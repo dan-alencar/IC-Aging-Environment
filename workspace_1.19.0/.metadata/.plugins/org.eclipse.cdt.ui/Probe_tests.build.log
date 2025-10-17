@@ -1,0 +1,33 @@
+08:44:36 **** Incremental Build of configuration Debug for project Probe_tests ****
+make -j8 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F303xE -c -I../Core/Inc -I../Drivers/STM32F3xx_HAL_Driver/Inc -I../Drivers/STM32F3xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F3xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c: In function 'HAL_GPIO_EXTI_Callback':
+../Core/Src/main.c:240:11: warning: statement with no effect [-Wunused-value]
+  240 |           conversao;
+      |           ^~~~~~~~~
+../Core/Src/main.c: In function 'write_byte_1w':
+../Core/Src/main.c:264:22: warning: implicit declaration of function 'tst_bit' [-Wimplicit-function-declaration]
+  264 |                   if(tst_bit(data,i)){
+      |                      ^~~~~~~
+../Core/Src/main.c:271:64: error: 'aRxBuffer' undeclared (first use in this function); did you mean 'ITM_RxBuffer'?
+  271 |                           HAL_UART_Receive(&huart2, (uint8_t *)aRxBuffer, 1,0xFFFF);
+      |                                                                ^~~~~~~~~
+      |                                                                ITM_RxBuffer
+../Core/Src/main.c:271:64: note: each undeclared identifier is reported only once for each function it appears in
+../Core/Src/main.c: In function 'read_byte_1w':
+../Core/Src/main.c:284:54: error: 'aRxBuffer' undeclared (first use in this function); did you mean 'ITM_RxBuffer'?
+  284 |                 HAL_UART_Receive(&huart2, (uint8_t *)aRxBuffer, 1,0xFFFF);
+      |                                                      ^~~~~~~~~
+      |                                                      ITM_RxBuffer
+../Core/Src/main.c:287:20: warning: implicit declaration of function 'set_bit' [-Wimplicit-function-declaration]
+  287 |                    set_bit(dado,i);
+      |                    ^~~~~~~
+../Core/Src/main.c: In function 'conversao':
+../Core/Src/main.c:308:14: warning: variable 'sinal' set but not used [-Wunused-but-set-variable]
+  308 |         char sinal;
+      |              ^~~~~
+make: *** [Core/Src/subdir.mk:34: Core/Src/main.o] Error 1
+"make -j8 all" terminated with exit code 2. Build might be incomplete.
+
+08:44:36 Build Failed. 3 errors, 4 warnings. (took 179ms)
+

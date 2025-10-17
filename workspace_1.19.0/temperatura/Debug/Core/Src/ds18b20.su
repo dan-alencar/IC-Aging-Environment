@@ -1,0 +1,7 @@
+../Core/Src/ds18b20.c:25:6:delay_us_dwt_init	4	static
+../Core/Src/ds18b20.c:33:6:delay_us_dwt	24	static
+../Core/Src/ds18b20.c:50:6:Onewire_Pin_Init	40	static
+../Core/Src/ds18b20.c:71:9:onewire_reset	16	static
+../Core/Src/ds18b20.c:94:6:onewire_Write	24	static
+../Core/Src/ds18b20.c:120:9:onewire_Read	16	static
+../Core/Src/ds18b20.c:150:7:DS18b20_temp	16	static
