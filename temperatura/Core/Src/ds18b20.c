@@ -78,40 +78,41 @@ uint8_t onewire_reset(void) {
 
     // 2. Switch to Input mode (release bus)
     Onewire_Pin_Init(GPIO_MODE_INPUT);
-    delay_us_dwt(60);   // Wait for sensor response (Presence Pulse)
+    delay_us_dwt(80);   // Wait for sensor response (Presence Pulse)
 
     // 3. Check for Presence Pulse (pin should be low)
     if (HAL_GPIO_ReadPin(ONEWIRE_GPIO_Port, ONEWIRE_Pin) == GPIO_PIN_RESET) {
         sensor_present = 1;
     }
 
-    delay_us_dwt(480 - 60);  // Complete the reset sequence (Total time: 480µs + 60µs + 420µs)
+    delay_us_dwt(480 - 80);  // Complete the reset sequence (Total time: 480µs + 80µs + 400µs)
 
     return sensor_present;
 }
 
 // Write a byte to the OneWire bus
-void onewire_Write(uint8_t dato) {
+void onewire_Write(uint8_t data) {
+	// Pin must be Output Open-Drain for writing
+	Onewire_Pin_Init(GPIO_MODE_OUTPUT_OD);
     for (int i = 0; i < 8; i++) {
-        uint8_t bit = (dato >> i) & 0x01;
-
-        // Pin must be Output Open-Drain for writing
+        uint8_t bit = (data >> i) & 0x01;
         Onewire_Pin_Init(GPIO_MODE_OUTPUT_OD);
-
         if (bit) {
+        	// Pin must be Output Open-Drain for writing
+//        	Onewire_Pin_Init(GPIO_MODE_OUTPUT_OD);
             // Write '1' time slot: pull low briefly (6µs), then release/wait
             HAL_GPIO_WritePin(ONEWIRE_GPIO_Port, ONEWIRE_Pin, GPIO_PIN_RESET);
-            delay_us_dwt(6);
+            delay_us_dwt(1); // delay 1 us
 
             Onewire_Pin_Init(GPIO_MODE_INPUT); // Release bus
-            delay_us_dwt(64);                  // Complete the slot (70µs total)
+            delay_us_dwt(61);                  // Complete the slot (60µs total) and 2µs to recover
         } else {
             // Write '0' time slot: pull low for longer (60µs), then release/wait
             HAL_GPIO_WritePin(ONEWIRE_GPIO_Port, ONEWIRE_Pin, GPIO_PIN_RESET);
             delay_us_dwt(60);
 
             Onewire_Pin_Init(GPIO_MODE_INPUT); // Release bus
-            delay_us_dwt(10);                  // Complete the slot (70µs total)
+            delay_us_dwt(2);                  // Complete the slot (60µs total) and 2µs to recover
         }
     }
 }
@@ -119,16 +120,16 @@ void onewire_Write(uint8_t dato) {
 // Read a byte from the OneWire bus
 uint8_t onewire_Read(void) {
     uint8_t read_byte = 0;
-
+    Onewire_Pin_Init(GPIO_MODE_INPUT);
     for (int i = 0; i < 8; i++) {
         // Step 1: Start the read time slot (pull low for 6us)
         Onewire_Pin_Init(GPIO_MODE_OUTPUT_OD);
         HAL_GPIO_WritePin(ONEWIRE_GPIO_Port, ONEWIRE_Pin, GPIO_PIN_RESET);
-        delay_us_dwt(6);
+        delay_us_dwt(2);
 
         // Step 2: Release bus (switch to Input) and sample the line 9us later
         Onewire_Pin_Init(GPIO_MODE_INPUT);
-        delay_us_dwt(9);
+        delay_us_dwt(11);
 
         // Step 3: Read the bit state
         if (HAL_GPIO_ReadPin(ONEWIRE_GPIO_Port, ONEWIRE_Pin) == GPIO_PIN_SET) {
@@ -136,7 +137,7 @@ uint8_t onewire_Read(void) {
         }
 
         // Step 4: Wait for the rest of the time slot
-        delay_us_dwt(55); // Remaining time for 70µs slot (70 - 6 - 9 = 55)
+        delay_us_dwt(60); // Remaining time for 70µs slot (70 - 6 - 9 = 55)
     }
 
     return read_byte;
@@ -150,6 +151,23 @@ uint8_t onewire_Read(void) {
 float DS18b20_temp(void) {
     uint8_t temp_lsb, temp_msb;
     int16_t raw_temp;
+
+    if (onewire_reset()) {
+            onewire_Write(0xCC);  // Skip ROM command
+            onewire_Write(0x4E);  // Write Scratchpad command
+
+            // Byte 2: TH (Ignorado) - Exemplo: 0x00
+            onewire_Write(0x00);
+            // Byte 3: TL (Ignorado) - Exemplo: 0x00
+            onewire_Write(0x00);
+
+            // Byte 4: Configuration Register (Resolução)
+            // 0b00011111 = 0x1F (9 bits de resolução: 93.75ms)
+            // 0b00111111 = 0x3F (10 bits de resolução: 187.5ms)
+            // 0b01011111 = 0x5F (11 bits de resolução: 375ms)
+            // 0b01111111 = 0x7F (12 bits de resolução: 750ms)
+            onewire_Write(0x1F); // Define para 9 bits
+        }
 
     // 1. Start Conversion
     if (!onewire_reset()) return -999.0f; // Check for presence

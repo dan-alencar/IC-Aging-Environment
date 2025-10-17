@@ -30,7 +30,8 @@
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 float temperatura;
-char texto[50];
+char texto[16];
+uint8_t UART2_rxBuffer[1] = {0};
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -83,7 +84,6 @@ int main(void)
   //removidas do code begin2
   delay_us_dwt_init();
   onewire_reset();
-  uartx_write_text(&huart2, "Initialization complete\r\n");
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -97,20 +97,21 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_UART_Receive_IT(&huart2, UART2_rxBuffer, 1); // Setando a interrupcao
+  //uartx_write_text(&huart2, "Initialization complete\r\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
-	  temperatura=DS18b20_temp();
-	  sprintf(texto,"%.2f\r\n",temperatura);
-	  uartx_write_text(&huart2, texto);
-	  HAL_Delay(800);
-    /* USER CODE BEGIN 3 */
+
+
   }
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+
   /* USER CODE END 3 */
 }
 
@@ -228,24 +229,30 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 1, 0);
-  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
-
   /* USER CODE BEGIN MX_GPIO_Init_2 */
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-  if(GPIO_Pin == GPIO_PIN_13){
+//void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+//{
+//  if(GPIO_Pin == GPIO_PIN_13){
+//	temperatura=DS18b20_temp();
+//	sprintf(texto,"%.2f\r\n",temperatura);
+//	uartx_write_text(&huart2, texto);
+//	HAL_Delay(800);
+//  }
+//}
+
+// Em HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart):
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 	temperatura=DS18b20_temp();
-	sprintf(texto,"%.2f\r\n",temperatura);
-	uartx_write_text(&huart2, texto);
-	HAL_Delay(800);
-  }
+	int len = sprintf(texto,"%.2f\r\n",temperatura); // Obter o tamanho real
+//	uartx_write_text(&huart2, texto);
+	HAL_UART_Transmit(&huart2, (uint8_t*)texto, len, 1000); // Enviar o tamanho real
+	HAL_UART_Receive_IT(&huart2, UART2_rxBuffer, 1); // Setando a interrupcao
 }
+
 /* USER CODE END 4 */
 
 /**

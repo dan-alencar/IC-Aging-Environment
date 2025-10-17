@@ -3,5 +3,5 @@
 ../Core/Src/ds18b20.c:50:6:Onewire_Pin_Init	1
 ../Core/Src/ds18b20.c:71:9:onewire_reset	2
 ../Core/Src/ds18b20.c:94:6:onewire_Write	3
-../Core/Src/ds18b20.c:120:9:onewire_Read	3
-../Core/Src/ds18b20.c:150:7:DS18b20_temp	3
+../Core/Src/ds18b20.c:121:9:onewire_Read	3
+../Core/Src/ds18b20.c:151:7:DS18b20_temp	4

@@ -4,7 +4,7 @@ import csv
 import os
 
 # --- Configurações ---
-SERIAL_PORT = '/dev/ttyACM0' 
+SERIAL_PORT = 'COM25' 
 
 BAUD_RATE = 38400
 OUTPUT_FILE = 'log_serial_tabela.csv'

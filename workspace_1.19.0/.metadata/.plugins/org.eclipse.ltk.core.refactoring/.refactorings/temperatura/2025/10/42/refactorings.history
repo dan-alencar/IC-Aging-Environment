@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;temperatura/Core/Src/ds18b20v.c&apos; to &apos;ds18b20.c&apos;" description="Rename resource &apos;ds18b20v.c&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="Core/Src/ds18b20v.c" name="ds18b20.c" stamp="1760712776805" updateReferences="true"/>
+</session>
