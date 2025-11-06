@@ -1,0 +1,243 @@
+ Eu quero iniciar a construção do meu Trabalho de Conclusão de Curso, e gostaria de ser auxiliado nesse processo. O que eu desejo fazer é tomar um artigo no qual sou autor como referência e construir ao redor da temática que estive mais envolvido desenvolvendo. O artigo está sendo enviado em anexo. A temática que estarei focando será "Sobre Ambientes Controlados Para Estudo de Envelhecimento de Circuitos Integrados", que é abordado nesse artigo. Minha ideia será de comparar o ambiente que utilizamos para fazer o estudo nesse artigo, fazendo uma projeção do envelhecimento futuro esperado caso mantivéssemos as mesmas condições, abordar como é o estado da arte nesse quesito para estudos mais sofisticados e, futuramente, criar um novo ambiente de envelhecimento no meu laboratório, onde irei continuar o envelhecimento da placa que utilizamos para o artigo, de forma que esses novos dados servirão como base de comparação entre esse novo ambiente e a curva projetada no início desse trabalho com o ambiente anterior. Para isso, gostaria de passar de uma maneira sucinta por agora pelas etapas necessárias para propor esse trabalho, já que quero entregar uma parcial (ou uma proposta de trabalho com alguma fundamentação) em breve. 
+
+
+Tópicos importantes:
+High Temperature Operating Life (HTOL): Often referenced within JESD22-A108 and MIL-STD-883 Method 1005.
+JEDEC Standard JESD22-A108
+MIL-STD-883, Method 1015
+
+Além disso, quanto ao meu sistema, eu estou utilizando um forno bem rudimentar, que tem um sistema de controle de sua temperatura inexistente, sem implementar qualquer controle para a estabilização de sua temperatura. O único recurso que oferece é um termostato que desliga o aquecimento da resistência do forno assim que a temperatura interna cruza o ponto definido nele, e o liga novamente quando a temperatura se torna menor que esse ponto. Eu gostaria de saber qual seria a melhor abordagem para mapear esse sistema que, a princípio, é desconhecido quanto aos seus parâmetros de funcionamento e a sua função de transferência. Ao meu ver, partindo de um ponto de vista leigo sobre o assunto, penso que seria importante mapear a curva de temperatura durante um aquecimento irrestrito, para a partir disso, fazer um estudo analítico e estatístico desse comportamento, e por fim, modelar o sistema de controle, inicialmente estipulado para ser um PWM chaveando um relé, com o seu duty cycle variando a partir da saída de um controlador PID, mas podendo ser alterado ao decorrer do desenvolvimento do projeto. Esse processo todo seria estritamente necessário, ou existe outra maneira de abordar a problemática?
+
+
+
+Você é um assistente acadêmico especializado em confiabilidade e envelhecimento de semicondutores.
+
+Estou desenvolvendo um Trabalho de Conclusão de Curso intitulado “Ambientes Controlados para Estudo de Envelhecimento em Circuitos Integrados”, derivado diretamente do artigo “Auto-Tuning Aging Sensor Validated Under Burn-In, Temperature, and Voltage Variations”, do qual sou coautor.
+
+O foco principal do meu TCC é analisar criticamente o ambiente experimental utilizado nesse artigo — composto por um FPGA Artix-7 submetido a condições de burn-in em forno térmico controlado — e projetar um novo ambiente automatizado de envelhecimento controlado, com instrumentação e controle multiestresse (temperatura, tensão e umidade), baseado em normas JEDEC JESD22-A108 (HTOL) e MIL-STD-883 Method 1015 (Burn-in).
+
+Quero que você realize pesquisas aprofundadas em bases científicas recentes (IEEE, Elsevier, Springer, MDPI, ACM, etc.) para fundamentar meu TCC com o estado da arte sobre:
+
+Testes acelerados de confiabilidade (HTOL, HAST, HALT, Burn-in) e suas normas (JEDEC JESD22-A108, MIL-STD-883, JESD22-A110).
+
+Ambientes controlados e automatizados de envelhecimento — incluindo câmaras climáticas, instrumentação PXI, Source Measure Units (SMUs), automação via LabVIEW/TestStand, integração FPGA-sistema de teste.
+
+Modelos físicos e estatísticos de degradação — Modelos de Arrhenius, Eyring e Arrhenius-Eyring combinados para extrapolação da vida útil.
+
+Aging monitoring e Silicon Lifecycle Management (SLM) — sensores on-chip, aging monitors, e arquiteturas de mitigação adaptativa.
+
+Tendências e avanços recentes (2018–2025) em testbenches de confiabilidade automatizados, abordagens de machine learning para previsão de falhas e plataformas integradas de qualificação.
+
+A partir dessas fontes, quero que você:
+
+Organize os resultados em tópicos estruturados por seção (introdução teórica, estado da arte, modelagem, automação, normas e futuras direções);
+
+Cite os principais artigos, autores e conferências IEEE relevantes (com ano e breve resumo das contribuições);
+
+Destaque como cada referência pode fundamentar a construção de um novo ambiente experimental de envelhecimento;
+
+Sugira referências normativas e industriais complementares (JEDEC, MIL, IEC).
+
+Palavras-chave a priorizar:
+
+"High Temperature Operating Life (HTOL)"
+
+"JEDEC JESD22-A108"
+
+"MIL-STD-883 Method 1015"
+
+"Accelerated Life Testing (ALT)"
+
+"Burn-in test"
+
+"Arrhenius model"
+
+"Eyring model"
+
+"FPGA reliability"
+
+"on-chip aging sensor"
+
+"Silicon Lifecycle Management"
+
+"automated reliability test platform"
+
+"environmental stress testing"
+
+"HAST", "HALT", "THB"
+
+"PXI instrumentation"
+
+"SMU-based measurement"
+
+"LabVIEW automation"
+
+Retorne um relatório analítico completo e, ao final, uma lista de artigos e normas prioritárias para leitura, que servirão de base para a fundamentação teórica e metodológica do TCC.
+
+
+Você é um assistente acadêmico especializado em confiabilidade, envelhecimento de semicondutores e modelagem térmica de sistemas experimentais.
+
+Estou desenvolvendo um Trabalho de Conclusão de Curso (TCC) intitulado “Ambientes Controlados para Estudo de Envelhecimento em Circuitos Integrados”, derivado diretamente do artigo “Auto-Tuning Aging Sensor Validated Under Burn-In, Temperature, and Voltage Variations”, do qual sou coautor.
+
+O foco central do meu TCC é:
+
+Comparar o ambiente experimental utilizado no artigo — um forno térmico rudimentar controlado por termostato, usado em testes de envelhecimento acelerado em uma FPGA Artix-7 — e avaliar sua estabilidade e reprodutibilidade.
+
+Projetar e modelar um novo ambiente de envelhecimento controlado, com controle automatizado de temperatura, tensão e umidade, de acordo com normas JEDEC JESD22-A108 (HTOL) e MIL-STD-883 Method 1015 (Burn-in).
+
+Projetar o controle térmico do forno, partindo da caracterização empírica do sistema e construindo um modelo matemático que permita projetar um controlador PID robusto e escalável.
+
+Fazer projeções do envelhecimento esperado com base nos dados já obtidos e modelos físicos de degradação (Arrhenius, Eyring), comparando com resultados futuros do novo ambiente controlado.
+
+🎯 Objetivo do pedido
+
+Quero que você conduza uma pesquisa acadêmica aprofundada e atualizada (2018–2025) para embasar meu TCC, cobrindo tanto:
+
+o estado da arte em ambientes controlados para envelhecimento acelerado de circuitos integrados,
+
+quanto a modelagem, identificação e controle térmico de fornos experimentais usados nesses testes.
+
+🔬 Tópicos que devem ser pesquisados e estruturados
+1. Testes de confiabilidade e envelhecimento acelerado
+
+High Temperature Operating Life (HTOL), Burn-In, HAST, HALT, THB.
+
+Normas: JEDEC JESD22-A108, JESD22-A110, MIL-STD-883 (Methods 1015 e 1005).
+
+Procedimentos experimentais típicos, tempos, perfis térmicos, tolerâncias e requisitos de estabilidade.
+
+Exemplos de setups acadêmicos ou industriais, e métricas usadas para caracterizar estabilidade térmica e uniformidade.
+
+2. Ambientes controlados e automação de testes
+
+Arquiteturas de sistemas de envelhecimento: câmaras climáticas, controladores PID, automação PXI, instrumentação SMU, controle via LabVIEW/TestStand, integração com FPGA.
+
+Estratégias de controle térmico: PWM time-proportioning, SSR, rampas de setpoint, anti-windup e segurança.
+
+Casos de estudo com fornos experimentais desenvolvidos em laboratório para HTOL.
+
+3. Modelagem térmica e identificação de sistemas térmicos
+
+Metodologia experimental:
+
+Step test de aquecimento: obtenção de K, L e τ a partir de um degrau de potência (ou duty).
+
+Curva de resfriamento para medir τ_resfriamento.
+
+Histerese do termostato para estabelecer baseline.
+
+Modelagem FOPDT por mínimos quadrados e ajustes via erro quadrático.
+
+Modelos mais ricos: ARX, ARMAX e OE identificados via sinais PRBS (pseudo-random binary sequence).
+
+Critérios experimentais recomendados:
+
+Amostragem de 1 Hz (fornos lentos),
+
+Duração ≥ 5×τ,
+
+L = tempo até 5% de ΔT,
+
+τ = tempo adicional até 63.2% de ΔT.
+
+Parâmetros práticos: τ típico (100–1000 s), overshoot tolerável (≤2 °C para HTOL), faixa de estabilidade ±1–2 °C.
+
+4. Projeto e sintonia de controladores térmicos
+
+Regras de sintonia baseadas no modelo FOPDT:
+
+Método IMC/SIMC (Skogestad) para PI/PID.
+
+Alternativa: método de relé de Åström–Hägglund (para ganho e período último).
+
+Implementação prática:
+
+Controle time-proportioning PWM com janela 5–10 s.
+
+Derivada filtrada, anti-windup e rampa de setpoint.
+
+Critérios de desempenho:
+
+Tempo de assentamento (±1–2 °C), overshoot < 2 °C, erro médio e desvio padrão em regime.
+
+Avaliação estatística da estabilidade térmica (variância, histograma, autocorrelação).
+
+Casos de uso em ambientes HTOL laboratoriais documentados em artigos recentes.
+
+5. Modelos de degradação e extrapolação de vida útil
+
+Arrhenius e Eyring models aplicados à extrapolação de tempo de falha (MTTF).
+
+Relação entre temperatura de operação e aceleração de envelhecimento.
+
+Estudos comparando setups de laboratório com ambientes industriais.
+
+6. Tendências recentes (2020–2025)
+
+Plataformas automatizadas de envelhecimento baseadas em FPGA.
+
+Uso de machine learning para predição de falhas e drift térmico.
+
+Conceito de Silicon Lifecycle Management (SLM).
+
+📚 Saída esperada
+
+Retorne um relatório técnico-analítico que inclua:
+
+Revisão de literatura organizada por tópico (com autores, ano, periódico e resumo das contribuições).
+
+Comparação entre metodologias de envelhecimento (HTOL, Burn-In, HAST etc.).
+
+Síntese das técnicas de modelagem e controle térmico aplicáveis ao meu forno experimental.
+
+Referências normativas e industriais (JEDEC, MIL, IEC).
+
+Recomendações para futura implementação de um ambiente de envelhecimento controlado em laboratório.
+
+Cite os principais artigos, autores e conferências IEEE relevantes (com ano e breve resumo das contribuições);
+
+🔑 Palavras-chave prioritárias
+
+"High Temperature Operating Life (HTOL)"
+
+"JEDEC JESD22-A108"
+
+"MIL-STD-883 Method 1015"
+
+"Accelerated Life Testing"
+
+"Burn-in test"
+
+"Arrhenius model"
+
+"Eyring model"
+
+"FPGA reliability"
+
+"on-chip aging sensor"
+
+"Silicon Lifecycle Management"
+
+"automated reliability test platform"
+
+"environmental stress testing"
+
+"FOPDT identification"
+
+"thermal system modeling"
+
+"time-proportioning PID"
+
+"LabVIEW automation"
+
+"Python automation"
+
+"PXI instrumentation"
+
+"HAST", "HALT", "THB"
+
+"Source Measure Unit"
+
+"thermal chamber control"
+
+Organize tudo de forma lógica e técnica, de modo que o material resultante possa ser usado diretamente como fundamentação teórica e metodológica do TCC.
