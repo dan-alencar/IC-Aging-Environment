@@ -34,7 +34,7 @@ const long CONTROL_PERIOD_MS = 5000; // 5 segundos
 const float RAMP_RATE_PER_SEC = 1.0f;  // Taxa da rampa: 0.1°C/seg (ou 6°C/min) 
 
 // --- GANHOS PID (Calculados da sua análise SIMC) ---
-const double KP = 1.39;
+const double KP = 2.78;
 const double KI = 0.00106; // Testando Ki baixo
 const double KD = 5.0; // Testando utilizar o Kd
 
