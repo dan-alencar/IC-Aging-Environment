@@ -34,9 +34,9 @@ const long CONTROL_PERIOD_MS = 5000; // 5 segundos
 const float RAMP_RATE_PER_SEC = 1.0f;  // Taxa da rampa: 0.1°C/seg (ou 6°C/min) 
 
 // --- GANHOS PID (Calculados da sua análise SIMC) ---
-const double KP = 2.78;
+const double KP = 1.39;
 const double KI = 0.00106; // Testando Ki baixo
-const double KD = 4.0; // Testando utilizar o Kd
+const double KD = 5.0; // Testando utilizar o Kd
 
 // --- Variáveis Globais do PID ---
 double currentCelsius;    // (Input) O que o forno ESTÁ
@@ -77,11 +77,11 @@ void setup() {
   myPID.setOutputLimits(0, 100);
   myPID.setWindUpLimits(0, 100);
   myPID.setSampleTime(CONTROL_PERIOD_MS);
-  myPID.setDeadBand(0.2);  // ignore small ±0.5°C fluctuations
+  myPID.setDeadBand(-0.2, 0.2);  // ignore small ±0.5°C fluctuations
   //myPID.setOutputRampRate(5); // limit rate of output change per cycle
-  myPID.setDerivativeFilter(0.8); // smooth derivative term
-
-  myPID.start();  // Enables the controller
+  //myPID.setDerivativeFilter(0.8); // smooth derivative term
+  myPID.stop();
+  myPID.reset();
 
   pidOutput = 0;
   
@@ -166,7 +166,8 @@ void handleSerialCommands() {
     else if (cmd.equals("START_TEST")) {
       currentCelsius = getOvenTemperature();
       rampedSetpoint = currentCelsius; // Começa a rampa de onde estamos
-      myPID.SetMode(AUTOMATIC);        // LIGA O PID
+      myPID.reset();
+      myPID.start();
       testRunning = true;
       // (Aqui você também ligaria o relé de 3.3V do DUT)
       Serial.println("OK,TEST_STARTED");
@@ -174,9 +175,9 @@ void handleSerialCommands() {
     
     // Ex: "STOP_TEST" (Desliga tudo)
     else if (cmd.equals("STOP_TEST")) {
+      myPID.stop();
+      myPID.reset();
       testRunning = false;
-      pidOutput = 0;                   // Força a saída para 0
-      myPID.SetMode(MANUAL);           // DESLIGA O PID
       digitalWrite(SSR_PIN, LOW);      // Garante SSR desligado
       targetSetpoint = getOvenTemperature();
       rampedSetpoint = targetSetpoint;
