@@ -35,8 +35,8 @@ const float RAMP_RATE_PER_SEC = 1.0f;  // Taxa da rampa: 0.1°C/seg (ou 6°C/min
 
 // --- GANHOS PID (Calculados da sua análise SIMC) ---
 const double KP = 2.78;
-const double KI = 0.0017; // Testando Ki baixo
-const double KD = 5.0; // Testando utilizar o Kd
+const double KI = 0.0024; // Testando Ki baixo
+const double KD = 4.0; // Testando utilizar o Kd
 
 // --- Variáveis Globais do PID ---
 double currentCelsius;    // (Input) O que o forno ESTÁ
