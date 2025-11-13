@@ -23,7 +23,7 @@ const int SSR_PIN = A1;   // Pino de controle (via TIP31) para o SSR
 const float VREF = 3.3f;            
 const int   ADC_MAX_BITS = 12;      
 const float ADC_MAX_VALUE = 4095.0f;  
-const int   ADC_SAMPLES = 50;       // Aumentado para mais estabilidade
+const int   ADC_SAMPLES = 500;       // Aumentado para mais estabilidade
 const float R_DIVISOR = 10000.0f;       
 const float NTC_R_NOMINAL = 10000.0f;   
 const float NTC_T_NOMINAL_C = 25.0f;    
@@ -31,12 +31,12 @@ const float NTC_B_VALUE = 3950.0f;      // (Ou 3380.0f, se você mudou)
 
 // --- Parâmetros de Controle (JANELA DE 5 SEGUNDOS) ---
 const long CONTROL_PERIOD_MS = 5000; // 5 segundos
-const float RAMP_RATE_PER_SEC = 0.1f;  // Taxa da rampa: 0.1°C/seg (ou 6°C/min) 
+const float RAMP_RATE_PER_SEC = 1.0f;  // Taxa da rampa: 0.1°C/seg (ou 6°C/min) 
 
 // --- GANHOS PID (Calculados da sua análise SIMC) ---
 const double KP = 2.78;
-const double KI = 0.0115;
-const double KD = 0.0;
+const double KI = 0.0017; // Testando Ki baixo
+const double KD = 5.0; // Testando utilizar o Kd
 
 // --- Variáveis Globais do PID ---
 double currentCelsius;    // (Input) O que o forno ESTÁ
