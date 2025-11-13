@@ -13,7 +13,7 @@
  */
 
 // --- Inclusão da Biblioteca PID ---
-#include <PID_v1.h>
+#include <ArduPID.h>
 
 // --- Pinos de Hardware ---
 const int NTC_PIN = A0;   // Pino do sensor NTC do forno
@@ -35,7 +35,7 @@ const float RAMP_RATE_PER_SEC = 1.0f;  // Taxa da rampa: 0.1°C/seg (ou 6°C/min
 
 // --- GANHOS PID (Calculados da sua análise SIMC) ---
 const double KP = 2.78;
-const double KI = 0.0024; // Testando Ki baixo
+const double KI = 0.00106; // Testando Ki baixo
 const double KD = 4.0; // Testando utilizar o Kd
 
 // --- Variáveis Globais do PID ---
@@ -48,7 +48,7 @@ double targetSetpoint = 25.0; // O alvo final (ex: 125.0°C)
 bool testRunning = false;
 
 // Objeto PID
-PID myPID(&currentCelsius, &pidOutput, &rampedSetpoint, KP, KI, KD, DIRECT);
+ArduPID myPID;
 
 // --- Variáveis de Temporização ---
 unsigned long ssrWindowStartTime = 0;
@@ -73,13 +73,16 @@ void setup() {
   
   // Define a janela de saída do PID (0% a 100%)
   // ISSO IMPLEMENTA O ANTI-WINDUP AUTOMATICAMENTE 
-  myPID.SetOutputLimits(0, 100);
+  myPID.begin(&currentCelsius, &pidOutput, &rampedSetpoint, KP, KI, KD);
+  myPID.setOutputLimits(0, 100);
+  myPID.setWindUpLimits(0, 100);
+  myPID.setSampleTime(CONTROL_PERIOD_MS);
+  myPID.setDeadBand(0.2);  // ignore small ±0.5°C fluctuations
+  //myPID.setOutputRampRate(5); // limit rate of output change per cycle
+  myPID.setDerivativeFilter(0.8); // smooth derivative term
 
-  // Informa ao PID o tempo entre cálculos (5s)
-  myPID.SetSampleTime(CONTROL_PERIOD_MS);
-  
-  // Desliga o PID até darmos "START_TEST"
-  myPID.SetMode(MANUAL);
+  myPID.start();  // Enables the controller
+
   pidOutput = 0;
   
   Serial.println("Arduino PID Controller Pronto.");
@@ -112,7 +115,7 @@ void loop() {
     updateSetpointRamp();
 
     // 2c. Calcular a nova saída do PID
-    myPID.Compute(); 
+    myPID.compute(); 
   }
 
   // 3. Loop de Atuação do SSR (Roda continuamente)
