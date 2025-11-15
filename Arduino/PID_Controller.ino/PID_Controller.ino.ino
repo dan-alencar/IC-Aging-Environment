@@ -38,9 +38,6 @@ const double KP = 2.78;
 const double KI = 0.00106; // Testando Ki baixo
 const double KD = 5.0; // Testando utilizar o Kd
 
-// Adicione esta variável aos seus globais
-unsigned long rampTimer = 0;
-
 // --- Variáveis Globais do PID ---
 double currentCelsius;    // (Input) O que o forno ESTÁ
 double pidOutput;         // (Output) O que o PID QUER (0-100%)
@@ -55,7 +52,8 @@ ArduPID myPID;
 
 // --- Variáveis de Temporização ---
 unsigned long ssrWindowStartTime = 0;
-unsigned long pidCalcTimer = 0;
+// unsigned long pidCalcTimer = 0;
+unsigned long rampTimer = 0;
 
 // =================================================================
 //   SETUP
@@ -99,38 +97,25 @@ void loop() {
   handleSerialCommands();
   
   if (!testRunning) {
-    digitalWrite(SSR_PIN, LOW); // Garante que SSR esteja desligado
+    digitalWrite(SSR_PIN, LOW); // Garante que SSR esteja desligado se o teste parar
     return;
   }
   
-  unsigned long currentMillis = millis();
-
-  // 2. Loop de Leitura (Roda o mais rápido possível)
-  //    O PID precisa da entrada mais recente.
+  // 2. Atualiza a leitura do sensor
+  //    (O PID precisa da entrada mais recente)
   currentCelsius = getOvenTemperature();
+     
+  // 3. Atualiza a Rampa (agora tem seu próprio timer)
+  updateSetpointRamp();
 
-  // 3. Loop da Rampa (Roda 1x por segundo para suavidade)
-  if (currentMillis - rampTimer >= 1000) {
-    rampTimer = currentMillis;
-    updateSetpointRamp(1.0); // Atualiza a rampa a cada 1 segundo
-  }
-
-  // 4. Cálculo do PID (Roda continuamente)
-  //    A biblioteca ArduPID gerencia internamente o sampleTime.
-  //    CHAMAR A CADA LOOP é o que permite o ANTI-WINDUP funcionar.
-  bool newComputation = myPID.compute();
-
-  // 5. Atuação do SSR (Time-Proportioning)
-  //    'newComputation' será TRUE somente naqueles loops em que o PID
-  //    realmente recalcular (a cada 5 segundos).
-  if (newComputation) {
-    // O PID acabou de calcular uma nova saída (ex: 80.0)
-    // Reiniciamos a janela de 5 segundos AGORA.
-    ssrWindowStartTime = currentMillis;
-  }
+  // 4. Calcular a nova saída do PID
+  //    DEVE SER CHAMADO A CADA LOOP para o Anti-Windup funcionar
+  //    A biblioteca gerencia o sampleTime internamente.
+  //    A função é 'void', não 'bool' (esta é a correção do erro de compilação)
+  myPID.compute();  
   
-  // Esta lógica de time-proportioning agora usa o 'pidOutput'
-  // mais recente (que só muda a cada 5s)
+  // 5. Loop de Atuação do SSR (Roda continuamente)
+  //    Usa o valor 'pidOutput' mais recente
   runSsrControl(pidOutput);
 }
 
@@ -142,23 +127,32 @@ void loop() {
  * @brief Atualiza o 'rampedSetpoint' para subir/descer suavemente
  * em direção ao 'targetSetpoint'.
  */
-void updateSetpointRamp(float secondsElapsed) {
-  // Esta função agora é chamada a cada 1 segundo
-  float maxChange = RAMP_RATE_PER_SEC * secondsElapsed;
-
-  if (targetSetpoint > rampedSetpoint) {
-    rampedSetpoint += maxChange;
-    if (rampedSetpoint > targetSetpoint) {
-      rampedSetpoint = targetSetpoint;
-    }
-  } 
-  else if (targetSetpoint < rampedSetpoint) {
-    rampedSetpoint -= maxChange;
-    if (rampedSetpoint < targetSetpoint) {
-      rampedSetpoint = targetSetpoint;
+void updateSetpointRamp() {
+  
+  unsigned long currentMillis = millis();
+  
+  // Roda esta lógica apenas a cada 1 segundo (1000ms)
+  if (currentMillis - rampTimer >= 1000) {
+    rampTimer = currentMillis;
+    
+    // Calcula a mudança para 1 segundo
+    float maxChange = RAMP_RATE_PER_SEC * 1.0; 
+  
+    if (targetSetpoint > rampedSetpoint) {
+      rampedSetpoint += maxChange;
+      if (rampedSetpoint > targetSetpoint) {
+        rampedSetpoint = targetSetpoint;
+      }
+    } 
+    else if (targetSetpoint < rampedSetpoint) {
+      rampedSetpoint -= maxChange;
+      if (rampedSetpoint < targetSetpoint) {
+        rampedSetpoint = targetSetpoint;
+      }
     }
   }
 }
+
 /**
  * @brief Interpreta os comandos de texto do Python.
  */
@@ -175,18 +169,18 @@ void handleSerialCommands() {
     
     // Ex: "START_TEST" (Liga o PID e o relé do DUT)
     else if (cmd.equals("START_TEST")) {
-      currentCelsius = getOvenTemperature();
-      rampedSetpoint = currentCelsius; // Começa a rampa de onde estamos
-      myPID.reset();
-      myPID.start();
-      
-      // --- SINCRONIZA OS TIMERS ---
-      ssrWindowStartTime = millis(); // Sincroniza o SSR
-      rampTimer = millis();        // Sincroniza a Rampa
-      
-      testRunning = true;
-      Serial.println("OK,TEST_STARTED");
-    }
+    currentCelsius = getOvenTemperature();
+    rampedSetpoint = currentCelsius; // Começa a rampa de onde estamos
+    myPID.reset();
+    myPID.start();
+    
+    // --- SINCRONIZA OS TIMERS ---
+    rampTimer = millis(); // Sincroniza a Rampa
+    // ssrWindowStartTime é sincronizado no runSsrControl
+    
+    testRunning = true;
+    Serial.println("OK,TEST_STARTED");
+  }
     
     // Ex: "STOP_TEST" (Desliga tudo)
     else if (cmd.equals("STOP_TEST")) {

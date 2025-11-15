@@ -12,7 +12,8 @@ from collections import deque
 
 # --- Configurações ---
 #SERIAL_PORT = "/dev/serial/by-id/usb-Arduino_LLC_Arduino_NANO_33_IoT_91DB68C651544C3954202020FF0B0D09-if00"
-SERIAL_PORT = "COM27"
+SERIAL_PORT = "/dev/serial/by-id/usb-Arduino_LLC_Arduino_NANO_33_IoT_40C381DB51544C3954202020FF082015-if00"
+# SERIAL_PORT = "COM27"
 BAUDRATE = 115200
 CONTROL_PERIOD_SEC = 5.0
 LOG_DATABASE = "aging_test_log.db" 
