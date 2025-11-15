@@ -4,12 +4,13 @@ Janela Principal da HMI (PySide6)
 Junta a UI (botões, gráfico) e os Workers (threads).
 """
 import sys
+import time
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
     QPushButton, QGroupBox, QFormLayout, QLineEdit, QTextEdit,
     QProgressBar, QLabel, QDoubleSpinBox
 )
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import QThread, Signal, Slot
 import config
 from workers import ArduinoWorker, PSUWorker, DUTWorker, TestSequencer
 from plot_widget import PlotWidget
