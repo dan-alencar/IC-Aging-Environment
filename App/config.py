@@ -27,9 +27,9 @@ LOG_INTERVAL_MS = 1000   # Intervalo de log (1 segundo)
 
 # --- Ganhos PID Padrão (Sintonizados) ---
 # O operador poderá mudar isso na HMI
-DEFAULT_KP = 1.39
+DEFAULT_KP = 2.78 #testar com 1.39
 DEFAULT_KI = 0.00106  # Ki correto para ArduPID (Kp / Tau_I)
-DEFAULT_KD = 10.45
+DEFAULT_KD = 5.0  #testar com 4.0
 
 # --- Outros Parâmetros do PID ---
 DEFAULT_RAMP_RATE_C_PER_SEC = 0.5 # °C por segundo
