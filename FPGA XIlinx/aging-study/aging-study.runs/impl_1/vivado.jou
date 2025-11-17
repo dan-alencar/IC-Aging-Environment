@@ -1,0 +1,24 @@
+#-----------------------------------------------------------
+# Vivado v2025.1 (64-bit)
+# SW Build 6140274 on Wed May 21 22:58:25 MDT 2025
+# IP Build 6138677 on Thu May 22 03:10:11 MDT 2025
+# SharedData Build 6139179 on Tue May 20 17:58:58 MDT 2025
+# Start of session at: Mon Nov 17 18:51:11 2025
+# Process ID         : 10834
+# Current directory  : /home/dan-alencar/Documents/GitHub/Aging/Vivado Projects/aging-study/aging-study.runs/impl_1
+# Command line       : vivado -log design_1_wrapper.vdi -applog -product Vivado -messageDb vivado.pb -mode batch -source design_1_wrapper.tcl -notrace
+# Log file           : /home/dan-alencar/Documents/GitHub/Aging/Vivado Projects/aging-study/aging-study.runs/impl_1/design_1_wrapper.vdi
+# Journal file       : /home/dan-alencar/Documents/GitHub/Aging/Vivado Projects/aging-study/aging-study.runs/impl_1/vivado.jou
+# Running On         : dan-alencar
+# Platform           : Linuxmint
+# Operating System   : Linux Mint 22.1
+# Processor Detail   : Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz
+# CPU Frequency      : 2402.169 MHz
+# CPU Physical cores : 4
+# CPU Logical cores  : 8
+# Host memory        : 16496 MB
+# Swap memory        : 2147 MB
+# Total Virtual      : 18643 MB
+# Available Virtual  : 13259 MB
+#-----------------------------------------------------------
+source design_1_wrapper.tcl -notrace

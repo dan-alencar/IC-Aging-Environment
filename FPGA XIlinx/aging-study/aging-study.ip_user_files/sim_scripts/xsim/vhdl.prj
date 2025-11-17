@@ -1,0 +1,5 @@
+vhdl xpm  \
+"/home/dan-alencar/2025.1/data/ip/xpm/xpm_VCOMP.vhd" \
+
+# Do not sort compile order
+nosort

@@ -1,0 +1,24 @@
+#-----------------------------------------------------------
+# Vivado v2024.2 (64-bit)
+# SW Build 5239630 on Fri Nov 08 22:34:34 MST 2024
+# IP Build 5239520 on Sun Nov 10 16:12:51 MST 2024
+# SharedData Build 5239561 on Fri Nov 08 14:39:27 MST 2024
+# Start of session at: Wed Feb  5 19:10:42 2025
+# Process ID         : 21334
+# Current directory  : /home/mirai/Documents/Projects/Aging-main/vivado_project/aging-study/aging-study.runs/design_1_DisplayController_0_0_synth_1
+# Command line       : vivado -log design_1_DisplayController_0_0.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source design_1_DisplayController_0_0.tcl
+# Log file           : /home/mirai/Documents/Projects/Aging-main/vivado_project/aging-study/aging-study.runs/design_1_DisplayController_0_0_synth_1/design_1_DisplayController_0_0.vds
+# Journal file       : /home/mirai/Documents/Projects/Aging-main/vivado_project/aging-study/aging-study.runs/design_1_DisplayController_0_0_synth_1/vivado.jou
+# Running On         : pop-os
+# Platform           : Pop
+# Operating System   : Pop!_OS 22.04 LTS
+# Processor Detail   : 11th Gen Intel(R) Core(TM) i5-11300H @ 3.10GHz
+# CPU Frequency      : 4000.000 MHz
+# CPU Physical cores : 4
+# CPU Logical cores  : 8
+# Host memory        : 8100 MB
+# Swap memory        : 12394 MB
+# Total Virtual      : 20494 MB
+# Available Virtual  : 14700 MB
+#-----------------------------------------------------------
+source design_1_DisplayController_0_0.tcl -notrace
