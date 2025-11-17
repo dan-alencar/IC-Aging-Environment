@@ -11,7 +11,9 @@ import matplotlib.animation as animation
 from collections import deque
 
 # --- Configurações ---
-SERIAL_PORT = "/dev/serial/by-id/usb-Arduino_LLC_Arduino_NANO_33_IoT_91DB68C651544C3954202020FF0B0D09-if00"
+#SERIAL_PORT = "/dev/serial/by-id/usb-Arduino_LLC_Arduino_NANO_33_IoT_91DB68C651544C3954202020FF0B0D09-if00"
+SERIAL_PORT = "/dev/serial/by-id/usb-Arduino_LLC_Arduino_NANO_33_IoT_40C381DB51544C3954202020FF082015-if00"
+# SERIAL_PORT = "COM27"
 BAUDRATE = 115200
 CONTROL_PERIOD_SEC = 5.0
 LOG_DATABASE = "aging_test_log.db" 
@@ -137,6 +139,8 @@ class OvenController:
 
     def _logging_loop(self):
         self.message_queue.put(f"Thread de log iniciada (intervalo: {CONTROL_PERIOD_SEC}s).")
+
+        time.sleep(1.0) # Tratar o race condition na comunicação
         
         while self.test_running:
             start_time = time.time()
