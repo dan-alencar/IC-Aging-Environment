@@ -1,0 +1,99 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (lin64) Build 6140274 Wed May 21 22:58:25 MDT 2025
+| Date         : Mon Nov 17 18:51:39 2025
+| Host         : dan-alencar running 64-bit Linux Mint 22.1
+| Command      : report_control_sets -verbose -file design_1_wrapper_control_sets_placed.rpt
+| Design       : design_1_wrapper
+| Device       : xc7a100t
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Control Set Information
+
+Table of Contents
+-----------------
+1. Summary
+2. Histogram
+3. Flip-Flop Distribution
+4. Detailed Control Set Information
+
+1. Summary
+----------
+
++----------------------------------------------------------+-------+
+|                          Status                          | Count |
++----------------------------------------------------------+-------+
+| Total control sets                                       |    21 |
+|    Minimum number of control sets                        |    21 |
+|    Addition due to synthesis replication                 |     0 |
+|    Addition due to physical synthesis replication        |     0 |
+| Unused register locations in slices containing registers |    80 |
++----------------------------------------------------------+-------+
+* Control sets can be merged at opt_design using control_set_merge or merge_equivalent_drivers
+** Run report_qor_suggestions for automated merging and remapping suggestions
+
+
+2. Histogram
+------------
+
++--------------------+-------+
+|       Fanout       | Count |
++--------------------+-------+
+| Total control sets |    21 |
+| >= 0 to < 4        |     8 |
+| >= 4 to < 6        |     1 |
+| >= 6 to < 8        |     1 |
+| >= 8 to < 10       |     4 |
+| >= 10 to < 12      |     0 |
+| >= 12 to < 14      |     1 |
+| >= 14 to < 16      |     1 |
+| >= 16              |     5 |
++--------------------+-------+
+* Control sets can be remapped at either synth_design or opt_design
+
+
+3. Flip-Flop Distribution
+-------------------------
+
++--------------+-----------------------+------------------------+-----------------+--------------+
+| Clock Enable | Synchronous Set/Reset | Asynchronous Set/Reset | Total Registers | Total Slices |
++--------------+-----------------------+------------------------+-----------------+--------------+
+| No           | No                    | No                     |              45 |           21 |
+| No           | No                    | Yes                    |              77 |           22 |
+| No           | Yes                   | No                     |               0 |            0 |
+| Yes          | No                    | No                     |               0 |            0 |
+| Yes          | No                    | Yes                    |              62 |           22 |
+| Yes          | Yes                   | No                     |               0 |            0 |
++--------------+-----------------------+------------------------+-----------------+--------------+
+
+
+4. Detailed Control Set Information
+-----------------------------------
+
++------------------------------------------------------------------------+---------------------------------------------------+-------------------------------------------------------------------------+------------------+----------------+--------------+
+|                              Clock Signal                              |                   Enable Signal                   |                             Set/Reset Signal                            | Slice Load Count | Bel Load Count | Bels / Slice |
++------------------------------------------------------------------------+---------------------------------------------------+-------------------------------------------------------------------------+------------------+----------------+--------------+
+|  design_1_i/modern_sensible_0/inst/ff1_out                             |                                                   | design_1_i/failure_holder_0/inst/held_i_2_n_0                           |                1 |              1 |         1.00 |
+|  design_1_i/clk_wiz_0/inst/clk_en                                      |                                                   | design_1_i/util_vector_logic_1/Res[0]                                   |                1 |              1 |         1.00 |
+|  design_1_i/clk_wiz_0/inst/clk_sys                                     |                                                   | design_1_i/util_vector_logic_1/Res[0]                                   |                1 |              1 |         1.00 |
+|  design_1_i/clk_wiz_0/inst/sensor0                                     |                                                   | design_1_i/util_vector_logic_1/Res[0]                                   |                1 |              1 |         1.00 |
+| ~design_1_i/controller_controller_0/inst/state[1]                      |                                                   |                                                                         |                2 |              2 |         1.00 |
+|  design_1_i/clk_wiz_0/inst/clk_sys                                     |                                                   | design_1_i/controller_controller_0/inst/FSM_sequential_state[1]_i_1_n_0 |                1 |              2 |         2.00 |
+|  design_1_i/clk_wiz_0/inst/clk_sys                                     |                                                   |                                                                         |                3 |              3 |         1.00 |
+|  design_1_i/controller_controller_0/inst/psen_reg_i_2_n_0              |                                                   |                                                                         |                2 |              3 |         1.50 |
+|  CLK100MHZ_IBUF_BUFG                                                   | design_1_i/uart_tx_0/inst/index[3]_i_1_n_0        | reset_IBUF                                                              |                2 |              4 |         2.00 |
+|  CLK100MHZ_IBUF_BUFG                                                   | design_1_i/temp_catcher_0/inst/timeout[5]_i_1_n_0 | reset_IBUF                                                              |                2 |              6 |         3.00 |
+|  design_1_i/clk_wiz_0/inst/clk_sys_design_1_clk_wiz_0_0_en_clk         |                                                   | design_1_i/util_vector_logic_1/Res[0]                                   |                1 |              8 |         8.00 |
+|  design_1_i/clk_wiz_0/inst/sensor0_design_1_clk_wiz_0_0_en_clk         |                                                   | design_1_i/util_vector_logic_1/Res[0]                                   |                1 |              8 |         8.00 |
+|  design_1_i/clk_wiz_0/inst/clk_en_design_1_clk_wiz_0_0_en_clk          |                                                   | design_1_i/util_vector_logic_1/Res[0]                                   |                1 |              8 |         8.00 |
+|  CLK100MHZ_IBUF_BUFG                                                   | design_1_i/uart_tx_0/inst/tx17_out                | reset_IBUF                                                              |                3 |              9 |         3.00 |
+|  CLK100MHZ_IBUF_BUFG                                                   | design_1_i/sensor_stream_0/inst/sel               | reset_IBUF                                                              |                4 |             12 |         3.00 |
+|  CLK100MHZ_IBUF_BUFG                                                   | design_1_i/uart_tx_0/inst/counter[13]_i_1_n_0     | reset_IBUF                                                              |                6 |             14 |         2.33 |
+|  design_1_i/clk_wiz_0/inst/psdone                                      |                                                   | design_1_i/controller_controller_0/inst/FSM_sequential_state[1]_i_1_n_0 |                4 |             16 |         4.00 |
+|  design_1_i/controller_controller_0/inst/display_value_reg[15]_i_1_n_0 |                                                   |                                                                         |                6 |             16 |         2.67 |
+|  CLK100MHZ_IBUF_BUFG                                                   | design_1_i/sensor_stream_0/inst/counter           | reset_IBUF                                                              |                5 |             17 |         3.40 |
+|  CLK100MHZ_IBUF_BUFG                                                   |                                                   |                                                                         |                8 |             21 |         2.62 |
+|  CLK100MHZ_IBUF_BUFG                                                   |                                                   | reset_IBUF                                                              |               10 |             31 |         3.10 |
++------------------------------------------------------------------------+---------------------------------------------------+-------------------------------------------------------------------------+------------------+----------------+--------------+
+
+

@@ -1,0 +1,11 @@
+sv xpm -i "../../../../../../../../2025.1/data/rsb/busdef" --include "../../../aging-study.gen/sources_1/bd/design_1/ipshared/a9be" \
+"/home/dan-alencar/2025.1/Vivado/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv" \
+
+verilog xil_defaultlib -i "../../../../../../../../2025.1/data/rsb/busdef" --include "../../../aging-study.gen/sources_1/bd/design_1/ipshared/a9be" \
+"../../../aging-study.srcs/sources_1/new/temp_catcher.v" \
+"../../../aging-study.srcs/sim_1/new/sim.v" \
+
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort

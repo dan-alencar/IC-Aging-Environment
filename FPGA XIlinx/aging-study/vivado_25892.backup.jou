@@ -1,0 +1,298 @@
+#-----------------------------------------------------------
+# Vivado v2024.2 (64-bit)
+# SW Build 5239630 on Fri Nov 08 22:35:27 MST 2024
+# IP Build 5239520 on Sun Nov 10 16:12:51 MST 2024
+# SharedData Build 5239561 on Fri Nov 08 14:39:27 MST 2024
+# Start of session at: Sun Feb  2 16:18:10 2025
+# Process ID         : 25892
+# Current directory  : C:/Projects/Vivado/Aging/vivado_project/aging-study
+# Command line       : vivado.exe -gui_launcher_event rodinguilauncherevent23932 C:\Projects\Vivado\Aging\vivado_project\aging-study\aging-study.xpr
+# Log file           : C:/Projects/Vivado/Aging/vivado_project/aging-study/vivado.log
+# Journal file       : C:/Projects/Vivado/Aging/vivado_project/aging-study\vivado.jou
+# Running On         : LucasNogueira
+# Platform           : Windows Server 2016 or Windows 10
+# Operating System   : 26100
+# Processor Detail   : 13th Gen Intel(R) Core(TM) i7-13700H
+# CPU Frequency      : 2918 MHz
+# CPU Physical cores : 14
+# CPU Logical cores  : 20
+# Host memory        : 16890 MB
+# Swap memory        : 23622 MB
+# Total Virtual      : 40512 MB
+# Available Virtual  : 18838 MB
+#-----------------------------------------------------------
+start_gui
+open_project C:/Projects/Vivado/Aging/vivado_project/aging-study/aging-study.xpr
+update_compile_order -fileset sources_1
+add_files -fileset utils_1 -norecurse C:/Projects/Vivado/Aging/vivado_project/aging-study/fixed_pnr.dcp
+set_property incremental_checkpoint {C:\Projects\Vivado\Aging\vivado_project\aging-study\fixed_pnr.dcp} [get_runs impl_1]
+launch_runs impl_1 -jobs 18
+wait_on_run impl_1
+open_run impl_1
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 1569325056 -input_pins -routable_nets -name timing_1
+startgroup
+route_design -nets [get_nets { design_1_i/not_series_0_critpath }]
+select_objects [get_nets { design_1_i/not_series_0_critpath }]
+endgroup
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 1569325056 -input_pins -routable_nets -name timing_1
+reset_run impl_1 -prev_step 
+close_design
+launch_runs impl_1 -jobs 18
+wait_on_run impl_1
+open_run impl_1
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 1569325056 -input_pins -routable_nets -name timing_1
+open_bd_design {C:/Projects/Vivado/Aging/vivado_project/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd}
+startgroup
+set_property -dict [list \
+  CONFIG.CLKOUT2_REQUESTED_PHASE {-120} \
+  CONFIG.MMCM_CLKOUT1_PHASE {-120.000} \
+] [get_bd_cells clk_wiz_0]
+endgroup
+save_bd_design
+reset_run synth_1
+reset_run impl_1
+launch_runs impl_1 -jobs 18
+wait_on_run impl_1
+create_ip_run [get_files -of_objects [get_fileset sources_1] C:/Projects/Vivado/Aging/vivado_project/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd]
+refresh_design
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 1569325066 -input_pins -routable_nets -name timing_1
+launch_runs impl_1 -to_step write_bitstream -jobs 18
+wait_on_run impl_1
+startgroup
+route_design -nets [get_nets { design_1_i/not_series_0/inst/critpath }]
+select_objects [get_nets { design_1_i/not_series_0/inst/critpath }]
+endgroup
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 1569325066 -input_pins -routable_nets -name timing_1
+set_property is_bel_fixed 1 [get_cells {design_1_i/not_series_0/inst/genblk1[12].INV }]
+set_property is_loc_fixed 1 [get_cells {design_1_i/not_series_0/inst/genblk1[12].INV }]
+set_property fixed_route {  { CLBLL_L_C }  } [get_nets { design_1_i/not_series_0/inst/critpath }]
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 1569325066 -input_pins -routable_nets -name timing_1
+startgroup
+route_design -nets [get_nets { design_1_i/not_series_0/inst/critpath }]
+select_objects [get_nets { design_1_i/not_series_0/inst/critpath }]
+endgroup
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 1569325066 -input_pins -routable_nets -name timing_1
+startgroup
+route_design -unroute -nets [get_nets { design_1_i/not_series_0/inst/critpath }]
+select_objects [get_nets { design_1_i/not_series_0/inst/critpath }]
+endgroup
+startgroup
+route_design -nets [get_nets { design_1_i/not_series_0/inst/critpath }]
+select_objects [get_nets { design_1_i/not_series_0/inst/critpath }]
+endgroup
+startgroup
+route_design -unroute -nets [get_nets { design_1_i/not_series_0/inst/critpath }]
+select_objects [get_nets { design_1_i/not_series_0/inst/critpath }]
+endgroup
+startgroup
+route_design -nets [get_nets { design_1_i/not_series_0/inst/critpath }]
+select_objects [get_nets { design_1_i/not_series_0/inst/critpath }]
+endgroup
+startgroup
+place_cell design_1_i/modern_sensible_0/inst/FF2 SLICE_X2Y92/C5FF
+endgroup
+startgroup
+place_cell design_1_i/modern_sensible_0/inst/FF2 SLICE_X2Y92/CFF
+endgroup
+startgroup
+unplace_cell  [get_cells [list  design_1_i/modern_sensible_0/inst/FF2 design_1_i/modern_sensible_0/inst/XOR1] -filter {((is_primitive==true && primitive_level!="INTERNAL")  && (loc!=""))}]
+place_cell design_1_i/modern_sensible_0/inst/FF1 SLICE_X0Y91/CFF
+place_cell design_1_i/modern_sensible_0/inst/FF2 SLICE_X1Y91/D5FF
+place_cell design_1_i/modern_sensible_0/inst/XOR1 SLICE_X1Y91/A6LUT
+endgroup
+undo
+startgroup
+place_cell design_1_i/modern_sensible_0/inst/FF2 SLICE_X2Y92/C5FF
+endgroup
+startgroup
+place_cell design_1_i/modern_sensible_0/inst/FF3 SLICE_X0Y92/D5FF
+endgroup
+startgroup
+place_cell design_1_i/modern_sensible_0/inst/FF1 SLICE_X3Y92/CFF
+endgroup
+startgroup
+place_cell design_1_i/modern_sensible_0/inst/FF2 SLICE_X1Y92/D5FF
+endgroup
+startgroup
+place_cell design_1_i/modern_sensible_0/inst/FF1 SLICE_X2Y92/D5FF
+endgroup
+startgroup
+place_cell design_1_i/modern_sensible_0/inst/BUF1 SLICE_X0Y92/A6LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[10].INV} SLICE_X0Y92/B5LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[10].INV} SLICE_X0Y92/A5LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[10].INV} SLICE_X0Y92/B5LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[10].INV} SLICE_X0Y91/C5LUT
+endgroup
+startgroup
+place_cell design_1_i/modern_sensible_0/inst/XOR1 SLICE_X0Y92/B6LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[0].INV} SLICE_X3Y91/D6LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[1].INV} SLICE_X3Y91/C6LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[7].INV} SLICE_X2Y91/D6LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[6].INV} SLICE_X2Y91/C6LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[2].INV} SLICE_X3Y91/B6LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[3].INV} SLICE_X3Y91/A6LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[7].INV} SLICE_X2Y92/C6LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[6].INV} SLICE_X2Y92/B6LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[4].INV} SLICE_X2Y91/D6LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[5].INV} SLICE_X2Y91/C6LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[6].INV} SLICE_X2Y91/B6LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[7].INV} SLICE_X2Y91/A6LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[8].INV} SLICE_X1Y91/D6LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[9].INV} SLICE_X1Y91/C6LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[10].INV} SLICE_X1Y91/B5LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[11].INV} SLICE_X1Y91/A6LUT
+endgroup
+startgroup
+place_cell {design_1_i/not_series_0/inst/genblk1[12].INV} SLICE_X0Y92/D6LUT
+endgroup
+startgroup
+place_cell design_1_i/not_series_0/inst/inverted_bit_reg SLICE_X0Y93/A5FF
+endgroup
+startgroup
+place_cell design_1_i/not_series_0/inst/inverted_bit_reg SLICE_X0Y91/D5FF
+endgroup
+startgroup
+place_cell design_1_i/not_series_0/inst/start_reg SLICE_X0Y91/C5FF
+endgroup
+startgroup
+place_cell design_1_i/not_series_0/inst/inverted_bit_reg SLICE_X1Y91/D5FF
+endgroup
+startgroup
+place_cell design_1_i/not_series_0/inst/start_reg SLICE_X1Y91/DFF
+endgroup
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 1569325066 -input_pins -routable_nets -name timing_1
+save_constraints
+reset_run impl_1
+launch_runs impl_1 -jobs 18
+wait_on_run impl_1
+create_ip_run [get_files -of_objects [get_fileset sources_1] C:/Projects/Vivado/Aging/vivado_project/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd]
+refresh_design
+startgroup
+route_design -nets [get_nets { design_1_i/not_series_0/critpath }]
+set_property IS_ROUTE_FIXED 0 [get_nets design_1_i/modern_sensible_0/in_sensor]
+save_constraints
+reset_run synth_1
+launch_runs synth_1 -jobs 18
+wait_on_run synth_1
+close_design
+export_ip_user_files -of_objects  [get_files C:/Projects/Vivado/fixed_routing.dcp] -no_script -reset -force -quiet
+remove_files  C:/Projects/Vivado/fixed_routing.dcp
+launch_runs impl_1 -jobs 18
+wait_on_run impl_1
+open_run synth_1 -name synth_1
+close_design
+open_run impl_1
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 1569325056 -input_pins -routable_nets -name timing_1
+startgroup 
+set_property is_bel_fixed true [get_cells [list {design_1_i/not_series_0/inst/genblk1[12].INV} {design_1_i/not_series_0/inst/genblk1[1].INV} {design_1_i/not_series_0/inst/genblk1[2].INV} {design_1_i/not_series_0/inst/genblk1[6].INV} {design_1_i/not_series_0/inst/genblk1[8].INV} {design_1_i/not_series_0/inst/genblk1[4].INV} {design_1_i/not_series_0/inst/genblk1[7].INV} {design_1_i/not_series_0/inst/genblk1[11].INV} {design_1_i/not_series_0/inst/genblk1[5].INV} {design_1_i/not_series_0/inst/genblk1[9].INV} {design_1_i/not_series_0/inst/genblk1[0].INV} design_1_i/not_series_0/inst/start_reg {design_1_i/not_series_0/inst/genblk1[3].INV} {design_1_i/not_series_0/inst/genblk1[10].INV} design_1_i/not_series_0/inst/inverted_bit_reg]]
+set_property is_loc_fixed true [get_cells [list {design_1_i/not_series_0/inst/genblk1[12].INV} {design_1_i/not_series_0/inst/genblk1[1].INV} {design_1_i/not_series_0/inst/genblk1[2].INV} {design_1_i/not_series_0/inst/genblk1[6].INV} {design_1_i/not_series_0/inst/genblk1[8].INV} {design_1_i/not_series_0/inst/genblk1[4].INV} {design_1_i/not_series_0/inst/genblk1[7].INV} {design_1_i/not_series_0/inst/genblk1[11].INV} {design_1_i/not_series_0/inst/genblk1[5].INV} {design_1_i/not_series_0/inst/genblk1[9].INV} {design_1_i/not_series_0/inst/genblk1[0].INV} design_1_i/not_series_0/inst/start_reg {design_1_i/not_series_0/inst/genblk1[3].INV} {design_1_i/not_series_0/inst/genblk1[10].INV} design_1_i/not_series_0/inst/inverted_bit_reg]]
+endgroup
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 1569325056 -input_pins -routable_nets -name timing_1
+startgroup 
+set_property is_bel_fixed true [get_cells [list design_1_i/modern_sensible_0/inst/FF1 design_1_i/modern_sensible_0/inst/FF2 design_1_i/modern_sensible_0/inst/AND1 design_1_i/modern_sensible_0/inst/XOR1 design_1_i/modern_sensible_0/inst/BUF1 design_1_i/modern_sensible_0/inst/FF3]]
+set_property is_loc_fixed true [get_cells [list design_1_i/modern_sensible_0/inst/FF1 design_1_i/modern_sensible_0/inst/FF2 design_1_i/modern_sensible_0/inst/AND1 design_1_i/modern_sensible_0/inst/XOR1 design_1_i/modern_sensible_0/inst/BUF1 design_1_i/modern_sensible_0/inst/FF3]]
+endgroup
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 1569325056 -input_pins -routable_nets -name timing_1
+save_constraints
+set_property incremental_checkpoint {C:\Projects\Vivado\Aging\vivado_project\aging-study\fixed_pnr.dcp} [get_runs impl_1]
+set_property incremental_checkpoint.directive RuntimeOptimized [get_runs impl_1]
+open_bd_design {C:/Projects/Vivado/Aging/vivado_project/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd}
+startgroup
+set_property -dict [list \
+  CONFIG.CLKOUT2_REQUESTED_PHASE {-130} \
+  CONFIG.MMCM_CLKOUT1_PHASE {-130.000} \
+] [get_bd_cells clk_wiz_0]
+endgroup
+save_bd_design
+reset_run synth_1
+launch_runs impl_1 -jobs 18
+wait_on_run impl_1
+set_property OPTIONS.max_paths {10000000000000000000000000000000000000000000} [get_report_config -of_objects [get_runs impl_1] {impl_1_init_report_timing_summary_0}]
+create_ip_run [get_files -of_objects [get_fileset sources_1] C:/Projects/Vivado/Aging/vivado_project/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd]
+refresh_design
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 1569325056 -input_pins -routable_nets -name timing_1
+open_bd_design {C:/Projects/Vivado/Aging/vivado_project/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd}
+startgroup
+set_property -dict [list \
+  CONFIG.CLKOUT2_REQUESTED_PHASE {-140} \
+  CONFIG.MMCM_CLKOUT1_PHASE {-140.000} \
+] [get_bd_cells clk_wiz_0]
+endgroup
+save_bd_design
+reset_run synth_1
+launch_runs impl_1 -jobs 20
+wait_on_run impl_1
+create_ip_run [get_files -of_objects [get_fileset sources_1] C:/Projects/Vivado/Aging/vivado_project/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd]
+refresh_design
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 1569325056 -input_pins -routable_nets -name timing_1
+open_bd_design {C:/Projects/Vivado/Aging/vivado_project/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd}
+open_bd_design {C:/Projects/Vivado/Aging/vivado_project/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd}
+startgroup
+set_property -dict [list \
+  CONFIG.CLKOUT2_REQUESTED_PHASE {-180} \
+  CONFIG.MMCM_CLKOUT1_PHASE {-180.000} \
+] [get_bd_cells clk_wiz_0]
+endgroup
+save_bd_design
+reset_run design_1_clk_wiz_0_0_synth_1
+reset_run synth_1
+launch_runs impl_1 -jobs 20
+wait_on_run impl_1
+create_ip_run [get_files -of_objects [get_fileset sources_1] C:/Projects/Vivado/Aging/vivado_project/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd]
+refresh_design
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 1569325056 -input_pins -routable_nets -name timing_1
+open_bd_design {C:/Projects/Vivado/Aging/vivado_project/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd}
+startgroup
+set_property -dict [list \
+  CONFIG.CLKOUT2_REQUESTED_PHASE {-110} \
+  CONFIG.MMCM_CLKOUT1_PHASE {-110.000} \
+] [get_bd_cells clk_wiz_0]
+endgroup
+save_bd_design
+reset_run design_1_clk_wiz_0_0_synth_1
+reset_run synth_1
+launch_runs impl_1 -jobs 20
+wait_on_run impl_1
+create_ip_run [get_files -of_objects [get_fileset sources_1] C:/Projects/Vivado/Aging/vivado_project/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd]
+refresh_design
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 1569325056 -input_pins -routable_nets -name timing_1

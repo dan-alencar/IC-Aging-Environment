@@ -1,0 +1,785 @@
+#-----------------------------------------------------------
+# Vivado v2024.2 (64-bit)
+# SW Build 5239630 on Fri Nov 08 22:34:34 MST 2024
+# IP Build 5239520 on Sun Nov 10 16:12:51 MST 2024
+# SharedData Build 5239561 on Fri Nov 08 14:39:27 MST 2024
+# Start of session at: Wed Jan 22 14:26:32 2025
+# Process ID         : 148030
+# Current directory  : /home/tools/Documents/agfing/aging-study
+# Command line       : vivado
+# Log file           : /home/tools/Documents/agfing/aging-study/vivado.log
+# Journal file       : /home/tools/Documents/agfing/aging-study/vivado.jou
+# Running On         : cinova17.lesc.ufc.br
+# Platform           : Rocky
+# Operating System   : Rocky Linux release 8.10 (Green Obsidian)
+# Processor Detail   : 12th Gen Intel(R) Core(TM) i5-12400T
+# CPU Frequency      : 1800.000 MHz
+# CPU Physical cores : 6
+# CPU Logical cores  : 12
+# Host memory        : 16190 MB
+# Swap memory        : 8300 MB
+# Total Virtual      : 24490 MB
+# Available Virtual  : 16007 MB
+#-----------------------------------------------------------
+start_gui
+open_project /home/tools/Documents/agfing/aging-study/aging-study.xpr
+INFO: [Project 1-313] Project file moved from '/home/mirai/aging-study' since last save.
+Scanning sources...
+Finished scanning sources
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/home/tools/cadence/installs/Xilinx/Vivado/2024.2/data/ip'.
+WARNING: [BD 41-1661] One or more IPs have been locked in the design 'design_1.bd'. Please run report_ip_status for more details and recommendations on how to fix this issue.
+List of locked IPs:
+design_1_clk_wiz_0_0
+design_1_xadc_wiz_0_0
+
+INFO: [Project 1-230] Project 'aging-study.xpr' upgraded for this version of Vivado.
+INFO: [Project 1-5579] Found utility IPs instantiated in one or more block designs which have equivalent inline hdl with improved performance and reduced diskspace. It is recommended to migrate these utility IPs to inline hdl using the command upgrade_project -migrate_to_inline_hdl. The utility IPs may be deprecated in future releases. More information on inline hdl is available in UG994.
+update_compile_order -fileset sources_1
+report_ip_status -name ip_status 
+upgrade_ip [get_ips  {design_1_xadc_wiz_0_0 design_1_clk_wiz_0_0}] -log ip_upgrade.log
+Reading block design file </home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd>...
+Adding component instance block -- xilinx.com:ip:xadc_wiz:3.3 - xadc_wiz_0
+Adding component instance block -- xilinx.com:module_ref:BinToBCD:1.0 - BinToBCD_0
+Adding component instance block -- xilinx.com:module_ref:DisplayController:1.0 - DisplayController_0
+Adding component instance block -- xilinx.com:ip:util_vector_logic:2.0 - util_vector_logic_0
+Adding component instance block -- xilinx.com:module_ref:Dff:1.0 - Dff_0
+Adding component instance block -- xilinx.com:module_ref:temp_catcher:1.0 - temp_catcher_0
+Adding component instance block -- xilinx.com:module_ref:modern_sensible:1.0 - modern_sensible_0
+Adding component instance block -- xilinx.com:module_ref:modern_sensible:1.0 - modern_sensible_1
+Adding component instance block -- xilinx.com:module_ref:modern_sensible:1.0 - modern_sensible_2
+Adding component instance block -- xilinx.com:module_ref:modern_sensible:1.0 - modern_sensible_3
+Adding component instance block -- xilinx.com:module_ref:modern_sensible:1.0 - modern_sensible_4
+Adding component instance block -- xilinx.com:module_ref:modern_sensible:1.0 - modern_sensible_5
+Adding component instance block -- xilinx.com:ip:clk_wiz:6.0 - clk_wiz_0
+Adding component instance block -- xilinx.com:module_ref:not_series:1.0 - not_series_0
+Adding component instance block -- xilinx.com:module_ref:sensor_stream:1.0 - sensor_stream_0
+Adding component instance block -- xilinx.com:module_ref:uart_tx:1.0 - uart_tx_0
+Successfully read diagram <design_1> from block design file </home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd>
+Upgrading '/home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd'
+INFO: [Device 21-403] Loading part xc7a100tcsg324-1
+INFO: [IP_Flow 19-3422] Upgraded design_1_clk_wiz_0_0 (Clocking Wizard 6.0) from revision 14 to revision 15
+INFO: [IP_Flow 19-3422] Upgraded design_1_xadc_wiz_0_0 (XADC Wizard 3.3) from revision 10 to revision 11
+Wrote  : </home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd> 
+Wrote  : </home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/ui/bd_1f5defd0.ui> 
+INFO: [Coretcl 2-1525] Wrote upgrade log to '/home/tools/Documents/agfing/aging-study/ip_upgrade.log'.
+upgrade_ip: Time (s): cpu = 00:00:12 ; elapsed = 00:00:10 . Memory (MB): peak = 8842.281 ; gain = 16.539 ; free physical = 408 ; free virtual = 13919
+export_ip_user_files -of_objects [get_ips {design_1_xadc_wiz_0_0 design_1_clk_wiz_0_0}] -no_script -sync -force -quiet
+generate_target all [get_files  /home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd]
+INFO: [xilinx.com:ip:clk_wiz:6.0-1] /clk_wiz_0 clk_wiz propagate
+Wrote  : </home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd> 
+CRITICAL WARNING: [BD 41-2383] Width mismatch when connecting input pin '/BinToBCD_0/bin'(21) to pin '/Dff_0/ffoutput'(16) - Only lower order bits will be connected, and other input bits of this pin will be left unconnected.
+Verilog Output written to : /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/synth/design_1.v
+CRITICAL WARNING: [BD 41-2383] Width mismatch when connecting input pin '/BinToBCD_0/bin'(21) to pin '/Dff_0/ffoutput'(16) - Only lower order bits will be connected, and other input bits of this pin will be left unconnected.
+Verilog Output written to : /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/sim/design_1.v
+Verilog Output written to : /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/hdl/design_1_wrapper.v
+INFO: [BD 41-1029] Generation completed for the IP Integrator block xadc_wiz_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block BinToBCD_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block DisplayController_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block util_vector_logic_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block Dff_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block temp_catcher_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block modern_sensible_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block modern_sensible_1 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block modern_sensible_2 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block modern_sensible_3 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block modern_sensible_4 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block modern_sensible_5 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block clk_wiz_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block not_series_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block sensor_stream_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block uart_tx_0 .
+Exporting to file /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/hw_handoff/design_1.hwh
+Generated Hardware Definition File /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/synth/design_1.hwdef
+catch { config_ip_cache -export [get_ips -all design_1_xadc_wiz_0_0] }
+INFO: [IP_Flow 19-6924] IPCACHE: Running cache check for IP inst: design_1_xadc_wiz_0_0
+catch { config_ip_cache -export [get_ips -all design_1_clk_wiz_0_0] }
+INFO: [IP_Flow 19-6924] IPCACHE: Running cache check for IP inst: design_1_clk_wiz_0_0
+export_ip_user_files -of_objects [get_files /home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd] -no_script -sync -force -quiet
+create_ip_run [get_files -of_objects [get_fileset sources_1] /home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd]
+launch_runs design_1_clk_wiz_0_0_synth_1 design_1_xadc_wiz_0_0_synth_1 -jobs 12
+INFO: [IP_Flow 19-6924] IPCACHE: Running cache check for IP inst: design_1_clk_wiz_0_0
+INFO: [IP_Flow 19-6924] IPCACHE: Running cache check for IP inst: design_1_xadc_wiz_0_0
+[Wed Jan 22 14:31:18 2025] Launched design_1_clk_wiz_0_0_synth_1, design_1_xadc_wiz_0_0_synth_1...
+Run output will be captured here:
+design_1_clk_wiz_0_0_synth_1: /home/tools/Documents/agfing/aging-study/aging-study.runs/design_1_clk_wiz_0_0_synth_1/runme.log
+design_1_xadc_wiz_0_0_synth_1: /home/tools/Documents/agfing/aging-study/aging-study.runs/design_1_xadc_wiz_0_0_synth_1/runme.log
+export_simulation -lib_map_path [list {modelsim=/home/tools/Documents/agfing/aging-study/aging-study.cache/compile_simlib/modelsim} {questa=/home/tools/Documents/agfing/aging-study/aging-study.cache/compile_simlib/questa} {xcelium=/home/tools/Documents/agfing/aging-study/aging-study.cache/compile_simlib/xcelium} {vcs=/home/tools/Documents/agfing/aging-study/aging-study.cache/compile_simlib/vcs} {riviera=/home/tools/Documents/agfing/aging-study/aging-study.cache/compile_simlib/riviera}] -of_objects [get_files /home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd] -directory /home/tools/Documents/agfing/aging-study/aging-study.ip_user_files/sim_scripts -ip_user_files_dir /home/tools/Documents/agfing/aging-study/aging-study.ip_user_files -ipstatic_source_dir /home/tools/Documents/agfing/aging-study/aging-study.ip_user_files/ipstatic -use_ip_compiled_libs -force -quiet
+regenerate_bd_layout
+startgroup
+set_property CONFIG.size {13} [get_bd_cells not_series_0]
+endgroup
+save_bd_design
+Wrote  : </home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd> 
+Wrote  : </home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/ui/bd_1f5defd0.ui> 
+reset_run synth_1
+INFO: [Project 1-1161] Replacing file /home/tools/Documents/agfing/aging-study/aging-study.srcs/utils_1/imports/synth_1/BinToBCD.dcp with file /home/tools/Documents/agfing/aging-study/aging-study.runs/synth_1/design_1_wrapper.dcp
+reset_run design_1_not_series_0_0_synth_1
+launch_runs impl_1 -to_step write_bitstream -jobs 12
+INFO: [xilinx.com:ip:clk_wiz:6.0-1] /clk_wiz_0 clk_wiz propagate
+Wrote  : </home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd> 
+CRITICAL WARNING: [BD 41-2383] Width mismatch when connecting input pin '/BinToBCD_0/bin'(21) to pin '/Dff_0/ffoutput'(16) - Only lower order bits will be connected, and other input bits of this pin will be left unconnected.
+Verilog Output written to : /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/synth/design_1.v
+CRITICAL WARNING: [BD 41-2383] Width mismatch when connecting input pin '/BinToBCD_0/bin'(21) to pin '/Dff_0/ffoutput'(16) - Only lower order bits will be connected, and other input bits of this pin will be left unconnected.
+Verilog Output written to : /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/sim/design_1.v
+Verilog Output written to : /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/hdl/design_1_wrapper.v
+INFO: [BD 41-1029] Generation completed for the IP Integrator block not_series_0 .
+Exporting to file /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/hw_handoff/design_1.hwh
+Generated Hardware Definition File /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/synth/design_1.hwdef
+[Wed Jan 22 14:41:32 2025] Launched design_1_not_series_0_0_synth_1, synth_1...
+Run output will be captured here:
+design_1_not_series_0_0_synth_1: /home/tools/Documents/agfing/aging-study/aging-study.runs/design_1_not_series_0_0_synth_1/runme.log
+synth_1: /home/tools/Documents/agfing/aging-study/aging-study.runs/synth_1/runme.log
+[Wed Jan 22 14:41:32 2025] Launched impl_1...
+Run output will be captured here: /home/tools/Documents/agfing/aging-study/aging-study.runs/impl_1/runme.log
+open_run impl_1
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 9450.281 ; gain = 0.000 ; free physical = 2400 ; free virtual = 13028
+INFO: [Netlist 29-17] Analyzing 32 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2024.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+WARNING: [Constraints 18-550] Could not create 'IBUF_LOW_PWR' constraint because net 'design_1_i/clk_wiz_0/clk_in1' is not directly connected to top level port. 'IBUF_LOW_PWR' is ignored for synthesis but preserved for implementation.
+Read ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 9450.281 ; gain = 0.000 ; free physical = 2356 ; free virtual = 12984
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 9713.891 ; gain = 0.000 ; free physical = 1902 ; free virtual = 12529
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 9713.891 ; gain = 0.000 ; free physical = 1900 ; free virtual = 12527
+Read PlaceDB: Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.01 . Memory (MB): peak = 9713.891 ; gain = 0.000 ; free physical = 1900 ; free virtual = 12527
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 9713.891 ; gain = 0.000 ; free physical = 1900 ; free virtual = 12527
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 9713.891 ; gain = 0.000 ; free physical = 1900 ; free virtual = 12527
+Read Physdb Files: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.02 . Memory (MB): peak = 9713.891 ; gain = 0.000 ; free physical = 1900 ; free virtual = 12527
+Restored from archive | CPU: 0.030000 secs | Memory: 0.665306 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.02 . Memory (MB): peak = 9713.891 ; gain = 0.000 ; free physical = 1900 ; free virtual = 12527
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 9713.891 ; gain = 0.000 ; free physical = 1899 ; free virtual = 12527
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+open_run: Time (s): cpu = 00:00:12 ; elapsed = 00:00:08 . Memory (MB): peak = 9989.676 ; gain = 539.395 ; free physical = 1620 ; free virtual = 12264
+CRITICAL WARNING: [Timing 38-282] The design failed to meet the timing requirements. Please see the timing summary report for details on the timing violations.
+create_dataflow_design
+INFO: [Vivado_Tcl 4-1924] Creating dataflow design from design 'impl_1'. Use the current_design command to change the design from which dataflow design is created.
+INFO: [Implflow 47-2768] Generation of Dataflow netlist complete, took 0 seconds
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 10016.336 ; gain = 0.000 ; free physical = 927 ; free virtual = 11865
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 10048.273 ; gain = 0.000 ; free physical = 871 ; free virtual = 11820
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+current_design impl_1
+open_bd_design {/home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd}
+reset_run synth_1
+INFO: [Project 1-1161] Replacing file /home/tools/Documents/agfing/aging-study/aging-study.srcs/utils_1/imports/synth_1/BinToBCD.dcp with file /home/tools/Documents/agfing/aging-study/aging-study.runs/synth_1/design_1_wrapper.dcp
+launch_runs impl_1 -to_step write_bitstream -jobs 12
+[Wed Jan 22 14:54:41 2025] Launched synth_1...
+Run output will be captured here: /home/tools/Documents/agfing/aging-study/aging-study.runs/synth_1/runme.log
+[Wed Jan 22 14:54:41 2025] Launched impl_1...
+Run output will be captured here: /home/tools/Documents/agfing/aging-study/aging-study.runs/impl_1/runme.log
+create_ip_run [get_files -of_objects [get_fileset sources_1] /home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd]
+refresh_design
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 10168.734 ; gain = 0.000 ; free physical = 2203 ; free virtual = 10639
+INFO: [Netlist 29-17] Analyzing 32 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2024.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+WARNING: [Constraints 18-550] Could not create 'IBUF_LOW_PWR' constraint because net 'design_1_i/clk_wiz_0/clk_in1' is not directly connected to top level port. 'IBUF_LOW_PWR' is ignored for synthesis but preserved for implementation.
+Read ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 10168.734 ; gain = 0.000 ; free physical = 2205 ; free virtual = 10642
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 10168.734 ; gain = 0.000 ; free physical = 2204 ; free virtual = 10642
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 10168.734 ; gain = 0.000 ; free physical = 2204 ; free virtual = 10642
+Read PlaceDB: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 10168.734 ; gain = 0.000 ; free physical = 2204 ; free virtual = 10643
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 10168.734 ; gain = 0.000 ; free physical = 2204 ; free virtual = 10643
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 10168.734 ; gain = 0.000 ; free physical = 2204 ; free virtual = 10643
+Read Physdb Files: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.03 . Memory (MB): peak = 10168.734 ; gain = 0.000 ; free physical = 2204 ; free virtual = 10643
+Restored from archive | CPU: 0.030000 secs | Memory: 0.647346 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.03 . Memory (MB): peak = 10168.734 ; gain = 0.000 ; free physical = 2204 ; free virtual = 10643
+CRITICAL WARNING: [Timing 38-282] The design failed to meet the timing requirements. Please see the timing summary report for details on the timing violations.
+open_bd_design {/home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd}
+open_hw_manager
+connect_hw_server -allow_non_jtag
+INFO: [Labtools 27-2285] Connecting to hw_server url TCP:localhost:3121
+INFO: [Labtools 27-2222] Launching hw_server...
+INFO: [Labtools 27-2221] Launch Output:
+
+****** Xilinx hw_server v2024.2
+  **** Build date : Oct 29 2024 at 10:16:47
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+
+INFO: [Labtools 27-3415] Connecting to cs_server url TCP:localhost:0
+INFO: [Labtools 27-3417] Launching cs_server...
+INFO: [Labtools 27-2221] Launch Output:
+
+
+******** Xilinx cs_server v2024.2.0
+  ****** Build date   : Oct 30 2024-15:19:07
+    **** Build number : 2024.2.1730312347
+      ** Copyright 2017-2022 Xilinx, Inc. All Rights Reserved.
+      ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+
+
+
+open_hw_target
+INFO: [Labtoolstcl 44-466] Opening hw_target localhost:3121/xilinx_tcf/Digilent/210292A6E9A7A
+set_property PROGRAM.FILE {/home/tools/Documents/agfing/aging-study/aging-study.runs/impl_1/design_1_wrapper.bit} [get_hw_devices xc7a100t_0]
+current_hw_device [get_hw_devices xc7a100t_0]
+refresh_hw_device -update_hw_probes false [lindex [get_hw_devices xc7a100t_0] 0]
+INFO: [Labtools 27-1434] Device xc7a100t (JTAG device index = 0) is programmed with a design that has no supported debug core(s) in it.
+set_property PROBES.FILE {} [get_hw_devices xc7a100t_0]
+set_property FULL_PROBES.FILE {} [get_hw_devices xc7a100t_0]
+set_property PROGRAM.FILE {/home/tools/Documents/agfing/aging-study/aging-study.runs/impl_1/design_1_wrapper.bit} [get_hw_devices xc7a100t_0]
+program_hw_devices [get_hw_devices xc7a100t_0]
+INFO: [Labtools 27-3164] End of startup status: HIGH
+refresh_hw_device [lindex [get_hw_devices xc7a100t_0] 0]
+INFO: [Labtools 27-1434] Device xc7a100t (JTAG device index = 0) is programmed with a design that has no supported debug core(s) in it.
+close_design
+open_run synth_1 -name synth_1
+Design is defaulting to impl run constrset: constrs_1
+Design is defaulting to synth run part: xc7a100tcsg324-1
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_BinToBCD_0_0/design_1_BinToBCD_0_0.dcp' for cell 'design_1_i/BinToBCD_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_Dff_0_0/design_1_Dff_0_0.dcp' for cell 'design_1_i/Dff_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_DisplayController_0_0/design_1_DisplayController_0_0.dcp' for cell 'design_1_i/DisplayController_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0.dcp' for cell 'design_1_i/clk_wiz_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_modern_sensible_0_0/design_1_modern_sensible_0_0.dcp' for cell 'design_1_i/modern_sensible_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_modern_sensible_1_0/design_1_modern_sensible_1_0.dcp' for cell 'design_1_i/modern_sensible_1'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_modern_sensible_2_0/design_1_modern_sensible_2_0.dcp' for cell 'design_1_i/modern_sensible_2'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_modern_sensible_3_0/design_1_modern_sensible_3_0.dcp' for cell 'design_1_i/modern_sensible_3'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_modern_sensible_4_0/design_1_modern_sensible_4_0.dcp' for cell 'design_1_i/modern_sensible_4'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_modern_sensible_5_0/design_1_modern_sensible_5_0.dcp' for cell 'design_1_i/modern_sensible_5'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_not_series_0_0/design_1_not_series_0_0.dcp' for cell 'design_1_i/not_series_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_sensor_stream_0_0/design_1_sensor_stream_0_0.dcp' for cell 'design_1_i/sensor_stream_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_temp_catcher_0_0/design_1_temp_catcher_0_0.dcp' for cell 'design_1_i/temp_catcher_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_uart_tx_0_0/design_1_uart_tx_0_0.dcp' for cell 'design_1_i/uart_tx_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_util_vector_logic_0_0/design_1_util_vector_logic_0_0.dcp' for cell 'design_1_i/util_vector_logic_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_xadc_wiz_0_0/design_1_xadc_wiz_0_0.dcp' for cell 'design_1_i/xadc_wiz_0'
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 10281.637 ; gain = 0.000 ; free physical = 1187 ; free virtual = 10441
+INFO: [Netlist 29-17] Analyzing 32 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2024.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-140] Inserted 1 IBUFs to IO ports without IO buffers.
+WARNING: [Opt 31-35] Removing redundant IBUF, design_1_i/clk_wiz_0/inst/clkin1_ibufg, from the path connected to top-level port: CLK100MHZ 
+Resolution: The tool has removed redundant IBUF. To resolve this warning, check for redundant IBUF in the input design.
+WARNING: [Constraints 18-550] Could not create 'IBUF_LOW_PWR' constraint because net 'design_1_i/clk_wiz_0/clk_in1' is not directly connected to top level port. 'IBUF_LOW_PWR' is ignored for synthesis but preserved for implementation.
+Parsing XDC File [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_xadc_wiz_0_0/design_1_xadc_wiz_0_0.xdc] for cell 'design_1_i/xadc_wiz_0/inst'
+Finished Parsing XDC File [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_xadc_wiz_0_0/design_1_xadc_wiz_0_0.xdc] for cell 'design_1_i/xadc_wiz_0/inst'
+Parsing XDC File [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0_board.xdc] for cell 'design_1_i/clk_wiz_0/inst'
+Finished Parsing XDC File [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0_board.xdc] for cell 'design_1_i/clk_wiz_0/inst'
+Parsing XDC File [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0.xdc] for cell 'design_1_i/clk_wiz_0/inst'
+INFO: [Timing 38-35] Done setting XDC timing constraints. [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0.xdc:54]
+INFO: [Timing 38-2] Deriving generated clocks [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0.xdc:54]
+CRITICAL WARNING: [Common 17-697] get_clocks: option '-of_objects' requires explicit objects, e.g. -of_objects [get_cells lut2], implicit search for '-of_objects' using name or pattern is not supported. [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0.xdc:54]
+Finished Parsing XDC File [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0.xdc] for cell 'design_1_i/clk_wiz_0/inst'
+Parsing XDC File [/home/tools/Documents/agfing/aging-study/aging-study.srcs/constrs_1/imports/digilent-xdc/Nexys-4-DDR-Master.xdc]
+Finished Parsing XDC File [/home/tools/Documents/agfing/aging-study/aging-study.srcs/constrs_1/imports/digilent-xdc/Nexys-4-DDR-Master.xdc]
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 10321.188 ; gain = 0.000 ; free physical = 1171 ; free virtual = 10434
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 10 -input_pins -routable_nets -name timing_1
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 8 CPUs
+open_bd_design {/home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd}
+report_ip_status -name ip_status 
+open_bd_design {/home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd}
+startgroup
+set_property -dict [list \
+  CONFIG.CLKOUT1_DRIVES {BUFGCE} \
+  CONFIG.CLKOUT2_DRIVES {BUFGCE} \
+  CONFIG.CLKOUT3_DRIVES {BUFGCE} \
+  CONFIG.CLKOUT4_DRIVES {BUFGCE} \
+  CONFIG.CLKOUT5_DRIVES {BUFGCE} \
+  CONFIG.CLKOUT6_DRIVES {BUFGCE} \
+  CONFIG.CLKOUT7_DRIVES {BUFGCE} \
+  CONFIG.FEEDBACK_SOURCE {FDBK_AUTO} \
+  CONFIG.USE_FREQ_SYNTH {false} \
+  CONFIG.USE_SAFE_CLOCK_STARTUP {true} \
+] [get_bd_cells clk_wiz_0]
+endgroup
+save_bd_design
+Wrote  : </home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd> 
+Wrote  : </home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/ui/bd_1f5defd0.ui> 
+reset_run synth_1
+INFO: [Project 1-1161] Replacing file /home/tools/Documents/agfing/aging-study/aging-study.srcs/utils_1/imports/synth_1/BinToBCD.dcp with file /home/tools/Documents/agfing/aging-study/aging-study.runs/synth_1/design_1_wrapper.dcp
+reset_run design_1_clk_wiz_0_0_synth_1
+launch_runs impl_1 -to_step write_bitstream -jobs 12
+INFO: [xilinx.com:ip:clk_wiz:6.0-1] /clk_wiz_0 clk_wiz propagate
+Wrote  : </home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd> 
+CRITICAL WARNING: [BD 41-2383] Width mismatch when connecting input pin '/BinToBCD_0/bin'(21) to pin '/Dff_0/ffoutput'(16) - Only lower order bits will be connected, and other input bits of this pin will be left unconnected.
+Verilog Output written to : /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/synth/design_1.v
+CRITICAL WARNING: [BD 41-2383] Width mismatch when connecting input pin '/BinToBCD_0/bin'(21) to pin '/Dff_0/ffoutput'(16) - Only lower order bits will be connected, and other input bits of this pin will be left unconnected.
+Verilog Output written to : /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/sim/design_1.v
+Verilog Output written to : /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/hdl/design_1_wrapper.v
+INFO: [BD 41-1029] Generation completed for the IP Integrator block clk_wiz_0 .
+Exporting to file /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/hw_handoff/design_1.hwh
+Generated Hardware Definition File /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/synth/design_1.hwdef
+INFO: [IP_Flow 19-6924] IPCACHE: Running cache check for IP inst: design_1_clk_wiz_0_0
+WARNING: [Project 1-478] Design 'synth_1' is stale and will not be used when launching 'impl_1'
+[Wed Jan 22 16:00:27 2025] Launched design_1_clk_wiz_0_0_synth_1, synth_1...
+Run output will be captured here:
+design_1_clk_wiz_0_0_synth_1: /home/tools/Documents/agfing/aging-study/aging-study.runs/design_1_clk_wiz_0_0_synth_1/runme.log
+synth_1: /home/tools/Documents/agfing/aging-study/aging-study.runs/synth_1/runme.log
+[Wed Jan 22 16:00:27 2025] Launched impl_1...
+Run output will be captured here: /home/tools/Documents/agfing/aging-study/aging-study.runs/impl_1/runme.log
+open_run impl_1
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2385 ; free virtual = 9889
+INFO: [Netlist 29-17] Analyzing 32 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2024.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+WARNING: [Constraints 18-550] Could not create 'IBUF_LOW_PWR' constraint because net 'design_1_i/clk_wiz_0/clk_in1' is not directly connected to top level port. 'IBUF_LOW_PWR' is ignored for synthesis but preserved for implementation.
+Read ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2344 ; free virtual = 9849
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2296 ; free virtual = 9801
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2295 ; free virtual = 9800
+Read PlaceDB: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.03 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2295 ; free virtual = 9800
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2295 ; free virtual = 9800
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2295 ; free virtual = 9800
+Read Physdb Files: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.04 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2295 ; free virtual = 9800
+Restored from archive | CPU: 0.030000 secs | Memory: 0.720520 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.04 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2295 ; free virtual = 9800
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2295 ; free virtual = 9800
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+CRITICAL WARNING: [Timing 38-282] The design failed to meet the timing requirements. Please see the timing summary report for details on the timing violations.
+copy_run -name synth_1_copy_1 [get_runs synth_1] 
+synth_1_copy_1
+set_property STEPS.SYNTH_DESIGN.ARGS.BUFG 16 [get_runs synth_1]
+set_property STEPS.SYNTH_DESIGN.ARGS.KEEP_EQUIVALENT_REGISTERS true [get_runs synth_1]
+set_property STEPS.SYNTH_DESIGN.ARGS.NO_LC true [get_runs synth_1]
+set_property STEPS.SYNTH_DESIGN.ARGS.NO_SRLEXTRACT true [get_runs synth_1]
+set_property STEPS.OPT_DESIGN.ARGS.VERBOSE true [get_runs impl_1]
+set_property STEPS.POWER_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]
+set_property STEPS.POST_PLACE_POWER_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]
+set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]
+set_property STEPS.WRITE_BITSTREAM.ARGS.BIN_FILE true [get_runs impl_1]
+reset_run synth_1
+INFO: [Project 1-1161] Replacing file /home/tools/Documents/agfing/aging-study/aging-study.srcs/utils_1/imports/synth_1/BinToBCD.dcp with file /home/tools/Documents/agfing/aging-study/aging-study.runs/synth_1/design_1_wrapper.dcp
+launch_runs impl_1 -to_step write_bitstream -jobs 12
+WARNING: [Project 1-478] Design 'synth_1' is stale and will not be used when launching 'impl_1'
+[Wed Jan 22 16:20:14 2025] Launched synth_1...
+Run output will be captured here: /home/tools/Documents/agfing/aging-study/aging-study.runs/synth_1/runme.log
+[Wed Jan 22 16:20:14 2025] Launched impl_1...
+Run output will be captured here: /home/tools/Documents/agfing/aging-study/aging-study.runs/impl_1/runme.log
+create_ip_run [get_files -of_objects [get_fileset sources_1] /home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd]
+refresh_design
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2449 ; free virtual = 9071
+INFO: [Netlist 29-17] Analyzing 32 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2024.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+WARNING: [Constraints 18-550] Could not create 'IBUF_LOW_PWR' constraint because net 'design_1_i/clk_wiz_0/clk_in1' is not directly connected to top level port. 'IBUF_LOW_PWR' is ignored for synthesis but preserved for implementation.
+Read ShapeDB Complete: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2410 ; free virtual = 9033
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2410 ; free virtual = 9033
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2410 ; free virtual = 9033
+Read PlaceDB: Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2409 ; free virtual = 9032
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2409 ; free virtual = 9032
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2409 ; free virtual = 9033
+Read Physdb Files: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.04 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2409 ; free virtual = 9033
+Restored from archive | CPU: 0.040000 secs | Memory: 0.785233 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.04 . Memory (MB): peak = 10816.977 ; gain = 0.000 ; free physical = 2409 ; free virtual = 9033
+CRITICAL WARNING: [Timing 38-282] The design failed to meet the timing requirements. Please see the timing summary report for details on the timing violations.
+open_bd_design {/home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd}
+report_ip_status -name ip_status 
+startgroup
+set_property -dict [list CONFIG.PRIM_IN_FREQ.VALUE_SRC PROPAGATED] [get_bd_cells clk_wiz_0]
+set_property CONFIG.USE_LOCKED {true} [get_bd_cells clk_wiz_0]
+endgroup
+delete_bd_objs [get_bd_ports CLK100MHZ]
+create_bd_port -dir I -type clk -freq_hz 100000000 CLK100MHZ
+startgroup
+apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config { Clk {/clk_wiz_0/clk_en (100 MHz)} Freq {100} Ref_Clk0 {} Ref_Clk1 {} Ref_Clk2 {}}  [get_bd_pins BinToBCD_0/clk]
+INFO: [BD 5-455] Automation on '/Dff_0/clk' will not be run, since it is obsolete due to previously run automations
+INFO: [BD 5-455] Automation on '/DisplayController_0/clk' will not be run, since it is obsolete due to previously run automations
+INFO: [BD 5-455] Automation on '/not_series_0/clk' will not be run, since it is obsolete due to previously run automations
+INFO: [BD 5-455] Automation on '/sensor_stream_0/clk' will not be run, since it is obsolete due to previously run automations
+INFO: [BD 5-455] Automation on '/temp_catcher_0/clk' will not be run, since it is obsolete due to previously run automations
+INFO: [BD 5-455] Automation on '/uart_tx_0/clk' will not be run, since it is obsolete due to previously run automations
+INFO: [BD 5-455] Automation on '/xadc_wiz_0/dclk_in' will not be run, since it is obsolete due to previously run automations
+endgroup
+regenerate_bd_layout
+delete_bd_objs [get_bd_nets clk_wiz_0_clk_en]
+connect_bd_net [get_bd_ports CLK100MHZ] [get_bd_pins DisplayController_0/clk]
+connect_bd_net [get_bd_ports CLK100MHZ] [get_bd_pins modern_sensible_0/sclk]
+connect_bd_net [get_bd_ports CLK100MHZ] [get_bd_pins modern_sensible_1/sclk]
+connect_bd_net [get_bd_ports CLK100MHZ] [get_bd_pins modern_sensible_4/sclk]
+set_property location {28 302} [get_bd_ports CLK100MHZ]
+connect_bd_net [get_bd_ports CLK100MHZ] [get_bd_pins modern_sensible_2/sclk]
+connect_bd_net [get_bd_ports CLK100MHZ] [get_bd_pins modern_sensible_5/sclk]
+connect_bd_net [get_bd_ports CLK100MHZ] [get_bd_pins not_series_0/clk]
+connect_bd_net [get_bd_ports CLK100MHZ] [get_bd_pins sensor_stream_0/clk]
+connect_bd_net [get_bd_ports CLK100MHZ] [get_bd_pins xadc_wiz_0/dclk_in]
+connect_bd_net [get_bd_ports CLK100MHZ] [get_bd_pins Dff_0/clk]
+connect_bd_net [get_bd_ports CLK100MHZ] [get_bd_pins temp_catcher_0/clk]
+connect_bd_net [get_bd_ports CLK100MHZ] [get_bd_pins clk_wiz_0/clk_in1]
+set_property location {-15 522} [get_bd_ports CLK100MHZ]
+connect_bd_net [get_bd_ports CLK100MHZ] [get_bd_pins modern_sensible_3/sclk]
+connect_bd_net [get_bd_ports CLK100MHZ] [get_bd_pins uart_tx_0/clk]
+connect_bd_net [get_bd_pins clk_wiz_0/clk_en] [get_bd_pins modern_sensible_2/clk_en]
+connect_bd_net [get_bd_pins clk_wiz_0/clk_en] [get_bd_pins modern_sensible_5/clk_en]
+connect_bd_net [get_bd_pins clk_wiz_0/clk_en] [get_bd_pins modern_sensible_4/clk_en]
+connect_bd_net [get_bd_pins clk_wiz_0/clk_en] [get_bd_pins modern_sensible_1/clk_en]
+connect_bd_net [get_bd_pins clk_wiz_0/clk_en] [get_bd_pins modern_sensible_0/clk_en]
+connect_bd_net [get_bd_ports CLK100MHZ] [get_bd_pins BinToBCD_0/clk]
+validate_bd_design
+INFO: [xilinx.com:ip:clk_wiz:6.0-1] /clk_wiz_0 clk_wiz propagate
+CRITICAL WARNING: [BD 41-759] The input pins (listed below) are either not connected or do not have a source port, and they don't have a tie-off specified. These pins are tied-off to all 0's to avoid error in Implementation flow.
+Please check your design and connect them as needed: 
+/modern_sensible_3/clk_en
+
+connect_bd_net [get_bd_pins clk_wiz_0/clk_en] [get_bd_pins modern_sensible_3/clk_en]
+save_bd_design
+Wrote  : </home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd> 
+Wrote  : </home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/ui/bd_1f5defd0.ui> 
+make_wrapper -files [get_files /home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd] -top
+INFO: [xilinx.com:ip:clk_wiz:6.0-1] /clk_wiz_0 clk_wiz propagate
+Wrote  : </home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd> 
+CRITICAL WARNING: [BD 41-2383] Width mismatch when connecting input pin '/BinToBCD_0/bin'(21) to pin '/Dff_0/ffoutput'(16) - Only lower order bits will be connected, and other input bits of this pin will be left unconnected.
+Verilog Output written to : /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/synth/design_1.v
+CRITICAL WARNING: [BD 41-2383] Width mismatch when connecting input pin '/BinToBCD_0/bin'(21) to pin '/Dff_0/ffoutput'(16) - Only lower order bits will be connected, and other input bits of this pin will be left unconnected.
+Verilog Output written to : /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/sim/design_1.v
+Verilog Output written to : /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/hdl/design_1_wrapper.v
+reset_run synth_1
+INFO: [Project 1-1161] Replacing file /home/tools/Documents/agfing/aging-study/aging-study.srcs/utils_1/imports/synth_1/BinToBCD.dcp with file /home/tools/Documents/agfing/aging-study/aging-study.runs/synth_1/design_1_wrapper.dcp
+reset_run design_1_clk_wiz_0_0_synth_1
+launch_runs impl_1 -to_step write_bitstream -jobs 12
+INFO: [BD 41-1662] The design 'design_1.bd' is already validated. Therefore parameter propagation will not be re-run.
+CRITICAL WARNING: [BD 41-2383] Width mismatch when connecting input pin '/BinToBCD_0/bin'(21) to pin '/Dff_0/ffoutput'(16) - Only lower order bits will be connected, and other input bits of this pin will be left unconnected.
+Verilog Output written to : /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/synth/design_1.v
+CRITICAL WARNING: [BD 41-2383] Width mismatch when connecting input pin '/BinToBCD_0/bin'(21) to pin '/Dff_0/ffoutput'(16) - Only lower order bits will be connected, and other input bits of this pin will be left unconnected.
+Verilog Output written to : /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/sim/design_1.v
+Verilog Output written to : /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/hdl/design_1_wrapper.v
+INFO: [BD 41-1029] Generation completed for the IP Integrator block clk_wiz_0 .
+Exporting to file /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/hw_handoff/design_1.hwh
+Generated Hardware Definition File /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/synth/design_1.hwdef
+INFO: [IP_Flow 19-6924] IPCACHE: Running cache check for IP inst: design_1_clk_wiz_0_0
+WARNING: [Project 1-478] Design 'synth_1' is stale and will not be used when launching 'impl_1'
+[Wed Jan 22 17:33:19 2025] Launched design_1_clk_wiz_0_0_synth_1, synth_1...
+Run output will be captured here:
+design_1_clk_wiz_0_0_synth_1: /home/tools/Documents/agfing/aging-study/aging-study.runs/design_1_clk_wiz_0_0_synth_1/runme.log
+synth_1: /home/tools/Documents/agfing/aging-study/aging-study.runs/synth_1/runme.log
+[Wed Jan 22 17:33:19 2025] Launched impl_1...
+Run output will be captured here: /home/tools/Documents/agfing/aging-study/aging-study.runs/impl_1/runme.log
+launch_runs: Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 11135.602 ; gain = 0.000 ; free physical = 739 ; free virtual = 7840
+regenerate_bd_layout
+WARNING: [filemgmt 56-199] Attempt to get parsing info during refresh. "On-the-fly" syntax checking information may be incorrect. [/home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/imports/Projects/uart_test/uart_test.srcs/sources_1/new/uart_tx.v:]
+WARNING: [filemgmt 56-199] Attempt to get parsing info during refresh. "On-the-fly" syntax checking information may be incorrect. [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/synth/design_1.v:]
+WARNING: [filemgmt 56-199] Attempt to get parsing info during refresh. "On-the-fly" syntax checking information may be incorrect. [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/synth/design_1.v:]
+WARNING: [filemgmt 56-199] Attempt to get parsing info during refresh. "On-the-fly" syntax checking information may be incorrect. [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/synth/design_1.v:]
+set_property PROBES.FILE {} [get_hw_devices xc7a100t_0]
+set_property FULL_PROBES.FILE {} [get_hw_devices xc7a100t_0]
+set_property PROGRAM.FILE {/home/tools/Documents/agfing/aging-study/aging-study.runs/impl_1/design_1_wrapper.bit} [get_hw_devices xc7a100t_0]
+program_hw_devices [get_hw_devices xc7a100t_0]
+INFO: [Labtools 27-3164] End of startup status: HIGH
+refresh_hw_device [lindex [get_hw_devices xc7a100t_0] 0]
+INFO: [Labtools 27-1434] Device xc7a100t (JTAG device index = 0) is programmed with a design that has no supported debug core(s) in it.
+current_design synth_1
+create_ip_run [get_files -of_objects [get_fileset sources_1] /home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd]
+refresh_design
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_BinToBCD_0_0/design_1_BinToBCD_0_0.dcp' for cell 'design_1_i/BinToBCD_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_Dff_0_0/design_1_Dff_0_0.dcp' for cell 'design_1_i/Dff_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_DisplayController_0_0/design_1_DisplayController_0_0.dcp' for cell 'design_1_i/DisplayController_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0.dcp' for cell 'design_1_i/clk_wiz_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_modern_sensible_0_0/design_1_modern_sensible_0_0.dcp' for cell 'design_1_i/modern_sensible_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_modern_sensible_1_0/design_1_modern_sensible_1_0.dcp' for cell 'design_1_i/modern_sensible_1'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_modern_sensible_2_0/design_1_modern_sensible_2_0.dcp' for cell 'design_1_i/modern_sensible_2'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_modern_sensible_3_0/design_1_modern_sensible_3_0.dcp' for cell 'design_1_i/modern_sensible_3'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_modern_sensible_4_0/design_1_modern_sensible_4_0.dcp' for cell 'design_1_i/modern_sensible_4'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_modern_sensible_5_0/design_1_modern_sensible_5_0.dcp' for cell 'design_1_i/modern_sensible_5'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_not_series_0_0/design_1_not_series_0_0.dcp' for cell 'design_1_i/not_series_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_sensor_stream_0_0/design_1_sensor_stream_0_0.dcp' for cell 'design_1_i/sensor_stream_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_temp_catcher_0_0/design_1_temp_catcher_0_0.dcp' for cell 'design_1_i/temp_catcher_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_uart_tx_0_0/design_1_uart_tx_0_0.dcp' for cell 'design_1_i/uart_tx_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_util_vector_logic_0_0/design_1_util_vector_logic_0_0.dcp' for cell 'design_1_i/util_vector_logic_0'
+INFO: [Project 1-454] Reading design checkpoint '/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_xadc_wiz_0_0/design_1_xadc_wiz_0_0.dcp' for cell 'design_1_i/xadc_wiz_0'
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 11135.602 ; gain = 0.000 ; free physical = 2224 ; free virtual = 8158
+INFO: [Netlist 29-17] Analyzing 32 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2024.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-140] Inserted 1 IBUFs to IO ports without IO buffers.
+WARNING: [Opt 31-35] Removing redundant IBUF, design_1_i/clk_wiz_0/inst/clkin1_ibufg, from the path connected to top-level port: CLK100MHZ 
+Resolution: The tool has removed redundant IBUF. To resolve this warning, check for redundant IBUF in the input design.
+WARNING: [Constraints 18-550] Could not create 'IBUF_LOW_PWR' constraint because net 'design_1_i/clk_wiz_0/clk_in1' is not directly connected to top level port. 'IBUF_LOW_PWR' is ignored for synthesis but preserved for implementation.
+Parsing XDC File [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_xadc_wiz_0_0/design_1_xadc_wiz_0_0.xdc] for cell 'design_1_i/xadc_wiz_0/inst'
+Finished Parsing XDC File [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_xadc_wiz_0_0/design_1_xadc_wiz_0_0.xdc] for cell 'design_1_i/xadc_wiz_0/inst'
+Parsing XDC File [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0_board.xdc] for cell 'design_1_i/clk_wiz_0/inst'
+Finished Parsing XDC File [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0_board.xdc] for cell 'design_1_i/clk_wiz_0/inst'
+Parsing XDC File [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0.xdc] for cell 'design_1_i/clk_wiz_0/inst'
+INFO: [Timing 38-35] Done setting XDC timing constraints. [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0.xdc:54]
+INFO: [Timing 38-2] Deriving generated clocks [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0.xdc:54]
+CRITICAL WARNING: [Common 17-697] get_clocks: option '-of_objects' requires explicit objects, e.g. -of_objects [get_cells lut2], implicit search for '-of_objects' using name or pattern is not supported. [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0.xdc:54]
+Finished Parsing XDC File [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0.xdc] for cell 'design_1_i/clk_wiz_0/inst'
+Parsing XDC File [/home/tools/Documents/agfing/aging-study/aging-study.srcs/constrs_1/imports/digilent-xdc/Nexys-4-DDR-Master.xdc]
+Finished Parsing XDC File [/home/tools/Documents/agfing/aging-study/aging-study.srcs/constrs_1/imports/digilent-xdc/Nexys-4-DDR-Master.xdc]
+Parsing XDC File [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0_late.xdc] for cell 'design_1_i/clk_wiz_0/inst'
+Finished Parsing XDC File [/home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0_late.xdc] for cell 'design_1_i/clk_wiz_0/inst'
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+current_design impl_1
+create_ip_run [get_files -of_objects [get_fileset sources_1] /home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd]
+refresh_design
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 11135.602 ; gain = 0.000 ; free physical = 2276 ; free virtual = 8212
+INFO: [Netlist 29-17] Analyzing 32 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2024.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+WARNING: [Constraints 18-550] Could not create 'IBUF_LOW_PWR' constraint because net 'design_1_i/clk_wiz_0/clk_in1' is not directly connected to top level port. 'IBUF_LOW_PWR' is ignored for synthesis but preserved for implementation.
+Read ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 11135.602 ; gain = 0.000 ; free physical = 2258 ; free virtual = 8200
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 11135.602 ; gain = 0.000 ; free physical = 2240 ; free virtual = 8181
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 11135.602 ; gain = 0.000 ; free physical = 2240 ; free virtual = 8181
+Read PlaceDB: Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 11135.602 ; gain = 0.000 ; free physical = 2240 ; free virtual = 8181
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 11135.602 ; gain = 0.000 ; free physical = 2240 ; free virtual = 8181
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.02 . Memory (MB): peak = 11135.602 ; gain = 0.000 ; free physical = 2240 ; free virtual = 8181
+Read Physdb Files: Time (s): cpu = 00:00:00.04 ; elapsed = 00:00:00.04 . Memory (MB): peak = 11135.602 ; gain = 0.000 ; free physical = 2240 ; free virtual = 8181
+Restored from archive | CPU: 0.050000 secs | Memory: 0.785233 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.04 ; elapsed = 00:00:00.04 . Memory (MB): peak = 11135.602 ; gain = 0.000 ; free physical = 2240 ; free virtual = 8181
+CRITICAL WARNING: [Timing 38-282] The design failed to meet the timing requirements. Please see the timing summary report for details on the timing violations.
+set_property PROBES.FILE {} [get_hw_devices xc7a100t_0]
+set_property FULL_PROBES.FILE {} [get_hw_devices xc7a100t_0]
+set_property PROGRAM.FILE {/home/tools/Documents/agfing/aging-study/aging-study.runs/impl_1/design_1_wrapper.bit} [get_hw_devices xc7a100t_0]
+program_hw_devices [get_hw_devices xc7a100t_0]
+INFO: [Labtools 27-3164] End of startup status: HIGH
+refresh_hw_device [lindex [get_hw_devices xc7a100t_0] 0]
+INFO: [Labtools 27-1434] Device xc7a100t (JTAG device index = 0) is programmed with a design that has no supported debug core(s) in it.
+set_property PROBES.FILE {} [get_hw_devices xc7a100t_0]
+set_property FULL_PROBES.FILE {} [get_hw_devices xc7a100t_0]
+set_property PROGRAM.FILE {/home/tools/Documents/agfing/aging-study/aging-study.runs/impl_1/design_1_wrapper.bit} [get_hw_devices xc7a100t_0]
+program_hw_devices [get_hw_devices xc7a100t_0]
+INFO: [Labtools 27-3164] End of startup status: HIGH
+refresh_hw_device [lindex [get_hw_devices xc7a100t_0] 0]
+INFO: [Labtools 27-1434] Device xc7a100t (JTAG device index = 0) is programmed with a design that has no supported debug core(s) in it.
+open_bd_design {/home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd}
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 10 -input_pins -routable_nets -name timing_1
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 8 CPUs
+open_bd_design {/home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd}
+open_bd_design {/home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd}
+startgroup
+set_property -dict [list \
+  CONFIG.CLK_IN1_BOARD_INTERFACE {sys_clock} \
+  CONFIG.CLK_IN2_BOARD_INTERFACE {Custom} \
+  CONFIG.RESET_BOARD_INTERFACE {Custom} \
+] [get_bd_cells clk_wiz_0]
+endgroup
+save_bd_design
+Wrote  : </home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd> 
+Wrote  : </home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/ui/bd_1f5defd0.ui> 
+reset_run synth_1
+INFO: [Project 1-1161] Replacing file /home/tools/Documents/agfing/aging-study/aging-study.srcs/utils_1/imports/synth_1/BinToBCD.dcp with file /home/tools/Documents/agfing/aging-study/aging-study.runs/synth_1/design_1_wrapper.dcp
+reset_run design_1_clk_wiz_0_0_synth_1
+launch_runs impl_1 -to_step write_bitstream -jobs 12
+INFO: [xilinx.com:ip:clk_wiz:6.0-1] /clk_wiz_0 clk_wiz propagate
+Wrote  : </home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd> 
+CRITICAL WARNING: [BD 41-2383] Width mismatch when connecting input pin '/BinToBCD_0/bin'(21) to pin '/Dff_0/ffoutput'(16) - Only lower order bits will be connected, and other input bits of this pin will be left unconnected.
+Verilog Output written to : /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/synth/design_1.v
+CRITICAL WARNING: [BD 41-2383] Width mismatch when connecting input pin '/BinToBCD_0/bin'(21) to pin '/Dff_0/ffoutput'(16) - Only lower order bits will be connected, and other input bits of this pin will be left unconnected.
+Verilog Output written to : /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/sim/design_1.v
+Verilog Output written to : /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/hdl/design_1_wrapper.v
+INFO: [BD 41-1029] Generation completed for the IP Integrator block clk_wiz_0 .
+Exporting to file /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/hw_handoff/design_1.hwh
+Generated Hardware Definition File /home/tools/Documents/agfing/aging-study/aging-study.gen/sources_1/bd/design_1/synth/design_1.hwdef
+INFO: [IP_Flow 19-6924] IPCACHE: Running cache check for IP inst: design_1_clk_wiz_0_0
+WARNING: [Project 1-478] Design 'synth_1' is stale and will not be used when launching 'impl_1'
+[Wed Jan 22 18:42:01 2025] Launched design_1_clk_wiz_0_0_synth_1, synth_1...
+Run output will be captured here:
+design_1_clk_wiz_0_0_synth_1: /home/tools/Documents/agfing/aging-study/aging-study.runs/design_1_clk_wiz_0_0_synth_1/runme.log
+synth_1: /home/tools/Documents/agfing/aging-study/aging-study.runs/synth_1/runme.log
+[Wed Jan 22 18:42:01 2025] Launched impl_1...
+Run output will be captured here: /home/tools/Documents/agfing/aging-study/aging-study.runs/impl_1/runme.log
+create_ip_run [get_files -of_objects [get_fileset sources_1] /home/tools/Documents/agfing/aging-study/aging-study.srcs/sources_1/bd/design_1/design_1.bd]
+refresh_design
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 11204.781 ; gain = 0.000 ; free physical = 2290 ; free virtual = 7639
+INFO: [Netlist 29-17] Analyzing 32 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2024.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+WARNING: [Constraints 18-550] Could not create 'IBUF_LOW_PWR' constraint because net 'design_1_i/clk_wiz_0/clk_in1' is not directly connected to top level port. 'IBUF_LOW_PWR' is ignored for synthesis but preserved for implementation.
+Read ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 11204.781 ; gain = 0.000 ; free physical = 2292 ; free virtual = 7641
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 11204.781 ; gain = 0.000 ; free physical = 2292 ; free virtual = 7641
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 11204.781 ; gain = 0.000 ; free physical = 2292 ; free virtual = 7641
+Read PlaceDB: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 11204.781 ; gain = 0.000 ; free physical = 2292 ; free virtual = 7641
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 11204.781 ; gain = 0.000 ; free physical = 2292 ; free virtual = 7641
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 11204.781 ; gain = 0.000 ; free physical = 2292 ; free virtual = 7641
+Read Physdb Files: Time (s): cpu = 00:00:00.04 ; elapsed = 00:00:00.03 . Memory (MB): peak = 11204.781 ; gain = 0.000 ; free physical = 2292 ; free virtual = 7641
+Restored from archive | CPU: 0.040000 secs | Memory: 0.785004 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.04 ; elapsed = 00:00:00.03 . Memory (MB): peak = 11204.781 ; gain = 0.000 ; free physical = 2292 ; free virtual = 7641
+CRITICAL WARNING: [Timing 38-282] The design failed to meet the timing requirements. Please see the timing summary report for details on the timing violations.
+report_timing -from [get_clocks CLK100MHZ] -to [get_clocks CLK100MHZ] -delay_type min_max -max_paths 10 -sort_by group -input_pins -routable_nets -name timing_1
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 8 CPUs
+INFO: [Timing 38-78] ReportTimingParams: -from_pins  -to_pins  -max_paths 10 -nworst 1 -delay_type min_max -sort_by group.
+report_timing -from [::get_clocks_ren CLK100MHZ] -to [::get_clocks_ren CLK100MHZ] -delay_type min_max -max_paths 10 -sort_by group -input_pins -routable_nets -name timing_1
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 8 CPUs
+INFO: [Timing 38-78] ReportTimingParams: -from_pins  -to_pins  -max_paths 10 -nworst 1 -delay_type min_max -sort_by group.
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 20 -input_pins -routable_nets -name timing_1
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 8 CPUs
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 1000 -nworst 7 -input_pins -routable_nets -unique_pins -datasheet -name timing_2
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 8 CPUs
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 10000 -nworst 7 -input_pins -routable_nets -unique_pins -datasheet -name timing_3
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 8 CPUs
+WARNING: [Vivado 12-180] No cells matched 'get_cells -hierarchical -filter { PARENT =~  "*design_1_i/modern_sensible_4/inst/FF1*" && IS_BLACKBOX == "TRUE" }'.
+WARNING: [Vivado 12-180] No cells matched 'get_cells -hierarchical -filter { PARENT =~  "*design_1_i/modern_sensible_4/inst/FF1*" && IS_BLACKBOX == "TRUE" }'.
+WARNING: [Vivado 12-180] No cells matched 'get_cells -hierarchical -regexp -filter { PARENT =~  ".*design_1_i/modern_sensible_4/inst/FF1.*" && IS_BLACKBOX == "TRUE" }'.
+WARNING: [Vivado 12-180] No cells matched 'get_cells -hierarchical -filter { PARENT =~  "*design_1_i/modern_sensible_4/inst/FF1*" && IS_BLACKBOX == "TRUE" }'.
+WARNING: [Vivado 12-180] No cells matched 'get_cells -hierarchical -filter { PARENT =~  "*design_1_i/modern_sensible_4/inst/FF1*" }'.
+WARNING: [Vivado 12-180] No cells matched 'get_cells -hierarchical -filter { PARENT =~  "*design_1_i/modern_sensible_4/inst/FF1*" }'.
+WARNING: [Vivado 12-180] No cells matched 'get_cells -hierarchical -filter { PARENT =~  "*design_1_i/modern_sensible_4/inst/FF1*" }'.
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 10000 -nworst 7 -input_pins -routable_nets -unique_pins -datasheet -name timing_4
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 8 CPUs
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 276447232 -nworst 7 -input_pins -routable_nets -unique_pins -datasheet -name timing_5
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 8 CPUs
+startgroup
+set_property BITSTREAM.CONFIG.CONFIGRATE 33 [get_designs impl_1]
+set_property config_mode SPIx4 [current_design]
+set_property BITSTREAM.GENERAL.COMPRESS TRUE [get_designs impl_1]
+endgroup
+create_hw_cfgmem -hw_device [lindex [get_hw_devices xc7a100t_0] 0] [lindex [get_cfgmem_parts {s25fl128sxxxxxx0-spi-x1_x2_x4}] 0]
+set_property PROGRAM.BLANK_CHECK  0 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.ERASE  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.CFG_PROGRAM  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.VERIFY  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.CHECKSUM  0 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+refresh_hw_device [lindex [get_hw_devices xc7a100t_0] 0]
+INFO: [Labtools 27-1434] Device xc7a100t (JTAG device index = 0) is programmed with a design that has no supported debug core(s) in it.
+set_property PROGRAM.ADDRESS_RANGE  {use_file} [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.FILES [list "/home/tools/Documents/agfing/aging-study/aging-study.runs/impl_1/design_1_wrapper.bin" ] [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.PRM_FILE {} [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.UNUSED_PIN_TERMINATION {pull-none} [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.BLANK_CHECK  0 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.ERASE  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.CFG_PROGRAM  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.VERIFY  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.CHECKSUM  0 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+startgroup 
+create_hw_bitstream -hw_device [lindex [get_hw_devices xc7a100t_0] 0] [get_property PROGRAM.HW_CFGMEM_BITFILE [ lindex [get_hw_devices xc7a100t_0] 0]]; program_hw_devices [lindex [get_hw_devices xc7a100t_0] 0]; refresh_hw_device [lindex [get_hw_devices xc7a100t_0] 0];
+INFO: [Labtools 27-3164] End of startup status: HIGH
+INFO: [Labtools 27-2302] Device xc7a100t (JTAG device index = 0) is programmed with a design that has 1 SPI core(s).
+program_hw_cfgmem -hw_cfgmem [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+Mfg ID : 1   Memory Type : 20   Memory Capacity : 18   Device ID 1 : 0   Device ID 2 : 0
+Performing Erase Operation...
+Erase Operation successful.
+Performing Program and Verify Operations...
+Program/Verify Operation successful.
+INFO: [Labtoolstcl 44-377] Flash programming completed successfully
+program_hw_cfgmem: Time (s): cpu = 00:00:04 ; elapsed = 00:01:25 . Memory (MB): peak = 11204.781 ; gain = 0.000 ; free physical = 1223 ; free virtual = 6840
+endgroup
+set_property PROBES.FILE {} [get_hw_devices xc7a100t_0]
+set_property FULL_PROBES.FILE {} [get_hw_devices xc7a100t_0]
+set_property PROGRAM.FILE {/home/tools/Documents/agfing/aging-study/aging-study.runs/impl_1/design_1_wrapper.bit} [get_hw_devices xc7a100t_0]
+program_hw_devices [get_hw_devices xc7a100t_0]
+INFO: [Labtools 27-3164] End of startup status: HIGH
+refresh_hw_device [lindex [get_hw_devices xc7a100t_0] 0]
+INFO: [Labtools 27-1434] Device xc7a100t (JTAG device index = 0) is programmed with a design that has no supported debug core(s) in it.
+set_property PROGRAM.ADDRESS_RANGE  {use_file} [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.FILES [list "/home/tools/Documents/agfing/aging-study/aging-study.runs/impl_1/design_1_wrapper.bin" ] [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.UNUSED_PIN_TERMINATION {pull-none} [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.BLANK_CHECK  0 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.ERASE  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.CFG_PROGRAM  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.VERIFY  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.CHECKSUM  0 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.ADDRESS_RANGE  {use_file} [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.FILES [list "/home/tools/Documents/agfing/aging-study/aging-study.runs/impl_1/design_1_wrapper.bin" ] [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.PRM_FILE {} [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.UNUSED_PIN_TERMINATION {pull-none} [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.BLANK_CHECK  0 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.ERASE  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.CFG_PROGRAM  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.VERIFY  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.CHECKSUM  0 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+startgroup 
+create_hw_bitstream -hw_device [lindex [get_hw_devices xc7a100t_0] 0] [get_property PROGRAM.HW_CFGMEM_BITFILE [ lindex [get_hw_devices xc7a100t_0] 0]]; program_hw_devices [lindex [get_hw_devices xc7a100t_0] 0]; refresh_hw_device [lindex [get_hw_devices xc7a100t_0] 0];
+INFO: [Labtools 27-3164] End of startup status: HIGH
+INFO: [Labtools 27-2302] Device xc7a100t (JTAG device index = 0) is programmed with a design that has 1 SPI core(s).
+program_hw_cfgmem -hw_cfgmem [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+Mfg ID : 1   Memory Type : 20   Memory Capacity : 18   Device ID 1 : 0   Device ID 2 : 0
+Performing Erase Operation...
+Erase Operation successful.
+Performing Program and Verify Operations...
+Program/Verify Operation successful.
+INFO: [Labtoolstcl 44-377] Flash programming completed successfully
+program_hw_cfgmem: Time (s): cpu = 00:00:05 ; elapsed = 00:01:25 . Memory (MB): peak = 11204.781 ; gain = 0.000 ; free physical = 1295 ; free virtual = 6864
+endgroup
+set_property target_constrs_file /home/tools/Documents/agfing/aging-study/aging-study.srcs/constrs_1/imports/digilent-xdc/Nexys-4-DDR-Master.xdc [current_fileset -constrset]
+save_constraints -force
+reset_run impl_1
+launch_runs impl_1 -to_step write_bitstream -jobs 12
+WARNING: [Project 1-478] Design 'synth_1' is stale and will not be used when launching 'impl_1'
+[Wed Jan 22 19:22:53 2025] Launched impl_1...
+Run output will be captured here: /home/tools/Documents/agfing/aging-study/aging-study.runs/impl_1/runme.log
+set_property PROGRAM.ADDRESS_RANGE  {use_file} [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.FILES [list "/home/tools/Documents/agfing/aging-study/aging-study.runs/impl_1/design_1_wrapper.bin" ] [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.PRM_FILE {} [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.UNUSED_PIN_TERMINATION {pull-none} [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.BLANK_CHECK  0 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.ERASE  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.CFG_PROGRAM  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.VERIFY  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+set_property PROGRAM.CHECKSUM  0 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+startgroup 
+create_hw_bitstream -hw_device [lindex [get_hw_devices xc7a100t_0] 0] [get_property PROGRAM.HW_CFGMEM_BITFILE [ lindex [get_hw_devices xc7a100t_0] 0]]; program_hw_devices [lindex [get_hw_devices xc7a100t_0] 0]; refresh_hw_device [lindex [get_hw_devices xc7a100t_0] 0];
+INFO: [Labtools 27-3164] End of startup status: HIGH
+INFO: [Labtools 27-2302] Device xc7a100t (JTAG device index = 0) is programmed with a design that has 1 SPI core(s).
+program_hw_cfgmem -hw_cfgmem [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices xc7a100t_0] 0]]
+Mfg ID : 1   Memory Type : 20   Memory Capacity : 18   Device ID 1 : 0   Device ID 2 : 0
+Performing Erase Operation...
+Erase Operation successful.
+Performing Program and Verify Operations...
+Program/Verify Operation successful.
+INFO: [Labtoolstcl 44-377] Flash programming completed successfully
+program_hw_cfgmem: Time (s): cpu = 00:00:00.41 ; elapsed = 00:00:19 . Memory (MB): peak = 11204.781 ; gain = 0.000 ; free physical = 2039 ; free virtual = 6765
+endgroup
+ERROR: [Labtoolstcl 44-513] HW Target shutdown. Closing target: localhost:3121/xilinx_tcf/Digilent/210292A6E9A7A

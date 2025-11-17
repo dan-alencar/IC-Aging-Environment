@@ -1,0 +1,4 @@
+INFO: [VRFC 10-2263] Analyzing Verilog file "/home/mirai/aging-study/aging-study.srcs/sources_1/new/temp_catcher.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module temp_catcher
+INFO: [VRFC 10-2263] Analyzing Verilog file "/home/mirai/aging-study/aging-study.srcs/sim_1/new/sim.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module sim

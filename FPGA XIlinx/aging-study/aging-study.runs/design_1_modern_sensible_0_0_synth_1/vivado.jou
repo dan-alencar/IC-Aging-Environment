@@ -1,0 +1,24 @@
+#-----------------------------------------------------------
+# Vivado v2024.2 (64-bit)
+# SW Build 5239630 on Fri Nov 08 22:34:34 MST 2024
+# IP Build 5239520 on Sun Nov 10 16:12:51 MST 2024
+# SharedData Build 5239561 on Fri Nov 08 14:39:27 MST 2024
+# Start of session at: Fri Apr 25 14:24:39 2025
+# Process ID         : 2523348
+# Current directory  : /home/alisson/Downloads/aging_mirai_tensao/Aging-dynamic/vivado_project/aging-study/aging-study.runs/design_1_modern_sensible_0_0_synth_1
+# Command line       : vivado -log design_1_modern_sensible_0_0.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source design_1_modern_sensible_0_0.tcl
+# Log file           : /home/alisson/Downloads/aging_mirai_tensao/Aging-dynamic/vivado_project/aging-study/aging-study.runs/design_1_modern_sensible_0_0_synth_1/design_1_modern_sensible_0_0.vds
+# Journal file       : /home/alisson/Downloads/aging_mirai_tensao/Aging-dynamic/vivado_project/aging-study/aging-study.runs/design_1_modern_sensible_0_0_synth_1/vivado.jou
+# Running On         : alisson.lesc.ufc.br
+# Platform           : unknown
+# Operating System   : unknown
+# Processor Detail   : Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz
+# CPU Frequency      : 4000.000 MHz
+# CPU Physical cores : 4
+# CPU Logical cores  : 8
+# Host memory        : 16428 MB
+# Swap memory        : 8415 MB
+# Total Virtual      : 24844 MB
+# Available Virtual  : 13509 MB
+#-----------------------------------------------------------
+source design_1_modern_sensible_0_0.tcl -notrace

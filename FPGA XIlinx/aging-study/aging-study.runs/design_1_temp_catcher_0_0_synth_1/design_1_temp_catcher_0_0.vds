@@ -1,0 +1,314 @@
+#-----------------------------------------------------------
+# Vivado v2024.2 (64-bit)
+# SW Build 5239630 on Fri Nov 08 22:34:34 MST 2024
+# IP Build 5239520 on Sun Nov 10 16:12:51 MST 2024
+# SharedData Build 5239561 on Fri Nov 08 14:39:27 MST 2024
+# Start of session at: Mon Mar 31 17:07:47 2025
+# Process ID         : 58457
+# Current directory  : /home/mirai/Documentos/Projects/projeto_marco/Aging-main/vivado_project/aging-study/aging-study.runs/design_1_temp_catcher_0_0_synth_1
+# Command line       : vivado -log design_1_temp_catcher_0_0.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source design_1_temp_catcher_0_0.tcl
+# Log file           : /home/mirai/Documentos/Projects/projeto_marco/Aging-main/vivado_project/aging-study/aging-study.runs/design_1_temp_catcher_0_0_synth_1/design_1_temp_catcher_0_0.vds
+# Journal file       : /home/mirai/Documentos/Projects/projeto_marco/Aging-main/vivado_project/aging-study/aging-study.runs/design_1_temp_catcher_0_0_synth_1/vivado.jou
+# Running On         : mirai-note
+# Platform           : Arch
+# Operating System   : Arch Linux
+# Processor Detail   : 11th Gen Intel(R) Core(TM) i5-11300H @ 3.10GHz
+# CPU Frequency      : 3837.307 MHz
+# CPU Physical cores : 4
+# CPU Logical cores  : 8
+# Host memory        : 8094 MB
+# Swap memory        : 0 MB
+# Total Virtual      : 8094 MB
+# Available Virtual  : 4121 MB
+#-----------------------------------------------------------
+source design_1_temp_catcher_0_0.tcl -notrace
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/home/mirai/Xilinx/Vivado/2024.2/data/ip'.
+Command: synth_design -top design_1_temp_catcher_0_0 -part xc7a100tcsg324-1 -incremental_mode off -mode out_of_context
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Device 21-403] Loading part xc7a100tcsg324-1
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 58513
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:03 ; elapsed = 00:00:03 . Memory (MB): peak = 1961.945 ; gain = 419.797 ; free physical = 513 ; free virtual = 2830
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'design_1_temp_catcher_0_0' [/home/mirai/Documentos/Projects/projeto_marco/Aging-main/vivado_project/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_temp_catcher_0_0/synth/design_1_temp_catcher_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'temp_catcher' [/home/mirai/Documentos/Projects/projeto_marco/Aging-main/vivado_project/aging-study/aging-study.srcs/sources_1/new/temp_catcher.v:23]
+	Parameter ASK_TEMP bound to: 2'b00 
+	Parameter GET_TEMP bound to: 2'b01 
+	Parameter ASK_VCC bound to: 2'b10 
+	Parameter GET_VCC bound to: 2'b11 
+INFO: [Synth 8-6155] done synthesizing module 'temp_catcher' (0#1) [/home/mirai/Documentos/Projects/projeto_marco/Aging-main/vivado_project/aging-study/aging-study.srcs/sources_1/new/temp_catcher.v:23]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_temp_catcher_0_0' (0#1) [/home/mirai/Documentos/Projects/projeto_marco/Aging-main/vivado_project/aging-study/aging-study.gen/sources_1/bd/design_1/ip/design_1_temp_catcher_0_0/synth/design_1_temp_catcher_0_0.v:53]
+WARNING: [Synth 8-7129] Port do_data[3] in module temp_catcher is either unconnected or has no load
+WARNING: [Synth 8-7129] Port do_data[2] in module temp_catcher is either unconnected or has no load
+WARNING: [Synth 8-7129] Port do_data[1] in module temp_catcher is either unconnected or has no load
+WARNING: [Synth 8-7129] Port do_data[0] in module temp_catcher is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 2035.883 ; gain = 493.734 ; free physical = 436 ; free virtual = 2755
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 2053.695 ; gain = 511.547 ; free physical = 424 ; free virtual = 2742
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 2053.695 ; gain = 511.547 ; free physical = 424 ; free virtual = 2742
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2053.695 ; gain = 0.000 ; free physical = 424 ; free virtual = 2742
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2169.434 ; gain = 0.000 ; free physical = 339 ; free virtual = 2676
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2169.434 ; gain = 0.000 ; free physical = 365 ; free virtual = 2685
+INFO: [Designutils 20-5008] Incremental synthesis strategy off
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 2169.434 ; gain = 627.285 ; free physical = 422 ; free virtual = 2753
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7a100tcsg324-1
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 2177.438 ; gain = 635.289 ; free physical = 422 ; free virtual = 2753
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 2177.438 ; gain = 635.289 ; free physical = 422 ; free virtual = 2753
+---------------------------------------------------------------------------------
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'temp_catcher'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                ASK_TEMP |                               00 |                               00
+                GET_TEMP |                               01 |                               01
+                 ASK_VCC |                               10 |                               10
+                 GET_VCC |                               11 |                               11
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'sequential' in module 'temp_catcher'
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:09 ; elapsed = 00:00:09 . Memory (MB): peak = 2177.438 ; gain = 635.289 ; free physical = 422 ; free virtual = 2753
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input   21 Bit       Adders := 1     
+	   2 Input    8 Bit       Adders := 1     
++---Registers : 
+	               32 Bit    Registers := 2     
+	                8 Bit    Registers := 1     
+	                7 Bit    Registers := 1     
+	                1 Bit    Registers := 1     
++---Muxes : 
+	   4 Input    8 Bit        Muxes := 1     
+	   4 Input    2 Bit        Muxes := 1     
+	   2 Input    2 Bit        Muxes := 2     
+	   4 Input    1 Bit        Muxes := 5     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 240 (col length:80)
+BRAMs: 270 (col length: RAMB18 80 RAMB36 40)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-7080] Parallel synthesis criteria is not met
+DSP Report: Generating DSP p_0_out, operation Mode is: (A:0x7b0a7)*B.
+DSP Report: operator p_0_out is absorbed into DSP p_0_out.
+DSP Report: Generating DSP p_0_out, operation Mode is: A*(B:0xbb8).
+DSP Report: operator p_0_out is absorbed into DSP p_0_out.
+INFO: [Synth 8-3917] design design_1_temp_catcher_0_0 has port vccint[20] driven by constant 0
+INFO: [Synth 8-3917] design design_1_temp_catcher_0_0 has port vccint[19] driven by constant 0
+INFO: [Synth 8-3917] design design_1_temp_catcher_0_0 has port vccint[18] driven by constant 0
+INFO: [Synth 8-3917] design design_1_temp_catcher_0_0 has port vccint[17] driven by constant 0
+INFO: [Synth 8-3917] design design_1_temp_catcher_0_0 has port vccint[16] driven by constant 0
+INFO: [Synth 8-3917] design design_1_temp_catcher_0_0 has port vccint[15] driven by constant 0
+INFO: [Synth 8-3917] design design_1_temp_catcher_0_0 has port vccint[14] driven by constant 0
+INFO: [Synth 8-3917] design design_1_temp_catcher_0_0 has port vccint[13] driven by constant 0
+INFO: [Synth 8-3917] design design_1_temp_catcher_0_0 has port vccint[12] driven by constant 0
+WARNING: [Synth 8-7129] Port do_data[3] in module design_1_temp_catcher_0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port do_data[2] in module design_1_temp_catcher_0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port do_data[1] in module design_1_temp_catcher_0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port do_data[0] in module design_1_temp_catcher_0_0 is either unconnected or has no load
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__11) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__12) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__13) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__14) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__15) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__16) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__17) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__18) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__19) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__20) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__21) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__22) is unused and will be removed from module design_1_temp_catcher_0_0.
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 2177.438 ; gain = 635.289 ; free physical = 413 ; free virtual = 2750
+---------------------------------------------------------------------------------
+ Sort Area is  p_0_out_0 : 0 0 : 958 958 : Used 1 time 0
+ Sort Area is  p_0_out_2 : 0 0 : 413 413 : Used 1 time 0
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+DSP: Preliminary Mapping Report (see note below. The ' indicates corresponding REG is set)
++-------------+---------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|Module Name  | DSP Mapping   | A Size | B Size | C Size | D Size | P Size | AREG | BREG | CREG | DREG | ADREG | MREG | PREG | 
++-------------+---------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|temp_catcher | (A:0x7b0a7)*B | 19     | 12     | -      | -      | 31     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|temp_catcher | A*(B:0xbb8)   | 12     | 12     | -      | -      | 24     | 0    | 0    | -    | -    | -     | 0    | 0    | 
++-------------+---------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+
+Note: The table above is a preliminary report that shows the DSPs inferred at the current stage of the synthesis flow. Some DSP may be reimplemented as non DSP primitives later in the synthesis flow. Multiple instantiated DSPs are reported only once.
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:14 ; elapsed = 00:00:15 . Memory (MB): peak = 2238.438 ; gain = 696.289 ; free physical = 273 ; free virtual = 2661
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:14 ; elapsed = 00:00:15 . Memory (MB): peak = 2238.438 ; gain = 696.289 ; free physical = 273 ; free virtual = 2661
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:14 ; elapsed = 00:00:15 . Memory (MB): peak = 2255.461 ; gain = 713.312 ; free physical = 253 ; free virtual = 2641
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:17 ; elapsed = 00:00:17 . Memory (MB): peak = 2422.273 ; gain = 880.125 ; free physical = 138 ; free virtual = 2502
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:17 ; elapsed = 00:00:17 . Memory (MB): peak = 2422.273 ; gain = 880.125 ; free physical = 138 ; free virtual = 2502
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:17 ; elapsed = 00:00:17 . Memory (MB): peak = 2422.273 ; gain = 880.125 ; free physical = 138 ; free virtual = 2502
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:17 ; elapsed = 00:00:17 . Memory (MB): peak = 2422.273 ; gain = 880.125 ; free physical = 139 ; free virtual = 2503
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:17 ; elapsed = 00:00:17 . Memory (MB): peak = 2422.273 ; gain = 880.125 ; free physical = 139 ; free virtual = 2503
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:17 ; elapsed = 00:00:17 . Memory (MB): peak = 2422.273 ; gain = 880.125 ; free physical = 139 ; free virtual = 2503
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+DSP Final Report (the ' indicates corresponding REG is set)
++-------------+-------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|Module Name  | DSP Mapping | A Size | B Size | C Size | D Size | P Size | AREG | BREG | CREG | DREG | ADREG | MREG | PREG | 
++-------------+-------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|temp_catcher | (A*B)'      | 19     | 12     | -      | -      | 31     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|temp_catcher | (A*B)'      | 12     | 12     | -      | -      | 24     | 0    | 0    | -    | -    | -     | 0    | 1    | 
++-------------+-------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+--------+------+
+|      |Cell    |Count |
++------+--------+------+
+|1     |CARRY4  |     5|
+|2     |DSP48E1 |     2|
+|3     |LUT1    |     2|
+|4     |LUT2    |    40|
+|5     |LUT3    |     8|
+|6     |LUT4    |     4|
+|7     |LUT5    |     2|
+|8     |LUT6    |     2|
+|9     |FDCE    |    12|
+|10    |FDPE    |     1|
++------+--------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:17 ; elapsed = 00:00:17 . Memory (MB): peak = 2422.273 ; gain = 880.125 ; free physical = 138 ; free virtual = 2502
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 5 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:16 ; elapsed = 00:00:16 . Memory (MB): peak = 2422.273 ; gain = 764.387 ; free physical = 147 ; free virtual = 2499
+Synthesis Optimization Complete : Time (s): cpu = 00:00:17 ; elapsed = 00:00:17 . Memory (MB): peak = 2422.281 ; gain = 880.125 ; free physical = 147 ; free virtual = 2499
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2422.281 ; gain = 0.000 ; free physical = 146 ; free virtual = 2496
+INFO: [Netlist 29-17] Analyzing 7 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2478.301 ; gain = 0.000 ; free physical = 283 ; free virtual = 2641
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: 8e9197ac
+INFO: [Common 17-83] Releasing license: Synthesis
+45 Infos, 9 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:25 ; elapsed = 00:00:23 . Memory (MB): peak = 2478.301 ; gain = 1104.488 ; free physical = 288 ; free virtual = 2647
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 1758.660; main = 1758.660; forked = 312.722
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 3087.418; main = 2478.305; forked = 909.977
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2502.312 ; gain = 0.000 ; free physical = 288 ; free virtual = 2647
+INFO: [Common 17-1381] The checkpoint '/home/mirai/Documentos/Projects/projeto_marco/Aging-main/vivado_project/aging-study/aging-study.runs/design_1_temp_catcher_0_0_synth_1/design_1_temp_catcher_0_0.dcp' has been generated.
+INFO: [Vivado 12-24828] Executing command : report_utilization -file design_1_temp_catcher_0_0_utilization_synth.rpt -pb design_1_temp_catcher_0_0_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Mon Mar 31 17:08:15 2025...
