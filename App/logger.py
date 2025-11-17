@@ -1,5 +1,5 @@
 """
-Classe de Log de Dados (Estilo collect2.py)
+Classe de Log de Dados
 
 Cria um arquivo CSV único por teste e escreve os dados nele.
 """
@@ -25,7 +25,8 @@ class DataLogger:
 
     def _write_header(self):
         """Escreve o cabeçalho no arquivo CSV."""
-        self.file_handle = open(self.filepath, 'w', newline='', encoding='utf-8')
+        # Abre o arquivo com buffering zero (flush imediato)
+        self.file_handle = open(self.filepath, 'w', newline='', encoding='utf-8', buffering=1)
         self.csv_writer = csv.writer(self.file_handle)
         
         # Este cabeçalho define a estrutura do seu log
@@ -45,6 +46,7 @@ class DataLogger:
         """Escreve uma nova linha de dados no CSV."""
         if self.csv_writer:
             try:
+                # Os dados devem ser escritos na ordem exata do cabeçalho
                 row = [
                     data_dict.get('timestamp'),
                     data_dict.get('oven_temp'),
@@ -63,5 +65,4 @@ class DataLogger:
         """Fecha o arquivo CSV."""
         if self.file_handle:
             self.file_handle.close()
-            self.file_handle = None
-            print(f"Log salvo em: {self.filepath}")
+            print(f"Log de dados finalizado e salvo em: {self.filepath}")
