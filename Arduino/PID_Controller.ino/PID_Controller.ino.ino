@@ -13,7 +13,7 @@
  */
 
 // --- Inclusão da Biblioteca PID ---
-#include <PID_v1.h>
+#include <ArduPID.h>
 
 // --- Pinos de Hardware ---
 const int NTC_PIN = A0;   // Pino do sensor NTC do forno
@@ -23,7 +23,7 @@ const int SSR_PIN = A1;   // Pino de controle (via TIP31) para o SSR
 const float VREF = 3.3f;            
 const int   ADC_MAX_BITS = 12;      
 const float ADC_MAX_VALUE = 4095.0f;  
-const int   ADC_SAMPLES = 50;       // Aumentado para mais estabilidade
+const int   ADC_SAMPLES = 500;       // Aumentado para mais estabilidade
 const float R_DIVISOR = 10000.0f;       
 const float NTC_R_NOMINAL = 10000.0f;   
 const float NTC_T_NOMINAL_C = 25.0f;    
@@ -31,12 +31,12 @@ const float NTC_B_VALUE = 3950.0f;      // (Ou 3380.0f, se você mudou)
 
 // --- Parâmetros de Controle (JANELA DE 5 SEGUNDOS) ---
 const long CONTROL_PERIOD_MS = 5000; // 5 segundos
-const float RAMP_RATE_PER_SEC = 0.1f;  // Taxa da rampa: 0.1°C/seg (ou 6°C/min) 
+const float RAMP_RATE_PER_SEC = 1.0f;  // Taxa da rampa: 0.1°C/seg (ou 6°C/min) 
 
 // --- GANHOS PID (Calculados da sua análise SIMC) ---
 const double KP = 2.78;
-const double KI = 0.0115;
-const double KD = 0.0;
+const double KI = 0.00106; // Testando Ki baixo
+const double KD = 5.0; // Testando utilizar o Kd
 
 // --- Variáveis Globais do PID ---
 double currentCelsius;    // (Input) O que o forno ESTÁ
@@ -48,11 +48,12 @@ double targetSetpoint = 25.0; // O alvo final (ex: 125.0°C)
 bool testRunning = false;
 
 // Objeto PID
-PID myPID(&currentCelsius, &pidOutput, &rampedSetpoint, KP, KI, KD, DIRECT);
+ArduPID myPID;
 
 // --- Variáveis de Temporização ---
 unsigned long ssrWindowStartTime = 0;
-unsigned long pidCalcTimer = 0;
+// unsigned long pidCalcTimer = 0;
+unsigned long rampTimer = 0;
 
 // =================================================================
 //   SETUP
@@ -73,13 +74,16 @@ void setup() {
   
   // Define a janela de saída do PID (0% a 100%)
   // ISSO IMPLEMENTA O ANTI-WINDUP AUTOMATICAMENTE 
-  myPID.SetOutputLimits(0, 100);
+  myPID.begin(&currentCelsius, &pidOutput, &rampedSetpoint, KP, KI, KD);
+  myPID.setOutputLimits(0, 100);
+  myPID.setWindUpLimits(0, 100);
+  myPID.setSampleTime(CONTROL_PERIOD_MS);
+  myPID.setDeadBand(-0.2, 0.2);  // ignore small ±0.5°C fluctuations
+  //myPID.setOutputRampRate(5); // limit rate of output change per cycle
+  //myPID.setDerivativeFilter(0.8); // smooth derivative term
+  myPID.stop();
+  myPID.reset();
 
-  // Informa ao PID o tempo entre cálculos (5s)
-  myPID.SetSampleTime(CONTROL_PERIOD_MS);
-  
-  // Desliga o PID até darmos "START_TEST"
-  myPID.SetMode(MANUAL);
   pidOutput = 0;
   
   Serial.println("Arduino PID Controller Pronto.");
@@ -97,26 +101,21 @@ void loop() {
     return;
   }
   
-  unsigned long currentMillis = millis();
+  // 2. Atualiza a leitura do sensor
+  //    (O PID precisa da entrada mais recente)
+  currentCelsius = getOvenTemperature();
+     
+  // 3. Atualiza a Rampa (agora tem seu próprio timer)
+  updateSetpointRamp();
 
-  // 2. Loop de Cálculo do PID (Roda a cada 5 segundos)
-  //    A biblioteca PID_v1 gerencia isso internamente com SetSampleTime
-  //    Mas precisamos da nossa própria lógica de rampa na mesma cadência.
-  if (currentMillis - pidCalcTimer >= CONTROL_PERIOD_MS) {
-    pidCalcTimer = currentMillis;
-
-    // 2a. Ler a temperatura atual
-    currentCelsius = getOvenTemperature();
-    
-    // 2b. Atualizar a Rampa de Setpoint 
-    updateSetpointRamp();
-
-    // 2c. Calcular a nova saída do PID
-    myPID.Compute(); 
-  }
-
-  // 3. Loop de Atuação do SSR (Roda continuamente)
-  //    Usa o valor 'pidOutput' mais recente para controlar o SSR
+  // 4. Calcular a nova saída do PID
+  //    DEVE SER CHAMADO A CADA LOOP para o Anti-Windup funcionar
+  //    A biblioteca gerencia o sampleTime internamente.
+  //    A função é 'void', não 'bool' (esta é a correção do erro de compilação)
+  myPID.compute();  
+  
+  // 5. Loop de Atuação do SSR (Roda continuamente)
+  //    Usa o valor 'pidOutput' mais recente
   runSsrControl(pidOutput);
 }
 
@@ -129,18 +128,27 @@ void loop() {
  * em direção ao 'targetSetpoint'.
  */
 void updateSetpointRamp() {
-  float maxChange = RAMP_RATE_PER_SEC * (CONTROL_PERIOD_MS / 1000.0);
-
-  if (targetSetpoint > rampedSetpoint) {
-    rampedSetpoint += maxChange;
-    if (rampedSetpoint > targetSetpoint) {
-      rampedSetpoint = targetSetpoint;
-    }
-  } 
-  else if (targetSetpoint < rampedSetpoint) {
-    rampedSetpoint -= maxChange;
-    if (rampedSetpoint < targetSetpoint) {
-      rampedSetpoint = targetSetpoint;
+  
+  unsigned long currentMillis = millis();
+  
+  // Roda esta lógica apenas a cada 1 segundo (1000ms)
+  if (currentMillis - rampTimer >= 1000) {
+    rampTimer = currentMillis;
+    
+    // Calcula a mudança para 1 segundo
+    float maxChange = RAMP_RATE_PER_SEC * 1.0; 
+  
+    if (targetSetpoint > rampedSetpoint) {
+      rampedSetpoint += maxChange;
+      if (rampedSetpoint > targetSetpoint) {
+        rampedSetpoint = targetSetpoint;
+      }
+    } 
+    else if (targetSetpoint < rampedSetpoint) {
+      rampedSetpoint -= maxChange;
+      if (rampedSetpoint < targetSetpoint) {
+        rampedSetpoint = targetSetpoint;
+      }
     }
   }
 }
@@ -161,19 +169,24 @@ void handleSerialCommands() {
     
     // Ex: "START_TEST" (Liga o PID e o relé do DUT)
     else if (cmd.equals("START_TEST")) {
-      currentCelsius = getOvenTemperature();
-      rampedSetpoint = currentCelsius; // Começa a rampa de onde estamos
-      myPID.SetMode(AUTOMATIC);        // LIGA O PID
-      testRunning = true;
-      // (Aqui você também ligaria o relé de 3.3V do DUT)
-      Serial.println("OK,TEST_STARTED");
-    }
+    currentCelsius = getOvenTemperature();
+    rampedSetpoint = currentCelsius; // Começa a rampa de onde estamos
+    myPID.reset();
+    myPID.start();
+    
+    // --- SINCRONIZA OS TIMERS ---
+    rampTimer = millis(); // Sincroniza a Rampa
+    // ssrWindowStartTime é sincronizado no runSsrControl
+    
+    testRunning = true;
+    Serial.println("OK,TEST_STARTED");
+  }
     
     // Ex: "STOP_TEST" (Desliga tudo)
     else if (cmd.equals("STOP_TEST")) {
+      myPID.stop();
+      myPID.reset();
       testRunning = false;
-      pidOutput = 0;                   // Força a saída para 0
-      myPID.SetMode(MANUAL);           // DESLIGA O PID
       digitalWrite(SSR_PIN, LOW);      // Garante SSR desligado
       targetSetpoint = getOvenTemperature();
       rampedSetpoint = targetSetpoint;
