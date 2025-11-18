@@ -1,7 +1,7 @@
 {
-    "arduino_port": "/dev/serial/by-id/usb-Arduino_LLC_Arduino_NANO_33_IoT_91DB68C651544C3954202020FF0B0D09-if00",
-    "psu_port": "",
-    "dut_port": "",
+    "arduino_port": "/dev/serial/by-id/usb-Arduino_LLC_Arduino_NANO_33_IoT_40C381DB51544C3954202020FF082015-if00",
+    "psu_port": "/dev/usbtmc1",
+    "dut_port": "/dev/serial/by-id/usb-Digilent_Digilent_USB_Device_210292745007-if01-port0",
     "arduino_baud": "115200",
     "psu_baud": "9600",
     "dut_baud": "9600"

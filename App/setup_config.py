@@ -21,19 +21,21 @@ class SetupDialog(QDialog):
         self._load_current_config()
 
     def _get_serial_ports(self):
-        """Lista portas seriais filtrando ttyS e priorizando by-id no Linux."""
+        """Lista portas seriais (Serial + USBTMC) filtrando ttyS."""
         system_os = platform.system()
-        ports = serial.tools.list_ports.comports()
         port_list = []
         port_list.append(("", "Selecione uma porta..."))
 
+        # 1. Listar Portas Seriais Comuns (Arduino, DUT)
+        ports = serial.tools.list_ports.comports()
+        
+        # Mapa de by-id para Linux
         by_id_map = {}
         if system_os == "Linux":
             path = "/dev/serial/by-id/"
             if os.path.exists(path):
                 for f in glob.glob(os.path.join(path, "*")):
-                    try:
-                        by_id_map[os.path.realpath(f)] = f
+                    try: by_id_map[os.path.realpath(f)] = f
                     except: pass
 
         for p in ports:
@@ -48,6 +50,15 @@ class SetupDialog(QDialog):
                 display = f"{device_path} - {p.description}"
                 val = device_path
             port_list.append((val, display))
+
+        # 2. Listar dispositivos USBTMC (Para a Fonte ITech) - APENAS LINUX
+        if system_os == "Linux":
+            usbtmc_devices = glob.glob("/dev/usbtmc*")
+            for dev in usbtmc_devices:
+                # USBTMC não tem "description" fácil sem abrir, usamos o nome genérico
+                display = f"USBTMC Device ({dev})"
+                val = dev
+                port_list.append((val, display))
             
         return port_list
 
