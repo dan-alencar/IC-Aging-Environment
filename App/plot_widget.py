@@ -101,7 +101,7 @@ class PlotWidget(QWidget):
         """
         
         # 1. Adiciona dados aos deques
-        time_sec = data_row.get('timestamp')
+        time_sec = data_row.get('time_sec')
         
         self.time_data.append(time_sec)
         self.temp_oven_data.append(data_row.get('oven_temp'))
@@ -119,6 +119,8 @@ class PlotWidget(QWidget):
         # --- ATUALIZAÇÃO DO EIXO X (Auto-Scroll) ---
         if time_list:
             self.vb_temp.setXRange(time_list[0], time_list[-1], padding=0.01)
+        
+        self.vb_temp.autoRange()
 
     @Slot()
     def clear_plot(self):
