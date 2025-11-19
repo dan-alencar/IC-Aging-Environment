@@ -77,6 +77,7 @@ class PlotWidget(QWidget):
         self.ax_output = pg.AxisItem('right')
         self.ax_output.setLabel('Saída PID', units='%') # Rótulo padrão
         self.ax_output.linkToView(self.vb_output) 
+        self.legend.addItem(self.output_curve, name="Saída SSR (%)")
         
         self.plot_view.getPlotItem().layout.addItem(self.ax_output, 2, 3)
         self.plot_view.getPlotItem().scene().addItem(self.vb_output)

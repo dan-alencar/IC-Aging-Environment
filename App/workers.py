@@ -10,6 +10,7 @@ import time
 from datetime import datetime
 import config
 import usbtmc
+import pyvisa as visa
 from logger import DataLogger # Importa a classe DataLogger
 import threading
 
@@ -145,7 +146,7 @@ class ArduinoWorker(QObject):
         # Lógica de Checagem e Retorno AGORA ESTÁ FORA DO BLOCO de I/O do Lock
         # Se chegamos aqui, o I/O foi concluído sem exceções críticas.
         
-        print(f"DEBUG RESPOSTA BRUTA: CMD='{cmd}' -> '{response}'")
+        #print(f"DEBUG RESPOSTA BRUTA: CMD='{cmd}' -> '{response}'")
         
         if response is None or "OK" not in response:
             self.log_message.emit(f"CMD '{cmd}' -> Resposta: '{response}' (FALHOU)")
@@ -157,10 +158,25 @@ class ArduinoWorker(QObject):
     def set_target_setpoint(self, temp):
         return self.send_command(f"SET_SP,{int(temp)}")
 
-    @Slot(float, float, float)
-    def update_pid_gains(self, kp, ki, kd):
-        self.kp, self.ki, self.kd = kp, ki, kd
-        return self.send_command(f"SET_GAINS,{kp:.2f},{ki:.5f},{kd:.2f}")
+    # @Slot(float, float, float)
+    # def update_pid_gains(self, kp, ki, kd):
+        # self.kp, self.ki, self.kd = kp, ki, kd
+        # return self.send_command(f"SET_GAINS,{kp:.2f},{ki:.5f},{kd:.2f}")
+    
+    @Slot(float)
+    def update_kp(self, kp):
+        self.kp = kp
+        return self.send_command(f"SET_KP,{kp:.2f}")
+    
+    @Slot(float)
+    def update_ki(self, ki):
+        self.ki = ki
+        return self.send_command(f"SET_KI,{ki:.2f}")
+    
+    @Slot(float)
+    def update_kd(self, kd):
+        self.kd = kd
+        return self.send_command(f"SET_KD,{kd:.2f}")
         
     @Slot()
     def start_test_oven(self):
@@ -170,49 +186,60 @@ class ArduinoWorker(QObject):
     def stop_test_oven(self):
         return self.send_command("STOP_TEST")
 
+# workers.py (Assegure-se de que 'import pyvisa as visa' está no topo!)
+
 # =================================================================
-#   WORKER 2: Controlador da Fonte (PSU)
+#   WORKER 2: Controlador da Fonte (PSU) - PyVISA
 # =================================================================
 class PSUWorker(QObject):
     """
-    Controla a Fonte de Tensão (PSU) em um thread separado.
+    Controla a Fonte de Tensão (PSU) usando PyVISA (padrão USBTMC/SCPI).
     """
     log_message = Signal(str)
     data_ready = Signal(float, float) # voltage_v, current_a
     
     def __init__(self):
         super().__init__()
-        self.ser = None
+        # PyVISA Objects
+        self.rm = None       # Resource Manager
+        self.inst = None     # Instrument Handle (substitui self.ser)
+        
         self.is_running = False
-        self._latest_data = (0.0, 0.0) # voltage, current
+        self._latest_data = (0.0, 0.0)
         self.poll_timer = QTimer(self)
-        self.poll_timer.setInterval(config.LOG_INTERVAL_MS) # Poll a cada 1s
+        self.poll_timer.setInterval(config.LOG_INTERVAL_MS)
         self.poll_timer.timeout.connect(self.poll_data)
 
     @Slot()
     def start(self):
         try:
-            port_name = config.PSU_PORT
+            port_address = config.PSU_PORT # Assume que este é o endereço VISA ('USB0::...')
             
-            if "usbtmc" in port_name.lower():
-                self.log_message.emit(f"Conectando PSU via LIB USBTMC em {port_name}...")
-                # Instancia o Wrapper da lib
-                self.ser = USBTMCAdapter(port_name)
-            else:
-                self.log_message.emit(f"Conectando PSU via Serial em {port_name}...")
-                self.ser = serial.Serial(port_name, config.PSU_BAUD, timeout=2)
-
+            # 1. Cria o Resource Manager (Backend PyVISA-py)
+            self.rm = visa.ResourceManager('@py')
+            self.log_message.emit(f"Conectando PSU via PyVISA em {port_address}...")
+            
+            # 2. Abre o Recurso
+            self.inst = self.rm.open_resource(port_address)
+            self.inst.timeout = 5000 # Timeout de 5s para comunicações
+            
+            # 3. Inicializa e Configura
+            idn = self.send_query('*IDN?')
+            self.log_message.emit(f"PSU Identificada: {idn.strip()}")
+            
             self.is_running = True
             
-            # --- CORREÇÃO CRÍTICA: Ativa o modo Remoto ITECH ---
-            # Isso garante que a fonte obedeça aos comandos SCPI do PC.
+            # Comandos de Inicialização
             self.send_command("SYST:REMote")
             self.log_message.emit("Fonte PSU definida para modo remoto.")
-            self.send_command("VOLT 1.0") # Seta a tensão para 0V
-            self.send_command("OUTP 1")    # Desliga a saída
+            self.send_command("VOLT 1.0") # Seta a tensão para 0V inicial
+            self.send_command("OUTP ON") # Garante que a saída está desligada
             
             self.poll_timer.start()
             
+        except visa.errors.VisaIOError as e:
+            self.log_message.emit(f"ERRO (PSU): Falha VISA/Resource Not Found: {e}")
+            self.stop()
         except Exception as e:
             self.log_message.emit(f"ERRO (PSU): {e}")
             self.stop()
@@ -221,11 +248,21 @@ class PSUWorker(QObject):
     def stop(self):
         self.is_running = False
         self.poll_timer.stop()
-        if self.ser and self.ser.is_open:
-            # CORREÇÃO: Usar comandos SCPI corretos para desligar.
-            self.send_command("VOLT 0.0") # Seta a tensão para 0V
-            self.send_command("OUTP 0")    # Desliga a saída
-            self.ser.close()
+        
+        if self.inst:
+            try:
+                # 1. Envia comandos de segurança para desligar
+                self.send_command("OUTP ON") 
+                self.send_command("VOLT 1.0") 
+                self.send_command("SYST:LOCal") # Retorna ao modo LOCAL
+            except:
+                pass
+            
+            self.inst.close()
+            
+        if self.rm:
+            self.rm.close()
+            
         self.log_message.emit("Fonte (PSU) desconectada.")
         
     def poll_data(self):
@@ -233,131 +270,67 @@ class PSUWorker(QObject):
             return
             
         try:
-            # CORREÇÃO: Usar comandos SCPI padrão MEASure
-            v_str = self.send_command("MEAS:VOLT?") # SCPI: Measure Voltage [cite: uploaded file: ITECH_IT6500_Programming-Guide.pdf]
-            c_str = self.send_command("MEAS:CURR?") # SCPI: Measure Current [cite: uploaded file: ITECH_IT6500_Programming-Guide.pdf]
+            # PyVISA query é thread-safe
+            v_str = self.send_query("MEAS:VOLT?") 
+            c_str = self.send_query("MEAS:CURR?") 
             
-            # Tenta converter para float, assume 0.0 em caso de falha de leitura
-            voltage = float(v_str) if v_str and self.is_float(v_str) else 0.0
-            current = float(c_str) if c_str and self.is_float(c_str) else 0.0
-            
+            # Conversão
+            try:
+                # O PyVISA retorna strings que podem ter caracteres de terminação, usamos strip()
+                voltage = float(v_str) if v_str else 0.0
+                current = float(c_str) if c_str else 0.0
+                #print(f"Tensão da fonte: {voltage}")
+                #print(f"Corrente da fonte: {current}")
+            except ValueError:
+                self.log_message.emit(f"AVISO (PSU) Erro de conversão. Dados: ('{v_str}', '{c_str}')")
+                voltage, current = 0.0, 0.0
+
             self._latest_data = (voltage, current)
             self.data_ready.emit(voltage, current)
+            
         except Exception as e:
             self.log_message.emit(f"AVISO (PSU) ao ler dados: {e}. Retornando 0.0.")
             self._latest_data = (0.0, 0.0)
 
+    # --- Funções de Comunicação PyVISA (Sem adaptação) ---
+
+    def send_command(self, cmd):
+        """Envia um comando de configuração (WRITE) sem esperar resposta."""
+        try:
+            if self.inst:
+                self.inst.write(cmd)
+                return "OK"
+            return None
+        except Exception as e:
+             self.log_message.emit(f"ERRO (PSU) na escrita '{cmd}': {e}")
+             return None
+
+    def send_query(self, cmd):
+        """Envia uma consulta (QUERY) e retorna a resposta (STRING)."""
+        try:
+            if self.inst:
+                # PyVISA query faz Write e Read em sequência
+                return self.inst.query(cmd).strip()
+            return None
+        except Exception as e:
+             self.log_message.emit(f"ERRO (PSU) na consulta '{cmd}': {e}")
+             return None
+             
     def get_latest_data(self):
         return self._latest_data
         
-    def is_float(self, element):
-        try:
-            float(element)
-            return True
-        except ValueError:
-            return False
-
-    def send_command(self, cmd):
-        """Envia um comando para a PSU de forma segura."""
-        try:
-            if self.ser and self.ser.is_open:
-                self.ser.flushInput() 
-                # Comandos SCPI ITECH geralmente usam \n ou \r\n como terminação
-                self.ser.write(f"{cmd}\n".encode('ascii')) 
-                response = self.ser.readline().decode('ascii').strip()
-                return response
-            return None
-        except serial.SerialException as e:
-            self.log_message.emit(f"ERRO (PSU): {e}")
-            self.stop()
-            return None
-        except Exception as e:
-             self.log_message.emit(f"ERRO (PSU): Falha de comunicação: {e}")
-             return None
-
     # --- Slots Públicos ---
     @Slot(float)
     def set_voltage(self, volts):
-        # CORREÇÃO: Usar comando SCPI padrão VOLTage
-        self.send_command(f"VOLT {volts:.3f}") # SCPI: Set Voltage
+        self.send_command(f"VOLT {volts:.3f}")
         
     @Slot()
     def turn_on(self):
-        # CORREÇÃO: Usar comando SCPI padrão OUTPut
-        self.send_command("OUTP 1") # 1 = ON
+        self.send_command("OUTP ON")
         
     @Slot()
     def turn_off(self):
-        # CORREÇÃO: Usar comando SCPI padrão OUTPut
-        self.send_command("OUTP 0") # 0 = OFF
-
-class USBTMCAdapter:
-    """
-    Adaptador Híbrido Corrigido:
-    - Suporta verificação .is_open (Exigido pelo PSUWorker)
-    - Suporta .flushInput() (Exigido pelo PSUWorker)
-    """
-    def __init__(self, port_address):
-        self.use_kernel_driver = port_address.startswith("/dev/usbtmc")
-        self.inst = None
-        self.file = None
-        self.port_address = port_address
-
-        try:
-            if self.use_kernel_driver:
-                # Modo Arquivo (Linux Nativo)
-                self.file = open(port_address, 'rb+', buffering=0)
-            else:
-                # Modo Lib (Windows / VISA)
-                # Você pode precisar configurar o usbtmc.Instrument aqui
-                self.inst = usbtmc.Instrument(port_address)
-                self.inst.timeout = 2
-        except Exception as e:
-            raise serial.SerialException(f"Erro ao iniciar USBTMC ({port_address}): {e}")
-
-    @property
-    def is_open(self):
-        """Retorna True se a conexão estiver ativa."""
-        if self.use_kernel_driver:
-            return self.file is not None and not self.file.closed
-        else:
-            # Na lib, se o objeto existe, assumimos aberto
-            return self.inst is not None
-
-    def write(self, data_bytes):
-        try:
-            if self.use_kernel_driver:
-                self.file.write(data_bytes)
-                self.file.flush()
-            else:
-                # CORREÇÃO CRÍTICA: Não usar strip() para preservar o \n ou \r\n/código de terminação
-                cmd_str = data_bytes.decode('ascii') 
-                self.inst.write(cmd_str)
-        except Exception as e:
-            print(f"Erro de escrita USBTMC: {e}")
-
-    def readline(self):
-        try:
-            if self.use_kernel_driver:
-                return self.file.readline()
-            else:
-                # Adiciona \n para simular a leitura serial e garantir que a resposta seja completa
-                return self.inst.read().encode('ascii') + b'\n'
-        except Exception:
-            return b""
-
-    def flushInput(self):
-        """
-        Método dummy para compatibilidade com pyserial.
-        """
-        pass
-
-    def close(self):
-        if self.use_kernel_driver and self.file:
-            self.file.close()
-        elif self.inst:
-            self.inst.close()
-
+        self.send_command("OUTP OFF")
 
 # =================================================================
 #   WORKER 3: Leitor do DUT (FPGA) - Modo Binário
@@ -370,13 +343,13 @@ class DUTWorker(QObject):
     log_message = Signal(str)
     # Atualizei o sinal para passar mais dados se precisar no futuro, 
     # mas por enquanto mantive temp(float) e slack(int) para compatibilidade com o gráfico.
-    data_ready = Signal(float, int) 
+    data_ready = Signal(float, int, float) 
     
     def __init__(self):
         super().__init__()
         self.ser = None
         self.is_running = False
-        self._latest_data = (0.0, 0) # temp, slack
+        self._latest_data = (0.0, 0, 0.0) # temp, slack, voltage
         self.poll_timer = QTimer(self)
         self.poll_timer.setInterval(config.LOG_INTERVAL_MS) 
         self.poll_timer.timeout.connect(self.poll_data)
@@ -421,7 +394,7 @@ class DUTWorker(QObject):
                 # 4. Decodifica Binário (Little Endian)
                 raw_temp = int.from_bytes(data[:3], byteorder='little')
                 raw_slack = int.from_bytes(data[3:5], byteorder='little')
-                # raw_voltage = int.from_bytes(data[5:8], byteorder='little') # Não usado no gráfico ainda
+                raw_voltage = int.from_bytes(data[5:8], byteorder='little') # Não usado no gráfico ainda
                 # raw_failed = data[8] > 0                                    # Não usado no gráfico ainda
 
                 # AVISO: Seu código antigo usava int puro para temp. 
@@ -429,13 +402,14 @@ class DUTWorker(QObject):
                 # Por enquanto, vou manter o valor bruto como float.
                 temp_c = float(raw_temp) / 1000.0
                 slack = int(raw_slack)
+                voltage = int(raw_voltage) / 1000.0
 
                 # Validação simples (conforme seu código antigo: ignora zeros)
-                if temp_c == 0 and slack == 0:
+                if temp_c == 0 and slack == 0 and voltage == 0:
                     return
 
-                self._latest_data = (temp_c, slack)
-                self.data_ready.emit(temp_c, slack)
+                self._latest_data = (temp_c, slack, voltage)
+                self.data_ready.emit(temp_c, slack, voltage)
                 
             else:
                 # Timeout ou dados incompletos
@@ -443,7 +417,7 @@ class DUTWorker(QObject):
                 
         except Exception as e:
             self.log_message.emit(f"ERRO (DUT): Falha de comunicação: {e}")
-            self._latest_data = (0.0, 0)
+            self._latest_data = (0.0, 0, 0.0)
 
     def get_latest_data(self):
         return self._latest_data
@@ -506,10 +480,22 @@ class TestSequencer(QObject):
             
             # Ganhos PID (Comando sequencial: 3 comandos)
             # update_pid_gains agora envia 3 comandos e retorna OK se todos tiverem sucesso.
-            #response_pid = self.arduino.update_pid_gains(settings['kp'], settings['ki'], settings['kd'])
-            #if response_pid is None or "OK" not in response_pid:
-            #    raise Exception(f"Falha ao configurar PID. Resposta: {response_pid}")
-            #time.sleep(0.1)
+            response_kp = self.arduino.update_kp(settings['kp'])
+            if response_kp is None or "OK" not in response_kp:
+                raise Exception(f"Falha ao configurar PID. Resposta: {response_kp}")
+            time.sleep(0.1)
+
+            response_ki = self.arduino.update_ki(settings['ki'])
+            if response_ki is None or "OK" not in response_ki:
+                raise Exception(f"Falha ao configurar PID. Resposta: {response_ki}")
+            time.sleep(0.1)
+
+            response_kd = self.arduino.update_kd(settings['kd'])
+            if response_kd is None or "OK" not in response_kd:
+                raise Exception(f"Falha ao configurar PID. Resposta: {response_kd}")
+            time.sleep(0.1)
+
+            self.log_message.emit(f"Ganhos atualizados: KP = {settings['kp']}, KI = {settings['ki']}, KD = {settings['kd']}")
 
             # Setpoint (SP) (Usa integer/float minimalista)
             response_sp = self.arduino.set_target_setpoint(settings['oven_setpoint'])
@@ -585,7 +571,7 @@ class TestSequencer(QObject):
             # 1. Coletar dados de todos os workers (simplificado)
             t_oven, sp_oven, out_oven = self.arduino.get_latest_data()
             v_psu, c_psu = self.psu.get_latest_data()
-            t_dut, s_dut = self.dut.get_latest_data()
+            t_dut, s_dut, v_dut = self.dut.get_latest_data()
             
             # 2. Montar a linha de dados
             data_row = {
@@ -596,7 +582,8 @@ class TestSequencer(QObject):
                 'psu_voltage': v_psu,
                 'psu_current': c_psu,
                 'dut_temp': t_dut,
-                'dut_slack': s_dut
+                'dut_slack': s_dut,
+                'dut_volt': v_dut
             }
             
             # 3. Escrever no log

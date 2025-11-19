@@ -3,6 +3,7 @@ import os
 import glob
 import platform
 import serial.tools.list_ports
+import pyvisa as visa
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QGridLayout, QComboBox, 
     QPushButton, QLabel, QMessageBox, QGroupBox, QSpinBox
@@ -12,7 +13,7 @@ import config
 class SetupDialog(QDialog):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Configuração do Sistema - TCC")
+        self.setWindowTitle("Configuração do Sistema")
         self.setGeometry(200, 200, 650, 400) # Janela um pouco mais larga
         self.setModal(True)
         
@@ -21,44 +22,56 @@ class SetupDialog(QDialog):
         self._load_current_config()
 
     def _get_serial_ports(self):
-        """Lista portas seriais (Serial + USBTMC) filtrando ttyS."""
+        """
+        Lista portas seriais (pyserial) e recursos VISA (PyVISA).
+        Prioriza endereços canônicos para USBTMC e by-id para Serial.
+        """
         system_os = platform.system()
         port_list = []
         port_list.append(("", "Selecione uma porta..."))
 
-        # 1. Listar Portas Seriais Comuns (Arduino, DUT)
-        ports = serial.tools.list_ports.comports()
+        # --- PARTE 1: Listar Recursos VISA (PSU - Prioridade) ---
+        try:
+            rm = visa.ResourceManager('@py')
+            visa_resources = rm.list_resources()
+            rm.close()
+            
+            for res in visa_resources:
+                # Filtrar apenas recursos USB (nossa fonte ITech)
+                if res.startswith("USB"):
+                    
+                    # Usa o endereço completo como valor e um nome amigável para display
+                    display_name = f"VISA USBTMC ({res.split('::')[3]})" # Exibe o Serial Number
+                    port_list.append((res, display_name))
         
-        # Mapa de by-id para Linux
+        except Exception as e:
+            # Se PyVISA falhar (dependência ausente), logamos e continuamos com serial
+            print(f"AVISO: Falha ao listar recursos VISA. Usando apenas Serial: {e}")
+            
+        # --- PARTE 2: Listar Portas Seriais (Arduino, DUT) ---
+        ports = serial.tools.list_ports.comports()
         by_id_map = {}
+        
         if system_os == "Linux":
+            # 1. Mapear nomes persistentes (/dev/serial/by-id/)
             path = "/dev/serial/by-id/"
             if os.path.exists(path):
                 for f in glob.glob(os.path.join(path, "*")):
                     try: by_id_map[os.path.realpath(f)] = f
                     except: pass
-
+        
         for p in ports:
             device_path = p.device
-            if "ttyS" in device_path: continue # Filtro de poluição
+            if "ttyS" in device_path or "ASRL" in device_path: continue # Filtro de poluição
 
             if system_os == "Linux" and device_path in by_id_map:
                 stable = by_id_map[device_path]
-                display = f"{os.path.basename(stable)} ({p.description})"
+                display = f"{os.path.basename(stable)} (Serial Persistente)"
                 val = stable
             else:
                 display = f"{device_path} - {p.description}"
                 val = device_path
             port_list.append((val, display))
-
-        # 2. Listar dispositivos USBTMC (Para a Fonte ITech) - APENAS LINUX
-        if system_os == "Linux":
-            usbtmc_devices = glob.glob("/dev/usbtmc*")
-            for dev in usbtmc_devices:
-                # USBTMC não tem "description" fácil sem abrir, usamos o nome genérico
-                display = f"USBTMC Device ({dev})"
-                val = dev
-                port_list.append((val, display))
             
         return port_list
 
