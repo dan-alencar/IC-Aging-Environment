@@ -12,11 +12,14 @@ from PySide6.QtWidgets import (
     QPushButton, QGroupBox, QFormLayout, QLineEdit, QTextEdit,
     QProgressBar, QLabel, QDoubleSpinBox
 )
+from PySide6.QtGui import QFont
 from PySide6.QtCore import QThread, Signal, Slot, QObject
 import config
 from workers import ArduinoWorker, PSUWorker, DUTWorker, TestSequencer
 # Assume que plot_widget.py contém a classe PlotWidget (pyqtgraph)
 from plot_widget import PlotWidget 
+# Importa o widget auxiliar de plotagem (agora só V e A)
+from aux_plot_widget import AuxPlotWidget 
 
 class MainWindow(QMainWindow):
     # Sinais para iniciar/parar workers em outros threads
@@ -32,8 +35,11 @@ class MainWindow(QMainWindow):
     stop_test_signal = Signal()
     
     # SINAIS DE CONTROLE EM TEMPO REAL
-    update_pid_signal = Signal(float, float, float) # Kp, Ki, Kd
+    update_kp_signal = Signal(float) 
+    update_ki_signal = Signal(float)
+    update_kd_signal = Signal(float)
     update_psu_voltage_signal = Signal(float) # Setpoint Voltagem
+    update_oven_setpoint = Signal(float)
 
     def __init__(self):
         super().__init__()
@@ -66,6 +72,7 @@ class MainWindow(QMainWindow):
         self.oven_setpoint_input = QDoubleSpinBox()
         self.oven_setpoint_input.setRange(25.0, 200.0)
         self.oven_setpoint_input.setValue(100.0)
+        self.oven_setpoint_input.setToolTip("Altere o valor e pressione ENTER para atualizar em tempo real.")
         
         self.oven_kp_input = QDoubleSpinBox()
         self.oven_kp_input.setDecimals(4)
@@ -80,19 +87,49 @@ class MainWindow(QMainWindow):
         self.oven_kd_input.setValue(config.DEFAULT_KD)
         
         self.update_pid_button = QPushButton("Atualizar Ganhos PID")
-        # Remove o estilo amarelo, volta ao padrão "Fusion" (cinza/escuro)
-        # self.update_pid_button.setStyleSheet("background-color: #f7a31b; color: black;")
-
-        # --- Grupo 3: Parâmetros da Fonte (PSU) ---
-        self.psu_control_group = QGroupBox("Parâmetros da Fonte (PSU)")
+        
+        # --- Grupo 3: Parâmetros da Fonte (PSU) + Novo Widget Slack ---
+        self.psu_control_group = QGroupBox("Parâmetros da Fonte e DUT") # Nome ajustado
         self.psu_setpoint_input = QDoubleSpinBox()
         self.psu_setpoint_input.setRange(0.0, 5.0)
-        self.psu_setpoint_input.setValue(1.1)
+        self.psu_setpoint_input.setValue(1.0)
         self.psu_setpoint_input.setSingleStep(0.1)
         self.psu_setpoint_input.setToolTip("Altere o valor e pressione ENTER para atualizar em tempo real.")
 
+        # NOVO WIDGET: Exibição do Slack
+        self.slack_label = QLabel("Slack: 0 Inc.")
+
+        # --- Configurações de Fonte ---
+        # Vamos manter o tamanho grande para visibilidade (16),
+        # mas podemos optar por um peso de fonte ligeiramente menor (se disponível)
+        # ou manter o Bold se for essencial para o destaque.
+        slack_font = self.slack_label.font()
+        slack_font.setPointSize(14)  # Um pouco menor para sobriedade
+        slack_font.setWeight(QFont.DemiBold) # Se for QFont no Qt
+        # No PySide/PyQt, setBold(True) é equivalente a setWeight(QFont.Bold).
+        # Vamos manter o setBold(True) para garantir o destaque de forma padrão.
+        slack_font.setBold(True)
+        self.slack_label.setFont(slack_font)
+
+        # --- Configurações de Estilo (CSS) ---
+        # Cores e Borda para Formalidade:
+        # 1. 'lightgray' ou 'silver': Cor mais neutra que o branco puro.
+        # 2. Borda sutil: Adiciona definição sem ser agressiva.
+        # 3. Background/Padding: Mantemos um padding limpo.
+        self.slack_label.setStyleSheet("""
+            QLabel {
+                color: #C0C0C0;          /* Cor prateada/cinza claro para sobriedade */
+                background-color: #333333; /* Fundo cinza escuro ou preto (se estiver em um tema escuro) */
+                border: 1px solid #555555; /* Borda sutil para delimitar o widget */
+                border-radius: 4px;      /* Cantos levemente arredondados */
+                padding: 5px 8px;        /* Ajuste de padding */
+            }
+        """)
+
+
         # --- Grupo 4: Gráfico ---
-        self.plot_widget = PlotWidget() # Instancia o widget do gráfico (versão pyqtgraph)
+        self.plot_widget = PlotWidget() # Instancia o widget do gráfico principal
+        self.aux_plot_widget = AuxPlotWidget() # Instancia o widget do gráfico auxiliar (V e A)
 
         # --- Grupo 5: Log de Eventos ---
         self.log_group = QGroupBox("Log de Eventos")
@@ -108,7 +145,7 @@ class MainWindow(QMainWindow):
         # Coluna 1: Controle do Teste
         test_layout = QFormLayout()
         test_layout.addRow("Nome do Teste:", self.test_name_input)
-        test_layout.addRow(self.toggle_test_button) # Adiciona o novo botão de toggle
+        test_layout.addRow(self.toggle_test_button) 
         
         self.log_folder_label = QLabel(f"Pasta de Log: {config.LOG_FOLDER}")
         test_layout.addRow(self.log_folder_label)
@@ -126,14 +163,25 @@ class MainWindow(QMainWindow):
         self.oven_control_group.setLayout(oven_layout)
         controls_layout.addWidget(self.oven_control_group)
 
-        # Coluna 3: Parâmetros da Fonte
+        # Coluna 3: Parâmetros da Fonte + Slack (usando QVBoxLayout para o grupo)
+        psu_group_v_layout = QVBoxLayout()
         psu_layout = QFormLayout()
         psu_layout.addRow("Setpoint (V):", self.psu_setpoint_input)
-        self.psu_control_group.setLayout(psu_layout)
+        
+        psu_group_v_layout.addLayout(psu_layout)
+        psu_group_v_layout.addWidget(self.slack_label) # Adiciona o Slack abaixo do form
+        psu_group_v_layout.addStretch(1) # Empurra o conteúdo para cima
+
+        self.psu_control_group.setLayout(psu_group_v_layout)
         controls_layout.addWidget(self.psu_control_group)
         
+        # Layout para os gráficos lado a lado
+        plots_layout = QHBoxLayout()
+        plots_layout.addWidget(self.plot_widget, stretch=1)
+        plots_layout.addWidget(self.aux_plot_widget, stretch=1) 
+
         main_layout.addLayout(controls_layout)
-        main_layout.addWidget(self.plot_widget, stretch=1)
+        main_layout.addLayout(plots_layout, stretch=1) 
         
         log_layout = QVBoxLayout()
         log_layout.addWidget(self.log_text_edit)
@@ -169,7 +217,10 @@ class MainWindow(QMainWindow):
         arduino_worker = self._start_worker("arduino", ArduinoWorker)
         self.start_arduino_signal.connect(arduino_worker.start)
         self.stop_arduino_signal.connect(arduino_worker.stop)
-        self.update_pid_signal.connect(arduino_worker.update_pid_gains) 
+        self.update_kp_signal.connect(arduino_worker.update_kp) 
+        self.update_ki_signal.connect(arduino_worker.update_ki)
+        self.update_kd_signal.connect(arduino_worker.update_kd)
+        self.update_oven_setpoint.connect(arduino_worker.set_target_setpoint)
         self.start_arduino_signal.emit()
         
         # Inicia PSU Worker
@@ -198,7 +249,13 @@ class MainWindow(QMainWindow):
         self.start_test_signal.connect(sequencer_worker.start_test)
         self.stop_test_signal.connect(sequencer_worker.stop_test)
         
+        # Conecta o sinal de atualização de dados a AMBOS os gráficos
         sequencer_worker.plot_data_update.connect(self.plot_widget.update_plot_data)
+        sequencer_worker.plot_data_update.connect(self.aux_plot_widget.update_plot_data)
+        
+        # NOVO: Conecta o sinal de atualização de dados ao novo slot de Slack
+        sequencer_worker.plot_data_update.connect(self.update_slack_label) 
+        
         sequencer_worker.test_finished.connect(self.on_test_finished)
 
 
@@ -211,6 +268,7 @@ class MainWindow(QMainWindow):
         # Conecta botões/inputs de atualização de parâmetros em tempo real
         self.update_pid_button.clicked.connect(self.on_update_pid)
         self.psu_setpoint_input.editingFinished.connect(self.on_update_psu_voltage)
+        self.oven_setpoint_input.editingFinished.connect(self.on_update_oven_setpoint)
         
     # --- Slots da HMI (Ações do Usuário) ---
     
@@ -218,6 +276,33 @@ class MainWindow(QMainWindow):
     def log_message(self, message):
         """Adiciona uma mensagem à caixa de log da HMI."""
         self.log_text_edit.append(f"[{time.strftime('%H:%M:%S')}] {message}")
+
+    @Slot(dict)
+    def update_slack_label(self, data_row):
+        """Atualiza a label de Slack em tempo real."""
+        slack_value = data_row.get('dut_slack', 0)
+        self.slack_label.setText(f"Slack: {slack_value} Inc.")
+        if slack_value < 20:
+             self.slack_label.setStyleSheet("""
+            QLabel {
+                color: red;          /* Cor prateada/cinza claro para sobriedade */
+                background-color: #333333; /* Fundo cinza escuro ou preto (se estiver em um tema escuro) */
+                border: 1px solid #555555; /* Borda sutil para delimitar o widget */
+                border-radius: 4px;      /* Cantos levemente arredondados */
+                padding: 5px 8px;        /* Ajuste de padding */
+            }
+        """)
+        else:
+             self.slack_label.setStyleSheet("""
+            QLabel {
+                color: #C0C0C0;          /* Cor prateada/cinza claro para sobriedade */
+                background-color: #333333; /* Fundo cinza escuro ou preto (se estiver em um tema escuro) */
+                border: 1px solid #555555; /* Borda sutil para delimitar o widget */
+                border-radius: 4px;      /* Cantos levemente arredondados */
+                padding: 5px 8px;        /* Ajuste de padding */
+            }
+            """)
+
 
     @Slot(bool)
     def on_toggle_test(self, checked):
@@ -237,21 +322,24 @@ class MainWindow(QMainWindow):
             }
             
             self.plot_widget.clear_plot()
+            self.aux_plot_widget.clear_plot() 
+            self.update_slack_label({'dut_slack': 0}) # Reseta a label
             self.start_test_signal.emit(settings)
             
             # Atualiza UI para o estado "Rodando"
             self.toggle_test_button.setText("PARAR TESTE")
             self.toggle_test_button.setStyleSheet("background-color: red; color: white; font-weight: bold;")
-            self.oven_setpoint_input.setEnabled(False)
+            self.oven_setpoint_input.setEnabled(True)
             self.test_name_input.setEnabled(False)
-            self.psu_setpoint_input.setEnabled(True) # Mantém ajustável
+            self.psu_setpoint_input.setEnabled(True)
+            self.oven_kp_input.setEnabled(False)
+            self.oven_ki_input.setEnabled(False)
+            self.oven_kd_input.setEnabled(False)
+            self.update_pid_button.setEnabled(False)
             
         else:
             # Estado "Desligado" -> PARAR o teste
             self.stop_test_signal.emit()
-            
-            # A UI será redefinida pelo slot on_test_finished
-            # Mas podemos forçar aqui para garantir, caso o stop_test_signal falhe
             self.on_test_finished() 
 
     @Slot()
@@ -262,7 +350,12 @@ class MainWindow(QMainWindow):
         kd = self.oven_kd_input.value()
         
         self.log_message(f"Enviando novos ganhos PID em tempo real: Kp={kp}, Ki={ki}, Kd={kd}")
-        self.update_pid_signal.emit(kp, ki, kd)
+        
+        self.update_kp_signal.emit(kp)
+        time.sleep(0.05) 
+        self.update_ki_signal.emit(ki)
+        time.sleep(0.05)
+        self.update_kd_signal.emit(kd)
 
     @Slot()
     def on_update_psu_voltage(self):
@@ -271,6 +364,14 @@ class MainWindow(QMainWindow):
         
         self.log_message(f"Enviando novo setpoint de tensão da PSU em tempo real: {voltage}V")
         self.update_psu_voltage_signal.emit(voltage)
+    
+    @Slot()
+    def on_update_oven_setpoint(self):
+        """Chamado quando o campo do setpoint da PSU perde o foco (editingFinished)."""
+        setpoint = self.oven_setpoint_input.value()
+        
+        self.log_message(f"Enviando novo setpoint de temperatura do Forno em tempo real: {setpoint} graus Celsius")
+        self.update_oven_setpoint.emit(setpoint)
 
     @Slot()
     def on_test_finished(self):
@@ -285,6 +386,10 @@ class MainWindow(QMainWindow):
         self.test_control_group.setEnabled(True)
         self.oven_setpoint_input.setEnabled(True)
         self.psu_setpoint_input.setEnabled(True)
+        self.update_pid_button.setEnabled(True)
+        self.oven_kp_input.setEnabled(True)
+        self.oven_ki_input.setEnabled(True)
+        self.oven_kd_input.setEnabled(True)
         self.test_name_input.setEnabled(True)
         
     def closeEvent(self, event):
