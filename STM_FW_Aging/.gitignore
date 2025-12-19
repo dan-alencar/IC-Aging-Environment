@@ -1,0 +1,6 @@
+*.SchDocPreview
+/Debug
+*.PrjPcbStructure
+*.Harness
+*.LOG
+*.htm
