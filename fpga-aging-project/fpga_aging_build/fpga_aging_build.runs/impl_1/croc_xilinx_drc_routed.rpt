@@ -1,0 +1,72 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
+| Date         : Wed Dec 17 22:02:26 2025
+| Host         : dan-alencar running 64-bit Linux Mint 22.2
+| Command      : report_drc -file croc_xilinx_drc_routed.rpt -pb croc_xilinx_drc_routed.pb -rpx croc_xilinx_drc_routed.rpx
+| Design       : croc_xilinx
+| Device       : xcau15p-ffvb676-1-i
+| Speed File   : -1
+| Design State : Fully Routed
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Report DRC
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: netlist
+          Floorplan: design_1
+      Design limits: <entire design considered>
+           Ruledeck: default
+             Max checks: <unlimited>
+             Checks found: 5
++-----------+----------+---------------------------------------+--------+
+| Rule      | Severity | Description                           | Checks |
++-----------+----------+---------------------------------------+--------+
+| PLCK-58   | Warning  | Clock Placer Checks                   | 1      |
+| REQP-1851 | Warning  | BUFGCTRL_I0_I1_cascade_from_clock_buf | 3      |
+| RTSTAT-10 | Warning  | No routable loads                     | 1      |
++-----------+----------+---------------------------------------+--------+
+
+2. REPORT DETAILS
+-----------------
+PLCK-58#1 Warning
+Clock Placer Checks  
+Sub-optimal placement for a global clock-capable IO pin and BUFG pair.
+Resolution: A dedicated routing path between the two can be used if: (a) The global clock-capable IO (GCIO) is placed on a GCIO capable site (b) The BUFG is placed in the same bank of the device as the GCIO pin. Both the above conditions must be met at the same time, else it may lead to longer and less predictable clock insertion delays.
+ This is normally an ERROR but the CLOCK_DEDICATED_ROUTE constraint is set to FALSE allowing your design to continue. The use of this override is highly discouraged as it may lead to very poor timing results. It is recommended that this error condition be corrected in the design.
+
+	fpga_button_IBUF_inst/IBUFCTRL_INST (in fpga_button_IBUF_inst macro) (IBUFCTRL.O) is locked to R26
+	i_rstgen/i_rstgen_bypass/i_tc_clk_mux2_rst_n/i_BUFGMUX (BUFGCTRL.I0) is provisionally placed by clockplacer on BUFGCTRL_X0Y14
+	i_rstgen/i_rstgen_bypass/i_tc_clk_mux2_rst_no/i_BUFGMUX (BUFGCTRL.I1) is provisionally placed by clockplacer on BUFGCTRL_X0Y5
+
+Related violations: <none>
+
+REQP-1851#1 Warning
+BUFGCTRL_I0_I1_cascade_from_clock_buf  
+Cascaded clock buffers exist in the design with constant CE0 and S0 pins. This may result in large clock skew and timing violations. Cell BUFGCTRL i_croc_soc/i_rstgen/i_rstgen_bypass/i_tc_clk_mux2_rst_n/i_BUFGMUX I0 pin is driven by another clock buffer i_rstgen/i_rstgen_bypass/i_tc_clk_mux2_rst_no/i_BUFGMUX.
+Related violations: <none>
+
+REQP-1851#2 Warning
+BUFGCTRL_I0_I1_cascade_from_clock_buf  
+Cascaded clock buffers exist in the design with constant CE1 and S1 pins. This may result in large clock skew and timing violations. Cell BUFGCTRL i_croc_soc/i_rstgen/i_rstgen_bypass/i_tc_clk_mux2_rst_n/i_BUFGMUX I1 pin is driven by another clock buffer i_rstgen/i_rstgen_bypass/i_tc_clk_mux2_rst_no/i_BUFGMUX.
+Related violations: <none>
+
+REQP-1851#3 Warning
+BUFGCTRL_I0_I1_cascade_from_clock_buf  
+Cascaded clock buffers exist in the design with constant CE1 and S1 pins. This may result in large clock skew and timing violations. Cell BUFGCTRL i_croc_soc/i_rstgen/i_rstgen_bypass/i_tc_clk_mux2_rst_no/i_BUFGMUX I1 pin is driven by another clock buffer i_rstgen/i_rstgen_bypass/i_tc_clk_mux2_rst_no/i_BUFGMUX.
+Related violations: <none>
+
+RTSTAT-10#1 Warning
+No routable loads  
+3 net(s) have no routable loads. The problem bus(es) and/or net(s) are i_croc_soc/i_croc/i_dmi_jtag/i_dmi_cdc/i_cdc_req/i_cdc_reset_ctrlr/i_cdc_reset_ctrlr_half_a/i_state_transition_cdc_src/i_sync/reg_q[1],
+i_croc_soc/i_croc/i_dmi_jtag/i_dmi_cdc/i_cdc_req/i_src/i_sync/reg_q[2]
+i_croc_soc/i_croc/i_dmi_jtag/i_dmi_cdc/i_cdc_resp/i_cdc_reset_ctrlr/i_cdc_reset_ctrlr_half_b/i_state_transition_cdc_src/i_sync/reg_q[1].
+Related violations: <none>
+
+
