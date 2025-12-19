@@ -59,7 +59,7 @@ module croc_xilinx import croc_pkg::*; #(
 
 
 
-  wire status_o;
+  //wire status_o;
   
 
   ////////////
