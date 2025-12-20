@@ -1,39 +1,38 @@
 from PySide6.QtCore import QObject, Signal, Slot, QMutex
 from serial_config import SerialThread
-from protocol import ProtocolParser
+from protocol import ProtocolParser, AGING_PKT_LEN, raw_to_temp, raw_to_vcc
 import config
 import time
 
-# Headers de Roteamento (Hardware FPGA)
+# Headers de Roteamento (Envio)
 HEADER_CROC = b'\x10'
 HEADER_STM  = b'\x20'
+HEADER_AGING = b'\x1A'
 
 class UARTRouter(QObject):
-    """
-    Roteador Central:
-    - Gerencia o tráfego compartilhado.
-    - [FIX]: Insere Dead Time de 60ms ao trocar de alvo.
-    - [NEW]: Thread-safe com QMutex.
-    """
+    # Sinais existentes...
     stm_frame_received = Signal(object)
-    croc_data_received = Signal(bytes)
     log_text_received = Signal(str)      
-    
     connection_status = Signal(str)
     log_message = Signal(str)
+    
+    # NOVO SINAL: Envia dicionário com dados físicos (Temp, Vcc, Slack)
+    aging_data_received = Signal(dict) 
+
+    # (Sinal antigo croc_data_received pode ser depreciado ou mantido para debug)
+    croc_raw_received = Signal(bytes) 
 
     def __init__(self):
         super().__init__()
         self.serial = None
         self.parser = ProtocolParser()
         self.is_connected = False
-        
-        # Controle de fluxo
         self.last_target = None
-        self.ROUTER_TIMEOUT_S = 0.06 # 60ms (Hardware tem 50ms)
-        
-        # Mutex para garantir uso exclusivo do canal Serial durante a troca de rota
+        self.ROUTER_TIMEOUT_S = 0.06 
         self.route_lock = QMutex()
+        
+        # Buffer interno para remontar pacotes fragmentados
+        self._rx_buffer = bytearray()
 
     def connect_serial(self):
         if self.serial and self.serial.isRunning():
@@ -90,31 +89,71 @@ class UARTRouter(QObject):
 
     @Slot(bytes)
     def _on_data_received(self, data):
-        # 1. Processa Protocolo e Texto Misto
-        events = self.parser.feed(data)
+        # 1. Acumula no buffer
+        self._rx_buffer.extend(data)
         
-        for evt in events:
-            evt_type = evt[0]
+        # 2. Processamento de Pacotes de Aging (Prioridade Alta - Binário Fixo)
+        while True:
+            # Procura pelo cabeçalho 0x1A
+            try:
+                idx = self._rx_buffer.index(HEADER_AGING)
+            except ValueError:
+                break # Não achou cabeçalho
             
-            if evt_type in ('ok', 'error'):
-                # Eventos de protocolo vão para o Worker do STM
-                self.stm_frame_received.emit(evt)
-            
-            elif evt_type == 'line':
-                raw_msg = evt[1]
+            # Verifica se tem o pacote completo (6 bytes)
+            if len(self._rx_buffer) >= idx + AGING_PKT_LEN:
+                # Extrai o pacote
+                packet = self._rx_buffer[idx : idx + AGING_PKT_LEN]
                 
-                # --- SANITIZAÇÃO DE TEXTO ---
-                # Remove qualquer byte não-imprimível que tenha escapado
-                # Isso elimina símbolos estranhos como , ÿ, etc.
-                clean_msg = "".join(c for c in raw_msg if c.isprintable())
-                clean_msg = clean_msg.strip()
+                # Remove do buffer (incluindo lixo anterior ao header, se houver)
+                del self._rx_buffer[:idx + AGING_PKT_LEN]
                 
-                # Só emite se sobrou algo legível (ex: "Tick", "Tock")
-                if clean_msg:
-                    self.log_text_received.emit(f"[RX] {clean_msg}")
+                # --- PARSE AGING DATA ---
+                # [0:Header][1:TH][2:TL][3:VH][4:VL][5:Alarm]
+                raw_temp = (packet[1] << 8) | packet[2]
+                raw_vcc  = (packet[3] << 8) | packet[4]
+                alarm    = packet[5]
+                
+                phys_data = {
+                    'dut_temp':  round(raw_to_temp(raw_temp), 2),
+                    'dut_volt':  round(raw_to_vcc(raw_vcc), 3),
+                    'dut_slack': alarm, # 0 ou 1 (ou contador se evoluir)
+                    'raw_alarm': alarm
+                }
+                
+                self.aging_data_received.emit(phys_data)
+            else:
+                # Achou Header, mas pacote incompleto. Espera mais dados.
+                break
 
-        # 2. Dados brutos continuam indo para o gráfico do CROC (sem filtro)
-        self.croc_data_received.emit(data)
+        # 3. Processamento de Protocolo STM e Texto (O que sobrou no buffer)
+        # O ProtocolParser consome e retorna eventos.
+        # Importante: Precisamos alimentar o parser apenas com o que NÃO é Aging.
+        # Como já removemos os pacotes Aging do self._rx_buffer, podemos passar o resto.
+        
+        # Para evitar travar o buffer se chegar lixo, processamos e limpamos.
+        if self._rx_buffer:
+            # Copia para bytes para o parser
+            chunk = bytes(self._rx_buffer)
+            events = self.parser.feed(chunk)
+            
+            # Limpa o buffer pois o parser mantém seu próprio estado interno para fragmentos
+            # Se quisermos ser perfeitos, o parser deveria retornar quanto consumiu, 
+            # mas o seu parser atual processa byte a byte. Vamos assumir que ele consome tudo.
+            self._rx_buffer.clear() 
+
+            for evt in events:
+                evt_type = evt[0]
+                
+                if evt_type in ('ok', 'error'):
+                    self.stm_frame_received.emit(evt)
+                
+                elif evt_type == 'line':
+                    raw_msg = evt[1]
+                    # Sanitização final (Remove caracteres estranhos)
+                    clean_msg = "".join(c for c in raw_msg if c.isprintable()).strip()
+                    if clean_msg:
+                        self.log_text_received.emit(f"[RX] {clean_msg}")
 
     @Slot(str)
     def _on_opened(self, port):

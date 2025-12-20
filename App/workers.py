@@ -169,73 +169,54 @@ class STMWorker(QObject):
 # =================================================================
 class CROCWorker(QObject):
     log_message = Signal(str)
-    data_ready = Signal(float, int, float) 
     
     def __init__(self, router):
         super().__init__()
         self.router = router
-        self.router.croc_data_received.connect(self._on_data_received)
         self.is_running = False
-        self.poll_timer = None
         
-        self._rx_buf = bytearray() 
-        self._latest_data = (0.0, 0, 0.0)
-
+        # Variáveis de Estado da FPGA
+        self._temp = 0.0
+        self._slack = 0
+        self._volt = 0.0
+        
     @Slot()
     def start(self):
         self.is_running = True
-        self.poll_timer = QTimer()
-        self.poll_timer.setInterval(config.LOG_INTERVAL_MS)
-        self.poll_timer.timeout.connect(self.poll_data)
-        
-        # --- ATIVADO: Agora confiamos na proteção de DeadTime do Router e no Firmware Blindado ---
-        self.poll_timer.start() 
+        # Conecta ao novo sinal do Router
+        self.router.aging_data_received.connect(self._on_aging_data)
+        self.log_message.emit("CROC Worker iniciado (Monitoramento FPGA).")
 
     @Slot()
     def stop(self):
         self.is_running = False
-        if self.poll_timer:
-            self.poll_timer.stop()
-            self.poll_timer.deleteLater()
-            self.poll_timer = None
+        try:
+            self.router.aging_data_received.disconnect(self._on_aging_data)
+        except:
+            pass
 
-    def poll_data(self):
+    @Slot(dict)
+    def _on_aging_data(self, data):
+        """Recebe dados processados do Router (0x1A Packet)."""
         if not self.is_running: return
-        self.router.send_to_croc(b'F')
-
-    @Slot(bytes)
-    def _on_data_received(self, data):
-        if not self.is_running: return
-        self._rx_buf.extend(data)
         
-        while len(self._rx_buf) >= 9:
-            packet = self._rx_buf[:9]
-            try:
-                raw_temp = int.from_bytes(packet[:3], 'little')
-                raw_slack = int.from_bytes(packet[3:5], 'little')
-                raw_voltage = int.from_bytes(packet[5:8], 'little')
-                
-                temp_c = float(raw_temp) / 1000.0
-                slack = int(raw_slack)
-                voltage = int(raw_voltage) / 1000.0
-                
-                if temp_c < 200 and slack < 65535:
-                    self._latest_data = (temp_c, slack, voltage)
-                    self.data_ready.emit(temp_c, slack, voltage)
-                    self._rx_buf = self._rx_buf[9:] 
-                    continue
-            except:
-                pass
-            self._rx_buf.pop(0)
+        self._temp  = data.get('dut_temp', 0.0)
+        self._volt  = data.get('dut_volt', 0.0)
+        self._slack = data.get('dut_slack', 0)
+        
+        # Opcional: Logar alarmes críticos
+        if self._slack > 0:
+             # Evita spam de log, logar só mudanças de estado se quiser
+             pass 
 
-    def get_latest_data(self): return self._latest_data
-    
-    @Slot(str)
-    def send_manual_command(self, txt):
-        payload = txt.encode('utf-8')
-        if not payload.endswith(b'\n'): payload += b'\n'
+    def get_latest_data(self):
+        """Retorna (Temp, Slack, Vcc_Internal) para o Logger/Gráfico"""
+        return self._temp, self._slack, self._volt
+
+    def send_manual_command(self, cmd: str):
+        # Envia texto puro + Enter para o terminal do CROC
+        payload = (cmd + "\n").encode('utf-8')
         self.router.send_to_croc(payload)
-        self.log_message.emit(f"[CROC TX] {txt}")
 
 # =================================================================
 #   SEQUENCIADOR
@@ -307,19 +288,27 @@ class TestSequencer(QObject):
     def log_data_tick(self):
         if not self.running: return
         try:
+            # Pega dados dos workers
             t_oven, sp, out = self.arduino.get_latest_data()
             v_stm, _ = self.stm.get_latest_data()
-            t_dut, s_dut, v_dut = self.croc.get_latest_data()
+            
+            # AGORA O CROC RETORNA DADOS REAIS!
+            t_dut, s_dut, v_dut = self.croc.get_latest_data() 
             
             row = {
                 'time_sec': time.time() - self.t0,
                 'oven_temp': t_oven, 'oven_setpoint': sp, 'oven_output': out,
                 'psu_voltage': v_stm, 'psu_current': 0.0,
-                'dut_temp': t_dut, 'dut_slack': s_dut, 'dut_volt': v_dut
+                'dut_temp': t_dut,    # Temperatura interna da FPGA
+                'dut_slack': s_dut,   # Alarme de Timing
+                'dut_volt': v_dut     # VCCINT da FPGA
             }
             
+            # Salva no CSV
             if self.logger: self.logger.write_data_row(row)
+            
+            # Emite para a GUI atualizar gráficos
             self.plot_data_update.emit(row)
             
         except Exception as e:
-            self.log_message.emit(f"Erro Log: {e}")
+            print(f"Erro no log tick: {e}")

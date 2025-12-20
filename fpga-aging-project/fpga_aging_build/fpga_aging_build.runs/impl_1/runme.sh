@@ -21,7 +21,7 @@ else
 fi
 export LD_LIBRARY_PATH
 
-HD_PWD='/home/dan-alencar/Documents/GitHub/CROC-TU_Graz/fpga-aging-project/fpga_aging_build/fpga_aging_build.runs/impl_1'
+HD_PWD='/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/fpga-aging-project/fpga_aging_build/fpga_aging_build.runs/impl_1'
 cd "$HD_PWD"
 
 HD_LOG=runme.log
