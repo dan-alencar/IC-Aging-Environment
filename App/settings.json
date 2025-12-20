@@ -1,8 +1,4 @@
 {
-    "arduino_port": "/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0",
-    "psu_port": "/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0",
-    "dut_port": "/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0",
-    "arduino_baud": "115200",
-    "psu_baud": "9600",
-    "dut_baud": "9600"
+    "arduino_port": "/dev/ttyACM0",
+    "esp32_port": "/dev/ttyUSB0"
 }

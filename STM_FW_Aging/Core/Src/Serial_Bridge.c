@@ -229,16 +229,35 @@ uint8_t* Read_Messages_From_FPGA(){
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
     // Se o erro for na UART da FPGA (UART1)
-    if (huart->Instance == USART1) {
-        // Limpa flags de erro (Opcional, a HAL geralmente faz, mas garante reinicio)
-        __HAL_UART_CLEAR_OREFLAG(huart);
-        __HAL_UART_CLEAR_NEFLAG(huart);
-        __HAL_UART_CLEAR_FEFLAG(huart);
+	if (huart->Instance == USART1) {
 
-        // REINICIA A ESCUTA VIA DMA IMEDIATAMENTE
-        // Sem isso, o STM32 para de ouvir para sempre após o primeiro ruído.
-        HAL_UART_Receive_DMA(huart, &buffer_fpga.receiver, 1);
-    }
+	        // 1. Limpa Flags de Erro Críticas
+	        __HAL_UART_CLEAR_OREFLAG(huart); // Overrun
+	        __HAL_UART_CLEAR_NEFLAG(huart);  // Noise
+	        __HAL_UART_CLEAR_FEFLAG(huart);  // Frame Error
+
+	        // 2. Reinicia a Máquina de Estados do Protocolo
+	        // (Acesso à variável global message_from_fpga_cmd definida em Serial_Bridge.c/main.c)
+	        extern Data_ctx message_from_fpga_cmd;
+	        message_from_fpga_cmd.state = IDLE_STATE;
+	        message_from_fpga_cmd.count = 0;
+
+	        // 3. Força o reinício da recepção DMA circular
+	        HAL_UART_DMAStop(huart);
+
+	        // Reinicia buffer circular da FPGA
+	        // buffer_fpga é static neste arquivo, certifique-se de ter acesso ou recrie a lógica
+	        // Assumindo que você tem acesso à struct buffer_fpga aqui:
+
+	        buffer_fpga.first = 0;
+	        buffer_fpga.last = 0;
+	        buffer_fpga.tx_in_progress = 0;
+	        HAL_UART_Receive_DMA(huart, &buffer_fpga.receiver, 1);
+
+
+	       // Se buffer_fpga não for acessível aqui, chame a função de init novamente:
+	       //Serial_Bridge_Init();
+	    }
 
     #ifdef ENABLE_STLINK_DEBUG
     else if (huart->Instance == USART2) {

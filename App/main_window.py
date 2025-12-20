@@ -1,409 +1,283 @@
-"""
-Janela Principal da HMI (PySide6)
-
-Junta a UI (botões, gráfico) e os Workers (threads).
-Adiciona controle em tempo real para PID e PSU.
-Alterado para usar um botão de toggle (Ligar/Desligar) para o teste.
-"""
 import sys
 import time
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
     QPushButton, QGroupBox, QFormLayout, QLineEdit, QTextEdit,
-    QProgressBar, QLabel, QDoubleSpinBox
+    QLabel, QDoubleSpinBox, QComboBox, QGridLayout, QTabWidget, QSplitter
 )
-from PySide6.QtGui import QFont
-from PySide6.QtCore import QThread, Signal, Slot, QObject
+from PySide6.QtCore import QThread, Signal, Slot, Qt
 import config
-from workers import ArduinoWorker, PSUWorker, DUTWorker, TestSequencer
-# Assume que plot_widget.py contém a classe PlotWidget (pyqtgraph)
+
+from router import UARTRouter
+from workers import STMWorker, CROCWorker, ArduinoWorker, TestSequencer
 from plot_widget import PlotWidget 
-# Importa o widget auxiliar de plotagem (agora só V e A)
 from aux_plot_widget import AuxPlotWidget 
 
 class MainWindow(QMainWindow):
-    # Sinais para iniciar/parar workers em outros threads
-    start_arduino_signal = Signal()
-    stop_arduino_signal = Signal()
-    start_psu_signal = Signal()
-    stop_psu_signal = Signal()
-    start_dut_signal = Signal()
-    stop_dut_signal = Signal()
-    
-    # Sinal para o sequenciador
     start_test_signal = Signal(dict)
     stop_test_signal = Signal()
     
-    # SINAIS DE CONTROLE EM TEMPO REAL
-    update_kp_signal = Signal(float) 
-    update_ki_signal = Signal(float)
-    update_kd_signal = Signal(float)
-    update_psu_voltage_signal = Signal(float) # Setpoint Voltagem
-    update_oven_setpoint = Signal(float)
-
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Supervisor de Teste de Envelhecimento - TCC")
-        self.setGeometry(100, 100, 1200, 800)
+        self.setWindowTitle("Sistema Integrado de Envelhecimento (Burn-in)")
+        self.resize(1200, 850)
         
-        self.threads = {}
-        self.workers = {}
+        self.router = UARTRouter()
         
-        self._create_widgets()
-        self._create_layout()
-        self._start_device_workers()
-        self._start_test_sequencer()
-        self._connect_signals()
+        self._init_ui()
+        
+        # Conexões do Router
+        self.router.connection_status.connect(self.log_message)
+        self.router.log_message.connect(self.log_message)
+        self.router.log_text_received.connect(self.log_message)
+        
+        # Inicia Hardware
+        self.router.connect_serial()
+        self._start_workers()
+        self._start_sequencer()
 
-    def _create_widgets(self):
-        """Cria todos os widgets da UI."""
+    def _init_ui(self):
+        self.tabs = QTabWidget()
         
-        # --- Grupo 1: Controle do Teste ---
-        self.test_control_group = QGroupBox("Controle do Teste")
-        self.test_name_input = QLineEdit("Teste_001")
+        # --- ABA 1: MONITORAMENTO (A "Outra IHM") ---
+        self.tab_monitor = QWidget()
+        self._setup_monitor_tab()
+        self.tabs.addTab(self.tab_monitor, "Monitoramento & Gráficos")
         
-        # Botão de Toggle (Ligar/Desligar)
-        self.toggle_test_button = QPushButton("INICIAR TESTE")
-        self.toggle_test_button.setCheckable(True) # Define como botão de toggle
-        self.toggle_test_button.setStyleSheet("background-color: green; color: white; font-weight: bold;")
-
-        # --- Grupo 2: Parâmetros do Forno (PID) ---
-        self.oven_control_group = QGroupBox("Parâmetros do Forno (Arduino)")
-        self.oven_setpoint_input = QDoubleSpinBox()
-        self.oven_setpoint_input.setRange(25.0, 200.0)
-        self.oven_setpoint_input.setValue(100.0)
-        self.oven_setpoint_input.setToolTip("Altere o valor e pressione ENTER para atualizar em tempo real.")
+        # --- ABA 2: ENGENHARIA (Controles Manuais) ---
+        self.tab_config = QWidget()
+        self._setup_config_tab()
+        self.tabs.addTab(self.tab_config, "Engenharia & Configuração")
         
-        self.oven_kp_input = QDoubleSpinBox()
-        self.oven_kp_input.setDecimals(4)
-        self.oven_kp_input.setValue(config.DEFAULT_KP)
-        
-        self.oven_ki_input = QDoubleSpinBox()
-        self.oven_ki_input.setDecimals(5) # Aumentando precisão para o novo Ki
-        self.oven_ki_input.setValue(config.DEFAULT_KI)
-        
-        self.oven_kd_input = QDoubleSpinBox()
-        self.oven_kd_input.setDecimals(4)
-        self.oven_kd_input.setValue(config.DEFAULT_KD)
-        
-        self.update_pid_button = QPushButton("Atualizar Ganhos PID")
-        
-        # --- Grupo 3: Parâmetros da Fonte (PSU) + Novo Widget Slack ---
-        self.psu_control_group = QGroupBox("Parâmetros da Fonte e DUT") # Nome ajustado
-        self.psu_setpoint_input = QDoubleSpinBox()
-        self.psu_setpoint_input.setRange(0.0, 5.0)
-        self.psu_setpoint_input.setValue(1.0)
-        self.psu_setpoint_input.setSingleStep(0.1)
-        self.psu_setpoint_input.setToolTip("Altere o valor e pressione ENTER para atualizar em tempo real.")
-
-        # NOVO WIDGET: Exibição do Slack
-        self.slack_label = QLabel("Slack: 0 Inc.")
-
-        # --- Configurações de Fonte ---
-        # Vamos manter o tamanho grande para visibilidade (16),
-        # mas podemos optar por um peso de fonte ligeiramente menor (se disponível)
-        # ou manter o Bold se for essencial para o destaque.
-        slack_font = self.slack_label.font()
-        slack_font.setPointSize(14)  # Um pouco menor para sobriedade
-        slack_font.setWeight(QFont.DemiBold) # Se for QFont no Qt
-        # No PySide/PyQt, setBold(True) é equivalente a setWeight(QFont.Bold).
-        # Vamos manter o setBold(True) para garantir o destaque de forma padrão.
-        slack_font.setBold(True)
-        self.slack_label.setFont(slack_font)
-
-        # --- Configurações de Estilo (CSS) ---
-        # Cores e Borda para Formalidade:
-        # 1. 'lightgray' ou 'silver': Cor mais neutra que o branco puro.
-        # 2. Borda sutil: Adiciona definição sem ser agressiva.
-        # 3. Background/Padding: Mantemos um padding limpo.
-        self.slack_label.setStyleSheet("""
-            QLabel {
-                color: #C0C0C0;          /* Cor prateada/cinza claro para sobriedade */
-                background-color: #333333; /* Fundo cinza escuro ou preto (se estiver em um tema escuro) */
-                border: 1px solid #555555; /* Borda sutil para delimitar o widget */
-                border-radius: 4px;      /* Cantos levemente arredondados */
-                padding: 5px 8px;        /* Ajuste de padding */
-            }
-        """)
-
-
-        # --- Grupo 4: Gráfico ---
-        self.plot_widget = PlotWidget() # Instancia o widget do gráfico principal
-        self.aux_plot_widget = AuxPlotWidget() # Instancia o widget do gráfico auxiliar (V e A)
-
-        # --- Grupo 5: Log de Eventos ---
-        self.log_group = QGroupBox("Log de Eventos")
-        self.log_text_edit = QTextEdit()
-        self.log_text_edit.setReadOnly(True)
-
-    def _create_layout(self):
-        """Organiza os widgets na janela."""
-        
+        # Layout Principal
         main_layout = QVBoxLayout()
-        controls_layout = QHBoxLayout()
+        main_layout.addWidget(self.tabs)
         
-        # Coluna 1: Controle do Teste
-        test_layout = QFormLayout()
-        test_layout.addRow("Nome do Teste:", self.test_name_input)
-        test_layout.addRow(self.toggle_test_button) 
-        
-        self.log_folder_label = QLabel(f"Pasta de Log: {config.LOG_FOLDER}")
-        test_layout.addRow(self.log_folder_label)
-        
-        self.test_control_group.setLayout(test_layout)
-        controls_layout.addWidget(self.test_control_group)
-        
-        # Coluna 2: Parâmetros do Forno
-        oven_layout = QFormLayout()
-        oven_layout.addRow("Setpoint (°C):", self.oven_setpoint_input)
-        oven_layout.addRow("Kp:", self.oven_kp_input)
-        oven_layout.addRow("Ki:", self.oven_ki_input)
-        oven_layout.addRow("Kd:", self.oven_kd_input)
-        oven_layout.addRow(self.update_pid_button)
-        self.oven_control_group.setLayout(oven_layout)
-        controls_layout.addWidget(self.oven_control_group)
+        # Log Global (Fixo na parte inferior)
+        self.log_box = QTextEdit()
+        self.log_box.setReadOnly(True)
+        self.log_box.setMaximumHeight(120)
+        self.log_box.setPlaceholderText("Logs do sistema...")
+        main_layout.addWidget(self.log_box)
 
-        # Coluna 3: Parâmetros da Fonte + Slack (usando QVBoxLayout para o grupo)
-        psu_group_v_layout = QVBoxLayout()
-        psu_layout = QFormLayout()
-        psu_layout.addRow("Setpoint (V):", self.psu_setpoint_input)
-        
-        psu_group_v_layout.addLayout(psu_layout)
-        psu_group_v_layout.addWidget(self.slack_label) # Adiciona o Slack abaixo do form
-        psu_group_v_layout.addStretch(1) # Empurra o conteúdo para cima
+        container = QWidget()
+        container.setLayout(main_layout)
+        self.setCentralWidget(container)
 
-        self.psu_control_group.setLayout(psu_group_v_layout)
-        controls_layout.addWidget(self.psu_control_group)
+    def _setup_monitor_tab(self):
+        """Recria a interface focada em Gráficos da IHM de Burn-in"""
+        layout = QVBoxLayout(self.tab_monitor)
         
-        # Layout para os gráficos lado a lado
-        plots_layout = QHBoxLayout()
-        plots_layout.addWidget(self.plot_widget, stretch=1)
-        plots_layout.addWidget(self.aux_plot_widget, stretch=1) 
+        # Barra de Controle Superior
+        top_bar = QHBoxLayout()
+        
+        # Controle do Teste
+        self.txt_test_name = QLineEdit("Teste_01")
+        self.txt_test_name.setPlaceholderText("Nome do Teste")
+        self.btn_test = QPushButton("INICIAR EXPERIMENTO")
+        self.btn_test.setCheckable(True)
+        self.btn_test.setMinimumHeight(40)
+        self.btn_test.setStyleSheet("background-color: #2E7D32; color: white; font-weight: bold; font-size: 11pt;")
+        self.btn_test.clicked.connect(self._toggle_test)
+        
+        # Setpoints Rápidos
+        self.sp_input = QDoubleSpinBox()
+        self.sp_input.setRange(20, 150); self.sp_input.setValue(100); self.sp_input.setSuffix(" °C")
+        self.sp_input.setPrefix("Forno: ")
+        
+        self.vcore_monitor = QDoubleSpinBox()
+        self.vcore_monitor.setRange(0, 1.2); self.vcore_monitor.setValue(1.0); self.vcore_monitor.setSuffix(" V")
+        self.vcore_monitor.setPrefix("Vcore: ")
+        
+        # Status Slack (Destaque)
+        self.lbl_slack = QLabel("Slack: ---")
+        self.lbl_slack.setAlignment(Qt.AlignCenter)
+        self.lbl_slack.setStyleSheet("background-color: #333; color: white; font-weight: bold; padding: 5px; border-radius: 4px;")
+        
+        top_bar.addWidget(QLabel("Experimento:"))
+        top_bar.addWidget(self.txt_test_name)
+        top_bar.addWidget(self.sp_input)
+        top_bar.addWidget(self.vcore_monitor)
+        top_bar.addWidget(self.btn_test)
+        top_bar.addSpacing(20)
+        top_bar.addWidget(self.lbl_slack)
+        
+        layout.addLayout(top_bar)
+        
+        # Área dos Gráficos (Splitter Vertical)
+        splitter = QSplitter(Qt.Vertical)
+        
+        self.plot1 = PlotWidget(plot_window_size=200) # Gráfico Térmico
+        self.plot2 = AuxPlotWidget(plot_window_size=200) # Gráfico Elétrico
+        
+        splitter.addWidget(self.plot1)
+        splitter.addWidget(self.plot2)
+        layout.addWidget(splitter)
 
-        main_layout.addLayout(controls_layout)
-        main_layout.addLayout(plots_layout, stretch=1) 
+    def _setup_config_tab(self):
+        """Controles técnicos do Arduino, STM32 e Console Manual"""
+        layout = QHBoxLayout(self.tab_config)
         
-        log_layout = QVBoxLayout()
-        log_layout.addWidget(self.log_text_edit)
-        self.log_group.setLayout(log_layout)
-        self.log_group.setFixedHeight(150)
-        main_layout.addWidget(self.log_group)
+        # Coluna 1: Controle PID (Arduino)
+        grp_pid = QGroupBox("Parâmetros PID (Forno)")
+        form_pid = QFormLayout()
+        self.kp_input = QDoubleSpinBox(); self.kp_input.setValue(config.DEFAULT_KP)
+        self.ki_input = QDoubleSpinBox(); self.ki_input.setValue(config.DEFAULT_KI); self.ki_input.setDecimals(5)
+        self.kd_input = QDoubleSpinBox(); self.kd_input.setValue(config.DEFAULT_KD)
+        self.btn_update_pid = QPushButton("Enviar PID para Arduino")
+        self.btn_update_pid.clicked.connect(self._update_pid)
+        
+        form_pid.addRow("Proporcional (Kp):", self.kp_input)
+        form_pid.addRow("Integral (Ki):", self.ki_input)
+        form_pid.addRow("Derivativo (Kd):", self.kd_input)
+        form_pid.addRow(self.btn_update_pid)
+        grp_pid.setLayout(form_pid)
+        
+        # Coluna 2: Controle STM32 (Display/Vcore Manual)
+        grp_stm = QGroupBox("Controle STM32 (Fonte/Display)")
+        v_stm = QVBoxLayout()
+        
+        h_vcore = QHBoxLayout()
+        self.vcore_manual_spin = QDoubleSpinBox(); self.vcore_manual_spin.setRange(0, 1.8); self.vcore_manual_spin.setValue(1.0)
+        btn_set_vcore = QPushButton("Aplicar Tensão"); btn_set_vcore.clicked.connect(lambda: self.w_stm.set_voltage(self.vcore_manual_spin.value()))
+        h_vcore.addWidget(QLabel("Vcore:")); h_vcore.addWidget(self.vcore_manual_spin); h_vcore.addWidget(btn_set_vcore)
+        
+        h_page = QHBoxLayout()
+        self.page_combo = QComboBox(); self.page_combo.addItems([f"Página {i}" for i in range(1, 7)])
+        btn_page = QPushButton("Mudar Página OLED"); btn_page.clicked.connect(lambda: self.w_stm.set_page(self.page_combo.currentIndex()+1))
+        h_page.addWidget(self.page_combo); h_page.addWidget(btn_page)
+        
+        btn_reset = QPushButton("HARD RESET SYSTEM"); btn_reset.setStyleSheet("background-color: #800; color: white;")
+        btn_reset.clicked.connect(lambda: self.w_stm.send_manual_message("reset"))
+        
+        v_stm.addLayout(h_vcore)
+        v_stm.addLayout(h_page)
+        v_stm.addStretch()
+        v_stm.addWidget(btn_reset)
+        grp_stm.setLayout(v_stm)
+        
+        # Coluna 3: Console Manual
+        grp_manual = QGroupBox("Terminal Manual")
+        v_man = QVBoxLayout()
+        self.txt_manual = QLineEdit()
+        self.txt_manual.setPlaceholderText("Comando raw...")
+        self.cmb_target = QComboBox(); self.cmb_target.addItems(["STM32 (Protocolo)", "CROC (Raw)"])
+        self.btn_send_manual = QPushButton("Enviar Comando")
+        self.btn_send_manual.clicked.connect(self._manual_send)
+        
+        v_man.addWidget(QLabel("Destino:"))
+        v_man.addWidget(self.cmb_target)
+        v_man.addWidget(QLabel("Payload:"))
+        v_man.addWidget(self.txt_manual)
+        v_man.addWidget(self.btn_send_manual)
+        v_man.addStretch()
+        grp_manual.setLayout(v_man)
+        
+        layout.addWidget(grp_pid)
+        layout.addWidget(grp_stm)
+        layout.addWidget(grp_manual)
 
-        central_widget = QWidget()
-        central_widget.setLayout(main_layout)
-        self.setCentralWidget(central_widget)
+    # --- Lógica de Negócio ---
 
-    def _start_worker(self, name, worker_class):
-        """Função genérica para iniciar um worker em um QThread."""
-        thread = QThread()
-        if isinstance(worker_class, QObject):
-             worker = worker_class
-        else:
-             worker = worker_class()
-        
-        self.threads[name] = thread
-        self.workers[name] = worker
-        
-        worker.moveToThread(thread)
-        worker.log_message.connect(self.log_message)
-        
-        thread.start()
-        return worker
+    def _start_workers(self):
+        # Arduino
+        self.w_ard = ArduinoWorker()
+        self.t_ard = QThread()
+        self.w_ard.moveToThread(self.t_ard)
+        self.w_ard.log_message.connect(self.log_message)
+        self.t_ard.start(); self.w_ard.start()
 
-    def _start_device_workers(self):
-        """Inicia os workers de hardware (PySerial) e conecta seus sinais de controle."""
-        
-        # Inicia Arduino Worker
-        arduino_worker = self._start_worker("arduino", ArduinoWorker)
-        self.start_arduino_signal.connect(arduino_worker.start)
-        self.stop_arduino_signal.connect(arduino_worker.stop)
-        self.update_kp_signal.connect(arduino_worker.update_kp) 
-        self.update_ki_signal.connect(arduino_worker.update_ki)
-        self.update_kd_signal.connect(arduino_worker.update_kd)
-        self.update_oven_setpoint.connect(arduino_worker.set_target_setpoint)
-        self.start_arduino_signal.emit()
-        
-        # Inicia PSU Worker
-        psu_worker = self._start_worker("psu", PSUWorker)
-        self.start_psu_signal.connect(psu_worker.start)
-        self.stop_psu_signal.connect(psu_worker.stop)
-        self.update_psu_voltage_signal.connect(psu_worker.set_voltage)
-        self.start_psu_signal.emit()
+        # STM
+        self.w_stm = STMWorker(self.router)
+        self.t_stm = QThread()
+        self.w_stm.moveToThread(self.t_stm)
+        self.w_stm.log_message.connect(self.log_message)
+        self.t_stm.start(); self.w_stm.start()
 
-        # Inicia DUT Worker
-        dut_worker = self._start_worker("dut", DUTWorker)
-        self.start_dut_signal.connect(dut_worker.start)
-        self.stop_dut_signal.connect(dut_worker.stop)
-        self.start_dut_signal.emit()
+        # CROC
+        self.w_croc = CROCWorker(self.router)
+        self.t_croc = QThread()
+        self.w_croc.moveToThread(self.t_croc)
+        self.w_croc.log_message.connect(self.log_message)
+        self.t_croc.start(); self.w_croc.start()
 
-    def _start_test_sequencer(self):
-        """Inicia o worker "mestre" que gerencia o teste."""
+    def _start_sequencer(self):
+        self.seq = TestSequencer(self.w_ard, self.w_stm, self.w_croc)
+        self.t_seq = QThread()
+        self.seq.moveToThread(self.t_seq)
         
-        sequencer_worker = TestSequencer(
-            self.workers["arduino"], 
-            self.workers["psu"], 
-            self.workers["dut"]
-        )
-        self._start_worker("sequencer", sequencer_worker)
+        self.start_test_signal.connect(self.seq.start_test)
+        self.stop_test_signal.connect(self.seq.stop_test)
         
-        self.start_test_signal.connect(sequencer_worker.start_test)
-        self.stop_test_signal.connect(sequencer_worker.stop_test)
+        # Conecta Plots e Slack
+        self.seq.plot_data_update.connect(self.plot1.update_plot_data)
+        self.seq.plot_data_update.connect(self.plot2.update_plot_data)
+        self.seq.plot_data_update.connect(self.update_slack_display)
         
-        # Conecta o sinal de atualização de dados a AMBOS os gráficos
-        sequencer_worker.plot_data_update.connect(self.plot_widget.update_plot_data)
-        sequencer_worker.plot_data_update.connect(self.aux_plot_widget.update_plot_data)
-        
-        # NOVO: Conecta o sinal de atualização de dados ao novo slot de Slack
-        sequencer_worker.plot_data_update.connect(self.update_slack_label) 
-        
-        sequencer_worker.test_finished.connect(self.on_test_finished)
-
-
-    def _connect_signals(self):
-        """Conecta os botões da HMI aos seus slots, incluindo os de controle em tempo real."""
-        
-        # Conecta o novo botão de toggle
-        self.toggle_test_button.clicked.connect(self.on_toggle_test)
-        
-        # Conecta botões/inputs de atualização de parâmetros em tempo real
-        self.update_pid_button.clicked.connect(self.on_update_pid)
-        self.psu_setpoint_input.editingFinished.connect(self.on_update_psu_voltage)
-        self.oven_setpoint_input.editingFinished.connect(self.on_update_oven_setpoint)
-        
-    # --- Slots da HMI (Ações do Usuário) ---
-    
-    @Slot(str)
-    def log_message(self, message):
-        """Adiciona uma mensagem à caixa de log da HMI."""
-        self.log_text_edit.append(f"[{time.strftime('%H:%M:%S')}] {message}")
+        self.seq.test_finished.connect(self.on_finished)
+        self.seq.log_message.connect(self.log_message)
+        self.t_seq.start()
 
     @Slot(dict)
-    def update_slack_label(self, data_row):
-        """Atualiza a label de Slack em tempo real."""
-        slack_value = data_row.get('dut_slack', 0)
-        self.slack_label.setText(f"Slack: {slack_value} Inc.")
-        if slack_value < 20:
-             self.slack_label.setStyleSheet("""
-            QLabel {
-                color: red;          /* Cor prateada/cinza claro para sobriedade */
-                background-color: #333333; /* Fundo cinza escuro ou preto (se estiver em um tema escuro) */
-                border: 1px solid #555555; /* Borda sutil para delimitar o widget */
-                border-radius: 4px;      /* Cantos levemente arredondados */
-                padding: 5px 8px;        /* Ajuste de padding */
-            }
-        """)
-        else:
-             self.slack_label.setStyleSheet("""
-            QLabel {
-                color: #C0C0C0;          /* Cor prateada/cinza claro para sobriedade */
-                background-color: #333333; /* Fundo cinza escuro ou preto (se estiver em um tema escuro) */
-                border: 1px solid #555555; /* Borda sutil para delimitar o widget */
-                border-radius: 4px;      /* Cantos levemente arredondados */
-                padding: 5px 8px;        /* Ajuste de padding */
-            }
-            """)
-
+    def update_slack_display(self, d):
+        s = d.get('dut_slack', 0)
+        self.lbl_slack.setText(f"Slack Crítico: {s}")
+        # Lógica visual de alerta
+        if s < 0: color = "#D32F2F" # Vermelho forte (violação)
+        elif s < 20: color = "#F57C00" # Laranja (alerta)
+        else: color = "#388E3C" # Verde (ok)
+        self.lbl_slack.setStyleSheet(f"background-color: {color}; color: white; font-weight: bold; padding: 5px; border-radius: 4px;")
 
     @Slot(bool)
-    def on_toggle_test(self, checked):
-        """Chamado pelo botão de toggle INICIAR/PARAR."""
-        
+    def _toggle_test(self, checked):
         if checked:
-            # Estado "Ligado" -> INICIAR o teste
-            self.log_message("Coletando configurações do teste...")
-            
-            settings = {
-                'test_name': self.test_name_input.text(),
-                'oven_setpoint': self.oven_setpoint_input.value(),
-                'psu_voltage': self.psu_setpoint_input.value(),
-                'kp': self.oven_kp_input.value(),
-                'ki': self.oven_ki_input.value(),
-                'kd': self.oven_kd_input.value()
+            # Configuração do Experimento
+            cfg = {
+                'test_name': self.txt_test_name.text(),
+                'oven_setpoint': self.sp_input.value(),
+                'psu_voltage': self.vcore_monitor.value(), # Usa o valor da aba de monitoramento
+                'kp': self.kp_input.value(), 
+                'ki': self.ki_input.value(), 
+                'kd': self.kd_input.value()
             }
+            self.plot1.clear_plot(); self.plot2.clear_plot()
+            self.start_test_signal.emit(cfg)
+            self.btn_test.setText("PARAR EXPERIMENTO")
+            self.btn_test.setStyleSheet("background-color: #C62828; color: white; font-weight: bold; font-size: 11pt;")
             
-            self.plot_widget.clear_plot()
-            self.aux_plot_widget.clear_plot() 
-            self.update_slack_label({'dut_slack': 0}) # Reseta a label
-            self.start_test_signal.emit(settings)
-            
-            # Atualiza UI para o estado "Rodando"
-            self.toggle_test_button.setText("PARAR TESTE")
-            self.toggle_test_button.setStyleSheet("background-color: red; color: white; font-weight: bold;")
-            self.oven_setpoint_input.setEnabled(True)
-            self.test_name_input.setEnabled(False)
-            self.psu_setpoint_input.setEnabled(True)
-            self.oven_kp_input.setEnabled(False)
-            self.oven_ki_input.setEnabled(False)
-            self.oven_kd_input.setEnabled(False)
-            self.update_pid_button.setEnabled(False)
-            
+            # Trava controles críticos
+            self.vcore_monitor.setEnabled(False)
         else:
-            # Estado "Desligado" -> PARAR o teste
             self.stop_test_signal.emit()
-            self.on_test_finished() 
 
     @Slot()
-    def on_update_pid(self):
-        """Chamado pelo botão 'Atualizar Ganhos PID'."""
-        kp = self.oven_kp_input.value()
-        ki = self.oven_ki_input.value()
-        kd = self.oven_kd_input.value()
-        
-        self.log_message(f"Enviando novos ganhos PID em tempo real: Kp={kp}, Ki={ki}, Kd={kd}")
-        
-        self.update_kp_signal.emit(kp)
-        time.sleep(0.05) 
-        self.update_ki_signal.emit(ki)
-        time.sleep(0.05)
-        self.update_kd_signal.emit(kd)
+    def on_finished(self):
+        self.btn_test.setChecked(False)
+        self.btn_test.setText("INICIAR EXPERIMENTO")
+        self.btn_test.setStyleSheet("background-color: #2E7D32; color: white; font-weight: bold; font-size: 11pt;")
+        self.vcore_monitor.setEnabled(True)
 
     @Slot()
-    def on_update_psu_voltage(self):
-        """Chamado quando o campo do setpoint da PSU perde o foco (editingFinished)."""
-        voltage = self.psu_setpoint_input.value()
-        
-        self.log_message(f"Enviando novo setpoint de tensão da PSU em tempo real: {voltage}V")
-        self.update_psu_voltage_signal.emit(voltage)
-    
-    @Slot()
-    def on_update_oven_setpoint(self):
-        """Chamado quando o campo do setpoint da PSU perde o foco (editingFinished)."""
-        setpoint = self.oven_setpoint_input.value()
-        
-        self.log_message(f"Enviando novo setpoint de temperatura do Forno em tempo real: {setpoint} graus Celsius")
-        self.update_oven_setpoint.emit(setpoint)
+    def _manual_send(self):
+        cmd = self.txt_manual.text()
+        if "STM32" in self.cmb_target.currentText():
+            self.w_stm.send_manual_message(cmd)
+        else:
+            self.w_croc.send_manual_command(cmd)
 
     @Slot()
-    def on_test_finished(self):
-        """Slot chamado pelo Sequencer quando o teste é finalizado ou parado."""
-        
-        # Reseta o botão de toggle para o estado "INICIAR"
-        self.toggle_test_button.setText("INICIAR TESTE")
-        self.toggle_test_button.setStyleSheet("background-color: green; color: white; font-weight: bold;")
-        self.toggle_test_button.setChecked(False) # Força o estado "desligado"
-        
-        # Destrava os controles
-        self.test_control_group.setEnabled(True)
-        self.oven_setpoint_input.setEnabled(True)
-        self.psu_setpoint_input.setEnabled(True)
-        self.update_pid_button.setEnabled(True)
-        self.oven_kp_input.setEnabled(True)
-        self.oven_ki_input.setEnabled(True)
-        self.oven_kd_input.setEnabled(True)
-        self.test_name_input.setEnabled(True)
-        
-    def closeEvent(self, event):
-        """Garante que todos os threads sejam fechados ao sair."""
-        self.log_message("Fechando todos os threads e dispositivos...")
-        
+    def _update_pid(self):
+        self.w_ard.update_kp(self.kp_input.value())
+        self.w_ard.update_ki(self.ki_input.value())
+        self.w_ard.update_kd(self.kd_input.value())
+        self.log_message.emit("PID Atualizado Manualmente.")
+
+    @Slot(str)
+    def log_message(self, msg):
+        self.log_box.append(f"[{time.strftime('%H:%M:%S')}] {msg}")
+
+    def closeEvent(self, e):
         self.stop_test_signal.emit()
-        self.stop_arduino_signal.emit()
-        self.stop_psu_signal.emit()
-        self.stop_dut_signal.emit()
-        
-        for name, thread in self.threads.items():
-            if thread.isRunning():
-                thread.quit()
-                thread.wait(500)
-                
-        event.accept()
+        self.router.disconnect_serial()
+        self.w_ard.stop(); self.w_stm.stop(); self.w_croc.stop()
+        super().closeEvent(e)
