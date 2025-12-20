@@ -32,6 +32,17 @@ FUNC_STR = {
 CRC_ENDIAN = "little"  # ordem dos 2 bytes de CRC no fio
 LEN_ENDIAN = "big"     # ordem dos 2 bytes do campo de tamanho
 
+AGING_PKT_LEN = 6  # 1 (Header) + 2 (Temp) + 2 (Vcc) + 1 (Alarm)
+
+# Fatores de Conversão Xilinx UltraScale+ (UG580)
+def raw_to_temp(raw_val: int) -> float:
+    # Transfer function: Temp = (ADC * 501.3743 / 65536) - 273.6777
+    return (raw_val * 501.3743 / 65536.0) - 273.6777
+
+def raw_to_vcc(raw_val: int) -> float:
+    # Transfer function: Voltage = (ADC * 3.0 / 65536)
+    return (raw_val * 3.0 / 65536.0)
+
 # --------- CRC16/Modbus ---------
 def compute_crc16_modbus(data: bytes) -> int:
     crc = 0xFFFF

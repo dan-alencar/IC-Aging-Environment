@@ -1,5 +1,5 @@
 namespace eval ::optrace {
-  variable script "/home/dan-alencar/Documents/GitHub/CROC-TU_Graz/fpga-aging-project/fpga_aging_build/fpga_aging_build.runs/impl_1/croc_xilinx.tcl"
+  variable script "/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/fpga-aging-project/fpga_aging_build/fpga_aging_build.runs/impl_1/croc_xilinx.tcl"
   variable category "vivado_impl"
 }
 
@@ -119,17 +119,17 @@ OPTRACE "create in-memory project" START { }
   set_param project.singleFileAddWarning.threshold 0
 OPTRACE "create in-memory project" END { }
 OPTRACE "set parameters" START { }
-  set_property webtalk.parent_dir /home/dan-alencar/Documents/GitHub/CROC-TU_Graz/fpga-aging-project/fpga_aging_build/fpga_aging_build.cache/wt [current_project]
-  set_property parent.project_path /home/dan-alencar/Documents/GitHub/CROC-TU_Graz/fpga-aging-project/fpga_aging_build/fpga_aging_build.xpr [current_project]
-  set_property ip_output_repo /home/dan-alencar/Documents/GitHub/CROC-TU_Graz/fpga-aging-project/fpga_aging_build/fpga_aging_build.cache/ip [current_project]
+  set_property webtalk.parent_dir /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/fpga-aging-project/fpga_aging_build/fpga_aging_build.cache/wt [current_project]
+  set_property parent.project_path /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/fpga-aging-project/fpga_aging_build/fpga_aging_build.xpr [current_project]
+  set_property ip_output_repo /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/fpga-aging-project/fpga_aging_build/fpga_aging_build.cache/ip [current_project]
   set_property ip_cache_permissions {read write} [current_project]
   set_property XPM_LIBRARIES {XPM_CDC XPM_MEMORY} [current_project]
 OPTRACE "set parameters" END { }
 OPTRACE "add files" START { }
-  add_files -quiet /home/dan-alencar/Documents/GitHub/CROC-TU_Graz/fpga-aging-project/fpga_aging_build/fpga_aging_build.runs/synth_1/croc_xilinx.dcp
-  read_ip -quiet /home/dan-alencar/Documents/GitHub/CROC-TU_Graz/fpga-aging-project/fpga_aging_build/fpga_aging_build.srcs/sources_1/ip/clk_wiz/clk_wiz.xci
+  add_files -quiet /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/fpga-aging-project/fpga_aging_build/fpga_aging_build.runs/synth_1/croc_xilinx.dcp
+  read_ip -quiet /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/fpga-aging-project/fpga_aging_build/fpga_aging_build.srcs/sources_1/ip/clk_wiz/clk_wiz.xci
 OPTRACE "read constraints: implementation" START { }
-  read_xdc /home/dan-alencar/Documents/GitHub/CROC-TU_Graz/fpga-aging-project/sources/constraints/fpga_aging_constraints.xdc
+  read_xdc /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/fpga-aging-project/sources/constraints/fpga_aging_constraints.xdc
 OPTRACE "read constraints: implementation" END { }
 OPTRACE "read constraints: implementation_pre" START { }
 OPTRACE "read constraints: implementation_pre" END { }

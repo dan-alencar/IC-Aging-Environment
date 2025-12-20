@@ -154,51 +154,87 @@ module croc_xilinx import croc_pkg::*; #(
   end 
 
 
-logic  jtag_tck_i;
-logic  jtag_tms_i;
-logic  jtag_tdi_i;
-logic  jtag_tdo_o;
-assign jtag_tck_i   = 1'b0;  
-assign jtag_tdi_i   = 1'b0;   
-assign jtag_tms_i   = 1'b0;  
-
-
-// Sinais internos
-wire w_router_to_croc; 
-wire w_router_to_stm;  
-wire soc_tx_signal;    // TX saindo do CROC
-wire w_heartbeat;
-wire w_wd_reset_n;     // Reset vindo do Watchdog
-
-// Conexões
-assign w_heartbeat = vio_gpio_o[0]; // Bit 0 do GPIO do CROC usado como Heartbeat
-assign mcu_usart1_rx = w_router_to_stm; // FPGA manda para STM RX
-
-// Instância do Router
-uart_router #(
-  .CLK_FREQ(20000000), 
-  .BAUD_RATE(125000),
-  .WATCHDOG_MS(1000)
-) u_router (
-  .clk             ( soc_clk         ),
-  .rst_n           ( rst_n           ),
-  
-  // PC Interface
-  .uart_rx_phys    ( fpga_uart_rx    ), 
-  .uart_tx_phys    ( fpga_uart_tx    ), 
-  
-  // CROC Interface
-  .uart_tx_to_croc ( w_router_to_croc), 
-  .uart_tx_from_croc( soc_tx_signal  ), 
-  
-  // STM32 Interface
-  .uart_tx_to_stm  ( w_router_to_stm ), 
-  .uart_tx_from_stm( mcu_usart1_tx   ), 
-  
-  // Segurança
-  .heartbeat_pin   ( w_heartbeat     ),
-  .safe_rst_n      ( w_wd_reset_n    ) 
-);
+    logic  jtag_tck_i;
+    logic  jtag_tms_i;
+    logic  jtag_tdi_i;
+    logic  jtag_tdo_o;
+    assign jtag_tck_i   = 1'b0;  
+    assign jtag_tdi_i   = 1'b0;   
+    assign jtag_tms_i   = 1'b0;  
+    
+    
+    logic aging_tx_line;
+    logic aging_active;
+    
+    // Sensor de Slack (Exemplo instanciado)
+    logic sensor_alarm;
+    //modern_sensible sensible_inst (
+    //    .sclk(sys_clk), .psclk(sys_clk), .in_sensor(1'b1), 
+    //    .reset(!rst_n), .clk_en(1'b1), .alarm(sensor_alarm), .ff1_out()
+    //);
+    
+    wire soc_tx_signal;    // TX saindo do CROC
+    
+    sysmon_monitor #(
+      .CLK_FREQ (20000000), // <--- CONFIRA SEU CLOCK REAL
+      .BAUD_RATE(115200)
+    ) i_sysmon_monitor (
+      .clk        (sys_clk),
+      .rst_n      (rst_n),
+      .aging_alarm(sensor_alarm),
+      .tx_out     (aging_tx_line),
+      .tx_active  (aging_active)
+    );
+    
+    // ===========================================================================
+    // ARBITRAGEM DE UART (CROC vs MONITOR)
+    // ===========================================================================
+    logic muxed_tx_to_router;
+    
+    uart_arbiter i_arbiter (
+      .clk           (sys_clk),
+      .rst_n         (rst_n),
+      .tx_croc       (soc_tx_signal),   // Vindo do CROC
+      .tx_monitor    (aging_tx_line),   // Vindo do Monitor
+      .monitor_active(aging_active),
+      .tx_combined   (muxed_tx_to_router)
+    );
+    
+    // Sinais internos
+    wire w_router_to_croc; 
+    wire w_router_to_stm;  
+    wire w_heartbeat;
+    wire w_wd_reset_n;     // Reset vindo do Watchdog
+    
+    // Conexões
+    assign w_heartbeat = vio_gpio_o[0]; // Bit 0 do GPIO do CROC usado como Heartbeat
+    assign mcu_usart1_rx = w_router_to_stm; // FPGA manda para STM RX
+    
+    // Instância do Router
+    uart_router #(
+      .CLK_FREQ(20000000), 
+      .BAUD_RATE(125000),
+      .WATCHDOG_MS(1000)
+    ) u_router (
+      .clk             ( soc_clk         ),
+      .rst_n           ( rst_n           ),
+      
+      // PC Interface
+      .uart_rx_phys    ( fpga_uart_rx    ), 
+      .uart_tx_phys    ( fpga_uart_tx    ), 
+      
+      // CROC Interface
+      .uart_tx_to_croc ( w_router_to_croc), 
+      .uart_tx_from_croc( soc_tx_signal  ), 
+      
+      // STM32 Interface
+      .uart_tx_to_stm  ( w_router_to_stm ), 
+      .uart_tx_from_stm( mcu_usart1_tx   ), 
+      
+      // Segurança
+      .heartbeat_pin   ( w_heartbeat     ),
+      .safe_rst_n      ( w_wd_reset_n    ) 
+    );
 
   //////////////////
   // Cheshire SoC //

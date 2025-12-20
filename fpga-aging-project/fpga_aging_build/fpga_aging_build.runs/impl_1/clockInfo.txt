@@ -1,6 +1,6 @@
 -------------------------------------
 | Tool Version : Vivado v.2025.2
-| Date         : Wed Dec 17 22:01:44 2025
+| Date         : Fri Dec 19 23:35:39 2025
 | Host         : dan-alencar
 | Design       : design_1
 | Device       : xcau15p-ffvb676-1-I-

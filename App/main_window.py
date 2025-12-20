@@ -180,26 +180,73 @@ class MainWindow(QMainWindow):
     # --- Lógica de Negócio ---
 
     def _start_workers(self):
-        # Arduino
+        # --- Arduino Worker ---
         self.w_ard = ArduinoWorker()
         self.t_ard = QThread()
+        # IMPORTANTE: Garante que a thread morra se o app principal morrer
+        self.t_ard.setTerminationEnabled(True) 
         self.w_ard.moveToThread(self.t_ard)
         self.w_ard.log_message.connect(self.log_message)
-        self.t_ard.start(); self.w_ard.start()
+        self.t_ard.start()
+        self.w_ard.start() # Inicia loop lógico
 
-        # STM
+        # --- STM Worker ---
         self.w_stm = STMWorker(self.router)
         self.t_stm = QThread()
+        self.t_stm.setTerminationEnabled(True)
         self.w_stm.moveToThread(self.t_stm)
         self.w_stm.log_message.connect(self.log_message)
-        self.t_stm.start(); self.w_stm.start()
+        self.t_stm.start()
+        self.w_stm.start()
 
-        # CROC
+        # --- CROC Worker ---
         self.w_croc = CROCWorker(self.router)
         self.t_croc = QThread()
+        self.t_croc.setTerminationEnabled(True)
         self.w_croc.moveToThread(self.t_croc)
         self.w_croc.log_message.connect(self.log_message)
-        self.t_croc.start(); self.w_croc.start()
+        self.t_croc.start()
+        self.w_croc.start()
+
+    def closeEvent(self, event):
+        """Evento disparado ao tentar fechar a janela."""
+        self.log_message("Encerrando sistema e parando threads...")
+        
+        # 1. Para o sequenciador (Logger e Updates automáticos)
+        if hasattr(self, 'seq'):
+            self.stop_test_signal.emit()
+            if hasattr(self, 't_seq') and self.t_seq.isRunning():
+                self.t_seq.quit()
+                self.t_seq.wait(100) # Espera breve
+
+        # 2. Desconecta o Router (Fecha porta Serial Física do ESP32)
+        # Ao fechar a porta, qualquer thread bloqueada em 'serial.read()' é liberada com erro.
+        if hasattr(self, 'router'):
+            self.router.disconnect_serial()
+
+        # 3. Encerra Workers e Threads forçadamente se necessário
+        workers_threads = [
+            (self.w_ard, self.t_ard), 
+            (self.w_stm, self.t_stm), 
+            (self.w_croc, self.t_croc)
+        ]
+
+        for worker, thread in workers_threads:
+            # Tenta parar logicamente
+            if hasattr(worker, 'stop'):
+                worker.stop()
+            
+            # Para a QThread
+            if thread.isRunning():
+                thread.quit()
+                # Espera 100ms. Se não fechar (travado em IO), mata forçado.
+                if not thread.wait(100):
+                    # terminate() não é recomendado em produção normal, mas 
+                    # para garantir que o app feche ao clicar no X, é válido aqui.
+                    thread.terminate() 
+
+        event.accept() # Confirma o fechamento
+        super().closeEvent(event)
 
     def _start_sequencer(self):
         self.seq = TestSequencer(self.w_ard, self.w_stm, self.w_croc)
@@ -275,9 +322,3 @@ class MainWindow(QMainWindow):
     @Slot(str)
     def log_message(self, msg):
         self.log_box.append(f"[{time.strftime('%H:%M:%S')}] {msg}")
-
-    def closeEvent(self, e):
-        self.stop_test_signal.emit()
-        self.router.disconnect_serial()
-        self.w_ard.stop(); self.w_stm.stop(); self.w_croc.stop()
-        super().closeEvent(e)

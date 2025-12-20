@@ -1,4 +1,4 @@
-set_property SRC_FILE_INFO {cfile:/home/dan-alencar/Documents/GitHub/CROC-TU_Graz/fpga-aging-project/sources/constraints/fpga_aging_constraints.xdc rfile:../../../../sources/constraints/fpga_aging_constraints.xdc id:1} [current_design]
+set_property SRC_FILE_INFO {cfile:/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/fpga-aging-project/sources/constraints/fpga_aging_constraints.xdc rfile:../../../../sources/constraints/fpga_aging_constraints.xdc id:1} [current_design]
 set_property src_info {type:XDC file:1 line:6 export:INPUT save:INPUT read:READ} [current_design]
 set_property PACKAGE_PIN AD20 [get_ports sys_clk_p]
 set_property src_info {type:XDC file:1 line:7 export:INPUT save:INPUT read:READ} [current_design]
