@@ -1,108 +1,67 @@
-"""
-Arquivo de Configuração Central (Multiplataforma)
-Gerencia configurações de Portas e Baud Rates via settings.json.
-"""
 import json
 import os
 import platform
 
-# --- Arquivo de Persistência ---
 SETTINGS_FILE = "settings.json"
 
-# --- Variáveis Globais (Atualizadas pelo Setup) ---
-ARDUINO_PORT = ""
-PSU_PORT = ""
-DUT_PORT = ""
+# --- Variáveis Globais ---
+ARDUINO_PORT = ""       # Arduino Nano 33 IoT (PID Forno)
+ESP32_PORT = ""         # ESP32 WROOM (Ponte para o Sistema)
 
-# Agora estas variáveis são dinâmicas, mas iniciam com um valor seguro
-ARDUINO_BAUD = 115200
-PSU_BAUD = 9600
-DUT_BAUD = 9600
+# Baudrates (Alinhados com seus firmwares)
+ARDUINO_BAUD = 115200   # PID_Controller.ino usa 115200
+SYSTEM_BAUD = 115200    # esp32wroom_uart-reader.ino usa 125000
 
 # --- Parâmetros de Teste ---
 LOG_FOLDER = os.path.join(os.getcwd(), "test_logs") 
-LOG_INTERVAL_MS = 1000
-DEFAULT_KP = 1.39
+LOG_INTERVAL_MS = 500  
+DEFAULT_KP = 2.78      # Atualizado conforme seu firmware
 DEFAULT_KI = 0.00106
-DEFAULT_KD = 10.45
-DEFAULT_RAMP_RATE_C_PER_SEC = 0.5 
-DEFAULT_OVEN_SAMPLE_TIME_MS = 5000
+DEFAULT_KD = 5.0
 
 def get_default_ports():
-    """Retorna portas padrão baseadas no Sistema Operacional."""
     system = platform.system()
     if system == "Windows":
-        return {"arduino": "COM3", "psu": "COM4", "dut": "COM5"}
+        return {"arduino": "COM3", "esp32": "COM4"}
     elif system == "Linux":
-        return {"arduino": "/dev/ttyUSB0", "psu": "/dev/ttyUSB1", "dut": "/dev/ttyACM0"}
-    return {"arduino": "", "psu": "", "dut": ""}
+        return {"arduino": "/dev/ttyUSB0", "esp32": "/dev/ttyUSB1"}
+    return {"arduino": "", "esp32": ""}
 
 def load_config():
-    """Carrega as configurações (Portas e Bauds) do JSON."""
-    global ARDUINO_PORT, PSU_PORT, DUT_PORT
-    global ARDUINO_BAUD, PSU_BAUD, DUT_BAUD
-    
+    global ARDUINO_PORT, ESP32_PORT, ARDUINO_BAUD, SYSTEM_BAUD
     defaults = get_default_ports()
     
     if os.path.exists(SETTINGS_FILE):
         try:
             with open(SETTINGS_FILE, 'r') as f:
                 data = json.load(f)
-                
-                # Carrega Portas
                 ARDUINO_PORT = data.get("arduino_port", defaults["arduino"])
-                PSU_PORT = data.get("psu_port", defaults["psu"])
-                DUT_PORT = data.get("dut_port", defaults["dut"])
-                
-                # Carrega Bauds (com fallback para os valores padrão originais)
-                ARDUINO_BAUD = int(data.get("arduino_baud", 115200))
-                PSU_BAUD = int(data.get("psu_baud", 9600))
-                DUT_BAUD = int(data.get("dut_baud", 9600))
-                
+                ESP32_PORT = data.get("esp32_port", defaults["esp32"])
         except Exception as e:
-            print(f"Erro ao ler config: {e}. Usando padrões.")
+            print(f"Erro config: {e}")
             _apply_defaults(defaults)
     else:
         _apply_defaults(defaults)
 
 def _apply_defaults(defaults):
-    global ARDUINO_PORT, PSU_PORT, DUT_PORT
-    global ARDUINO_BAUD, PSU_BAUD, DUT_BAUD
+    global ARDUINO_PORT, ESP32_PORT
     ARDUINO_PORT = defaults["arduino"]
-    PSU_PORT = defaults["psu"]
-    DUT_PORT = defaults["dut"]
-    ARDUINO_BAUD = 115200
-    PSU_BAUD = 9600
-    DUT_BAUD = 9600
+    ESP32_PORT = defaults["esp32"]
 
-def save_config(arduino_p, psu_p, dut_p, arduino_b, psu_b, dut_b):
-    """Salva Portas e Bauds no arquivo JSON."""
-    global ARDUINO_PORT, PSU_PORT, DUT_PORT
-    global ARDUINO_BAUD, PSU_BAUD, DUT_BAUD
-    
+def save_config(ard_port, esp_port):
+    global ARDUINO_PORT, ESP32_PORT
     data = {
-        "arduino_port": arduino_p,
-        "psu_port": psu_p,
-        "dut_port": dut_p,
-        "arduino_baud": arduino_b,
-        "psu_baud": psu_b,
-        "dut_baud": dut_b
+        "arduino_port": ard_port,
+        "esp32_port": esp_port
     }
-    
     try:
         with open(SETTINGS_FILE, 'w') as f:
             json.dump(data, f, indent=4)
-        
-        # Atualiza memória
-        ARDUINO_PORT = arduino_p
-        PSU_PORT = psu_p
-        DUT_PORT = dut_p
-        ARDUINO_BAUD = int(arduino_b)
-        PSU_BAUD = int(psu_b)
-        DUT_BAUD = int(dut_b)
+        ARDUINO_PORT = ard_port
+        ESP32_PORT = esp_port
         return True
     except Exception as e:
-        print(f"Erro ao salvar configurações: {e}")
+        print(f"Erro ao salvar: {e}")
         return False
 
 load_config()
