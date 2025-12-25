@@ -1,0 +1,265 @@
+
+*** Running vivado
+    with args -log system_management_wiz_0.vds -m64 -product Vivado -mode batch -messageDb vivado.pb -notrace -source system_management_wiz_0.tcl
+
+
+****** Vivado v2025.2 (64-bit)
+  **** SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
+  **** IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+  **** SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+  **** Start of session at: Tue Dec 23 16:59:27 2025
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source system_management_wiz_0.tcl -notrace
+Command: synth_design -top system_management_wiz_0 -part xcau15p-ffvb676-1-i -incremental_mode off -mode out_of_context
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xcau15p'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xcau15p'
+INFO: [Device 21-403] Loading part xcau15p-ffvb676-1-i
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 9655
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:03 ; elapsed = 00:00:03 . Memory (MB): peak = 2442.113 ; gain = 458.688 ; free physical = 13149 ; free virtual = 19150
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'system_management_wiz_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/system_management_wiz_0/system_management_wiz_0.v:49]
+INFO: [Synth 8-6157] synthesizing module 'system_management_wiz_0_sysmon' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/system_management_wiz_0/system_management_wiz_0_sysmon.v:50]
+INFO: [Synth 8-6157] synthesizing module 'SYSMONE4' [/home/dan-alencar/2025.2/Vivado/scripts/rt/data/unisim_comp.v:165924]
+	Parameter COMMON_N_SOURCE bound to: 16'b1111111111111111 
+	Parameter INIT_40 bound to: 16'b0000000000000000 
+	Parameter INIT_41 bound to: 16'b0010111110010000 
+	Parameter INIT_42 bound to: 16'b0001010000000000 
+	Parameter INIT_43 bound to: 16'b0010000000001111 
+	Parameter INIT_44 bound to: 16'b0000000000000000 
+	Parameter INIT_45 bound to: 16'b1110001000000000 
+	Parameter INIT_46 bound to: 16'b0000000000000000 
+	Parameter INIT_47 bound to: 16'b0000000000000000 
+	Parameter INIT_48 bound to: 16'b0100111100000001 
+	Parameter INIT_49 bound to: 16'b0000000000000000 
+	Parameter INIT_4A bound to: 16'b0000000000000000 
+	Parameter INIT_4B bound to: 16'b0000000000000000 
+	Parameter INIT_4C bound to: 16'b0000000000000000 
+	Parameter INIT_4D bound to: 16'b0000000000000000 
+	Parameter INIT_4E bound to: 16'b0000000000000000 
+	Parameter INIT_4F bound to: 16'b0000000000000000 
+	Parameter INIT_50 bound to: 16'b1011011110010100 
+	Parameter INIT_51 bound to: 16'b0100111010000001 
+	Parameter INIT_52 bound to: 16'b1010000101000111 
+	Parameter INIT_53 bound to: 16'b1100101110100011 
+	Parameter INIT_54 bound to: 16'b1010101100000010 
+	Parameter INIT_55 bound to: 16'b0100100101100011 
+	Parameter INIT_56 bound to: 16'b1001010101010101 
+	Parameter INIT_57 bound to: 16'b1011000000001010 
+	Parameter INIT_58 bound to: 16'b0100111010000001 
+	Parameter INIT_59 bound to: 16'b0100100101100011 
+	Parameter INIT_5A bound to: 16'b0100100101100011 
+	Parameter INIT_5B bound to: 16'b1001101001110100 
+	Parameter INIT_5C bound to: 16'b0100100101100011 
+	Parameter INIT_5D bound to: 16'b0100010100011110 
+	Parameter INIT_5E bound to: 16'b0100010100011110 
+	Parameter INIT_5F bound to: 16'b1001000111101011 
+	Parameter INIT_60 bound to: 16'b0100110100111001 
+	Parameter INIT_61 bound to: 16'b0100110110100111 
+	Parameter INIT_62 bound to: 16'b1001101001110100 
+	Parameter INIT_63 bound to: 16'b1001101001110100 
+	Parameter INIT_68 bound to: 16'b0100110001011110 
+	Parameter INIT_69 bound to: 16'b0100101111110010 
+	Parameter INIT_6A bound to: 16'b1001100010111111 
+	Parameter INIT_6B bound to: 16'b1001100010111111 
+	Parameter INIT_7A bound to: 16'b0000000000000000 
+	Parameter INIT_7B bound to: 16'b0000000000000000 
+	Parameter INIT_7C bound to: 16'b0000000000000000 
+	Parameter INIT_7D bound to: 16'b0000000000000000 
+	Parameter SIM_DEVICE bound to: ULTRASCALE_PLUS - type: string 
+	Parameter SIM_MONITOR_FILE bound to: design.dat - type: string 
+INFO: [Synth 8-6155] done synthesizing module 'SYSMONE4' (0#1) [/home/dan-alencar/2025.2/Vivado/scripts/rt/data/unisim_comp.v:165924]
+INFO: [Synth 8-6155] done synthesizing module 'system_management_wiz_0_sysmon' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/system_management_wiz_0/system_management_wiz_0_sysmon.v:50]
+INFO: [Synth 8-6155] done synthesizing module 'system_management_wiz_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/system_management_wiz_0/system_management_wiz_0.v:49]
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 2527.082 ; gain = 543.656 ; free physical = 13050 ; free virtual = 19054
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 2541.926 ; gain = 558.500 ; free physical = 13050 ; free virtual = 19054
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 2541.926 ; gain = 558.500 ; free physical = 13050 ; free virtual = 19054
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2544.895 ; gain = 0.000 ; free physical = 13050 ; free virtual = 19054
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/system_management_wiz_0/system_management_wiz_0_ooc.xdc] for cell 'inst'
+Finished Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/system_management_wiz_0/system_management_wiz_0_ooc.xdc] for cell 'inst'
+Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/system_management_wiz_0/system_management_wiz_0_board.xdc] for cell 'inst'
+Finished Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/system_management_wiz_0/system_management_wiz_0_board.xdc] for cell 'inst'
+Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/system_management_wiz_0/system_management_wiz_0.xdc] for cell 'inst'
+Finished Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/system_management_wiz_0/system_management_wiz_0.xdc] for cell 'inst'
+INFO: [Project 1-236] Implementation specific constraints were found while reading constraint file [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/system_management_wiz_0/system_management_wiz_0.xdc]. These constraints will be ignored for synthesis but will be used in implementation. Impacted constraints are listed in the file [.Xil/system_management_wiz_0_propImpl.xdc].
+Resolution: To avoid this warning, move constraints listed in [.Xil/system_management_wiz_0_propImpl.xdc] to another XDC file and exclude this new file from synthesis with the used_in_synthesis property (File Properties dialog in GUI) and re-run elaboration/synthesis.
+Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/system_management_wiz_0_synth_1/dont_touch.xdc]
+Finished Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/system_management_wiz_0_synth_1/dont_touch.xdc]
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2590.852 ; gain = 0.000 ; free physical = 13034 ; free virtual = 19043
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2590.887 ; gain = 0.000 ; free physical = 13034 ; free virtual = 19044
+INFO: [Designutils 20-5008] Incremental synthesis strategy off
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 2590.887 ; gain = 607.461 ; free physical = 13014 ; free virtual = 19024
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xcau15p-ffvb676-1-i
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 2598.855 ; gain = 615.430 ; free physical = 13014 ; free virtual = 19024
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 2598.855 ; gain = 615.430 ; free physical = 13014 ; free virtual = 19024
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 2598.855 ; gain = 615.430 ; free physical = 13012 ; free virtual = 19023
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 576 (col length:72)
+BRAMs: 288 (col length: RAMB18 72 RAMB36 36)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:09 ; elapsed = 00:00:09 . Memory (MB): peak = 2598.855 ; gain = 615.430 ; free physical = 13022 ; free virtual = 19025
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:11 ; elapsed = 00:00:11 . Memory (MB): peak = 2886.219 ; gain = 902.793 ; free physical = 12786 ; free virtual = 18825
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:11 ; elapsed = 00:00:11 . Memory (MB): peak = 2886.219 ; gain = 902.793 ; free physical = 12786 ; free virtual = 18825
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:11 ; elapsed = 00:00:11 . Memory (MB): peak = 2896.234 ; gain = 912.809 ; free physical = 12778 ; free virtual = 18817
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:13 ; elapsed = 00:00:13 . Memory (MB): peak = 3083.047 ; gain = 1099.621 ; free physical = 12653 ; free virtual = 18693
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:13 ; elapsed = 00:00:13 . Memory (MB): peak = 3083.047 ; gain = 1099.621 ; free physical = 12653 ; free virtual = 18693
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:13 ; elapsed = 00:00:13 . Memory (MB): peak = 3083.047 ; gain = 1099.621 ; free physical = 12653 ; free virtual = 18693
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:13 ; elapsed = 00:00:13 . Memory (MB): peak = 3083.047 ; gain = 1099.621 ; free physical = 12653 ; free virtual = 18693
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:13 ; elapsed = 00:00:13 . Memory (MB): peak = 3083.047 ; gain = 1099.621 ; free physical = 12653 ; free virtual = 18693
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:13 ; elapsed = 00:00:13 . Memory (MB): peak = 3083.047 ; gain = 1099.621 ; free physical = 12653 ; free virtual = 18693
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+---------+------+
+|      |Cell     |Count |
++------+---------+------+
+|1     |SYSMONE4 |     1|
++------+---------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:13 ; elapsed = 00:00:13 . Memory (MB): peak = 3083.047 ; gain = 1099.621 ; free physical = 12653 ; free virtual = 18693
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 0 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:13 ; elapsed = 00:00:13 . Memory (MB): peak = 3083.047 ; gain = 1050.660 ; free physical = 12653 ; free virtual = 18693
+Synthesis Optimization Complete : Time (s): cpu = 00:00:13 ; elapsed = 00:00:14 . Memory (MB): peak = 3083.047 ; gain = 1099.621 ; free physical = 12653 ; free virtual = 18693
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3083.047 ; gain = 0.000 ; free physical = 12653 ; free virtual = 18694
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3083.047 ; gain = 0.000 ; free physical = 12789 ; free virtual = 18831
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: c0ca38b2
+INFO: [Common 17-83] Releasing license: Synthesis
+21 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:17 ; elapsed = 00:00:16 . Memory (MB): peak = 3083.047 ; gain = 1459.871 ; free physical = 12787 ; free virtual = 18829
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 2118.580; main = 2118.580; forked = 282.599
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 3771.152; main = 2991.500; forked = 995.242
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3083.047 ; gain = 0.000 ; free physical = 12787 ; free virtual = 18829
+INFO: [Common 17-1381] The checkpoint '/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/system_management_wiz_0_synth_1/system_management_wiz_0.dcp' has been generated.
+INFO: [Coretcl 2-1648] Added synthesis output to IP cache for IP system_management_wiz_0, cache-ID = 5ae5fa3b1028e5d1
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3083.047 ; gain = 0.000 ; free physical = 12762 ; free virtual = 18805
+INFO: [Common 17-1381] The checkpoint '/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/system_management_wiz_0_synth_1/system_management_wiz_0.dcp' has been generated.
+INFO: [Vivado 12-24828] Executing command : report_utilization -file system_management_wiz_0_utilization_synth.rpt -pb system_management_wiz_0_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Tue Dec 23 16:59:47 2025...

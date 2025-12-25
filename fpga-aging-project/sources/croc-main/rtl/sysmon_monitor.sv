@@ -2,7 +2,7 @@
 
 module sysmon_monitor #(
     parameter int CLK_FREQ = 20000000, // Verifique se bate com seu sys_clk
-    parameter int BAUD_RATE = 115200
+    parameter int BAUD_RATE = 125000
 )(
     input  logic        clk,
     input  logic        rst_n,

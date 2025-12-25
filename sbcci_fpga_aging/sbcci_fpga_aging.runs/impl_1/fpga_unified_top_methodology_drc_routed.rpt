@@ -1,0 +1,268 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
+| Date         : Tue Dec 23 21:34:48 2025
+| Host         : dan-alencar running 64-bit Linux Mint 22.2
+| Command      : report_methodology -file fpga_unified_top_methodology_drc_routed.rpt -pb fpga_unified_top_methodology_drc_routed.pb -rpx fpga_unified_top_methodology_drc_routed.rpx
+| Design       : fpga_unified_top
+| Device       : xcau15p-ffvb676-1-i
+| Speed File   : -1
+| Design State : Fully Routed
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Report Methodology
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: netlist
+          Floorplan: design_1
+      Design limits: <entire design considered>
+             Max checks: <unlimited>
+             Checks found: 43
++-----------+------------------+--------------------------------------------+--------+
+| Rule      | Severity         | Description                                | Checks |
++-----------+------------------+--------------------------------------------+--------+
+| TIMING-17 | Critical Warning | Non-clocked sequential cell                | 16     |
+| LUTAR-1   | Warning          | LUT drives async reset alert               | 2      |
+| TIMING-18 | Warning          | Missing input or output delay              | 5      |
+| TIMING-20 | Warning          | Non-clocked latch                          | 18     |
+| CLKC-56   | Advisory         | MMCME4 with global clock driver has no LOC | 1      |
+| LATCH-1   | Advisory         | Existing latches in the design             | 1      |
++-----------+------------------+--------------------------------------------+--------+
+
+2. REPORT DETAILS
+-----------------
+TIMING-17#1 Critical Warning
+Non-clocked sequential cell  
+The clock pin mgr/inc_count_reg[0]/C is not reached by a timing clock
+Related violations: <none>
+
+TIMING-17#2 Critical Warning
+Non-clocked sequential cell  
+The clock pin mgr/inc_count_reg[10]/C is not reached by a timing clock
+Related violations: <none>
+
+TIMING-17#3 Critical Warning
+Non-clocked sequential cell  
+The clock pin mgr/inc_count_reg[11]/C is not reached by a timing clock
+Related violations: <none>
+
+TIMING-17#4 Critical Warning
+Non-clocked sequential cell  
+The clock pin mgr/inc_count_reg[12]/C is not reached by a timing clock
+Related violations: <none>
+
+TIMING-17#5 Critical Warning
+Non-clocked sequential cell  
+The clock pin mgr/inc_count_reg[13]/C is not reached by a timing clock
+Related violations: <none>
+
+TIMING-17#6 Critical Warning
+Non-clocked sequential cell  
+The clock pin mgr/inc_count_reg[14]/C is not reached by a timing clock
+Related violations: <none>
+
+TIMING-17#7 Critical Warning
+Non-clocked sequential cell  
+The clock pin mgr/inc_count_reg[15]/C is not reached by a timing clock
+Related violations: <none>
+
+TIMING-17#8 Critical Warning
+Non-clocked sequential cell  
+The clock pin mgr/inc_count_reg[1]/C is not reached by a timing clock
+Related violations: <none>
+
+TIMING-17#9 Critical Warning
+Non-clocked sequential cell  
+The clock pin mgr/inc_count_reg[2]/C is not reached by a timing clock
+Related violations: <none>
+
+TIMING-17#10 Critical Warning
+Non-clocked sequential cell  
+The clock pin mgr/inc_count_reg[3]/C is not reached by a timing clock
+Related violations: <none>
+
+TIMING-17#11 Critical Warning
+Non-clocked sequential cell  
+The clock pin mgr/inc_count_reg[4]/C is not reached by a timing clock
+Related violations: <none>
+
+TIMING-17#12 Critical Warning
+Non-clocked sequential cell  
+The clock pin mgr/inc_count_reg[5]/C is not reached by a timing clock
+Related violations: <none>
+
+TIMING-17#13 Critical Warning
+Non-clocked sequential cell  
+The clock pin mgr/inc_count_reg[6]/C is not reached by a timing clock
+Related violations: <none>
+
+TIMING-17#14 Critical Warning
+Non-clocked sequential cell  
+The clock pin mgr/inc_count_reg[7]/C is not reached by a timing clock
+Related violations: <none>
+
+TIMING-17#15 Critical Warning
+Non-clocked sequential cell  
+The clock pin mgr/inc_count_reg[8]/C is not reached by a timing clock
+Related violations: <none>
+
+TIMING-17#16 Critical Warning
+Non-clocked sequential cell  
+The clock pin mgr/inc_count_reg[9]/C is not reached by a timing clock
+Related violations: <none>
+
+LUTAR-1#1 Warning
+LUT drives async reset alert  
+LUT cell mgr/FSM_onehot_state[3]_i_2, with 2 or more inputs, drives asynchronous preset/clear pin(s) hld/held_reg/CLR, mgr/inc_count_reg[14]/CLR, mgr/inc_count_reg[15]/CLR,
+mgr/inc_count_reg[1]/CLR, mgr/inc_count_reg[2]/CLR,
+mgr/inc_count_reg[3]/CLR, mgr/inc_count_reg[4]/CLR,
+mgr/inc_count_reg[5]/CLR, mgr/inc_count_reg[6]/CLR,
+mgr/inc_count_reg[7]/CLR, mgr/inc_count_reg[8]/CLR,
+mgr/inc_count_reg[9]/CLR, sns/FF1/CLR, sns/FF2/CLR, sns/alarm_reg/CLR
+ (the first 15 of 24 listed). The LUT may glitch and trigger an unexpected reset, even if it is a properly timed path.
+Related violations: <none>
+
+LUTAR-1#2 Warning
+LUT drives async reset alert  
+LUT cell u_mon/tx_idle_timer[16]_i_3, with 2 or more inputs, drives asynchronous preset/clear pin(s) u_router/tx_idle_timer_reg[11]/CLR, u_router/tx_idle_timer_reg[12]/CLR,
+u_router/tx_idle_timer_reg[13]/CLR, u_router/tx_idle_timer_reg[14]/CLR,
+u_router/tx_idle_timer_reg[15]/CLR, u_router/tx_idle_timer_reg[16]/CLR,
+u_router/tx_idle_timer_reg[1]/CLR, u_router/tx_idle_timer_reg[2]/CLR,
+u_router/tx_idle_timer_reg[3]/CLR, u_router/tx_idle_timer_reg[4]/CLR,
+u_router/tx_idle_timer_reg[5]/CLR, u_router/tx_idle_timer_reg[6]/CLR,
+u_router/tx_idle_timer_reg[7]/CLR, u_router/tx_idle_timer_reg[8]/CLR,
+u_router/tx_idle_timer_reg[9]/CLR (the first 15 of 126 listed). The LUT may glitch and trigger an unexpected reset, even if it is a properly timed path.
+Related violations: <none>
+
+TIMING-18#1 Warning
+Missing input or output delay  
+An input delay is missing on fpga_button relative to the rising and/or falling clock edge(s) of sys_clk_p.
+Related violations: <none>
+
+TIMING-18#2 Warning
+Missing input or output delay  
+An input delay is missing on fpga_uart_rx relative to the rising and/or falling clock edge(s) of sys_clk_p.
+Related violations: <none>
+
+TIMING-18#3 Warning
+Missing input or output delay  
+An input delay is missing on mcu_usart1_tx relative to the rising and/or falling clock edge(s) of sys_clk_p.
+Related violations: <none>
+
+TIMING-18#4 Warning
+Missing input or output delay  
+An output delay is missing on fpga_uart_tx relative to the rising and/or falling clock edge(s) of sys_clk_p.
+Related violations: <none>
+
+TIMING-18#5 Warning
+Missing input or output delay  
+An output delay is missing on status_o relative to the rising and/or falling clock edge(s) of sys_clk_p.
+Related violations: <none>
+
+TIMING-20#1 Warning
+Non-clocked latch  
+The latch mgr/change_enable_reg cannot be properly analyzed as its control pin mgr/change_enable_reg/G is not reached by a timing clock
+Related violations: <none>
+
+TIMING-20#2 Warning
+Non-clocked latch  
+The latch mgr/display_value_reg[0] cannot be properly analyzed as its control pin mgr/display_value_reg[0]/G is not reached by a timing clock
+Related violations: <none>
+
+TIMING-20#3 Warning
+Non-clocked latch  
+The latch mgr/display_value_reg[10] cannot be properly analyzed as its control pin mgr/display_value_reg[10]/G is not reached by a timing clock
+Related violations: <none>
+
+TIMING-20#4 Warning
+Non-clocked latch  
+The latch mgr/display_value_reg[11] cannot be properly analyzed as its control pin mgr/display_value_reg[11]/G is not reached by a timing clock
+Related violations: <none>
+
+TIMING-20#5 Warning
+Non-clocked latch  
+The latch mgr/display_value_reg[12] cannot be properly analyzed as its control pin mgr/display_value_reg[12]/G is not reached by a timing clock
+Related violations: <none>
+
+TIMING-20#6 Warning
+Non-clocked latch  
+The latch mgr/display_value_reg[13] cannot be properly analyzed as its control pin mgr/display_value_reg[13]/G is not reached by a timing clock
+Related violations: <none>
+
+TIMING-20#7 Warning
+Non-clocked latch  
+The latch mgr/display_value_reg[14] cannot be properly analyzed as its control pin mgr/display_value_reg[14]/G is not reached by a timing clock
+Related violations: <none>
+
+TIMING-20#8 Warning
+Non-clocked latch  
+The latch mgr/display_value_reg[15] cannot be properly analyzed as its control pin mgr/display_value_reg[15]/G is not reached by a timing clock
+Related violations: <none>
+
+TIMING-20#9 Warning
+Non-clocked latch  
+The latch mgr/display_value_reg[1] cannot be properly analyzed as its control pin mgr/display_value_reg[1]/G is not reached by a timing clock
+Related violations: <none>
+
+TIMING-20#10 Warning
+Non-clocked latch  
+The latch mgr/display_value_reg[2] cannot be properly analyzed as its control pin mgr/display_value_reg[2]/G is not reached by a timing clock
+Related violations: <none>
+
+TIMING-20#11 Warning
+Non-clocked latch  
+The latch mgr/display_value_reg[3] cannot be properly analyzed as its control pin mgr/display_value_reg[3]/G is not reached by a timing clock
+Related violations: <none>
+
+TIMING-20#12 Warning
+Non-clocked latch  
+The latch mgr/display_value_reg[4] cannot be properly analyzed as its control pin mgr/display_value_reg[4]/G is not reached by a timing clock
+Related violations: <none>
+
+TIMING-20#13 Warning
+Non-clocked latch  
+The latch mgr/display_value_reg[5] cannot be properly analyzed as its control pin mgr/display_value_reg[5]/G is not reached by a timing clock
+Related violations: <none>
+
+TIMING-20#14 Warning
+Non-clocked latch  
+The latch mgr/display_value_reg[6] cannot be properly analyzed as its control pin mgr/display_value_reg[6]/G is not reached by a timing clock
+Related violations: <none>
+
+TIMING-20#15 Warning
+Non-clocked latch  
+The latch mgr/display_value_reg[7] cannot be properly analyzed as its control pin mgr/display_value_reg[7]/G is not reached by a timing clock
+Related violations: <none>
+
+TIMING-20#16 Warning
+Non-clocked latch  
+The latch mgr/display_value_reg[8] cannot be properly analyzed as its control pin mgr/display_value_reg[8]/G is not reached by a timing clock
+Related violations: <none>
+
+TIMING-20#17 Warning
+Non-clocked latch  
+The latch mgr/display_value_reg[9] cannot be properly analyzed as its control pin mgr/display_value_reg[9]/G is not reached by a timing clock
+Related violations: <none>
+
+TIMING-20#18 Warning
+Non-clocked latch  
+The latch mgr/psen_reg cannot be properly analyzed as its control pin mgr/psen_reg/G is not reached by a timing clock
+Related violations: <none>
+
+CLKC-56#1 Advisory
+MMCME4 with global clock driver has no LOC  
+The MMCME4_ADV cell clock_gen/inst/mmcme4_adv_inst CLKIN1 or CLKIN2 pin is driven by global Clock buffer(s) clock_gen/inst/clkin1_bufg1 and does not have a LOC constraint. It is recommended to LOC the MMCM and use the CLOCK_DEDICATED_ROUTE constraint on the net(s) driven by the global Clock buffer(s).
+Related violations: <none>
+
+LATCH-1#1 Advisory
+Existing latches in the design  
+There are 18 latches found in the design. Inferred latches are often the result of HDL coding mistakes, such as incomplete if or case statements.
+Related violations: <none>
+
+

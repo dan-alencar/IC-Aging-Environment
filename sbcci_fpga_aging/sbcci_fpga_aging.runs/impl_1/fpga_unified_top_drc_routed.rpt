@@ -1,0 +1,46 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
+| Date         : Tue Dec 23 21:34:48 2025
+| Host         : dan-alencar running 64-bit Linux Mint 22.2
+| Command      : report_drc -file fpga_unified_top_drc_routed.rpt -pb fpga_unified_top_drc_routed.pb -rpx fpga_unified_top_drc_routed.rpx
+| Design       : fpga_unified_top
+| Device       : xcau15p-ffvb676-1-i
+| Speed File   : -1
+| Design State : Fully Routed
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Report DRC
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: netlist
+          Floorplan: design_1
+      Design limits: <entire design considered>
+           Ruledeck: default
+             Max checks: <unlimited>
+             Checks found: 2
++----------+----------+-------------------+--------+
+| Rule     | Severity | Description       | Checks |
++----------+----------+-------------------+--------+
+| PDRC-153 | Warning  | Gated clock check | 2      |
++----------+----------+-------------------+--------+
+
+2. REPORT DETAILS
+-----------------
+PDRC-153#1 Warning
+Gated clock check  
+Net mgr/change_enable_reg_i_1_n_0 is a gated clock net sourced by a combinational pin mgr/change_enable_reg_i_1/O, cell mgr/change_enable_reg_i_1. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
+Related violations: <none>
+
+PDRC-153#2 Warning
+Gated clock check  
+Net mgr/psen_reg_i_1_n_0 is a gated clock net sourced by a combinational pin mgr/psen_reg_i_1/O, cell mgr/psen_reg_i_1. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
+Related violations: <none>
+
+

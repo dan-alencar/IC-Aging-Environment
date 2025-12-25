@@ -1,118 +1,100 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <GenRun Id="impl_1" LaunchPart="xcau15p-ffvb676-1-i" LaunchTime="1766197952">
-  <File Type="POSTROUTE-PHYSOPT-RQS-RPT" Name="postroute_physopt_report_qor_suggestions_0.rpt"/>
-  <File Type="ROUTE-RQS-RPT" Name="route_report_qor_suggestions_0.rpt"/>
-  <File Type="POSTROUTE-PHYSOPT-RQS" Name="croc_xilinx_postroute_physopted.rqs"/>
-  <File Type="ROUTE-RQS" Name="croc_xilinx_routed.rqs"/>
-  <File Type="WBT-USG" Name="usage_statistics_webtalk.html"/>
-  <File Type="RDI-RDI" Name="croc_xilinx.vdi"/>
-  <File Type="BG-DRC" Name="croc_xilinx.drc"/>
-  <File Type="BG-BGN" Name="croc_xilinx.bgn"/>
-  <File Type="BITSTR-SYSDEF" Name="croc_xilinx.sysdef"/>
-  <File Type="BITSTR-LTX" Name="debug_nets.ltx"/>
-  <File Type="BITSTR-LTX" Name="croc_xilinx.ltx"/>
-  <File Type="PL-LTX-FILE" Name="croc_xilinx_pld.ltx"/>
-  <File Type="BOOT-LTX-FILE" Name="croc_xilinx_boot.ltx"/>
-  <File Type="LTX-FILE" Name="croc_xilinx.ltx"/>
-  <File Type="PL-BIF-FILE" Name="croc_xilinx_pld.bif"/>
-  <File Type="BOOT-BIF-FILE" Name="croc_xilinx_boot.bif"/>
-  <File Type="BIF-FILE" Name="croc_xilinx.bif"/>
-  <File Type="MMI-FILE" Name="croc_xilinx.mmi"/>
-  <File Type="RBD_FILE" Name="croc_xilinx.rbd"/>
-  <File Type="NPI_FILE" Name="croc_xilinx.npi"/>
+  <File Type="NOC_SOLUTION_FILE" Name="croc_xilinx.ncr"/>
+  <File Type="NOC_TRAFFIC_SPEC_FILE" Name="croc_xilinx.nts"/>
   <File Type="PL_UNMASK_RCDO_FILE" Name="croc_xilinx_pld_unmask.rcdo"/>
   <File Type="PL_UNMASK_MARKER_RCDO_FILE" Name="croc_xilinx_pld_unmask_markers.rcdo"/>
   <File Type="PL_MASK_RCDO_FILE" Name="croc_xilinx_pld_mask.rcdo"/>
   <File Type="PL_MARKER_RCDO_FILE" Name="croc_xilinx_pld_markers.rcdo"/>
   <File Type="PL-CLEAR-RCDO-FILE" Name="croc_xilinx_pld_clear.rcdo"/>
-  <File Type="PL-RCDO-FILE" Name="croc_xilinx_pld.rcdo"/>
   <File Type="PL_UNMASK_RNPI_FILE" Name="croc_xilinx_pld_unmask.rnpi"/>
   <File Type="PL_SHUTDOWN_RNPI_FILE" Name="croc_xilinx_pld_shutdown.rnpi"/>
   <File Type="PL_MASK_RNPI_FILE" Name="croc_xilinx_pld_mask.rnpi"/>
   <File Type="PL_MARKER_RNPI_FILE" Name="croc_xilinx_pld_markers.rnpi"/>
-  <File Type="PL_RNPI_FILE" Name="croc_xilinx_pld.rnpi"/>
   <File Type="BOOT_MARKER_RNPI_FILE" Name="croc_xilinx_boot_markers.rnpi"/>
+  <File Type="PL_RNPI_FILE" Name="croc_xilinx_pld.rnpi"/>
   <File Type="BOOT_RNPI_FILE" Name="croc_xilinx_boot.rnpi"/>
-  <File Type="MARKER-RCDO-FILE" Name="croc_xilinx_markers.rcdo"/>
   <File Type="MARKER-RNPI-FILE" Name="croc_xilinx_markers.rnpi"/>
+  <File Type="PL-RCDO-FILE" Name="croc_xilinx_pld.rcdo"/>
+  <File Type="MARKER-RCDO-FILE" Name="croc_xilinx_markers.rcdo"/>
   <File Type="RCDO-FILE" Name="croc_xilinx.rcdo"/>
-  <File Type="RNPI_FILE" Name="croc_xilinx.rnpi"/>
-  <File Type="CFI_FILE" Name="croc_xilinx.cfi"/>
-  <File Type="RCFI_FILE" Name="croc_xilinx.rcfi"/>
-  <File Type="PL-PDI-FILE" Name="croc_xilinx_pld.pdi"/>
-  <File Type="BOOT-PDI-FILE" Name="croc_xilinx_boot.pdi"/>
-  <File Type="PDI-FILE" Name="croc_xilinx.pdi"/>
-  <File Type="BITSTR-MMI" Name="croc_xilinx.mmi"/>
-  <File Type="BITSTR-BMM" Name="croc_xilinx_bd.bmm"/>
-  <File Type="BITSTR-NKY" Name="croc_xilinx.nky"/>
-  <File Type="BITSTR-RBT" Name="croc_xilinx.rbt"/>
-  <File Type="BITSTR-MSK" Name="croc_xilinx.msk"/>
-  <File Type="BG-BIN" Name="croc_xilinx.bin"/>
-  <File Type="BG-BIT" Name="croc_xilinx.bit"/>
-  <File Type="NOC_SOLUTION_FILE" Name="croc_xilinx.ncr"/>
-  <File Type="NOC_TRAFFIC_SPEC_FILE" Name="croc_xilinx.nts"/>
-  <File Type="POSTROUTE-PHYSOPT-BUS-SKEW-RPX" Name="croc_xilinx_bus_skew_postroute_physopted.rpx"/>
-  <File Type="POSTROUTE-PHYSOPT-BUS-SKEW-PB" Name="croc_xilinx_bus_skew_postroute_physopted.pb"/>
-  <File Type="POSTROUTE-PHYSOPT-BUS-SKEW" Name="croc_xilinx_bus_skew_postroute_physopted.rpt"/>
+  <File Type="PL-LTX-FILE" Name="croc_xilinx_pld.ltx"/>
   <File Type="POSTROUTE-PHYSOPT-TIMING-RPX" Name="croc_xilinx_timing_summary_postroute_physopted.rpx"/>
-  <File Type="POSTROUTE-PHYSOPT-TIMING-PB" Name="croc_xilinx_timing_summary_postroute_physopted.pb"/>
-  <File Type="POSTROUTE-PHYSOPT-TIMING" Name="croc_xilinx_timing_summary_postroute_physopted.rpt"/>
-  <File Type="POSTROUTE-PHYSOPT-BLACKBOX-DCP" Name="croc_xilinx_postroute_physopt_bb.dcp"/>
-  <File Type="POSTROUTE-PHYSOPT-DCP" Name="croc_xilinx_postroute_physopt.dcp"/>
-  <File Type="ROUTE-RQS-PB" Name="croc_xilinx_rqs_routed.pb"/>
-  <File Type="ROUTE-BUS-SKEW-RPX" Name="croc_xilinx_bus_skew_routed.rpx"/>
+  <File Type="BITSTR-MSK" Name="croc_xilinx.msk"/>
   <File Type="ROUTE-BUS-SKEW-PB" Name="croc_xilinx_bus_skew_routed.pb"/>
+  <File Type="ROUTE-BUS-SKEW-RPX" Name="croc_xilinx_bus_skew_routed.rpx"/>
   <File Type="ROUTE-BUS-SKEW" Name="croc_xilinx_bus_skew_routed.rpt"/>
   <File Type="ROUTE-CLK" Name="croc_xilinx_clock_utilization_routed.rpt"/>
   <File Type="ROUTE-SIMILARITY" Name="croc_xilinx_incremental_reuse_routed.rpt"/>
-  <File Type="ROUTE-TIMING-RPX" Name="croc_xilinx_timing_summary_routed.rpx"/>
-  <File Type="ROUTE-TIMING-PB" Name="croc_xilinx_timing_summary_routed.pb"/>
-  <File Type="ROUTE-TIMINGSUMMARY" Name="croc_xilinx_timing_summary_routed.rpt"/>
+  <File Type="ROUTE-DRC-PB" Name="croc_xilinx_drc_routed.pb"/>
+  <File Type="ROUTE-DRC-RPX" Name="croc_xilinx_drc_routed.rpx"/>
+  <File Type="ROUTE-METHODOLOGY-DRC-RPX" Name="croc_xilinx_methodology_drc_routed.rpx"/>
+  <File Type="ROUTE-DRC" Name="croc_xilinx_drc_routed.rpt"/>
+  <File Type="ROUTE-PWR-SUM" Name="croc_xilinx_power_summary_routed.pb"/>
+  <File Type="ROUTE-PWR-RPX" Name="croc_xilinx_power_routed.rpx"/>
+  <File Type="ROUTE-PWR" Name="croc_xilinx_power_routed.rpt"/>
+  <File Type="BG-DRC" Name="croc_xilinx.drc"/>
   <File Type="ROUTE-STATUS-PB" Name="croc_xilinx_route_status.pb"/>
   <File Type="ROUTE-STATUS" Name="croc_xilinx_route_status.rpt"/>
-  <File Type="ROUTE-PWR-RPX" Name="croc_xilinx_power_routed.rpx"/>
-  <File Type="ROUTE-PWR-SUM" Name="croc_xilinx_power_summary_routed.pb"/>
-  <File Type="ROUTE-PWR" Name="croc_xilinx_power_routed.rpt"/>
+  <File Type="BITSTR-BMM" Name="croc_xilinx_bd.bmm"/>
+  <File Type="ROUTE-TIMING-RPX" Name="croc_xilinx_timing_summary_routed.rpx"/>
+  <File Type="ROUTE-TIMINGSUMMARY" Name="croc_xilinx_timing_summary_routed.rpt"/>
+  <File Type="BG-BGN" Name="croc_xilinx.bgn"/>
   <File Type="ROUTE-METHODOLOGY-DRC-PB" Name="croc_xilinx_methodology_drc_routed.pb"/>
-  <File Type="ROUTE-METHODOLOGY-DRC-RPX" Name="croc_xilinx_methodology_drc_routed.rpx"/>
-  <File Type="ROUTE-METHODOLOGY-DRC" Name="croc_xilinx_methodology_drc_routed.rpt"/>
-  <File Type="ROUTE-DRC-RPX" Name="croc_xilinx_drc_routed.rpx"/>
-  <File Type="ROUTE-DRC-PB" Name="croc_xilinx_drc_routed.pb"/>
-  <File Type="ROUTE-DRC" Name="croc_xilinx_drc_routed.rpt"/>
-  <File Type="ROUTE-UTIL-PB" Name="croc_xilinx_utilization_routed.pb"/>
-  <File Type="ROUTE-UTIL" Name="croc_xilinx_utilization_routed.rpt"/>
-  <File Type="ROUTE-BLACKBOX-DCP" Name="croc_xilinx_routed_bb.dcp"/>
-  <File Type="ROUTE-DCP" Name="croc_xilinx_routed.dcp"/>
-  <File Type="ROUTE-ERROR-DCP" Name="croc_xilinx_routed_error.dcp"/>
-  <File Type="PHYSOPT-TIMING" Name="croc_xilinx_timing_summary_physopted.rpt"/>
-  <File Type="PHYSOPT-DRC" Name="croc_xilinx_drc_physopted.rpt"/>
-  <File Type="PHYSOPT-DCP" Name="croc_xilinx_physopt.dcp"/>
-  <File Type="POSTPLACE-PWROPT-TIMING" Name="croc_xilinx_timing_summary_postplace_pwropted.rpt"/>
-  <File Type="POSTPLACE-PWROPT-DCP" Name="croc_xilinx_postplace_pwropt.dcp"/>
-  <File Type="PLACE-RQA-PB" Name="croc_xilinx_rqa_placed.pb"/>
-  <File Type="PLACE-TIMING" Name="croc_xilinx_timing_summary_placed.rpt"/>
-  <File Type="PLACE-PRE-SIMILARITY" Name="croc_xilinx_incremental_reuse_pre_placed.rpt"/>
-  <File Type="PLACE-SIMILARITY" Name="croc_xilinx_incremental_reuse_placed.rpt"/>
-  <File Type="PLACE-CTRL" Name="croc_xilinx_control_sets_placed.rpt"/>
-  <File Type="PLACE-UTIL-PB" Name="croc_xilinx_utilization_placed.pb"/>
-  <File Type="PLACE-UTIL" Name="croc_xilinx_utilization_placed.rpt"/>
-  <File Type="PLACE-CLK" Name="croc_xilinx_clock_utilization_placed.rpt"/>
-  <File Type="PLACE-IO" Name="croc_xilinx_io_placed.rpt"/>
-  <File Type="PLACE-DCP" Name="croc_xilinx_placed.dcp"/>
-  <File Type="PWROPT-TIMING" Name="croc_xilinx_timing_summary_pwropted.rpt"/>
-  <File Type="PWROPT-DRC" Name="croc_xilinx_drc_pwropted.rpt"/>
-  <File Type="PWROPT-DCP" Name="croc_xilinx_pwropt.dcp"/>
-  <File Type="OPT-RQA-PB" Name="croc_xilinx_rqa_opted.pb"/>
-  <File Type="OPT-TIMING" Name="croc_xilinx_timing_summary_opted.rpt"/>
-  <File Type="OPT-HWDEF" Name="croc_xilinx.hwdef"/>
-  <File Type="OPT-METHODOLOGY-DRC" Name="croc_xilinx_methodology_drc_opted.rpt"/>
-  <File Type="OPT-UTIL-PB" Name="croc_xilinx_utilization_opted.pb"/>
-  <File Type="OPT-UTIL" Name="croc_xilinx_utilization_opted.rpt"/>
-  <File Type="OPT-DRC" Name="croc_xilinx_drc_opted.rpt"/>
-  <File Type="OPT-DCP" Name="croc_xilinx_opt.dcp"/>
-  <File Type="INIT-TIMING" Name="croc_xilinx_timing_summary_init.rpt"/>
   <File Type="REPORTS-TCL" Name="croc_xilinx_reports.tcl"/>
   <File Type="PA-TCL" Name="croc_xilinx.tcl"/>
+  <File Type="ROUTE-METHODOLOGY-DRC" Name="croc_xilinx_methodology_drc_routed.rpt"/>
+  <File Type="PLACE-CTRL" Name="croc_xilinx_control_sets_placed.rpt"/>
+  <File Type="POSTROUTE-PHYSOPT-TIMING" Name="croc_xilinx_timing_summary_postroute_physopted.rpt"/>
+  <File Type="BITSTR-MMI" Name="croc_xilinx.mmi"/>
+  <File Type="BITSTR-NKY" Name="croc_xilinx.nky"/>
+  <File Type="PLACE-UTIL" Name="croc_xilinx_utilization_placed.rpt"/>
+  <File Type="PLACE-UTIL-PB" Name="croc_xilinx_utilization_placed.pb"/>
+  <File Type="OPT-DRC" Name="croc_xilinx_drc_opted.rpt"/>
+  <File Type="PLACE-IO" Name="croc_xilinx_io_placed.rpt"/>
+  <File Type="BG-BIN" Name="croc_xilinx.bin"/>
+  <File Type="BITSTR-RBT" Name="croc_xilinx.rbt"/>
+  <File Type="POSTROUTE-PHYSOPT-TIMING-PB" Name="croc_xilinx_timing_summary_postroute_physopted.pb"/>
+  <File Type="POSTROUTE-PHYSOPT-BUS-SKEW" Name="croc_xilinx_bus_skew_postroute_physopted.rpt"/>
+  <File Type="POSTROUTE-PHYSOPT-BUS-SKEW-RPX" Name="croc_xilinx_bus_skew_postroute_physopted.rpx"/>
+  <File Type="POSTROUTE-PHYSOPT-BUS-SKEW-PB" Name="croc_xilinx_bus_skew_postroute_physopted.pb"/>
+  <File Type="RDI-RDI" Name="croc_xilinx.vdi"/>
+  <File Type="PDI-FILE" Name="croc_xilinx.pdi"/>
+  <File Type="BG-BIT" Name="croc_xilinx.bit"/>
+  <File Type="POSTROUTE-PHYSOPT-RQS-RPT" Name="postroute_physopt_report_qor_suggestions_0.rpt"/>
+  <File Type="BITSTR-SYSDEF" Name="croc_xilinx.sysdef"/>
+  <File Type="MMI-FILE" Name="croc_xilinx.mmi"/>
+  <File Type="BITSTR-LTX" Name="debug_nets.ltx"/>
+  <File Type="BITSTR-LTX" Name="croc_xilinx.ltx"/>
+  <File Type="BIF-FILE" Name="croc_xilinx.bif"/>
+  <File Type="WBT-USG" Name="usage_statistics_webtalk.html"/>
+  <File Type="BOOT-LTX-FILE" Name="croc_xilinx_boot.ltx"/>
+  <File Type="OPT-HWDEF" Name="croc_xilinx.hwdef"/>
+  <File Type="PLACE-PRE-SIMILARITY" Name="croc_xilinx_incremental_reuse_pre_placed.rpt"/>
+  <File Type="ROUTE-DCP" Name="croc_xilinx_routed.dcp"/>
+  <File Type="ROUTE-ERROR-DCP" Name="croc_xilinx_routed_error.dcp"/>
+  <File Type="ROUTE-BLACKBOX-DCP" Name="croc_xilinx_routed_bb.dcp"/>
+  <File Type="ROUTE-TIMING-PB" Name="croc_xilinx_timing_summary_routed.pb"/>
+  <File Type="OPT-DCP" Name="croc_xilinx_opt.dcp"/>
+  <File Type="PLACE-DCP" Name="croc_xilinx_placed.dcp"/>
+  <File Type="PWROPT-DCP" Name="croc_xilinx_pwropt.dcp"/>
+  <File Type="POSTPLACE-PWROPT-DCP" Name="croc_xilinx_postplace_pwropt.dcp"/>
+  <File Type="PHYSOPT-DCP" Name="croc_xilinx_physopt.dcp"/>
+  <File Type="POSTROUTE-PHYSOPT-DCP" Name="croc_xilinx_postroute_physopt.dcp"/>
+  <File Type="POSTROUTE-PHYSOPT-BLACKBOX-DCP" Name="croc_xilinx_postroute_physopt_bb.dcp"/>
+  <File Type="BOOT-PDI-FILE" Name="croc_xilinx_boot.pdi"/>
+  <File Type="PL-PDI-FILE" Name="croc_xilinx_pld.pdi"/>
+  <File Type="RCFI_FILE" Name="croc_xilinx.rcfi"/>
+  <File Type="CFI_FILE" Name="croc_xilinx.cfi"/>
+  <File Type="RNPI_FILE" Name="croc_xilinx.rnpi"/>
+  <File Type="NPI_FILE" Name="croc_xilinx.npi"/>
+  <File Type="RBD_FILE" Name="croc_xilinx.rbd"/>
+  <File Type="ROUTE-RQS" Name="croc_xilinx_routed.rqs"/>
+  <File Type="POSTROUTE-PHYSOPT-RQS" Name="croc_xilinx_postroute_physopted.rqs"/>
+  <File Type="ROUTE-RQS-RPT" Name="route_report_qor_suggestions_0.rpt"/>
+  <File Type="BOOT-BIF-FILE" Name="croc_xilinx_boot.bif"/>
+  <File Type="PL-BIF-FILE" Name="croc_xilinx_pld.bif"/>
+  <File Type="LTX-FILE" Name="croc_xilinx.ltx"/>
   <FileSet Name="sources" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1" RelGenDir="$PGENDIR/sources_1">
     <Filter Type="Srcs"/>
     <File Path="$PPRDIR/../sources/croc-main/rtl/common_cells/stream_intf.sv">
@@ -1390,6 +1372,7 @@
     <Step Id="route_design"/>
     <Step Id="post_route_phys_opt_design"/>
     <Step Id="write_bitstream"/>
+    <Step Id="write_device_image"/>
   </Strategy>
   <BlockFileSet Type="BlockSrcs" Name="clk_wiz"/>
 </GenRun>
