@@ -1,0 +1,57 @@
+-------------------------------------
+| Tool Version : Vivado v.2025.2
+| Date         : Tue Dec 23 21:34:24 2025
+| Host         : dan-alencar
+| Design       : design_1
+| Device       : xcau15p-ffvb676-1-I-
+-------------------------------------
+
+For more information on clockInfo.txt clock routing debug file see https://support.xilinx.com/s/article/000035660?language=en_US
+
+***********************
+Running Pre-CRP Checker
+***********************
+Number of global clocks: 4
+	Number of BUFGCE: 4
+	Number of BUFGCE_HDIO: 0
+	Number of BUFG_CTRL: 0
+	Number of BUFGCE_DIV: 0
+	Number of BUFG_GT: 0
+	Number of BUFG_PS: 0
+	Number of BUFG_FABRIC: 0
+	Running suboptimal placement checker for 4 clocks (and their loads) which do not have the CLOCK_LOW_FANOUT property but have a fanout less than 2000...
+Pre-CRP Checker took 0 secs
+
+**************************************
+Clock Nets/Source Overview (CRP Input)
+**************************************
+Clock 1: clock_gen/inst/clk_out3
+	Clock source type: BUFGCE
+	Clock source region: X0Y0
+	Clock regions with locked loads: X0Y0 X1Y2 
+	initial rect ((0, 0), (1, 2))
+
+Clock 2: clock_gen/inst/clk_out2
+	Clock source type: BUFGCE
+	Clock source region: X0Y0
+	initial rect ((0, 0), (1, 2))
+
+Clock 3: clock_gen/inst/clk_out1
+	Clock source type: BUFGCE
+	Clock source region: X0Y0
+	initial rect ((0, 0), (1, 2))
+
+Clock 4: clock_gen/inst/clk_in1_clk_wiz_0
+	Clock source type: BUFGCE
+	Clock source region: X0Y0
+	Clock regions with locked loads: X0Y0 
+	initial rect ((0, 0), (0, 0))
+
+
+
+*****************************
+Clocks With User Constraints:
+*****************************
+No clocks with user constraints found
+
+

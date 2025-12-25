@@ -3,9 +3,10 @@ import time
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
     QPushButton, QGroupBox, QFormLayout, QLineEdit, QTextEdit,
-    QLabel, QDoubleSpinBox, QComboBox, QGridLayout, QTabWidget, QSplitter
+    QLabel, QDoubleSpinBox, QComboBox, QGridLayout, QTabWidget, QSplitter,
+    QCheckBox, QSpinBox, QFrame
 )
-from PySide6.QtCore import QThread, Signal, Slot, Qt
+from PySide6.QtCore import QThread, Signal, Slot, Qt, QTimer
 import config
 
 from router import UARTRouter
@@ -23,6 +24,10 @@ class MainWindow(QMainWindow):
         self.resize(1200, 850)
         
         self.router = UARTRouter()
+        
+        # Timer dedicado para o Trigger Cíclico do FPGA (0x0F)
+        self.sweep_timer = QTimer()
+        self.sweep_timer.timeout.connect(self._send_sweep_trigger)
         
         self._init_ui()
         
@@ -156,13 +161,15 @@ class MainWindow(QMainWindow):
         v_stm.addWidget(btn_reset)
         grp_stm.setLayout(v_stm)
         
-        # Coluna 3: Console Manual
-        grp_manual = QGroupBox("Terminal Manual")
+        # Coluna 3: Console Manual & Varredura
+        grp_manual = QGroupBox("Terminal & Varredura FPGA")
         v_man = QVBoxLayout()
+        
+        # --- Parte Manual ---
         self.txt_manual = QLineEdit()
         self.txt_manual.setPlaceholderText("Comando raw...")
         self.cmb_target = QComboBox(); self.cmb_target.addItems(["STM32 (Protocolo)", "CROC (Raw)"])
-        self.btn_send_manual = QPushButton("Enviar Comando")
+        self.btn_send_manual = QPushButton("Enviar Comando Texto")
         self.btn_send_manual.clicked.connect(self._manual_send)
         
         v_man.addWidget(QLabel("Destino:"))
@@ -170,6 +177,45 @@ class MainWindow(QMainWindow):
         v_man.addWidget(QLabel("Payload:"))
         v_man.addWidget(self.txt_manual)
         v_man.addWidget(self.btn_send_manual)
+        
+        # --- Separador Visual ---
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        v_man.addSpacing(10)
+        v_man.addWidget(line)
+        v_man.addSpacing(10)
+        
+        # --- Nova Parte: Controle de Varredura (0x0F) ---
+        lbl_sweep = QLabel("<b>FPGA Sensor Sweep (0x0F)</b>")
+        lbl_sweep.setAlignment(Qt.AlignCenter)
+        v_man.addWidget(lbl_sweep)
+        
+        h_sweep = QHBoxLayout()
+        
+        # Switch Cíclico
+        self.chk_auto_sweep = QCheckBox("Ciclo Automático")
+        self.chk_auto_sweep.setToolTip("Envia 0x0F repetidamente")
+        self.chk_auto_sweep.toggled.connect(self._toggle_sweep_timer)
+        
+        # Intervalo
+        self.spin_sweep_interval = QSpinBox()
+        self.spin_sweep_interval.setRange(50, 5000)
+        self.spin_sweep_interval.setValue(100) # Default 100ms
+        self.spin_sweep_interval.setSuffix(" ms")
+        self.spin_sweep_interval.setToolTip("Período entre triggers")
+        
+        h_sweep.addWidget(self.chk_auto_sweep)
+        h_sweep.addWidget(self.spin_sweep_interval)
+        v_man.addLayout(h_sweep)
+        
+        # Botão de Disparo Único
+        self.btn_single_sweep = QPushButton("DISPARAR AGORA (Single)")
+        self.btn_single_sweep.clicked.connect(self._send_sweep_trigger)
+        self.btn_single_sweep.setStyleSheet("background-color: #0097A7; color: white; font-weight: bold;")
+        self.btn_single_sweep.setToolTip("Envia um único byte 0x0F")
+        v_man.addWidget(self.btn_single_sweep)
+        
         v_man.addStretch()
         grp_manual.setLayout(v_man)
         
@@ -183,7 +229,6 @@ class MainWindow(QMainWindow):
         # --- Arduino Worker ---
         self.w_ard = ArduinoWorker()
         self.t_ard = QThread()
-        # IMPORTANTE: Garante que a thread morra se o app principal morrer
         self.t_ard.setTerminationEnabled(True) 
         self.w_ard.moveToThread(self.t_ard)
         self.w_ard.log_message.connect(self.log_message)
@@ -212,19 +257,22 @@ class MainWindow(QMainWindow):
         """Evento disparado ao tentar fechar a janela."""
         self.log_message("Encerrando sistema e parando threads...")
         
+        # Para Timer de Sweep
+        if self.sweep_timer.isActive():
+            self.sweep_timer.stop()
+        
         # 1. Para o sequenciador (Logger e Updates automáticos)
         if hasattr(self, 'seq'):
             self.stop_test_signal.emit()
             if hasattr(self, 't_seq') and self.t_seq.isRunning():
                 self.t_seq.quit()
-                self.t_seq.wait(100) # Espera breve
+                self.t_seq.wait(100) 
 
-        # 2. Desconecta o Router (Fecha porta Serial Física do ESP32)
-        # Ao fechar a porta, qualquer thread bloqueada em 'serial.read()' é liberada com erro.
+        # 2. Desconecta o Router
         if hasattr(self, 'router'):
             self.router.disconnect_serial()
 
-        # 3. Encerra Workers e Threads forçadamente se necessário
+        # 3. Encerra Workers
         workers_threads = [
             (self.w_ard, self.t_ard), 
             (self.w_stm, self.t_stm), 
@@ -232,20 +280,12 @@ class MainWindow(QMainWindow):
         ]
 
         for worker, thread in workers_threads:
-            # Tenta parar logicamente
-            if hasattr(worker, 'stop'):
-                worker.stop()
-            
-            # Para a QThread
+            if hasattr(worker, 'stop'): worker.stop()
             if thread.isRunning():
                 thread.quit()
-                # Espera 100ms. Se não fechar (travado em IO), mata forçado.
-                if not thread.wait(100):
-                    # terminate() não é recomendado em produção normal, mas 
-                    # para garantir que o app feche ao clicar no X, é válido aqui.
-                    thread.terminate() 
+                if not thread.wait(100): thread.terminate() 
 
-        event.accept() # Confirma o fechamento
+        event.accept() 
         super().closeEvent(event)
 
     def _start_sequencer(self):
@@ -282,7 +322,7 @@ class MainWindow(QMainWindow):
             cfg = {
                 'test_name': self.txt_test_name.text(),
                 'oven_setpoint': self.sp_input.value(),
-                'psu_voltage': self.vcore_monitor.value(), # Usa o valor da aba de monitoramento
+                'psu_voltage': self.vcore_monitor.value(), 
                 'kp': self.kp_input.value(), 
                 'ki': self.ki_input.value(), 
                 'kd': self.kd_input.value()
@@ -292,8 +332,10 @@ class MainWindow(QMainWindow):
             self.btn_test.setText("PARAR EXPERIMENTO")
             self.btn_test.setStyleSheet("background-color: #C62828; color: white; font-weight: bold; font-size: 11pt;")
             
-            # Trava controles críticos
             self.vcore_monitor.setEnabled(False)
+            
+            # Opcional: Ativar varredura automática ao iniciar teste?
+            # self.chk_auto_sweep.setChecked(True)
         else:
             self.stop_test_signal.emit()
 
@@ -303,6 +345,7 @@ class MainWindow(QMainWindow):
         self.btn_test.setText("INICIAR EXPERIMENTO")
         self.btn_test.setStyleSheet("background-color: #2E7D32; color: white; font-weight: bold; font-size: 11pt;")
         self.vcore_monitor.setEnabled(True)
+        # self.chk_auto_sweep.setChecked(False)
 
     @Slot()
     def _manual_send(self):
@@ -311,13 +354,40 @@ class MainWindow(QMainWindow):
             self.w_stm.send_manual_message(cmd)
         else:
             self.w_croc.send_manual_command(cmd)
+    
+    # --- NOVOS SLOTS PARA TRIGGER 0x0F ---
+    
+    @Slot()
+    def _send_sweep_trigger(self):
+        """Envia o byte 0x0F cru para o Router -> FPGA"""
+        # Usa _write_raw para evitar headers adicionais, garantindo que o FPGA Sniffer pegue '0F' limpo.
+        # Se usar send_to_croc, ele envia 10 0F. O Sniffer deve pegar 0F de qualquer jeito, 
+        # mas enviar raw é mais garantido para gatilhos de baixo nível.
+        self.router._write_raw(b'\x0F\x0F')
+
+    @Slot(bool)
+    def _toggle_sweep_timer(self, checked):
+        if checked:
+            ms = self.spin_sweep_interval.value()
+            self.sweep_timer.setInterval(ms)
+            self.sweep_timer.start()
+            self.btn_single_sweep.setEnabled(False)
+            # ERROR WAS HERE: self.log_message.emit(...)
+            # FIX: Call directly
+            self.log_message(f"Varredura Automática Iniciada ({ms}ms)") 
+        else:
+            self.sweep_timer.stop()
+            self.btn_single_sweep.setEnabled(True)
+            # FIX: Call directly
+            self.log_message("Varredura Automática Parada")
 
     @Slot()
     def _update_pid(self):
         self.w_ard.update_kp(self.kp_input.value())
         self.w_ard.update_ki(self.ki_input.value())
         self.w_ard.update_kd(self.kd_input.value())
-        self.log_message.emit("PID Atualizado Manualmente.")
+        # FIX: Call directly
+        self.log_message("PID Atualizado Manualmente.")
 
     @Slot(str)
     def log_message(self, msg):

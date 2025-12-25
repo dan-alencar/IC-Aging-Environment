@@ -1,0 +1,392 @@
+#-----------------------------------------------------------
+# Vivado v2025.2 (64-bit)
+# SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
+# IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+# SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+# Start of session at: Tue Dec 23 21:33:16 2025
+# Process ID         : 560741
+# Current directory  : /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1
+# Command line       : vivado -log fpga_unified_top.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source fpga_unified_top.tcl
+# Log file           : /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1/fpga_unified_top.vds
+# Journal file       : /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1/vivado.jou
+# Running On         : dan-alencar
+# Platform           : Linuxmint
+# Operating System   : Linux Mint 22.2
+# Processor Detail   : Intel(R) Core(TM) 5 210H
+# CPU Frequency      : 1235.820 MHz
+# CPU Physical cores : 8
+# CPU Logical cores  : 12
+# Host memory        : 24783 MB
+# Swap memory        : 2147 MB
+# Total Virtual      : 26931 MB
+# Available Virtual  : 17967 MB
+#-----------------------------------------------------------
+source fpga_unified_top.tcl -notrace
+Command: read_checkpoint -auto_incremental -incremental /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/utils_1/imports/synth_1/fpga_aging_top.dcp
+INFO: [Vivado 12-5825] Read reference checkpoint from /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/utils_1/imports/synth_1/fpga_aging_top.dcp for incremental synthesis
+INFO: [Vivado 12-7989] Please ensure there are no constraint changes
+Command: synth_design -top fpga_unified_top -part xcau15p-ffvb676-1-i
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xcau15p'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xcau15p'
+INFO: [Device 21-403] Loading part xcau15p-ffvb676-1-i
+INFO: [Designutils 20-5440] No compile time benefit to using incremental synthesis; A full resynthesis will be run
+INFO: [Designutils 20-4379] Flow is switching to default flow due to incremental criteria not met. If you would like to alter this behaviour and have the flow terminate instead, please set the following parameter config_implementation {autoIncr.Synth.RejectBehavior Terminate}
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 560786
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:03 ; elapsed = 00:00:03 . Memory (MB): peak = 2433.562 ; gain = 451.688 ; free physical = 7722 ; free virtual = 15482
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-10180] variable 'max_len' must explicitly be declared as automatic or static [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:138]
+INFO: [Synth 8-6157] synthesizing module 'fpga_unified_top' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/fpga_unified_top.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'clk_wiz_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1/.Xil/Vivado-560741-dan-alencar/realtime/clk_wiz_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'clk_wiz_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1/.Xil/Vivado-560741-dan-alencar/realtime/clk_wiz_0_stub.v:6]
+INFO: [Synth 8-155] case statement is not full and has no default [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/fpga_unified_top.sv:43]
+INFO: [Synth 8-6157] synthesizing module 'uart_router' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/rtl/uart_router.sv:3]
+	Parameter CLK_FREQ bound to: 32'sb00000101111101011110000100000000 
+	Parameter BAUD_RATE bound to: 32'sb00000000000000011110100001001000 
+INFO: [Synth 8-155] case statement is not full and has no default [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/rtl/uart_router.sv:89]
+INFO: [Synth 8-6155] done synthesizing module 'uart_router' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/rtl/uart_router.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'sysmon_monitor' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:3]
+	Parameter CLK_FREQ bound to: 32'sb00000101111101011110000100000000 
+	Parameter BAUD_RATE bound to: 32'sb00000000000000011110100001001000 
+INFO: [Synth 8-6157] synthesizing module 'SYSMONE4' [/home/dan-alencar/2025.2/Vivado/scripts/rt/data/unisim_comp.v:165924]
+	Parameter COMMON_N_SOURCE bound to: 16'b1111111111111111 
+	Parameter INIT_40 bound to: 16'b0000000000000000 
+	Parameter INIT_41 bound to: 16'b0010000000000000 
+	Parameter INIT_42 bound to: 16'b0001010000000000 
+	Parameter INIT_48 bound to: 16'b0000000000000011 
+	Parameter INIT_49 bound to: 16'b0000000000000000 
+INFO: [Synth 8-6155] done synthesizing module 'SYSMONE4' (0#1) [/home/dan-alencar/2025.2/Vivado/scripts/rt/data/unisim_comp.v:165924]
+WARNING: [Synth 8-7071] port 'ADC_DATA' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7071] port 'ALM' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7071] port 'BUSY' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7071] port 'CHANNEL' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7071] port 'EOC' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7071] port 'I2C_SCLK_TS' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7071] port 'I2C_SDA_TS' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7071] port 'JTAGBUSY' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7071] port 'JTAGLOCKED' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7071] port 'JTAGMODIFIED' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7071] port 'MUXADDR' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7071] port 'OT' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7071] port 'SMBALERT_TS' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7071] port 'CONVST' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7071] port 'CONVSTCLK' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7071] port 'I2C_SCLK' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7071] port 'I2C_SDA' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7071] port 'VAUXN' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7071] port 'VAUXP' of module 'SYSMONE4' is unconnected for instance 'sysmon_inst' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+WARNING: [Synth 8-7023] instance 'sysmon_inst' of module 'SYSMONE4' has 30 connections declared, but only 11 given [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:31]
+INFO: [Synth 8-155] case statement is not full and has no default [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:69]
+INFO: [Synth 8-6155] done synthesizing module 'sysmon_monitor' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'uart_arbiter' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/rtl/uart_arbiter.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'uart_arbiter' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/rtl/uart_arbiter.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'controller_controller' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/new/controller_controller.v:3]
+INFO: [Synth 8-6155] done synthesizing module 'controller_controller' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/new/controller_controller.v:3]
+INFO: [Synth 8-6157] synthesizing module 'not_series' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/imports/Projects/aging_Nexys4DDR/aging_Nexys4DDR.srcs/sources_1/imports/new/nand_series.v:3]
+	Parameter size bound to: 50 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'LUT1' [/home/dan-alencar/2025.2/Vivado/scripts/rt/data/unisim_comp.v:95343]
+	Parameter INIT bound to: 2'b01 
+INFO: [Synth 8-6155] done synthesizing module 'LUT1' (0#1) [/home/dan-alencar/2025.2/Vivado/scripts/rt/data/unisim_comp.v:95343]
+INFO: [Synth 8-6155] done synthesizing module 'not_series' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/imports/Projects/aging_Nexys4DDR/aging_Nexys4DDR.srcs/sources_1/imports/new/nand_series.v:3]
+INFO: [Synth 8-6157] synthesizing module 'modern_sensible' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/imports/Projects/aging_Nexys4DDR/aging_Nexys4DDR.srcs/sources_1/new/modern_sensible.v:3]
+INFO: [Synth 8-6157] synthesizing module 'FDCE' [/home/dan-alencar/2025.2/Vivado/scripts/rt/data/unisim_comp.v:49180]
+	Parameter INIT bound to: 1'b0 
+INFO: [Synth 8-6155] done synthesizing module 'FDCE' (0#1) [/home/dan-alencar/2025.2/Vivado/scripts/rt/data/unisim_comp.v:49180]
+INFO: [Synth 8-6155] done synthesizing module 'modern_sensible' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/imports/Projects/aging_Nexys4DDR/aging_Nexys4DDR.srcs/sources_1/new/modern_sensible.v:3]
+INFO: [Synth 8-6157] synthesizing module 'holder_button' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/new/holder_button.v:3]
+INFO: [Synth 8-6155] done synthesizing module 'holder_button' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/new/holder_button.v:3]
+INFO: [Synth 8-6155] done synthesizing module 'fpga_unified_top' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/fpga_unified_top.sv:3]
+WARNING: [Synth 8-6014] Unused sequential element wd_counter_reg was removed.  [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/rtl/uart_router.sv:46]
+WARNING: [Synth 8-6014] Unused sequential element last_heartbeat_reg was removed.  [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/rtl/uart_router.sv:47]
+WARNING: [Synth 8-6014] Unused sequential element wd_alarm_reg was removed.  [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/rtl/uart_router.sv:48]
+WARNING: [Synth 8-7137] Register shifter_reg in module sysmon_monitor has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:184]
+WARNING: [Synth 8-7137] Register baud_cnt_reg in module sysmon_monitor has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:186]
+WARNING: [Synth 8-7137] Register bit_cnt_reg in module sysmon_monitor has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:186]
+WARNING: [Synth 8-7129] Port heartbeat_pin in module uart_router is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:04 ; elapsed = 00:00:05 . Memory (MB): peak = 2532.531 ; gain = 550.656 ; free physical = 7630 ; free virtual = 15390
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:04 ; elapsed = 00:00:05 . Memory (MB): peak = 2547.375 ; gain = 565.500 ; free physical = 7630 ; free virtual = 15390
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:04 ; elapsed = 00:00:05 . Memory (MB): peak = 2547.375 ; gain = 565.500 ; free physical = 7630 ; free virtual = 15390
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2550.344 ; gain = 0.000 ; free physical = 7630 ; free virtual = 15390
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/clk_wiz_0/clk_wiz_0/clk_wiz_0_in_context.xdc] for cell 'clock_gen'
+create_clock: Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 2658.551 ; gain = 25.219 ; free physical = 7749 ; free virtual = 15500
+Finished Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/clk_wiz_0/clk_wiz_0/clk_wiz_0_in_context.xdc] for cell 'clock_gen'
+Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/constrs_1/imports/constraints/fpga_aging_constraints.xdc]
+WARNING: [Vivado 12-507] No nets matched 'fpga_button_IBUF'. [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/constrs_1/imports/constraints/fpga_aging_constraints.xdc:46]
+Finished Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/constrs_1/imports/constraints/fpga_aging_constraints.xdc]
+WARNING: [Project 1-498] One or more constraints failed evaluation while reading constraint file [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/constrs_1/imports/constraints/fpga_aging_constraints.xdc] and the design contains unresolved black boxes. These constraints will be read post-synthesis (as long as their source constraint file is marked as used_in_implementation) and should be applied correctly then. You should review the constraints listed in the file [.Xil/fpga_unified_top_propImpl.xdc] and check the run log file to verify that these constraints were correctly applied.
+INFO: [Project 1-236] Implementation specific constraints were found while reading constraint file [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/constrs_1/imports/constraints/fpga_aging_constraints.xdc]. These constraints will be ignored for synthesis but will be used in implementation. Impacted constraints are listed in the file [.Xil/fpga_unified_top_propImpl.xdc].
+Resolution: To avoid this warning, move constraints listed in [.Xil/fpga_unified_top_propImpl.xdc] to another XDC file and exclude this new file from synthesis with the used_in_synthesis property (File Properties dialog in GUI) and re-run elaboration/synthesis.
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2658.551 ; gain = 0.000 ; free physical = 7749 ; free virtual = 15500
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2658.586 ; gain = 0.000 ; free physical = 7748 ; free virtual = 15500
+INFO: [Designutils 20-5440] No compile time benefit to using incremental synthesis; A full resynthesis will be run
+INFO: [Designutils 20-4379] Flow is switching to default flow due to incremental criteria not met. If you would like to alter this behaviour and have the flow terminate instead, please set the following parameter config_implementation {autoIncr.Synth.RejectBehavior Terminate}
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:15 ; elapsed = 00:00:15 . Memory (MB): peak = 2658.586 ; gain = 676.711 ; free physical = 7788 ; free virtual = 15540
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xcau15p-ffvb676-1-i
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:15 ; elapsed = 00:00:15 . Memory (MB): peak = 2666.555 ; gain = 684.680 ; free physical = 7788 ; free virtual = 15540
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:15 ; elapsed = 00:00:16 . Memory (MB): peak = 2666.555 ; gain = 684.680 ; free physical = 7788 ; free virtual = 15540
+---------------------------------------------------------------------------------
+INFO: [Synth 8-802] inferred FSM for state register 'tx_state_reg' in module 'uart_router'
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'controller_controller'
+INFO: [Synth 8-802] inferred FSM for state register 'rx_state_reg' in module 'fpga_unified_top'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                 TX_IDLE |                               00 | 00000000000000000000000000000000
+            TX_LOCK_CROC |                               01 | 00000000000000000000000000000001
+             TX_LOCK_STM |                               10 | 00000000000000000000000000000010
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'tx_state_reg' using encoding 'sequential' in module 'uart_router'
+WARNING: [Synth 8-327] inferring latch for variable 'display_value_reg' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/new/controller_controller.v:53]
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                  S_INIT |                             0001 |                               00
+                S_LOCKED |                             0010 |                               11
+                 S_SHIFT |                             0100 |                               01
+                  S_WAIT |                             1000 |                               10
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'one-hot' in module 'controller_controller'
+WARNING: [Synth 8-327] inferring latch for variable 'change_enable_reg' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/new/controller_controller.v:37]
+WARNING: [Synth 8-327] inferring latch for variable 'psincdec_reg' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/new/controller_controller.v:39]
+WARNING: [Synth 8-327] inferring latch for variable 'signal_reg' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/new/controller_controller.v:38]
+WARNING: [Synth 8-327] inferring latch for variable 'psen_reg' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/new/controller_controller.v:38]
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+*
+                 iSTATE1 |                               00 |                              000
+                  iSTATE |                               01 |                              001
+                 iSTATE2 |                               10 |                              010
+                 iSTATE0 |                               11 |                              011
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'rx_state_reg' using encoding 'sequential' in module 'fpga_unified_top'
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:16 ; elapsed = 00:00:16 . Memory (MB): peak = 2666.555 ; gain = 684.680 ; free physical = 7788 ; free virtual = 15541
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input   27 Bit       Adders := 1     
+	   2 Input   24 Bit       Adders := 1     
+	   2 Input   17 Bit       Adders := 1     
+	   2 Input   16 Bit       Adders := 2     
+	   2 Input   10 Bit       Adders := 2     
+	   2 Input    4 Bit       Adders := 3     
+	   2 Input    3 Bit       Adders := 1     
++---XORs : 
+	   2 Input      1 Bit         XORs := 1     
++---Registers : 
+	               32 Bit    Registers := 6     
+	               16 Bit    Registers := 4     
+	                9 Bit    Registers := 1     
+	                8 Bit    Registers := 2     
+	                4 Bit    Registers := 1     
+	                3 Bit    Registers := 1     
+	                1 Bit    Registers := 19    
++---Muxes : 
+	   3 Input   32 Bit        Muxes := 1     
+	   2 Input   32 Bit        Muxes := 6     
+	   6 Input   32 Bit        Muxes := 1     
+	   2 Input   27 Bit        Muxes := 1     
+	   2 Input   24 Bit        Muxes := 1     
+	   2 Input   17 Bit        Muxes := 2     
+	   5 Input   16 Bit        Muxes := 1     
+	   2 Input   10 Bit        Muxes := 7     
+	   2 Input    9 Bit        Muxes := 1     
+	  14 Input    8 Bit        Muxes := 1     
+	   2 Input    8 Bit        Muxes := 2     
+	   5 Input    8 Bit        Muxes := 1     
+	   2 Input    4 Bit        Muxes := 9     
+	   4 Input    4 Bit        Muxes := 1     
+	   5 Input    3 Bit        Muxes := 1     
+	   3 Input    2 Bit        Muxes := 1     
+	   2 Input    2 Bit        Muxes := 2     
+	   5 Input    2 Bit        Muxes := 1     
+	   2 Input    1 Bit        Muxes := 32    
+	   3 Input    1 Bit        Muxes := 3     
+	   6 Input    1 Bit        Muxes := 9     
+	   4 Input    1 Bit        Muxes := 2     
+	   5 Input    1 Bit        Muxes := 5     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 576 (col length:72)
+BRAMs: 288 (col length: RAMB18 72 RAMB36 36)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-7129] Port heartbeat_pin in module uart_router is either unconnected or has no load
+WARNING: [Synth 8-3332] Sequential element (u_router/FSM_sequential_tx_state_reg[0]) is unused and will be removed from module fpga_unified_top.
+WARNING: [Synth 8-3332] Sequential element (mgr/psincdec_reg) is unused and will be removed from module fpga_unified_top.
+WARNING: [Synth 8-3332] Sequential element (mgr/signal_reg) is unused and will be removed from module fpga_unified_top.
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:18 ; elapsed = 00:00:18 . Memory (MB): peak = 2666.555 ; gain = 684.680 ; free physical = 7768 ; free virtual = 15525
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:19 ; elapsed = 00:00:20 . Memory (MB): peak = 2915.230 ; gain = 933.355 ; free physical = 7533 ; free virtual = 15299
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:20 ; elapsed = 00:00:20 . Memory (MB): peak = 2917.230 ; gain = 935.355 ; free physical = 7533 ; free virtual = 15299
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:20 ; elapsed = 00:00:20 . Memory (MB): peak = 2945.277 ; gain = 963.402 ; free physical = 7509 ; free virtual = 15275
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:22 ; elapsed = 00:00:22 . Memory (MB): peak = 3113.090 ; gain = 1131.215 ; free physical = 7345 ; free virtual = 15107
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:22 ; elapsed = 00:00:22 . Memory (MB): peak = 3113.090 ; gain = 1131.215 ; free physical = 7345 ; free virtual = 15107
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:22 ; elapsed = 00:00:22 . Memory (MB): peak = 3113.090 ; gain = 1131.215 ; free physical = 7345 ; free virtual = 15107
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:22 ; elapsed = 00:00:22 . Memory (MB): peak = 3113.090 ; gain = 1131.215 ; free physical = 7345 ; free virtual = 15107
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:22 ; elapsed = 00:00:22 . Memory (MB): peak = 3113.090 ; gain = 1131.215 ; free physical = 7345 ; free virtual = 15107
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:22 ; elapsed = 00:00:22 . Memory (MB): peak = 3113.090 ; gain = 1131.215 ; free physical = 7345 ; free virtual = 15107
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++------+--------------+----------+
+|      |BlackBox name |Instances |
++------+--------------+----------+
+|1     |clk_wiz_0     |         1|
++------+--------------+----------+
+
+Report Cell Usage: 
++------+---------+------+
+|      |Cell     |Count |
++------+---------+------+
+|1     |clk_wiz  |     1|
+|2     |CARRY8   |    20|
+|3     |LUT1     |    55|
+|4     |LUT2     |    73|
+|5     |LUT3     |    48|
+|6     |LUT4     |    34|
+|7     |LUT5     |    63|
+|8     |LUT6     |    71|
+|9     |SYSMONE4 |     1|
+|10    |FDCE     |   148|
+|11    |FDPE     |     2|
+|12    |FDRE     |   111|
+|13    |LD       |    18|
+|14    |IBUF     |     3|
+|15    |OBUF     |     3|
++------+---------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:22 ; elapsed = 00:00:22 . Memory (MB): peak = 3113.090 ; gain = 1131.215 ; free physical = 7345 ; free virtual = 15107
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 9 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:15 ; elapsed = 00:00:15 . Memory (MB): peak = 3113.090 ; gain = 1020.004 ; free physical = 7345 ; free virtual = 15107
+Synthesis Optimization Complete : Time (s): cpu = 00:00:22 ; elapsed = 00:00:23 . Memory (MB): peak = 3113.090 ; gain = 1131.215 ; free physical = 7345 ; free virtual = 15107
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 3113.090 ; gain = 0.000 ; free physical = 7345 ; free virtual = 15107
+INFO: [Netlist 29-17] Analyzing 41 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3113.090 ; gain = 0.000 ; free physical = 7484 ; free virtual = 15247
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 21 instances were transformed.
+  IBUF => IBUF (IBUFCTRL, INBUF): 3 instances
+  LD => LDCE: 18 instances
+
+Synth Design complete | Checksum: b102b2b0
+INFO: [Common 17-83] Releasing license: Synthesis
+55 Infos, 39 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:27 ; elapsed = 00:00:26 . Memory (MB): peak = 3113.090 ; gain = 1488.434 ; free physical = 7489 ; free virtual = 15252
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 2262.888; main = 2165.612; forked = 283.221
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 3940.523; main = 3077.570; forked = 995.242
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3113.090 ; gain = 0.000 ; free physical = 7489 ; free virtual = 15252
+INFO: [Common 17-1381] The checkpoint '/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1/fpga_unified_top.dcp' has been generated.
+INFO: [Vivado 12-24828] Executing command : report_utilization -file fpga_unified_top_utilization_synth.rpt -pb fpga_unified_top_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Tue Dec 23 21:33:45 2025...
