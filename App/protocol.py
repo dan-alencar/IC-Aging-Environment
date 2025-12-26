@@ -32,18 +32,26 @@ FUNC_STR = {
 CRC_ENDIAN = "little"  # ordem dos 2 bytes de CRC no fio
 LEN_ENDIAN = "big"     # ordem dos 2 bytes do campo de tamanho
 
-# UPDATED: Packet length is now 8 bytes for UltraScale+ System
-# [Header 1A] + [Temp 2B] + [Vcc 2B] + [Slack 2B] + [Alarm 1B]
-AGING_PKT_LEN = 8  
+# UPDATED: Packet is now 9 bytes: [TL, TH, 00, SL, SH, VL, VH, 00, AL]
+AGING_PKT_LEN = 9
 
-# --------- Fatores de Conversão Xilinx UltraScale+ (SYSMONE4) ---------
-def raw_to_temp(raw_val):
-    # Transfer Function: Temp(C) = (ADC * 501.3743 / 65536) - 273.67
-    return (raw_val * 501.3743 / 65536.0) - 273.67
+# --------- Fatores de Conversão Xilinx UltraScale+ (Matches debugger.py) ---------
+def raw_to_temp(raw_16bit):
+    """
+    Converts XADC raw 16-bit value to Celsius.
+    Logic: ((ADC[15:4] * 503.975) / 4096) - 273.15
+    """
+    # Shift right by 4 (discard lower 4 bits)
+    adc_12bit = (raw_16bit >> 4) & 0xFFF
+    return (adc_12bit * 503.975 / 4096.0) - 273.15
 
-def raw_to_vcc(raw_val):
-    # Transfer Function: VCC(V) = (ADC / 65536) * 3.0V
-    return (raw_val / 65536.0) * 3.0
+def raw_to_vcc(raw_16bit):
+    """
+    Converts XADC raw 16-bit value to Voltage.
+    Logic: (ADC[15:4] * 3.0) / 4096
+    """
+    adc_12bit = (raw_16bit >> 4) & 0xFFF
+    return (adc_12bit * 3.0) / 4096.0
 
 # -------------------------------------------------------------------------
 # Funções Auxiliares de Protocolo (STM32)
@@ -75,13 +83,13 @@ def compute_crc16_modbus(data: bytes) -> int:
 class ProtocolParser:
     def __init__(self):
         self._rx_buf = bytes()
-        self._last_was_cr = False
 
     def feed(self, chunk: bytes) -> list:
         """
-        Recebe bytes crus e retorna uma lista de eventos:
-          ('line', "texto") -> Logs do STM32
-          ('aging', {dict}) -> Dados do Sensor FPGA
+        Recebe bytes e retorna eventos do STM32 ou Texto.
+        (A detecção de Aging Packet agora é feita no Router via Sliding Window)
+        Eventos:
+          ('line', "texto") -> Logs
           ('ok', meta), ('error', meta) -> Respostas de Comandos
         """
         events = []
@@ -92,37 +100,8 @@ class ProtocolParser:
             byte = self._rx_buf[0]
 
             # ------------------------------------------------------------------
-            # 1. PACOTE DE AGING (FPGA) - Header 0x1A
+            # DETECÇÃO STM32 (Headers 0x10, 0x20 ou Texto)
             # ------------------------------------------------------------------
-            if byte == 0x1A:
-                if len(self._rx_buf) >= AGING_PKT_LEN:
-                    # Extrai o pacote completo
-                    pkt = self._rx_buf[:AGING_PKT_LEN]
-                    self._rx_buf = self._rx_buf[AGING_PKT_LEN:] # Remove do buffer
-                    
-                    # Unpack: [1A][TH][TL][VH][VL][SH][SL][AL]
-                    raw_temp  = (pkt[1] << 8) | pkt[2]
-                    raw_vcc   = (pkt[3] << 8) | pkt[4]
-                    raw_slack = (pkt[5] << 8) | pkt[6] # Slack / Phase Count
-                    raw_alarm = pkt[7]
-
-                    data = {
-                        'dut_temp':  raw_to_temp(raw_temp),
-                        'dut_volt':  raw_to_vcc(raw_vcc),
-                        'dut_slack': raw_slack, # Passa o Slack direto (Inteiro)
-                        'alarm':     bool(raw_alarm)
-                    }
-                    events.append(('aging', data))
-                    continue
-                else:
-                    # Pacote incompleto, aguarda mais bytes
-                    break
-            
-            # ------------------------------------------------------------------
-            # 2. PACOTES DO STM32 (Headers 0x10, 0x20 ou Texto)
-            # ------------------------------------------------------------------
-            # Se não for 0x1A, assumimos lógica legado ou texto
-            # A lógica abaixo tenta detectar texto vs binário STM
             
             # Verifica tamanho mínimo para header binário (min 4 bytes: Head+Ctrl+LenH+LenL)
             if len(self._rx_buf) < 4:
@@ -144,13 +123,10 @@ class ProtocolParser:
                 break
 
             # Se chegamos aqui, temos > 4 bytes. Tenta decodificar binário STM32.
-            # (Mantendo a lógica original do seu arquivo para compatibilidade)
             head = self._rx_buf[0]
             ctrl = self._rx_buf[1]
             origin, error, func = decode_ctrl(ctrl)
 
-            # Verifica se parece um pacote STM válido
-            is_protocol_noise = False
             if (head == 0x20 or head == 0x10): 
                 # Lê tamanho
                 payload_len = int.from_bytes(self._rx_buf[2:4], LEN_ENDIAN)
@@ -182,19 +158,9 @@ class ProtocolParser:
                     # Pacote STM incompleto, espera
                     break
             else:
-                # Não é Header 0x1A, nem 0x10, nem 0x20. É Lixo ou Texto solto.
-                # Consome 1 byte para tentar resincronizar ou processa como texto
-                self._process_text_byte(byte, events)
+                # Não é Header STM. Pode ser texto solto ou lixo.
+                # Consome 1 byte e continua
                 self._rx_buf = self._rx_buf[1:]
                 continue
                 
         return events
-
-    def _process_text_byte(self, b: int, events: list):
-        # Auxiliar para remontar linhas de texto caractere por caractere
-        # se o buffer estiver desalinhado
-        if b == 0x0D: return # Ignora CR solto se tratado no loop principal
-        if b == 0x0A: return 
-        # (Implementação simplificada: O loop principal já trata chunks de linhas.
-        #  Aqui só descartamos bytes não processados para limpar o buffer)
-        pass

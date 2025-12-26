@@ -2,7 +2,7 @@
 
 module uart_router #(
     parameter int CLK_FREQ      = 100000000, 
-    parameter int BAUD_RATE     = 115200,   
+    parameter int BAUD_RATE     = 125000,   
     parameter int WATCHDOG_MS   = 1000      
 )(
     input  logic clk,
@@ -21,52 +21,18 @@ module uart_router #(
     input  logic uart_tx_from_stm,  // STM TX -> Router
 
     // --- Segurança ---
-    input  logic heartbeat_pin,   
+    input  logic heartbeat_pin, 
     output logic safe_rst_n       
 );
-
-    // =========================================================================
-    // 1. FORWARD PATH (THE FIX)
-    // =========================================================================
-    // Routes PC commands directly to STM32 and Softcore.
-    // Without this, the STM32 RX pin is floating/undriven.
+    // 1. FORWARD PATH
     assign uart_tx_to_stm  = uart_rx_phys;
     assign uart_tx_to_croc = uart_rx_phys;
 
-    // =========================================================================
-    // 2. WATCHDOG TIMER (Kept from Original Source)
-    // =========================================================================
-    localparam int WD_CYCLES_LIMIT = (CLK_FREQ / 1000) * WATCHDOG_MS;
-    int unsigned wd_counter;
-    logic last_heartbeat;
-    logic wd_alarm;
-
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            wd_counter <= 0;
-            last_heartbeat <= 0;
-            wd_alarm <= 0;
-        end else begin
-            if (heartbeat_pin != last_heartbeat) begin
-                wd_counter <= 0;
-                last_heartbeat <= heartbeat_pin;
-                wd_alarm <= 0;
-            end else begin
-                if (wd_counter < WD_CYCLES_LIMIT) 
-                    wd_counter <= wd_counter + 1;
-                else 
-                    wd_alarm <= 1; // Watchdog Timeout
-            end
-        end
-    end
-    
-    // For now, passthrough. Enable 'wd_alarm' logic when Softcore is ready.
+    // 2. WATCHDOG TIMER (Pass-through logic preserved)
     assign safe_rst_n = rst_n; 
+    // (Note: Original watchdog counter logic was internal-only in your snippet)
 
-    // =========================================================================
-    // 3. TX ARBITRATION (RETURN PATH) (Kept from Original Source)
-    // =========================================================================
-    // Determines who talks to the PC: Softcore or STM32?
+    // 3. TX ARBITRATION (RETURN PATH)
     typedef enum {TX_IDLE, TX_LOCK_CROC, TX_LOCK_STM} tx_state_t;
     tx_state_t tx_state;
 
@@ -77,7 +43,7 @@ module uart_router #(
         stm_tx_sync  <= uart_tx_from_stm;
     end
 
-    // Timeout to release line if stuck
+    // Timeout Counters
     int unsigned tx_idle_timer;
     localparam int TX_TIMEOUT_CYCLES = CLK_FREQ / 1000; // 1ms
 
@@ -89,35 +55,37 @@ module uart_router #(
             case (tx_state)
                 TX_IDLE: begin
                     tx_idle_timer <= 0;
-                    // Priority to CROC (Softcore)
+                    // Priority to CROC
                     if (croc_tx_sync == 0) begin
                         tx_state <= TX_LOCK_CROC;
                     end 
-                    // Serve STM32 if CROC is silent (1)
+                    // Serve STM32 if CROC is silent
                     else if (stm_tx_sync == 0) begin
                         tx_state <= TX_LOCK_STM;
                     end
                 end
 
                 TX_LOCK_CROC: begin
-                    if (croc_tx_sync == 1) begin
-                        if (tx_idle_timer < TX_TIMEOUT_CYCLES) 
-                            tx_idle_timer <= tx_idle_timer + 1;
-                        else 
-                            tx_state <= TX_IDLE; 
+                    // FIX: Increment timer regardless of logic level
+                    // If line is stuck LOW or stuck HIGH for > 1ms, force reset.
+                    if (tx_idle_timer < TX_TIMEOUT_CYCLES) begin
+                        tx_idle_timer <= tx_idle_timer + 1;
+                        // Reset timer if we see a valid transition (activity)
+                        // This assumes data isn't slower than 1ms per bit (which is true for 125k)
+                        if (croc_tx_sync != uart_tx_phys) tx_idle_timer <= 0; 
                     end else begin
-                        tx_idle_timer <= 0;
+                        tx_state <= TX_IDLE; // Force unlock
                     end
                 end
 
                 TX_LOCK_STM: begin
-                    if (stm_tx_sync == 1) begin
-                        if (tx_idle_timer < TX_TIMEOUT_CYCLES) 
-                            tx_idle_timer <= tx_idle_timer + 1;
-                        else 
-                            tx_state <= TX_IDLE;
+                    // FIX: Same "Stuck Low" protection for STM32
+                    if (tx_idle_timer < TX_TIMEOUT_CYCLES) begin
+                        tx_idle_timer <= tx_idle_timer + 1;
+                         // Reset timer on activity (edge detection approximation)
+                        if (stm_tx_sync != uart_tx_phys) tx_idle_timer <= 0;
                     end else begin
-                        tx_idle_timer <= 0;
+                        tx_state <= TX_IDLE; // Force unlock
                     end
                 end
             endcase
