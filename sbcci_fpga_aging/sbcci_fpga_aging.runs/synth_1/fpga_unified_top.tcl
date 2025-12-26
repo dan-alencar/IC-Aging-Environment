@@ -57,10 +57,13 @@ if {$::dispatch::connected} {
 
 OPTRACE "synth_1" START { ROLLUP_AUTO }
 set_param chipscope.maxJobs 3
+set_param power.BramSDPPropagationFix 1
 set_param xicom.use_bs_reader 1
 set_param general.usePosixSpawnForFork 1
 set_param physdb.placeDBImplUsesPlaceStorage 0
-set_msg_config -id {HDL-1065} -limit 10000
+set_param power.enableUnconnectedCarry8PinPower 1
+set_param power.enableCarry8RouteBelPower 1
+set_param power.enableLutRouteBelPower 1
 OPTRACE "Creating in-memory project" START { }
 create_project -in_memory -part xcau15p-ffvb676-1-i
 
@@ -93,6 +96,11 @@ read_ip -quiet /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpg
 set_property used_in_implementation false [get_files -all /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/clk_wiz_0/clk_wiz_0_board.xdc]
 set_property used_in_implementation false [get_files -all /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/clk_wiz_0/clk_wiz_0.xdc]
 set_property used_in_implementation false [get_files -all /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/clk_wiz_0/clk_wiz_0_ooc.xdc]
+
+read_ip -quiet /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/ip/xadc_wiz_0/xadc_wiz_0.xci
+set_property used_in_implementation false [get_files -all /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/xadc_wiz_0/xadc_wiz_0_board.xdc]
+set_property used_in_implementation false [get_files -all /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/xadc_wiz_0/xadc_wiz_0_ooc.xdc]
+set_property used_in_implementation false [get_files -all /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/xadc_wiz_0/xadc_wiz_0.xdc]
 
 OPTRACE "Adding files" END { }
 # Mark all dcp files as not used in implementation to prevent them from being

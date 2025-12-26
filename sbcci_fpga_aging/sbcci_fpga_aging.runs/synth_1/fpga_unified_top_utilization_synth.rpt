@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
-| Date         : Tue Dec 23 21:33:45 2025
+| Date         : Fri Dec 26 17:01:21 2025
 | Host         : dan-alencar running 64-bit Linux Mint 22.2
 | Command      : report_utilization -file fpga_unified_top_utilization_synth.rpt -pb fpga_unified_top_utilization_synth.pb
 | Design       : fpga_unified_top
@@ -32,17 +32,17 @@ Table of Contents
 +-------------------------+------+-------+------------+-----------+-------+
 |        Site Type        | Used | Fixed | Prohibited | Available | Util% |
 +-------------------------+------+-------+------------+-----------+-------+
-| CLB LUTs*               |  268 |     0 |          0 |     77760 |  0.34 |
-|   LUT as Logic          |  268 |     0 |          0 |     77760 |  0.34 |
+| CLB LUTs*               |  182 |     0 |          0 |     77760 |  0.23 |
+|   LUT as Logic          |  182 |     0 |          0 |     77760 |  0.23 |
 |   LUT as Memory         |    0 |     0 |          0 |     40320 |  0.00 |
-| CLB Registers           |  279 |     0 |          0 |    155520 |  0.18 |
-|   Register as Flip Flop |  261 |     0 |          0 |    155520 |  0.17 |
-|   Register as Latch     |   18 |     0 |          0 |    155520 |  0.01 |
-| CARRY8                  |   20 |     0 |          0 |      9720 |  0.21 |
-| F7 Muxes                |    0 |     0 |          0 |     38880 |  0.00 |
+| CLB Registers           |  214 |     0 |          0 |    155520 |  0.14 |
+|   Register as Flip Flop |  214 |     0 |          0 |    155520 |  0.14 |
+|   Register as Latch     |    0 |     0 |          0 |    155520 |  0.00 |
+| CARRY8                  |   12 |     0 |          0 |      9720 |  0.12 |
+| F7 Muxes                |    1 |     0 |          0 |     38880 | <0.01 |
 | F8 Muxes                |    0 |     0 |          0 |     19440 |  0.00 |
 | F9 Muxes                |    0 |     0 |          0 |      9720 |  0.00 |
-| Unique Control Sets     |   23 |       |          0 |     19440 |  0.12 |
+| Unique Control Sets     |   20 |       |          0 |     19440 |  0.10 |
 +-------------------------+------+-------+------------+-----------+-------+
 * Warning! The Final LUT count, after physical optimizations and full implementation, is typically lower. Run opt_design after synthesis, if not already completed, for a more realistic count.
 Warning! LUT value is adjusted to account for LUT combining.
@@ -62,10 +62,10 @@ Warning! For any ECO changes, please run place_design if there are unplaced inst
 | 0     |            _ |         Set |            - |
 | 0     |            _ |       Reset |            - |
 | 0     |          Yes |           - |            - |
-| 2     |          Yes |           - |          Set |
-| 166   |          Yes |           - |        Reset |
+| 1     |          Yes |           - |          Set |
+| 186   |          Yes |           - |        Reset |
 | 0     |          Yes |         Set |            - |
-| 111   |          Yes |       Reset |            - |
+| 27    |          Yes |       Reset |            - |
 +-------+--------------+-------------+--------------+
 
 
@@ -133,16 +133,16 @@ Warning! For any ECO changes, please run place_design if there are unplaced inst
 6. ADVANCED
 -----------
 
-+-----------------+------+-------+------------+-----------+--------+
-|    Site Type    | Used | Fixed | Prohibited | Available |  Util% |
-+-----------------+------+-------+------------+-----------+--------+
-| GTHE4_CHANNEL   |    0 |     0 |          0 |        12 |   0.00 |
-| GTHE4_COMMON    |    0 |     0 |          0 |         3 |   0.00 |
-| OBUFDS_GTE4     |    0 |     0 |          0 |         6 |   0.00 |
-| OBUFDS_GTE4_ADV |    0 |     0 |          0 |         6 |   0.00 |
-| PCIE4CE4        |    0 |     0 |          0 |         1 |   0.00 |
-| SYSMONE4        |    1 |     0 |          0 |         1 | 100.00 |
-+-----------------+------+-------+------------+-----------+--------+
++-----------------+------+-------+------------+-----------+-------+
+|    Site Type    | Used | Fixed | Prohibited | Available | Util% |
++-----------------+------+-------+------------+-----------+-------+
+| GTHE4_CHANNEL   |    0 |     0 |          0 |        12 |  0.00 |
+| GTHE4_COMMON    |    0 |     0 |          0 |         3 |  0.00 |
+| OBUFDS_GTE4     |    0 |     0 |          0 |         6 |  0.00 |
+| OBUFDS_GTE4_ADV |    0 |     0 |          0 |         6 |  0.00 |
+| PCIE4CE4        |    0 |     0 |          0 |         1 |  0.00 |
+| SYSMONE4        |    0 |     0 |          0 |         1 |  0.00 |
++-----------------+------+-------+------------+-----------+-------+
 
 
 7. CONFIGURATION
@@ -167,32 +167,32 @@ Warning! For any ECO changes, please run place_design if there are unplaced inst
 +----------+------+---------------------+
 | Ref Name | Used | Functional Category |
 +----------+------+---------------------+
-| FDCE     |  148 |            Register |
-| FDRE     |  111 |            Register |
-| LUT2     |   73 |                 CLB |
-| LUT6     |   71 |                 CLB |
-| LUT5     |   63 |                 CLB |
-| LUT1     |   55 |                 CLB |
-| LUT3     |   48 |                 CLB |
-| LUT4     |   34 |                 CLB |
-| CARRY8   |   20 |                 CLB |
-| LDCE     |   18 |            Register |
+| FDCE     |  186 |            Register |
+| LUT1     |   56 |                 CLB |
+| LUT5     |   40 |                 CLB |
+| LUT2     |   40 |                 CLB |
+| LUT3     |   38 |                 CLB |
+| LUT6     |   29 |                 CLB |
+| LUT4     |   29 |                 CLB |
+| FDRE     |   27 |            Register |
+| CARRY8   |   12 |                 CLB |
 | OBUF     |    3 |                 I/O |
 | INBUF    |    3 |                 I/O |
 | IBUFCTRL |    3 |              Others |
-| FDPE     |    2 |            Register |
-| SYSMONE4 |    1 |            Advanced |
+| MUXF7    |    1 |                 CLB |
+| FDPE     |    1 |            Register |
 +----------+------+---------------------+
 
 
 9. Black Boxes
 --------------
 
-+-----------+------+
-|  Ref Name | Used |
-+-----------+------+
-| clk_wiz_0 |    1 |
-+-----------+------+
++------------+------+
+|  Ref Name  | Used |
++------------+------+
+| xadc_wiz_0 |    1 |
+| clk_wiz_0  |    1 |
++------------+------+
 
 
 10. Instantiated Netlists

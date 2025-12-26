@@ -1,3 +1,0 @@
-system_management_wiz_0_sysmon.v,verilog,xil_defaultlib,../../../../sbcci_fpga_aging.gen/sources_1/ip/system_management_wiz_0/system_management_wiz_0_sysmon.v,incdir="../../../../../../../../2025.2/data/rsb/busdef"
-system_management_wiz_0.v,verilog,xil_defaultlib,../../../../sbcci_fpga_aging.gen/sources_1/ip/system_management_wiz_0/system_management_wiz_0.v,incdir="../../../../../../../../2025.2/data/rsb/busdef"
-glbl.v,Verilog,xil_defaultlib,glbl.v
