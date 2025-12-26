@@ -1,0 +1,3 @@
+xadc_wiz_0_sysmon.v,verilog,xil_defaultlib,../../../../sbcci_fpga_aging.gen/sources_1/ip/xadc_wiz_0/xadc_wiz_0_sysmon.v,incdir="../../../../../../../../2025.2/data/rsb/busdef"
+xadc_wiz_0.v,verilog,xil_defaultlib,../../../../sbcci_fpga_aging.gen/sources_1/ip/xadc_wiz_0/xadc_wiz_0.v,incdir="../../../../../../../../2025.2/data/rsb/busdef"
+glbl.v,Verilog,xil_defaultlib,glbl.v

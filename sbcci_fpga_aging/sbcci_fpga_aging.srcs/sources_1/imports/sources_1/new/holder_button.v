@@ -2,24 +2,41 @@
 
 module holder_button(
     input clk,
-    input reset,  // <--- ADDED THIS PORT
+    input reset,
     input button,
     input alarm,
     output reg held
     );
     
     reg buttonant;
-    wire pulse;
+    reg alarm_prev;
+    wire button_pulse;
+    wire alarm_edge;
     
+    // Detect button press (rising edge)
     always@(posedge clk) begin
         buttonant <= button;
     end
+    assign button_pulse = button && !buttonant;
     
-    assign pulse = button && !buttonant;
-    
-    always@(posedge clk or posedge reset) begin // Added reset to sensitivity list
-        if (reset) held <= 0;           // Handle UART Reset (0x0F)
-        else if(pulse) held <= 0;       // Handle Physical Button
-        else if (alarm) held <= 1;
+    // Detect alarm rising edge (not just level)
+    always@(posedge clk) begin
+        alarm_prev <= alarm;
     end
+    assign alarm_edge = alarm && !alarm_prev;
+    
+    // Latch logic
+    always@(posedge clk or posedge reset) begin
+        if (reset) begin
+            held <= 0;  // Clear on reset
+        end
+        else if(button_pulse) begin
+            held <= 0;  // Clear on button press
+        end
+        else if (alarm_edge) begin
+            held <= 1;  // Latch on alarm rising edge
+        end
+        // Otherwise hold current value
+    end
+    
 endmodule

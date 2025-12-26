@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
-| Date         : Tue Dec 23 21:34:14 2025
+| Date         : Fri Dec 26 17:02:04 2025
 | Host         : dan-alencar running 64-bit Linux Mint 22.2
 | Command      : report_drc -file fpga_unified_top_drc_opted.rpt -pb fpga_unified_top_drc_opted.pb -rpx fpga_unified_top_drc_opted.rpx
 | Design       : fpga_unified_top

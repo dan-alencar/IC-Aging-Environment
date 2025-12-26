@@ -4,53 +4,96 @@ module uart_arbiter (
     input  logic clk,
     input  logic rst_n,
     
-    // Canal 1: CROC (Texto/Debug) - Prioridade Alta
+    // Channel 1: CROC/Router (Text/Debug) - High Priority
     input  logic tx_croc,
     
-    // Canal 2: Monitor Aging (Pacotes Binários) - Prioridade Baixa
+    // Channel 2: Monitor (Binary Packets) - Low Priority
     input  logic tx_monitor,
-    input  logic monitor_active, // Sinal 'tx_active' do módulo anterior
+    input  logic monitor_active,
     
-    // Saída Combinada
+    // Combined Output
     output logic tx_combined
 );
 
-    // Detecta se o CROC está ocupando a linha
-    // O UART fica em 1 quando Idle. Se for 0, está transmitindo.
-    // Vamos adicionar um pequeno timer para garantir que o CROC terminou mesmo.
+    // State machine for arbitration
+    typedef enum logic[1:0] {
+        ARB_IDLE,
+        ARB_CROC,
+        ARB_MONITOR
+    } arb_state_t;
     
+    arb_state_t state;
+    
+    // Detect when CROC is transmitting (UART idle = 1, transmit = 0)
     logic croc_busy;
-    int unsigned idle_cnt;
+    logic [15:0] croc_idle_timer;
+    
+    // Small timeout to ensure CROC has finished
+    localparam CROC_IDLE_TIMEOUT = 16'd5000;  // ~50us at 100MHz
     
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
+            state <= ARB_IDLE;
             croc_busy <= 0;
-            idle_cnt <= 0;
+            croc_idle_timer <= 0;
         end else begin
+            // Detect CROC activity
             if (tx_croc == 0) begin
                 croc_busy <= 1;
-                idle_cnt <= 0;
-            end else begin
-                // Se linha em 1, conta um pouco antes de liberar
-                if (idle_cnt < 1000) idle_cnt <= idle_cnt + 1;
-                else croc_busy <= 0;
+                croc_idle_timer <= 0;
+            end else if (croc_busy) begin
+                if (croc_idle_timer < CROC_IDLE_TIMEOUT) begin
+                    croc_idle_timer <= croc_idle_timer + 1;
+                end else begin
+                    croc_busy <= 0;
+                end
             end
+            
+            // Arbitration state machine
+            case (state)
+                ARB_IDLE: begin
+                    // Priority to CROC
+                    if (croc_busy) begin
+                        state <= ARB_CROC;
+                    end 
+                    // Monitor can transmit if CROC is quiet
+                    else if (monitor_active) begin
+                        state <= ARB_MONITOR;
+                    end
+                end
+                
+                ARB_CROC: begin
+                    // Stay locked to CROC until it finishes
+                    if (!croc_busy) begin
+                        state <= ARB_IDLE;
+                    end
+                end
+                
+                ARB_MONITOR: begin
+                    // Monitor keeps the channel until done
+                    // BUT if CROC suddenly needs it, we must handle gracefully
+                    if (!monitor_active) begin
+                        state <= ARB_IDLE;
+                    end
+                    // CROC can preempt between packets but not during
+                    else if (croc_busy && tx_monitor == 1) begin
+                        // Only switch if monitor is between bytes (line idle)
+                        state <= ARB_CROC;
+                    end
+                end
+                
+                default: state <= ARB_IDLE;
+            endcase
         end
     end
 
-    // Lógica de Mux
+    // Output multiplexer
     always_comb begin
-        if (croc_busy) begin
-            // Se o CROC está falando, a saída é dele.
-            // O monitor deve ter lógica interna para pausar ou perder o pacote se colidir.
-            tx_combined = tx_croc;
-        end else if (monitor_active) begin
-            // Se o CROC está quieto e o monitor quer falar
-            tx_combined = tx_monitor;
-        end else begin
-            // Idle
-            tx_combined = 1'b1;
-        end
+        case (state)
+            ARB_CROC:    tx_combined = tx_croc;
+            ARB_MONITOR: tx_combined = tx_monitor;
+            default:     tx_combined = 1'b1;  // Idle high
+        endcase
     end
 
 endmodule
