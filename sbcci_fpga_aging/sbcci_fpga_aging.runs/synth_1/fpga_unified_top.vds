@@ -3,8 +3,8 @@
 # SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
 # IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
 # SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
-# Start of session at: Fri Dec 26 17:00:23 2025
-# Process ID         : 306037
+# Start of session at: Fri Dec 26 19:39:25 2025
+# Process ID         : 573760
 # Current directory  : /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1
 # Command line       : vivado -log fpga_unified_top.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source fpga_unified_top.tcl
 # Log file           : /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1/fpga_unified_top.vds
@@ -13,13 +13,13 @@
 # Platform           : Linuxmint
 # Operating System   : Linux Mint 22.2
 # Processor Detail   : Intel(R) Core(TM) 5 210H
-# CPU Frequency      : 399.704 MHz
+# CPU Frequency      : 399.770 MHz
 # CPU Physical cores : 8
 # CPU Logical cores  : 12
 # Host memory        : 24783 MB
 # Swap memory        : 2147 MB
 # Total Virtual      : 26931 MB
-# Available Virtual  : 16375 MB
+# Available Virtual  : 14957 MB
 #-----------------------------------------------------------
 source fpga_unified_top.tcl -notrace
 Command: read_checkpoint -auto_incremental -incremental /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/utils_1/imports/synth_1/fpga_aging_top.dcp
@@ -34,13 +34,13 @@ INFO: [Designutils 20-5440] No compile time benefit to using incremental synthes
 INFO: [Designutils 20-4379] Flow is switching to default flow due to incremental criteria not met. If you would like to alter this behaviour and have the flow terminate instead, please set the following parameter config_implementation {autoIncr.Synth.RejectBehavior Terminate}
 INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
 INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
-INFO: [Synth 8-7075] Helper process launched with PID 306101
+INFO: [Synth 8-7075] Helper process launched with PID 573814
 ---------------------------------------------------------------------------------
-Starting RTL Elaboration : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2437.078 ; gain = 451.688 ; free physical = 6032 ; free virtual = 14162
+Starting RTL Elaboration : Time (s): cpu = 00:00:03 ; elapsed = 00:00:03 . Memory (MB): peak = 2436.910 ; gain = 452.688 ; free physical = 665 ; free virtual = 12879
 ---------------------------------------------------------------------------------
 INFO: [Synth 8-6157] synthesizing module 'fpga_unified_top' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/fpga_unified_top.sv:3]
-INFO: [Synth 8-6157] synthesizing module 'clk_wiz_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1/.Xil/Vivado-306037-dan-alencar/realtime/clk_wiz_0_stub.v:6]
-INFO: [Synth 8-6155] done synthesizing module 'clk_wiz_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1/.Xil/Vivado-306037-dan-alencar/realtime/clk_wiz_0_stub.v:6]
+INFO: [Synth 8-6157] synthesizing module 'clk_wiz_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1/.Xil/Vivado-573760-dan-alencar/realtime/clk_wiz_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'clk_wiz_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1/.Xil/Vivado-573760-dan-alencar/realtime/clk_wiz_0_stub.v:6]
 INFO: [Synth 8-6157] synthesizing module 'controller_controller' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/new/controller_controller.v:3]
 INFO: [Synth 8-6155] done synthesizing module 'controller_controller' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/new/controller_controller.v:3]
 INFO: [Synth 8-6157] synthesizing module 'not_series' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/imports/Projects/aging_Nexys4DDR/aging_Nexys4DDR.srcs/sources_1/imports/new/nand_series.v:3]
@@ -50,6 +50,9 @@ INFO: [Synth 8-6157] synthesizing module 'LUT1' [/home/dan-alencar/2025.2/Vivado
 INFO: [Synth 8-6155] done synthesizing module 'LUT1' (0#1) [/home/dan-alencar/2025.2/Vivado/scripts/rt/data/unisim_comp.v:95343]
 INFO: [Synth 8-6155] done synthesizing module 'not_series' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/imports/Projects/aging_Nexys4DDR/aging_Nexys4DDR.srcs/sources_1/imports/new/nand_series.v:3]
 INFO: [Synth 8-6157] synthesizing module 'modern_sensible' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/imports/Projects/aging_Nexys4DDR/aging_Nexys4DDR.srcs/sources_1/new/modern_sensible.v:3]
+INFO: [Synth 8-6157] synthesizing module 'LUT2_L' [/home/dan-alencar/2025.2/Vivado/scripts/rt/data/unisim_comp.v:95403]
+	Parameter INIT bound to: 4'b0110 
+INFO: [Synth 8-6155] done synthesizing module 'LUT2_L' (0#1) [/home/dan-alencar/2025.2/Vivado/scripts/rt/data/unisim_comp.v:95403]
 INFO: [Synth 8-6157] synthesizing module 'FDCE' [/home/dan-alencar/2025.2/Vivado/scripts/rt/data/unisim_comp.v:49180]
 	Parameter INIT bound to: 1'b0 
 INFO: [Synth 8-6155] done synthesizing module 'FDCE' (0#1) [/home/dan-alencar/2025.2/Vivado/scripts/rt/data/unisim_comp.v:49180]
@@ -59,44 +62,42 @@ INFO: [Synth 8-6155] done synthesizing module 'holder_button' (0#1) [/home/dan-a
 INFO: [Synth 8-6157] synthesizing module 'uart_router' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/rtl/uart_router.sv:3]
 	Parameter CLK_FREQ bound to: 32'sb00000101111101011110000100000000 
 	Parameter BAUD_RATE bound to: 32'sb00000000000000011110100001001000 
-INFO: [Synth 8-155] case statement is not full and has no default [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/rtl/uart_router.sv:89]
+INFO: [Synth 8-155] case statement is not full and has no default [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/rtl/uart_router.sv:55]
 INFO: [Synth 8-6155] done synthesizing module 'uart_router' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/rtl/uart_router.sv:3]
 INFO: [Synth 8-6157] synthesizing module 'sysmon_monitor' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:3]
 	Parameter CLK_FREQ bound to: 32'sb00000101111101011110000100000000 
 	Parameter BAUD_RATE bound to: 32'sb00000000000000011110100001001000 
-INFO: [Synth 8-6157] synthesizing module 'xadc_wiz_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1/.Xil/Vivado-306037-dan-alencar/realtime/xadc_wiz_0_stub.v:6]
-INFO: [Synth 8-6155] done synthesizing module 'xadc_wiz_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1/.Xil/Vivado-306037-dan-alencar/realtime/xadc_wiz_0_stub.v:6]
-INFO: [Synth 8-155] case statement is not full and has no default [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:76]
+INFO: [Synth 8-6157] synthesizing module 'xadc_wiz_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1/.Xil/Vivado-573760-dan-alencar/realtime/xadc_wiz_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'xadc_wiz_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1/.Xil/Vivado-573760-dan-alencar/realtime/xadc_wiz_0_stub.v:6]
+INFO: [Synth 8-155] case statement is not full and has no default [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:87]
 INFO: [Synth 8-6155] done synthesizing module 'sysmon_monitor' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:3]
 INFO: [Synth 8-6157] synthesizing module 'uart_arbiter' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/rtl/uart_arbiter.sv:3]
 INFO: [Synth 8-6155] done synthesizing module 'uart_arbiter' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/rtl/uart_arbiter.sv:3]
 INFO: [Synth 8-6155] done synthesizing module 'fpga_unified_top' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/fpga_unified_top.sv:3]
-WARNING: [Synth 8-6014] Unused sequential element wd_counter_reg was removed.  [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/rtl/uart_router.sv:46]
-WARNING: [Synth 8-6014] Unused sequential element last_heartbeat_reg was removed.  [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/rtl/uart_router.sv:47]
-WARNING: [Synth 8-6014] Unused sequential element wd_alarm_reg was removed.  [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/rtl/uart_router.sv:48]
-WARNING: [Synth 8-7137] Register shifter_reg in module sysmon_monitor has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:189]
-WARNING: [Synth 8-7137] Register baud_cnt_reg in module sysmon_monitor has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:191]
-WARNING: [Synth 8-7137] Register bit_cnt_reg in module sysmon_monitor has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/sysmon_monitor.sv:191]
+WARNING: [Synth 8-6014] Unused sequential element inc_count_reg was removed.  [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/new/controller_controller.v:62]
+WARNING: [Synth 8-6014] Unused sequential element monitor_locked_reg was removed.  [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/rtl/uart_arbiter.sv:32]
 WARNING: [Synth 8-7129] Port heartbeat_pin in module uart_router is either unconnected or has no load
 ---------------------------------------------------------------------------------
-Finished RTL Elaboration : Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 2534.047 ; gain = 548.656 ; free physical = 5946 ; free virtual = 14065
+Finished RTL Elaboration : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 2534.879 ; gain = 550.656 ; free physical = 551 ; free virtual = 12766
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Handling Custom Attributes
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Handling Custom Attributes : Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 2542.953 ; gain = 557.562 ; free physical = 5959 ; free virtual = 14078
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 2546.754 ; gain = 562.531 ; free physical = 548 ; free virtual = 12763
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 2542.953 ; gain = 557.562 ; free physical = 5959 ; free virtual = 14078
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 2546.754 ; gain = 562.531 ; free physical = 548 ; free virtual = 12763
 ---------------------------------------------------------------------------------
-Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2548.891 ; gain = 0.000 ; free physical = 5951 ; free virtual = 14070
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 2552.691 ; gain = 0.000 ; free physical = 540 ; free virtual = 12756
+INFO: [Netlist 29-17] Analyzing 1 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
 INFO: [Project 1-570] Preparing netlist for logic optimization
 
 Processing XDC Constraints
 Initializing timing engine
 Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/clk_wiz_0/clk_wiz_0/clk_wiz_0_in_context.xdc] for cell 'clock_gen'
-create_clock: Time (s): cpu = 00:00:13 ; elapsed = 00:00:13 . Memory (MB): peak = 2649.691 ; gain = 22.812 ; free physical = 6009 ; free virtual = 14149
+create_clock: Time (s): cpu = 00:00:06 ; elapsed = 00:00:07 . Memory (MB): peak = 2656.695 ; gain = 25.016 ; free physical = 474 ; free virtual = 12695
 Finished Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/clk_wiz_0/clk_wiz_0/clk_wiz_0_in_context.xdc] for cell 'clock_gen'
 Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/xadc_wiz_0/xadc_wiz_0/xadc_wiz_0_in_context.xdc] for cell 'u_mon/sysmon_inst'
 Finished Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/xadc_wiz_0/xadc_wiz_0/xadc_wiz_0_in_context.xdc] for cell 'u_mon/sysmon_inst'
@@ -108,15 +109,16 @@ INFO: [Project 1-236] Implementation specific constraints were found while readi
 Resolution: To avoid this warning, move constraints listed in [.Xil/fpga_unified_top_propImpl.xdc] to another XDC file and exclude this new file from synthesis with the used_in_synthesis property (File Properties dialog in GUI) and re-run elaboration/synthesis.
 Completed Processing XDC Constraints
 
-Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2649.691 ; gain = 0.000 ; free physical = 6009 ; free virtual = 14149
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2656.695 ; gain = 0.000 ; free physical = 474 ; free virtual = 12695
 INFO: [Project 1-111] Unisim Transformation Summary:
-No Unisim elements were transformed.
+  A total of 1 instances were transformed.
+  LUT2_L => LUT2: 1 instance 
 
-Constraint Validation Runtime : Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2649.727 ; gain = 0.000 ; free physical = 6009 ; free virtual = 14149
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 2656.730 ; gain = 0.000 ; free physical = 474 ; free virtual = 12695
 INFO: [Designutils 20-5440] No compile time benefit to using incremental synthesis; A full resynthesis will be run
 INFO: [Designutils 20-4379] Flow is switching to default flow due to incremental criteria not met. If you would like to alter this behaviour and have the flow terminate instead, please set the following parameter config_implementation {autoIncr.Synth.RejectBehavior Terminate}
 ---------------------------------------------------------------------------------
-Finished Constraint Validation : Time (s): cpu = 00:00:30 ; elapsed = 00:00:31 . Memory (MB): peak = 2649.727 ; gain = 664.336 ; free physical = 6002 ; free virtual = 14149
+Finished Constraint Validation : Time (s): cpu = 00:00:14 ; elapsed = 00:00:15 . Memory (MB): peak = 2656.730 ; gain = 672.508 ; free physical = 518 ; free virtual = 12730
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Loading Part and Timing Information
@@ -124,17 +126,18 @@ Start Loading Part and Timing Information
 Loading part: xcau15p-ffvb676-1-i
 INFO: [Synth 8-6742] Reading net delay rules and data
 ---------------------------------------------------------------------------------
-Finished Loading Part and Timing Information : Time (s): cpu = 00:00:30 ; elapsed = 00:00:31 . Memory (MB): peak = 2657.695 ; gain = 672.305 ; free physical = 6002 ; free virtual = 14148
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:14 ; elapsed = 00:00:15 . Memory (MB): peak = 2664.699 ; gain = 680.477 ; free physical = 518 ; free virtual = 12730
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Applying 'set_property' XDC Constraints
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:31 ; elapsed = 00:00:31 . Memory (MB): peak = 2657.695 ; gain = 672.305 ; free physical = 6001 ; free virtual = 14147
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:14 ; elapsed = 00:00:15 . Memory (MB): peak = 2664.699 ; gain = 680.477 ; free physical = 518 ; free virtual = 12730
 ---------------------------------------------------------------------------------
 INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'controller_controller'
 INFO: [Synth 8-802] inferred FSM for state register 'tx_state_reg' in module 'uart_router'
 INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'sysmon_monitor'
+INFO: [Synth 8-802] inferred FSM for state register 'tx_state_reg' in module 'sysmon_monitor'
 INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'uart_arbiter'
 ---------------------------------------------------------------------------------------------------
                    State |                     New Encoding |                Previous Encoding 
@@ -170,57 +173,70 @@ INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 
 ---------------------------------------------------------------------------------------------------
                    State |                     New Encoding |                Previous Encoding 
 ---------------------------------------------------------------------------------------------------
+                 TX_IDLE |                              000 |                             0000
+           TX_START_BYTE |                              001 |                             0001
+            TX_SEND_BITS |                              010 |                             0010
+           TX_BYTE_DELAY |                              011 |                             0011
+                 TX_DONE |                              100 |                             0100
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'tx_state_reg' using encoding 'sequential' in module 'sysmon_monitor'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
                 ARB_IDLE |                               00 |                               00
-             ARB_MONITOR |                               01 |                               10
-                ARB_CROC |                               10 |                               01
+                ARB_CROC |                               01 |                               01
+             ARB_MONITOR |                               10 |                               10
 ---------------------------------------------------------------------------------------------------
 INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'sequential' in module 'uart_arbiter'
 ---------------------------------------------------------------------------------
-Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:31 ; elapsed = 00:00:32 . Memory (MB): peak = 2657.695 ; gain = 672.305 ; free physical = 5991 ; free virtual = 14142
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:15 ; elapsed = 00:00:15 . Memory (MB): peak = 2664.699 ; gain = 680.477 ; free physical = 519 ; free virtual = 12732
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start RTL Component Statistics 
 ---------------------------------------------------------------------------------
 Detailed RTL Component Info : 
 +---Adders : 
+	   2 Input   32 Bit       Adders := 1     
 	   2 Input   27 Bit       Adders := 1     
-	   2 Input   17 Bit       Adders := 1     
-	   2 Input   16 Bit       Adders := 1     
+	   2 Input   16 Bit       Adders := 2     
+	   2 Input   14 Bit       Adders := 2     
 	   2 Input   13 Bit       Adders := 1     
-	   2 Input   10 Bit       Adders := 1     
-	   2 Input    6 Bit       Adders := 1     
+	   2 Input   10 Bit       Adders := 2     
+	   2 Input    7 Bit       Adders := 1     
 	   2 Input    4 Bit       Adders := 2     
-+---XORs : 
-	   2 Input      1 Bit         XORs := 1     
 +---Registers : 
 	               32 Bit    Registers := 3     
 	               28 Bit    Registers := 1     
-	               16 Bit    Registers := 5     
+	               16 Bit    Registers := 8     
 	               10 Bit    Registers := 1     
 	                8 Bit    Registers := 2     
-	                4 Bit    Registers := 1     
-	                3 Bit    Registers := 1     
-	                1 Bit    Registers := 23    
+	                4 Bit    Registers := 2     
+	                3 Bit    Registers := 2     
+	                1 Bit    Registers := 16    
 +---Muxes : 
+	   2 Input   32 Bit        Muxes := 2     
 	   3 Input   32 Bit        Muxes := 1     
-	   2 Input   32 Bit        Muxes := 4     
+	   5 Input   32 Bit        Muxes := 2     
 	   2 Input   27 Bit        Muxes := 1     
-	   2 Input   17 Bit        Muxes := 2     
+	   7 Input   16 Bit        Muxes := 2     
+	   6 Input   16 Bit        Muxes := 1     
 	   2 Input   13 Bit        Muxes := 1     
-	   2 Input   10 Bit        Muxes := 7     
+	   2 Input   10 Bit        Muxes := 1     
+	   5 Input   10 Bit        Muxes := 1     
 	   7 Input    8 Bit        Muxes := 1     
 	   6 Input    8 Bit        Muxes := 1     
-	   2 Input    8 Bit        Muxes := 1     
-	   2 Input    4 Bit        Muxes := 5     
+	   5 Input    4 Bit        Muxes := 2     
 	   7 Input    3 Bit        Muxes := 1     
-	   2 Input    3 Bit        Muxes := 2     
+	   2 Input    3 Bit        Muxes := 5     
 	   6 Input    3 Bit        Muxes := 1     
+	   5 Input    3 Bit        Muxes := 1     
 	   3 Input    2 Bit        Muxes := 2     
 	   2 Input    2 Bit        Muxes := 4     
-	   7 Input    1 Bit        Muxes := 11    
-	   2 Input    1 Bit        Muxes := 26    
+	   7 Input    1 Bit        Muxes := 12    
+	   2 Input    1 Bit        Muxes := 11    
 	   3 Input    1 Bit        Muxes := 5     
-	   6 Input    1 Bit        Muxes := 6     
+	   6 Input    1 Bit        Muxes := 8     
+	   5 Input    1 Bit        Muxes := 10    
 ---------------------------------------------------------------------------------
 Finished RTL Component Statistics 
 ---------------------------------------------------------------------------------
@@ -238,25 +254,25 @@ Start Cross Boundary and Area Optimization
 ---------------------------------------------------------------------------------
 WARNING: [Synth 8-3332] Sequential element (u_router/FSM_sequential_tx_state_reg[0]) is unused and will be removed from module fpga_unified_top.
 ---------------------------------------------------------------------------------
-Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:34 ; elapsed = 00:00:35 . Memory (MB): peak = 2657.695 ; gain = 672.305 ; free physical = 5948 ; free virtual = 14117
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:16 ; elapsed = 00:00:17 . Memory (MB): peak = 2664.699 ; gain = 680.477 ; free physical = 494 ; free virtual = 12713
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Applying XDC Timing Constraints
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:38 ; elapsed = 00:00:39 . Memory (MB): peak = 2916.402 ; gain = 931.012 ; free physical = 5733 ; free virtual = 13878
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:18 ; elapsed = 00:00:18 . Memory (MB): peak = 2916.406 ; gain = 932.184 ; free physical = 309 ; free virtual = 12527
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Timing Optimization
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Timing Optimization : Time (s): cpu = 00:00:38 ; elapsed = 00:00:39 . Memory (MB): peak = 2917.402 ; gain = 932.012 ; free physical = 5732 ; free virtual = 13877
+Finished Timing Optimization : Time (s): cpu = 00:00:18 ; elapsed = 00:00:19 . Memory (MB): peak = 2917.406 ; gain = 933.184 ; free physical = 309 ; free virtual = 12527
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Technology Mapping
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Technology Mapping : Time (s): cpu = 00:00:38 ; elapsed = 00:00:39 . Memory (MB): peak = 2936.434 ; gain = 951.043 ; free physical = 5724 ; free virtual = 13869
+Finished Technology Mapping : Time (s): cpu = 00:00:18 ; elapsed = 00:00:19 . Memory (MB): peak = 2934.430 ; gain = 950.207 ; free physical = 298 ; free virtual = 12496
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start IO Insertion
@@ -274,37 +290,37 @@ Start Final Netlist Cleanup
 Finished Final Netlist Cleanup
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished IO Insertion : Time (s): cpu = 00:00:44 ; elapsed = 00:00:45 . Memory (MB): peak = 3113.246 ; gain = 1127.855 ; free physical = 5577 ; free virtual = 13730
+Finished IO Insertion : Time (s): cpu = 00:00:21 ; elapsed = 00:00:21 . Memory (MB): peak = 3114.242 ; gain = 1130.020 ; free physical = 264 ; free virtual = 12340
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Renaming Generated Instances
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Renaming Generated Instances : Time (s): cpu = 00:00:44 ; elapsed = 00:00:45 . Memory (MB): peak = 3113.246 ; gain = 1127.855 ; free physical = 5577 ; free virtual = 13730
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:21 ; elapsed = 00:00:21 . Memory (MB): peak = 3114.242 ; gain = 1130.020 ; free physical = 264 ; free virtual = 12340
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Rebuilding User Hierarchy
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:44 ; elapsed = 00:00:45 . Memory (MB): peak = 3113.246 ; gain = 1127.855 ; free physical = 5577 ; free virtual = 13730
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:21 ; elapsed = 00:00:21 . Memory (MB): peak = 3114.242 ; gain = 1130.020 ; free physical = 263 ; free virtual = 12340
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Renaming Generated Ports
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Renaming Generated Ports : Time (s): cpu = 00:00:44 ; elapsed = 00:00:45 . Memory (MB): peak = 3113.246 ; gain = 1127.855 ; free physical = 5577 ; free virtual = 13730
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:21 ; elapsed = 00:00:21 . Memory (MB): peak = 3114.242 ; gain = 1130.020 ; free physical = 263 ; free virtual = 12340
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Handling Custom Attributes
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Handling Custom Attributes : Time (s): cpu = 00:00:44 ; elapsed = 00:00:45 . Memory (MB): peak = 3113.246 ; gain = 1127.855 ; free physical = 5577 ; free virtual = 13730
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:21 ; elapsed = 00:00:21 . Memory (MB): peak = 3114.242 ; gain = 1130.020 ; free physical = 263 ; free virtual = 12340
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Renaming Generated Nets
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Renaming Generated Nets : Time (s): cpu = 00:00:44 ; elapsed = 00:00:45 . Memory (MB): peak = 3113.246 ; gain = 1127.855 ; free physical = 5577 ; free virtual = 13730
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:21 ; elapsed = 00:00:21 . Memory (MB): peak = 3114.242 ; gain = 1130.020 ; free physical = 263 ; free virtual = 12340
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Writing Synthesis Report
@@ -324,45 +340,46 @@ Report Cell Usage:
 +------+---------+------+
 |1     |clk_wiz  |     1|
 |2     |xadc_wiz |     1|
-|3     |CARRY8   |    12|
-|4     |LUT1     |    56|
-|5     |LUT2     |    40|
-|6     |LUT3     |    38|
-|7     |LUT4     |    29|
-|8     |LUT5     |    40|
-|9     |LUT6     |    29|
-|10    |MUXF7    |     1|
-|11    |FDCE     |   186|
-|12    |FDPE     |     1|
-|13    |FDRE     |    27|
+|3     |CARRY8   |    14|
+|4     |LUT1     |    55|
+|5     |LUT2     |    76|
+|6     |LUT2_L   |     1|
+|7     |LUT3     |    26|
+|8     |LUT4     |    61|
+|9     |LUT5     |    57|
+|10    |LUT6     |    67|
+|11    |FDCE     |   272|
+|12    |FDPE     |    10|
+|13    |FDRE     |     3|
 |14    |IBUF     |     3|
 |15    |OBUF     |     3|
 +------+---------+------+
 ---------------------------------------------------------------------------------
-Finished Writing Synthesis Report : Time (s): cpu = 00:00:44 ; elapsed = 00:00:45 . Memory (MB): peak = 3113.246 ; gain = 1127.855 ; free physical = 5577 ; free virtual = 13730
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:21 ; elapsed = 00:00:21 . Memory (MB): peak = 3114.242 ; gain = 1130.020 ; free physical = 263 ; free virtual = 12340
 ---------------------------------------------------------------------------------
 Synthesis finished with 0 errors, 0 critical warnings and 1 warnings.
-Synthesis Optimization Runtime : Time (s): cpu = 00:00:30 ; elapsed = 00:00:31 . Memory (MB): peak = 3113.246 ; gain = 1021.082 ; free physical = 5579 ; free virtual = 13733
-Synthesis Optimization Complete : Time (s): cpu = 00:00:44 ; elapsed = 00:00:45 . Memory (MB): peak = 3113.246 ; gain = 1127.855 ; free physical = 5579 ; free virtual = 13733
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:14 ; elapsed = 00:00:14 . Memory (MB): peak = 3114.242 ; gain = 1020.043 ; free physical = 263 ; free virtual = 12339
+Synthesis Optimization Complete : Time (s): cpu = 00:00:21 ; elapsed = 00:00:21 . Memory (MB): peak = 3114.242 ; gain = 1130.020 ; free physical = 263 ; free virtual = 12339
 INFO: [Project 1-571] Translating synthesized netlist
-Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 3113.246 ; gain = 0.000 ; free physical = 5579 ; free virtual = 13732
-INFO: [Netlist 29-17] Analyzing 16 Unisim elements for replacement
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3114.242 ; gain = 0.000 ; free physical = 262 ; free virtual = 12339
+INFO: [Netlist 29-17] Analyzing 18 Unisim elements for replacement
 INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
 INFO: [Project 1-570] Preparing netlist for logic optimization
 INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
-Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3113.246 ; gain = 0.000 ; free physical = 5742 ; free virtual = 13896
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3114.242 ; gain = 0.000 ; free physical = 317 ; free virtual = 12393
 INFO: [Project 1-111] Unisim Transformation Summary:
-  A total of 3 instances were transformed.
+  A total of 4 instances were transformed.
   IBUF => IBUF (IBUFCTRL, INBUF): 3 instances
+  LUT2_L => LUT2: 1 instance 
 
-Synth Design complete | Checksum: 37dedd38
+Synth Design complete | Checksum: b43262b4
 INFO: [Common 17-83] Releasing license: Synthesis
-56 Infos, 10 Warnings, 0 Critical Warnings and 0 Errors encountered.
+62 Infos, 6 Warnings, 0 Critical Warnings and 0 Errors encountered.
 synth_design completed successfully
-synth_design: Time (s): cpu = 00:00:54 ; elapsed = 00:00:51 . Memory (MB): peak = 3113.246 ; gain = 1490.074 ; free physical = 5740 ; free virtual = 13897
-INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 2245.305; main = 2155.977; forked = 282.925
-INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 3940.680; main = 3077.727; forked = 995.242
-Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3113.246 ; gain = 0.000 ; free physical = 5740 ; free virtual = 13897
+synth_design: Time (s): cpu = 00:00:26 ; elapsed = 00:00:24 . Memory (MB): peak = 3114.242 ; gain = 1515.316 ; free physical = 316 ; free virtual = 12392
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 2333.498; main = 2154.102; forked = 282.833
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 4030.676; main = 3078.723; forked = 995.242
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3114.242 ; gain = 0.000 ; free physical = 316 ; free virtual = 12392
 INFO: [Common 17-1381] The checkpoint '/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1/fpga_unified_top.dcp' has been generated.
 INFO: [Vivado 12-24828] Executing command : report_utilization -file fpga_unified_top_utilization_synth.rpt -pb fpga_unified_top_utilization_synth.pb
-INFO: [Common 17-206] Exiting Vivado at Fri Dec 26 17:01:21 2025...
+INFO: [Common 17-206] Exiting Vivado at Fri Dec 26 19:39:54 2025...

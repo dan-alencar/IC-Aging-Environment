@@ -3,8 +3,8 @@
 # SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
 # IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
 # SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
-# Start of session at: Fri Dec 26 17:00:23 2025
-# Process ID         : 306037
+# Start of session at: Fri Dec 26 19:39:25 2025
+# Process ID         : 573760
 # Current directory  : /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1
 # Command line       : vivado -log fpga_unified_top.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source fpga_unified_top.tcl
 # Log file           : /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1/fpga_unified_top.vds
@@ -13,12 +13,12 @@
 # Platform           : Linuxmint
 # Operating System   : Linux Mint 22.2
 # Processor Detail   : Intel(R) Core(TM) 5 210H
-# CPU Frequency      : 399.704 MHz
+# CPU Frequency      : 399.770 MHz
 # CPU Physical cores : 8
 # CPU Logical cores  : 12
 # Host memory        : 24783 MB
 # Swap memory        : 2147 MB
 # Total Virtual      : 26931 MB
-# Available Virtual  : 16375 MB
+# Available Virtual  : 14957 MB
 #-----------------------------------------------------------
 source fpga_unified_top.tcl -notrace

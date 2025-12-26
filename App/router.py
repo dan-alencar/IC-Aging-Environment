@@ -7,19 +7,17 @@ import time
 # Headers de Roteamento (Envio)
 HEADER_CROC = b'\x10'
 HEADER_STM  = b'\x20'
-HEADER_AGING = b'\x1A'
 
 class UARTRouter(QObject):
-    # Sinais existentes...
     stm_frame_received = Signal(object)
     log_text_received = Signal(str)      
     connection_status = Signal(str)
     log_message = Signal(str)
     
-    # NOVO SINAL: Envia dicionário com dados físicos (Temp, Vcc, Slack)
+    # SINAL: Envia dicionário com dados físicos (Temp, Vcc, Slack)
     aging_data_received = Signal(dict) 
 
-    # (Sinal antigo croc_data_received pode ser depreciado ou mantido para debug)
+    # (Sinal para debug raw se necessário)
     croc_raw_received = Signal(bytes) 
 
     def __init__(self):
@@ -68,7 +66,6 @@ class UARTRouter(QObject):
         try:
             # 1. Verifica se precisa de Dead Time (Troca de Rota)
             if self.last_target != target_header:
-                # O sleep aqui bloqueia a thread do Worker (não a GUI), o que é correto
                 time.sleep(self.ROUTER_TIMEOUT_S)
                 self.last_target = target_header
             
@@ -92,55 +89,67 @@ class UARTRouter(QObject):
         # 1. Acumula no buffer
         self._rx_buffer.extend(data)
         
-        # 2. Processamento de Pacotes de Aging (Prioridade Alta - Binário Fixo)
-        while True:
-            # Procura pelo cabeçalho 0x1A
-            try:
-                idx = self._rx_buffer.index(HEADER_AGING)
-            except ValueError:
-                break # Não achou cabeçalho
+        # 2. Processamento de Pacotes de Aging (Sliding Window)
+        # O pacote tem 9 bytes. Estrutura: [TL, TH, 00, SL, SH, VL, VH, 00, AL]
+        while len(self._rx_buffer) >= AGING_PKT_LEN:
+            # Espia os primeiros 9 bytes
+            pkt = self._rx_buffer[:AGING_PKT_LEN]
             
-            # Verifica se tem o pacote completo (6 bytes)
-            if len(self._rx_buffer) >= idx + AGING_PKT_LEN:
-                # Extrai o pacote
-                packet = self._rx_buffer[idx : idx + AGING_PKT_LEN]
+            # Validação: Bytes 2 e 7 devem ser 0x00 (Padding)
+            padding_ok = (pkt[2] == 0x00 and pkt[7] == 0x00)
+            
+            if padding_ok:
+                # Decodifica Little Endian (conforme debugger.py)
+                raw_temp  = pkt[0] | (pkt[1] << 8)
+                raw_slack = pkt[3] | (pkt[4] << 8)
+                raw_vcc   = pkt[5] | (pkt[6] << 8)
+                alarm     = pkt[8] & 0x01
                 
-                # Remove do buffer (incluindo lixo anterior ao header, se houver)
-                del self._rx_buffer[:idx + AGING_PKT_LEN]
+                # Validação Extra: Valores razoáveis
+                # Temp != 0xFFFF e Vcc != 0xFFFF (evita falsos positivos com tudo zero)
+                valid_values = (raw_temp != 0xFFFF) and (raw_vcc != 0xFFFF)
                 
-                # --- PARSE AGING DATA ---
-                # [0:Header][1:TH][2:TL][3:VH][4:VL][5:Alarm]
-                raw_temp = (packet[1] << 8) | packet[2]
-                raw_vcc  = (packet[3] << 8) | packet[4]
-                alarm    = packet[5]
-                
-                phys_data = {
-                    'dut_temp':  round(raw_to_temp(raw_temp), 2),
-                    'dut_volt':  round(raw_to_vcc(raw_vcc), 3),
-                    'dut_slack': alarm, # 0 ou 1 (ou contador se evoluir)
-                    'raw_alarm': alarm
-                }
-                
-                self.aging_data_received.emit(phys_data)
-            else:
-                # Achou Header, mas pacote incompleto. Espera mais dados.
+                if valid_values:
+                    # Pacote Válido! Processa e remove do buffer.
+                    phys_data = {
+                        'dut_temp':  round(raw_to_temp(raw_temp), 2),
+                        'dut_volt':  round(raw_to_vcc(raw_vcc), 3),
+                        'dut_slack': raw_slack,
+                        'raw_alarm': alarm
+                    }
+                    self.aging_data_received.emit(phys_data)
+                    
+                    # Remove pacote processado
+                    del self._rx_buffer[:AGING_PKT_LEN]
+                    continue
+            
+            # Se não validou (padding errado ou valores inválidos),
+            # verifica se pode ser um cabeçalho STM (0x10 ou 0x20)
+            head = self._rx_buffer[0]
+            if head in (0x10, 0x20) and len(self._rx_buffer) >= 4:
+                # Parece começo de pacote STM, interrompe a busca por Aging
+                # e deixa o ProtocolParser processar o que está no buffer.
                 break
+                
+            # Se não é Aging nem STM, é lixo ou desalinhamento:
+            # Descarta 1 byte e tenta de novo (Sliding Window)
+            del self._rx_buffer[0]
 
-        # 3. Processamento de Protocolo STM e Texto (O que sobrou no buffer)
-        # O ProtocolParser consome e retorna eventos.
-        # Importante: Precisamos alimentar o parser apenas com o que NÃO é Aging.
-        # Como já removemos os pacotes Aging do self._rx_buffer, podemos passar o resto.
-        
-        # Para evitar travar o buffer se chegar lixo, processamos e limpamos.
+        # 3. Processamento de Protocolo STM e Texto
+        # Se sobrou algo no buffer (que não foi consumido como Aging), passamos para o Parser.
         if self._rx_buffer:
-            # Copia para bytes para o parser
             chunk = bytes(self._rx_buffer)
+            
+            # O parser processa e retorna eventos identificados
             events = self.parser.feed(chunk)
             
-            # Limpa o buffer pois o parser mantém seu próprio estado interno para fragmentos
-            # Se quisermos ser perfeitos, o parser deveria retornar quanto consumiu, 
-            # mas o seu parser atual processa byte a byte. Vamos assumir que ele consome tudo.
-            self._rx_buffer.clear() 
+            # Limpeza do Buffer:
+            # Como o parser do STM é robusto, se ele encontrou eventos válidos, 
+            # podemos assumir que os dados foram consumidos.
+            # Para evitar crescimento infinito em caso de ruído, limpamos se eventos ocorreram.
+            # (Numa implementação perfeita, o parser retornaria bytes consumidos)
+            if events:
+                self._rx_buffer.clear()
 
             for evt in events:
                 evt_type = evt[0]
@@ -150,7 +159,7 @@ class UARTRouter(QObject):
                 
                 elif evt_type == 'line':
                     raw_msg = evt[1]
-                    # Sanitização final (Remove caracteres estranhos)
+                    # Sanitização final
                     clean_msg = "".join(c for c in raw_msg if c.isprintable()).strip()
                     if clean_msg:
                         self.log_text_received.emit(f"[RX] {clean_msg}")
