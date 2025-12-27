@@ -107,6 +107,7 @@ set rc [catch {
   set_param chipscope.maxJobs 3
   set_param power.BramSDPPropagationFix 1
   set_param xicom.use_bs_reader 1
+  set_param tcl.collectionResultDisplayLimit 0
   set_param general.usePosixSpawnForFork 1
   set_param physdb.placeDBImplUsesPlaceStorage 0
   set_param power.enableUnconnectedCarry8PinPower 1
@@ -129,6 +130,7 @@ OPTRACE "add files" START { }
   add_files -quiet /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.runs/synth_1/fpga_unified_top.dcp
   read_ip -quiet /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/ip/clk_wiz_0/clk_wiz_0.xci
   read_ip -quiet /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/ip/xadc_wiz_0/xadc_wiz_0.xci
+  read_ip -quiet /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/ip/vio_0/vio_0.xci
 OPTRACE "read constraints: implementation" START { }
   read_xdc /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/constrs_1/imports/constraints/fpga_aging_constraints.xdc
 OPTRACE "read constraints: implementation" END { }

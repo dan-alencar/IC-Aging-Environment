@@ -1,0 +1,338 @@
+
+*** Running vivado
+    with args -log vio_0.vds -m64 -product Vivado -mode batch -messageDb vivado.pb -notrace -source vio_0.tcl
+
+
+****** Vivado v2025.2 (64-bit)
+  **** SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
+  **** IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+  **** SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+  **** Start of session at: Sat Dec 27 13:51:22 2025
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source vio_0.tcl -notrace
+Command: synth_design -top vio_0 -part xcau15p-ffvb676-1-i -incremental_mode off -mode out_of_context
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xcau15p'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xcau15p'
+INFO: [Device 21-403] Loading part xcau15p-ffvb676-1-i
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 1382213
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:03 ; elapsed = 00:00:03 . Memory (MB): peak = 2447.473 ; gain = 460.594 ; free physical = 8963 ; free virtual = 15940
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'vio_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/aging_study_ultrascale/aging_study_ultrascale.gen/sources_1/ip/vio_0/synth/vio_0.v:49]
+INFO: [Synth 8-6155] done synthesizing module 'vio_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/aging_study_ultrascale/aging_study_ultrascale.gen/sources_1/ip/vio_0/synth/vio_0.v:49]
+WARNING: [Synth 8-3848] Net sl_iport0 in module/entity vio_0 does not have driver. [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/aging_study_ultrascale/aging_study_ultrascale.gen/sources_1/ip/vio_0/synth/vio_0.v:86]
+WARNING: [Synth 8-7129] Port Bus_rst in module vio_v3_0_27_probe_width__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Rd_probe_width in module vio_v3_0_27_probe_width__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Internal_cnt_rst in module vio_v3_0_27_probe_width__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Bus_rst in module vio_v3_0_27_probe_out_one is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Read in module vio_v3_0_27_probe_out_one is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Bus_Data_in[15] in module vio_v3_0_27_probe_out_one is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Bus_Data_in[14] in module vio_v3_0_27_probe_out_one is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Bus_Data_in[13] in module vio_v3_0_27_probe_out_one is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Bus_Data_in[12] in module vio_v3_0_27_probe_out_one is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Bus_Data_in[11] in module vio_v3_0_27_probe_out_one is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Bus_Data_in[10] in module vio_v3_0_27_probe_out_one is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Bus_Data_in[9] in module vio_v3_0_27_probe_out_one is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Bus_Data_in[8] in module vio_v3_0_27_probe_out_one is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Bus_Data_in[7] in module vio_v3_0_27_probe_out_one is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Bus_Data_in[6] in module vio_v3_0_27_probe_out_one is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Bus_Data_in[5] in module vio_v3_0_27_probe_out_one is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Bus_Data_in[4] in module vio_v3_0_27_probe_out_one is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Bus_Data_in[3] in module vio_v3_0_27_probe_out_one is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Bus_Data_in[2] in module vio_v3_0_27_probe_out_one is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Bus_Data_in[1] in module vio_v3_0_27_probe_out_one is either unconnected or has no load
+WARNING: [Synth 8-7129] Port Internal_cnt_rst in module vio_v3_0_27_probe_out_one is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in9[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in10[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in11[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in12[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in13[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in14[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in15[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in16[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in17[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in18[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in19[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in20[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in21[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in22[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in23[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in24[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in25[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in26[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in27[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in28[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in29[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in30[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in31[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in32[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in33[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in34[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in35[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in36[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in37[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in38[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in39[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in40[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in41[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in42[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in43[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in44[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in45[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in46[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in47[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in48[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in49[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in50[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in51[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in52[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in53[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in54[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in55[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in56[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in57[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in58[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in59[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in60[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in61[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in62[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in63[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in64[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in65[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in66[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in67[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in68[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in69[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in70[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in71[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in72[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in73[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in74[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in75[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in76[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in77[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in78[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in79[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in80[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in81[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in82[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in83[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in84[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in85[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in86[0] in module vio_v3_0_27_vio is either unconnected or has no load
+WARNING: [Synth 8-7129] Port probe_in87[0] in module vio_v3_0_27_vio is either unconnected or has no load
+INFO: [Common 17-14] Message 'Synth 8-7129' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:05 ; elapsed = 00:00:05 . Memory (MB): peak = 2545.441 ; gain = 558.562 ; free physical = 8881 ; free virtual = 15841
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:05 ; elapsed = 00:00:05 . Memory (MB): peak = 2545.441 ; gain = 558.562 ; free physical = 8881 ; free virtual = 15841
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:05 ; elapsed = 00:00:05 . Memory (MB): peak = 2545.441 ; gain = 558.562 ; free physical = 8881 ; free virtual = 15841
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2545.441 ; gain = 0.000 ; free physical = 8880 ; free virtual = 15840
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/aging_study_ultrascale/aging_study_ultrascale.gen/sources_1/ip/vio_0/vio_0_ooc.xdc]
+create_clock: Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 2644.477 ; gain = 3.203 ; free physical = 9087 ; free virtual = 16055
+Finished Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/aging_study_ultrascale/aging_study_ultrascale.gen/sources_1/ip/vio_0/vio_0_ooc.xdc]
+Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/aging_study_ultrascale/aging_study_ultrascale.gen/sources_1/ip/vio_0/vio_0.xdc]
+Finished Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/aging_study_ultrascale/aging_study_ultrascale.gen/sources_1/ip/vio_0/vio_0.xdc]
+INFO: [Project 1-236] Implementation specific constraints were found while reading constraint file [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/aging_study_ultrascale/aging_study_ultrascale.gen/sources_1/ip/vio_0/vio_0.xdc]. These constraints will be ignored for synthesis but will be used in implementation. Impacted constraints are listed in the file [.Xil/vio_0_propImpl.xdc].
+Resolution: To avoid this warning, move constraints listed in [.Xil/vio_0_propImpl.xdc] to another XDC file and exclude this new file from synthesis with the used_in_synthesis property (File Properties dialog in GUI) and re-run elaboration/synthesis.
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2644.477 ; gain = 0.000 ; free physical = 9087 ; free virtual = 16055
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2644.512 ; gain = 0.000 ; free physical = 9087 ; free virtual = 16055
+INFO: [Designutils 20-5008] Incremental synthesis strategy off
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:16 ; elapsed = 00:00:16 . Memory (MB): peak = 2644.512 ; gain = 657.633 ; free physical = 9089 ; free virtual = 16057
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xcau15p-ffvb676-1-i
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:16 ; elapsed = 00:00:16 . Memory (MB): peak = 2652.480 ; gain = 665.602 ; free physical = 9089 ; free virtual = 16057
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:16 ; elapsed = 00:00:16 . Memory (MB): peak = 2652.480 ; gain = 665.602 ; free physical = 9088 ; free virtual = 16057
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:16 ; elapsed = 00:00:16 . Memory (MB): peak = 2652.480 ; gain = 665.602 ; free physical = 9101 ; free virtual = 16061
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input    5 Bit       Adders := 1     
+	   2 Input    3 Bit       Adders := 1     
++---Registers : 
+	              128 Bit    Registers := 1     
+	               64 Bit    Registers := 5     
+	               16 Bit    Registers := 12    
+	               13 Bit    Registers := 1     
+	                7 Bit    Registers := 1     
+	                5 Bit    Registers := 2     
+	                3 Bit    Registers := 3     
+	                2 Bit    Registers := 1     
+	                1 Bit    Registers := 22    
++---Muxes : 
+	   4 Input   16 Bit        Muxes := 1     
+	   2 Input   16 Bit        Muxes := 2     
+	   5 Input   13 Bit        Muxes := 1     
+	   2 Input    1 Bit        Muxes := 5     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 576 (col length:72)
+BRAMs: 288 (col length: RAMB18 72 RAMB36 36)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:18 ; elapsed = 00:00:18 . Memory (MB): peak = 2652.480 ; gain = 665.602 ; free physical = 9092 ; free virtual = 16052
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:19 ; elapsed = 00:00:20 . Memory (MB): peak = 2923.062 ; gain = 936.184 ; free physical = 8867 ; free virtual = 15837
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:20 ; elapsed = 00:00:20 . Memory (MB): peak = 2924.062 ; gain = 937.184 ; free physical = 8867 ; free virtual = 15837
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:20 ; elapsed = 00:00:20 . Memory (MB): peak = 2953.109 ; gain = 966.230 ; free physical = 8836 ; free virtual = 15805
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:22 ; elapsed = 00:00:22 . Memory (MB): peak = 3118.922 ; gain = 1132.043 ; free physical = 8693 ; free virtual = 15663
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:22 ; elapsed = 00:00:22 . Memory (MB): peak = 3118.922 ; gain = 1132.043 ; free physical = 8693 ; free virtual = 15663
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:22 ; elapsed = 00:00:22 . Memory (MB): peak = 3118.922 ; gain = 1132.043 ; free physical = 8693 ; free virtual = 15663
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:22 ; elapsed = 00:00:22 . Memory (MB): peak = 3118.922 ; gain = 1132.043 ; free physical = 8693 ; free virtual = 15663
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:22 ; elapsed = 00:00:22 . Memory (MB): peak = 3118.922 ; gain = 1132.043 ; free physical = 8693 ; free virtual = 15663
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:22 ; elapsed = 00:00:22 . Memory (MB): peak = 3118.922 ; gain = 1132.043 ; free physical = 8693 ; free virtual = 15663
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-----+------+
+|      |Cell |Count |
++------+-----+------+
+|1     |LUT1 |     3|
+|2     |LUT2 |    10|
+|3     |LUT3 |    29|
+|4     |LUT4 |   136|
+|5     |LUT5 |    34|
+|6     |LUT6 |   127|
+|7     |FDRE |   591|
++------+-----+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:22 ; elapsed = 00:00:22 . Memory (MB): peak = 3118.922 ; gain = 1132.043 ; free physical = 8693 ; free virtual = 15663
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 247 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:15 ; elapsed = 00:00:15 . Memory (MB): peak = 3118.922 ; gain = 1032.973 ; free physical = 8693 ; free virtual = 15663
+Synthesis Optimization Complete : Time (s): cpu = 00:00:22 ; elapsed = 00:00:22 . Memory (MB): peak = 3118.922 ; gain = 1132.043 ; free physical = 8693 ; free virtual = 15663
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3118.922 ; gain = 0.000 ; free physical = 8850 ; free virtual = 15820
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3118.922 ; gain = 0.000 ; free physical = 8851 ; free virtual = 15821
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: 9dc46b90
+INFO: [Common 17-83] Releasing license: Synthesis
+18 Infos, 101 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:26 ; elapsed = 00:00:25 . Memory (MB): peak = 3118.922 ; gain = 1494.262 ; free physical = 8851 ; free virtual = 15821
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 2250.735; main = 2160.496; forked = 282.865
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 3948.355; main = 3083.402; forked = 995.242
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3118.922 ; gain = 0.000 ; free physical = 8851 ; free virtual = 15821
+INFO: [Common 17-1381] The checkpoint '/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/aging_study_ultrascale/aging_study_ultrascale.runs/vio_0_synth_1/vio_0.dcp' has been generated.
+INFO: [Coretcl 2-1648] Added synthesis output to IP cache for IP vio_0, cache-ID = c7bf5d92249176d4
+INFO: [Coretcl 2-1174] Renamed 10 cell refs.
+Write ShapeDB Complete: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 3118.922 ; gain = 0.000 ; free physical = 8842 ; free virtual = 15814
+INFO: [Common 17-1381] The checkpoint '/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/aging_study_ultrascale/aging_study_ultrascale.runs/vio_0_synth_1/vio_0.dcp' has been generated.
+INFO: [Vivado 12-24828] Executing command : report_utilization -file vio_0_utilization_synth.rpt -pb vio_0_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Sat Dec 27 13:51:51 2025...

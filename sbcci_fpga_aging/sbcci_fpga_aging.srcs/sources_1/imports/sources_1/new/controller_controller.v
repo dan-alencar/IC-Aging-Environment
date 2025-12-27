@@ -9,7 +9,8 @@ module controller_controller(
     output reg change,
     output reg psincdec,
     output send,
-    output reg psen
+    output reg psen,
+    output [2:0] debug_state  // ADD: expose state for debugging
 );
     
     reg change_enable;
@@ -27,13 +28,15 @@ module controller_controller(
 
     reg[7:0] stab_count;
     reg[15:0] send_pulse_cnt;
-    reg[15:0] phase_limit_cnt;  // NEW: Count phase shifts
+    reg[15:0] phase_limit_cnt;
     localparam SEND_PULSE_WIDTH = 16'd1000;
-    localparam MAX_PHASE_SHIFTS = 16'd500;  // Give up after 500 shifts
+    localparam MAX_PHASE_SHIFTS = 16'd500;
 
-    // Add keep attribute to prevent optimization
     (* keep = "true" *)
     reg[15:0] inc_count_safe;
+    
+    // Debug output
+    assign debug_state = state;
 
     initial begin 
         change = 0;
@@ -102,7 +105,6 @@ module controller_controller(
                 end
                 
                 CHECK_ALARM: begin
-                    // Check alarm OR if we've done too many shifts
                     if(alarm || phase_limit_cnt >= MAX_PHASE_SHIFTS) begin
                         state <= LOCKED;
                     end else begin
@@ -124,7 +126,6 @@ module controller_controller(
                 end
                 
                 LOCKED: begin
-                    // Use the safe counter that has keep attribute
                     display_value <= inc_count_safe;
                     change_enable <= 0;
                     state <= SEND_DATA;
