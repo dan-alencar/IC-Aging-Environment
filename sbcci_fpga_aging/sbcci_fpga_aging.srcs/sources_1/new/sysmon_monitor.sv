@@ -1,6 +1,12 @@
 `timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Module Name: sysmon_monitor_fixed
+// Description: System Monitor with UART output
+//              Uses xadc_wiz_0 (System Management Wizard)
+//              Fixed trigger detection and DRP timing
+//////////////////////////////////////////////////////////////////////////////////
 
-module sysmon_monitor #(
+module sysmon_monitor_fixed #(
     parameter int CLK_FREQ = 100000000, 
     parameter int BAUD_RATE = 125000 
 )(
@@ -10,11 +16,16 @@ module sysmon_monitor #(
     input  logic [15:0] aging_count,
     input  logic        i_trigger,
     output logic        tx_out,
-    output logic        tx_active
+    output logic        tx_active,
+    
+    // Debug outputs - connect to VIO at top level if needed
+    output logic [15:0] debug_temp,
+    output logic [15:0] debug_vcc,
+    output logic [2:0]  debug_state
 );
 
     // =========================================================================
-    // XADC System Monitor
+    // XADC/SYSMON IP Instance
     // =========================================================================
     logic [7:0]  daddr;
     logic        den;
@@ -23,7 +34,7 @@ module sysmon_monitor #(
 
     xadc_wiz_0 sysmon_inst (
         .dclk_in(clk), 
-        .reset_in(!rst_n),
+        .reset_in(~rst_n),
         .daddr_in(daddr),
         .den_in(den),
         .dwe_in(1'b0),
@@ -40,27 +51,26 @@ module sysmon_monitor #(
     );
 
     // =========================================================================
-    // Trigger Synchronization
+    // Trigger Edge Detection
     // =========================================================================
-    logic [2:0] trig_sync;
-    logic       trig_stable;
+    logic trig_prev;
+    logic trig_edge;
     
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            trig_sync <= 3'b000;
-        end else begin
-            trig_sync <= {trig_sync[1:0], i_trigger};
-        end
+    always_ff @(posedge clk) begin
+        if (!rst_n)
+            trig_prev <= 1'b0;
+        else
+            trig_prev <= i_trigger;
     end
     
-    assign trig_stable = trig_sync[2] & trig_sync[1] & trig_sync[0];
+    assign trig_edge = i_trigger & ~trig_prev;
 
     // =========================================================================
-    // State Machine - Read XADC
+    // State Machine - Read XADC then transmit
     // =========================================================================
     logic [15:0] reg_temp, reg_vcc;
     logic [15:0] timeout_cnt;
-    localparam TIMEOUT_MAX = 16'd10000;
+    localparam TIMEOUT_MAX = 16'd50000;
 
     typedef enum logic [2:0] {
         IDLE,
@@ -72,44 +82,45 @@ module sysmon_monitor #(
     } state_t;
     
     state_t state;
-    logic triggered;
+    
+    // Debug outputs
+    assign debug_temp = reg_temp;
+    assign debug_vcc = reg_vcc;
+    assign debug_state = state;
 
-    always_ff @(posedge clk or negedge rst_n) begin
+    always_ff @(posedge clk) begin
         if (!rst_n) begin
             state <= IDLE;
-            den <= 0;
-            daddr <= 0;
-            reg_temp <= 0;
-            reg_vcc <= 0;
-            timeout_cnt <= 0;
-            triggered <= 0;
+            den <= 1'b0;
+            daddr <= 8'h00;
+            reg_temp <= 16'h0000;
+            reg_vcc <= 16'h0000;
+            timeout_cnt <= 16'd0;
         end else begin
             case (state)
                 IDLE: begin
-                    timeout_cnt <= 0;
-                    if (trig_stable && !triggered) begin
-                        daddr <= 8'h00; 
-                        den <= 1; 
+                    den <= 1'b0;
+                    timeout_cnt <= 16'd0;
+                    if (trig_edge) begin
+                        daddr <= 8'h00;
+                        den <= 1'b1;
                         state <= READ_TEMP;
-                        triggered <= 1;
-                    end else if (!trig_stable) begin
-                        triggered <= 0;
                     end
                 end
 
                 READ_TEMP: begin
-                    den <= 0;
-                    timeout_cnt <= 0;
+                    den <= 1'b0;
+                    timeout_cnt <= 16'd0;
                     state <= WAIT_TEMP;
                 end
                 
                 WAIT_TEMP: begin
                     if (drdy) begin
                         reg_temp <= do_data;
-                        daddr <= 8'h01; 
-                        den <= 1; 
+                        daddr <= 8'h01;
+                        den <= 1'b1;
                         state <= READ_VCC;
-                        timeout_cnt <= 0;
+                        timeout_cnt <= 16'd0;
                     end else if (timeout_cnt >= TIMEOUT_MAX) begin
                         state <= IDLE;
                     end else begin
@@ -118,8 +129,8 @@ module sysmon_monitor #(
                 end
                 
                 READ_VCC: begin
-                    den <= 0;
-                    timeout_cnt <= 0;
+                    den <= 1'b0;
+                    timeout_cnt <= 16'd0;
                     state <= WAIT_VCC;
                 end
 
@@ -127,7 +138,7 @@ module sysmon_monitor #(
                     if (drdy) begin
                         reg_vcc <= do_data;
                         state <= SEND_PACKET;
-                        timeout_cnt <= 0;
+                        timeout_cnt <= 16'd0;
                     end else if (timeout_cnt >= TIMEOUT_MAX) begin
                         state <= IDLE;
                     end else begin
@@ -140,15 +151,17 @@ module sysmon_monitor #(
                         state <= IDLE;
                     end
                 end
+                
+                default: state <= IDLE;
             endcase
         end
     end
 
     // =========================================================================
-    // UART Transmitter - SIMPLE, PROVEN DESIGN
+    // UART Transmitter - 9 byte packet
     // =========================================================================
     localparam CYCLES_PER_BIT = CLK_FREQ / BAUD_RATE;
-    localparam BYTE_DELAY = CYCLES_PER_BIT * 12; // 12 bit-times between bytes
+    localparam BYTE_DELAY = CYCLES_PER_BIT * 12;
     
     logic [3:0]  tx_state;
     logic [31:0] baud_counter;
@@ -158,30 +171,28 @@ module sysmon_monitor #(
     logic [31:0] byte_delay_counter;
     logic [7:0]  current_byte;
     
-    // State definitions
     localparam TX_IDLE       = 4'd0;
     localparam TX_START_BYTE = 4'd1;
     localparam TX_SEND_BITS  = 4'd2;
     localparam TX_BYTE_DELAY = 4'd3;
     localparam TX_DONE       = 4'd4;
 
-    // Current byte selection
     always_comb begin
         case (byte_index)
-            0: current_byte = reg_temp[7:0];      // Temp Low
-            1: current_byte = reg_temp[15:8];     // Temp High
-            2: current_byte = 8'h00;              // Padding
-            3: current_byte = aging_count[7:0];   // Slack Low
-            4: current_byte = aging_count[15:8];  // Slack High
-            5: current_byte = reg_vcc[7:0];       // VCC Low
-            6: current_byte = reg_vcc[15:8];      // VCC High
-            7: current_byte = 8'h00;              // Padding
-            8: current_byte = {7'b0, aging_alarm};// Alarm
+            0: current_byte = reg_temp[7:0];
+            1: current_byte = reg_temp[15:8];
+            2: current_byte = 8'h00;
+            3: current_byte = aging_count[7:0];
+            4: current_byte = aging_count[15:8];
+            5: current_byte = reg_vcc[7:0];
+            6: current_byte = reg_vcc[15:8];
+            7: current_byte = 8'h00;
+            8: current_byte = {7'b0, aging_alarm};
             default: current_byte = 8'h00;
         endcase
     end
 
-    always_ff @(posedge clk or negedge rst_n) begin
+    always_ff @(posedge clk) begin
         if (!rst_n) begin
             tx_state <= TX_IDLE;
             tx_out <= 1'b1;
@@ -200,7 +211,6 @@ module sysmon_monitor #(
                     baud_counter <= 0;
                     bit_index <= 0;
                     
-                    // Start transmission when state machine requests it
                     if (state == SEND_PACKET) begin
                         tx_active <= 1'b1;
                         tx_state <= TX_START_BYTE;
@@ -208,7 +218,6 @@ module sysmon_monitor #(
                 end
                 
                 TX_START_BYTE: begin
-                    // Load shift register: {Stop, Data[7:0], Start}
                     tx_shift_reg <= {1'b1, current_byte, 1'b0};
                     bit_index <= 0;
                     baud_counter <= 0;
@@ -220,21 +229,17 @@ module sysmon_monitor #(
                         baud_counter <= baud_counter + 1;
                     end else begin
                         baud_counter <= 0;
-                        
-                        // Output current bit
                         tx_out <= tx_shift_reg[0];
-                        tx_shift_reg <= {1'b1, tx_shift_reg[9:1]}; // Shift right
+                        tx_shift_reg <= {1'b1, tx_shift_reg[9:1]};
                         
                         if (bit_index < 9) begin
                             bit_index <= bit_index + 1;
                         end else begin
-                            // Byte complete
                             if (byte_index < 8) begin
                                 byte_index <= byte_index + 1;
                                 byte_delay_counter <= 0;
                                 tx_state <= TX_BYTE_DELAY;
                             end else begin
-                                // All 9 bytes sent
                                 tx_state <= TX_DONE;
                             end
                         end
@@ -242,7 +247,7 @@ module sysmon_monitor #(
                 end
                 
                 TX_BYTE_DELAY: begin
-                    tx_out <= 1'b1; // Idle between bytes
+                    tx_out <= 1'b1;
                     if (byte_delay_counter < BYTE_DELAY) begin
                         byte_delay_counter <= byte_delay_counter + 1;
                     end else begin

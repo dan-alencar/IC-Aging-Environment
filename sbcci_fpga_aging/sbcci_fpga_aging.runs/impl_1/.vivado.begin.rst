@@ -1,80 +1,25 @@
 <?xml version="1.0"?>
 <ProcessHandle Version="1" Minor="0">
-    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="8368" HostCore="12" HostMemory="24202844">
+    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="3803693" HostCore="12" HostMemory="24202848">
     </Process>
 </ProcessHandle>
 <?xml version="1.0"?>
 <ProcessHandle Version="1" Minor="0">
-    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="49872" HostCore="12" HostMemory="24202844">
+    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="3847640" HostCore="12" HostMemory="24202848">
     </Process>
 </ProcessHandle>
 <?xml version="1.0"?>
 <ProcessHandle Version="1" Minor="0">
-    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="83238" HostCore="12" HostMemory="24202844">
+    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="3904845" HostCore="12" HostMemory="24202848">
     </Process>
 </ProcessHandle>
 <?xml version="1.0"?>
 <ProcessHandle Version="1" Minor="0">
-    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="117364" HostCore="12" HostMemory="24202844">
+    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="3964994" HostCore="12" HostMemory="24202848">
     </Process>
 </ProcessHandle>
 <?xml version="1.0"?>
 <ProcessHandle Version="1" Minor="0">
-    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="170829" HostCore="12" HostMemory="24202844">
-    </Process>
-</ProcessHandle>
-<?xml version="1.0"?>
-<ProcessHandle Version="1" Minor="0">
-    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="197891" HostCore="12" HostMemory="24202844">
-    </Process>
-</ProcessHandle>
-<?xml version="1.0"?>
-<ProcessHandle Version="1" Minor="0">
-    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="229743" HostCore="12" HostMemory="24202844">
-    </Process>
-</ProcessHandle>
-<?xml version="1.0"?>
-<ProcessHandle Version="1" Minor="0">
-    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="267127" HostCore="12" HostMemory="24202844">
-    </Process>
-</ProcessHandle>
-<?xml version="1.0"?>
-<ProcessHandle Version="1" Minor="0">
-    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="306414" HostCore="12" HostMemory="24202844">
-    </Process>
-</ProcessHandle>
-<?xml version="1.0"?>
-<ProcessHandle Version="1" Minor="0">
-    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="332379" HostCore="12" HostMemory="24202844">
-    </Process>
-</ProcessHandle>
-<?xml version="1.0"?>
-<ProcessHandle Version="1" Minor="0">
-    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="370172" HostCore="12" HostMemory="24202844">
-    </Process>
-</ProcessHandle>
-<?xml version="1.0"?>
-<ProcessHandle Version="1" Minor="0">
-    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="408655" HostCore="12" HostMemory="24202844">
-    </Process>
-</ProcessHandle>
-<?xml version="1.0"?>
-<ProcessHandle Version="1" Minor="0">
-    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="451380" HostCore="12" HostMemory="24202844">
-    </Process>
-</ProcessHandle>
-<?xml version="1.0"?>
-<ProcessHandle Version="1" Minor="0">
-    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="493980" HostCore="12" HostMemory="24202844">
-    </Process>
-</ProcessHandle>
-<?xml version="1.0"?>
-<ProcessHandle Version="1" Minor="0">
-    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="526189" HostCore="12" HostMemory="24202844">
-    </Process>
-</ProcessHandle>
-<?xml version="1.0"?>
-<ProcessHandle Version="1" Minor="0">
-    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="574118" HostCore="12" HostMemory="24202844">
+    <Process Command="vivado" Owner="dan-alencar" Host="dan-alencar" Pid="4024032" HostCore="12" HostMemory="24202848">
     </Process>
 </ProcessHandle>

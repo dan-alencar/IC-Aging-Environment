@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version              : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
-| Date                      : Fri Dec 26 19:40:49 2025
+| Date                      : Sat Dec 27 19:16:24 2025
 | Host                      : dan-alencar running 64-bit Linux Mint 22.2
 | Command                   : report_io -file fpga_unified_top_io_placed.rpt
 | Design                    : fpga_unified_top
@@ -25,7 +25,7 @@ Table of Contents
 +---------------+
 | Total User IO |
 +---------------+
-|             8 |
+|             7 |
 +---------------+
 
 
@@ -580,7 +580,7 @@ Table of Contents
 | R23        |               | High Performance | IO_L19N_T3L_N1_DBC_AD9N_D11_65     | User IO       |             |      65 |            |                         |      |                   |                      |           |            |           |          |      |                  |              |                   |              |
 | R24        |               |                  | GND                                | GND           |             |         |            |                         |      |                   |                      |       0.0 |            |           |          |      |                  |              |                   |              |
 | R25        |               | High Performance | IO_L18P_T2U_N10_AD2P_D12_65        | User IO       |             |      65 |            |                         |      |                   |                      |           |            |           |          |      |                  |              |                   |              |
-| R26        | fpga_button   | High Performance | IO_L18N_T2U_N11_AD2N_D13_65        | INPUT         | LVCMOS12    |      65 |            |                         |      |                   |                 NONE |           | FIXED      |           |          |      | NONE             |              |                   |              |
+| R26        |               | High Performance | IO_L18N_T2U_N11_AD2N_D13_65        | User IO       |             |      65 |            |                         |      |                   |                      |           |            |           |          |      |                  |              |                   |              |
 | T1         |               |                  | MGTHRXN2_225                       | Gigabit       |             |         |            |                         |      |                   |                      |           |            |           |          |      |                  |              |                   |              |
 | T2         |               |                  | MGTHRXP2_225                       | Gigabit       |             |         |            |                         |      |                   |                      |           |            |           |          |      |                  |              |                   |              |
 | T3         |               |                  | GND                                | GND           |             |         |            |                         |      |                   |                      |       0.0 |            |           |          |      |                  |              |                   |              |

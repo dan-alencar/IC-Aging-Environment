@@ -1,0 +1,464 @@
+{
+    "ltx_root": {
+        "version": 4,
+        "minor": 0,
+        "ltx_data": [
+            {
+                "name": "EDA_PROBESET",
+                "active": true,
+                "debug_cores": [
+                    {
+                        "type": "XSDB_V3",
+                        "name": "dbg_hub",
+                        "spec": "labtools_xsdbm_v3",
+                        "clk_input_freq_hz": "100000000"
+                    },
+                    {
+                        "type": "VIO_V2",
+                        "name": "u_vio",
+                        "spec": "labtools_vio_v3",
+                        "ipName": "vio",
+                        "core_location": {
+                            "user_chain": 1,
+                            "slave_index": 0,
+                            "bscan_switch_index": 0
+                        },
+                        "uuid": "407D14E81CC958EF8C2E354D7BF170FD",
+                        "pins": [
+                            {
+                                "name": "probe_in0",
+                                "id": 0,
+                                "type": "DATA",
+                                "direction": "IN",
+                                "isVector": true,
+                                "leftIndex": 0,
+                                "rightIndex": 15,
+                                "portIndex": 0,
+                                "nets": [
+                                    {
+                                        "name": "mon_debug_temp",
+                                        "isBus": true,
+                                        "subnets": [
+                                            {
+                                                "name": "mon_debug_temp[15]"
+                                            },
+                                            {
+                                                "name": "mon_debug_temp[14]"
+                                            },
+                                            {
+                                                "name": "mon_debug_temp[13]"
+                                            },
+                                            {
+                                                "name": "mon_debug_temp[12]"
+                                            },
+                                            {
+                                                "name": "mon_debug_temp[11]"
+                                            },
+                                            {
+                                                "name": "mon_debug_temp[10]"
+                                            },
+                                            {
+                                                "name": "mon_debug_temp[9]"
+                                            },
+                                            {
+                                                "name": "mon_debug_temp[8]"
+                                            },
+                                            {
+                                                "name": "mon_debug_temp[7]"
+                                            },
+                                            {
+                                                "name": "mon_debug_temp[6]"
+                                            },
+                                            {
+                                                "name": "mon_debug_temp[5]"
+                                            },
+                                            {
+                                                "name": "mon_debug_temp[4]"
+                                            },
+                                            {
+                                                "name": "mon_debug_temp[3]"
+                                            },
+                                            {
+                                                "name": "mon_debug_temp[2]"
+                                            },
+                                            {
+                                                "name": "mon_debug_temp[1]"
+                                            },
+                                            {
+                                                "name": "mon_debug_temp[0]"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "probe_in1",
+                                "id": 1,
+                                "type": "DATA",
+                                "direction": "IN",
+                                "isVector": true,
+                                "leftIndex": 0,
+                                "rightIndex": 15,
+                                "portIndex": 1,
+                                "nets": [
+                                    {
+                                        "name": "mon_debug_vcc",
+                                        "isBus": true,
+                                        "subnets": [
+                                            {
+                                                "name": "mon_debug_vcc[15]"
+                                            },
+                                            {
+                                                "name": "mon_debug_vcc[14]"
+                                            },
+                                            {
+                                                "name": "mon_debug_vcc[13]"
+                                            },
+                                            {
+                                                "name": "mon_debug_vcc[12]"
+                                            },
+                                            {
+                                                "name": "mon_debug_vcc[11]"
+                                            },
+                                            {
+                                                "name": "mon_debug_vcc[10]"
+                                            },
+                                            {
+                                                "name": "mon_debug_vcc[9]"
+                                            },
+                                            {
+                                                "name": "mon_debug_vcc[8]"
+                                            },
+                                            {
+                                                "name": "mon_debug_vcc[7]"
+                                            },
+                                            {
+                                                "name": "mon_debug_vcc[6]"
+                                            },
+                                            {
+                                                "name": "mon_debug_vcc[5]"
+                                            },
+                                            {
+                                                "name": "mon_debug_vcc[4]"
+                                            },
+                                            {
+                                                "name": "mon_debug_vcc[3]"
+                                            },
+                                            {
+                                                "name": "mon_debug_vcc[2]"
+                                            },
+                                            {
+                                                "name": "mon_debug_vcc[1]"
+                                            },
+                                            {
+                                                "name": "mon_debug_vcc[0]"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "probe_in2",
+                                "id": 2,
+                                "type": "DATA",
+                                "direction": "IN",
+                                "isVector": true,
+                                "leftIndex": 0,
+                                "rightIndex": 2,
+                                "portIndex": 2,
+                                "nets": [
+                                    {
+                                        "name": "mon_debug_state",
+                                        "isBus": true,
+                                        "subnets": [
+                                            {
+                                                "name": "mon_debug_state[2]"
+                                            },
+                                            {
+                                                "name": "mon_debug_state[1]"
+                                            },
+                                            {
+                                                "name": "mon_debug_state[0]"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "probe_in3",
+                                "id": 3,
+                                "type": "DATA",
+                                "direction": "IN",
+                                "isVector": false,
+                                "leftIndex": 0,
+                                "rightIndex": 0,
+                                "portIndex": 3,
+                                "nets": [
+                                    {
+                                        "name": "send_trigger",
+                                        "isBus": false
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "probe_in4",
+                                "id": 4,
+                                "type": "DATA",
+                                "direction": "IN",
+                                "isVector": true,
+                                "leftIndex": 0,
+                                "rightIndex": 15,
+                                "portIndex": 4,
+                                "nets": [
+                                    {
+                                        "name": "phase_val",
+                                        "isBus": true,
+                                        "subnets": [
+                                            {
+                                                "name": "phase_val[15]"
+                                            },
+                                            {
+                                                "name": "phase_val[14]"
+                                            },
+                                            {
+                                                "name": "phase_val[13]"
+                                            },
+                                            {
+                                                "name": "phase_val[12]"
+                                            },
+                                            {
+                                                "name": "phase_val[11]"
+                                            },
+                                            {
+                                                "name": "phase_val[10]"
+                                            },
+                                            {
+                                                "name": "phase_val[9]"
+                                            },
+                                            {
+                                                "name": "phase_val[8]"
+                                            },
+                                            {
+                                                "name": "phase_val[7]"
+                                            },
+                                            {
+                                                "name": "phase_val[6]"
+                                            },
+                                            {
+                                                "name": "phase_val[5]"
+                                            },
+                                            {
+                                                "name": "phase_val[4]"
+                                            },
+                                            {
+                                                "name": "phase_val[3]"
+                                            },
+                                            {
+                                                "name": "phase_val[2]"
+                                            },
+                                            {
+                                                "name": "phase_val[1]"
+                                            },
+                                            {
+                                                "name": "phase_val[0]"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "probe_in5",
+                                "id": 5,
+                                "type": "DATA",
+                                "direction": "IN",
+                                "isVector": false,
+                                "leftIndex": 0,
+                                "rightIndex": 0,
+                                "portIndex": 5,
+                                "nets": [
+                                    {
+                                        "name": "locked",
+                                        "isBus": false
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "probe_in6",
+                                "id": 6,
+                                "type": "DATA",
+                                "direction": "IN",
+                                "isVector": false,
+                                "leftIndex": 0,
+                                "rightIndex": 0,
+                                "portIndex": 6,
+                                "nets": [
+                                    {
+                                        "name": "global_rst_n",
+                                        "isBus": false,
+                                        "parentNetId": 53
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "probe_in7",
+                                "id": 7,
+                                "type": "DATA",
+                                "direction": "IN",
+                                "isVector": false,
+                                "leftIndex": 0,
+                                "rightIndex": 0,
+                                "portIndex": 7,
+                                "nets": [
+                                    {
+                                        "name": "sweep_rst_n",
+                                        "isBus": false,
+                                        "parentNetId": 54
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "probe_in8",
+                                "id": 8,
+                                "type": "DATA",
+                                "direction": "IN",
+                                "isVector": false,
+                                "leftIndex": 0,
+                                "rightIndex": 0,
+                                "portIndex": 8,
+                                "nets": [
+                                    {
+                                        "name": "psen",
+                                        "isBus": false
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "probe_in9",
+                                "id": 9,
+                                "type": "DATA",
+                                "direction": "IN",
+                                "isVector": false,
+                                "leftIndex": 0,
+                                "rightIndex": 0,
+                                "portIndex": 9,
+                                "nets": [
+                                    {
+                                        "name": "psdone",
+                                        "isBus": false
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "probe_in10",
+                                "id": 10,
+                                "type": "DATA",
+                                "direction": "IN",
+                                "isVector": false,
+                                "leftIndex": 0,
+                                "rightIndex": 0,
+                                "portIndex": 10,
+                                "nets": [
+                                    {
+                                        "name": "alarm_latched",
+                                        "isBus": false
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "probe_in11",
+                                "id": 11,
+                                "type": "DATA",
+                                "direction": "IN",
+                                "isVector": true,
+                                "leftIndex": 0,
+                                "rightIndex": 2,
+                                "portIndex": 11,
+                                "nets": [
+                                    {
+                                        "name": "ctrl_debug_state",
+                                        "isBus": true,
+                                        "subnets": [
+                                            {
+                                                "name": "ctrl_debug_state[2]"
+                                            },
+                                            {
+                                                "name": "ctrl_debug_state[1]"
+                                            },
+                                            {
+                                                "name": "ctrl_debug_state[0]"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "parent_nets": [
+                    {
+                        "id": 53,
+                        "name": "global_rst_n",
+                        "state_reg": [
+                            {
+                                "name": "u_arb/FSM_sequential_state_reg[0]",
+                                "states": [
+                                    {
+                                        "name": "ARB_MONITOR",
+                                        "val": "10"
+                                    },
+                                    {
+                                        "name": "ARB_CROC",
+                                        "val": "01"
+                                    },
+                                    {
+                                        "name": "ARB_IDLE",
+                                        "val": "00"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": 54,
+                        "name": "sweep_rst_n",
+                        "state_reg": [
+                            {
+                                "name": "mgr/FSM_sequential_state_reg[0]",
+                                "states": [
+                                    {
+                                        "name": "IDLE",
+                                        "val": "000"
+                                    },
+                                    {
+                                        "name": "STABILIZE",
+                                        "val": "001"
+                                    },
+                                    {
+                                        "name": "CHECK_ALARM",
+                                        "val": "010"
+                                    },
+                                    {
+                                        "name": "WAIT_SHIFT",
+                                        "val": "110"
+                                    },
+                                    {
+                                        "name": "SEND_DATA",
+                                        "val": "100"
+                                    },
+                                    {
+                                        "name": "INIT_SHIFT",
+                                        "val": "101"
+                                    },
+                                    {
+                                        "name": "LOCKED",
+                                        "val": "011"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

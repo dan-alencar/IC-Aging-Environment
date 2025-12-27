@@ -1,0 +1,24 @@
+#-----------------------------------------------------------
+# Vivado v2025.2 (64-bit)
+# SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
+# IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+# SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+# Start of session at: Sat Dec 27 17:16:59 2025
+# Process ID         : 3582298
+# Current directory  : /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/aging_study_ultrascale/aging_study_ultrascale.runs/impl_1
+# Command line       : vivado -log aging_sensor_top.vdi -applog -product Vivado -messageDb vivado.pb -mode batch -source aging_sensor_top.tcl -notrace
+# Log file           : /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/aging_study_ultrascale/aging_study_ultrascale.runs/impl_1/aging_sensor_top.vdi
+# Journal file       : /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/aging_study_ultrascale/aging_study_ultrascale.runs/impl_1/vivado.jou
+# Running On         : dan-alencar
+# Platform           : Linuxmint
+# Operating System   : Linux Mint 22.2
+# Processor Detail   : Intel(R) Core(TM) 5 210H
+# CPU Frequency      : 2107.834 MHz
+# CPU Physical cores : 8
+# CPU Logical cores  : 12
+# Host memory        : 24783 MB
+# Swap memory        : 2147 MB
+# Total Virtual      : 26931 MB
+# Available Virtual  : 16868 MB
+#-----------------------------------------------------------
+source aging_sensor_top.tcl -notrace

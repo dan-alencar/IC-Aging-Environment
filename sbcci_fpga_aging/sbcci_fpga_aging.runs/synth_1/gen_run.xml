@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<GenRun Id="synth_1" LaunchPart="xcau15p-ffvb676-1-i" LaunchTime="1766788763" LaunchIncrCheckpoint="$PSRCDIR/utils_1/imports/synth_1/fpga_aging_top.dcp">
+<GenRun Id="synth_1" LaunchPart="xcau15p-ffvb676-1-i" LaunchTime="1766873693" LaunchIncrCheckpoint="$PSRCDIR/utils_1/imports/synth_1/fpga_aging_top.dcp">
   <File Type="VDS-TIMINGSUMMARY" Name="fpga_unified_top_timing_summary_synth.rpt"/>
   <File Type="RDS-DCP" Name="fpga_unified_top.dcp"/>
   <File Type="RDS-UTIL-PB" Name="fpga_unified_top_utilization_synth.pb"/>
@@ -174,6 +174,7 @@
     <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2025"/>
     <Step Id="synth_design"/>
   </Strategy>
+  <BlockFileSet Type="BlockSrcs" Name="vio_0"/>
   <BlockFileSet Type="BlockSrcs" Name="xadc_wiz_0"/>
   <BlockFileSet Type="BlockSrcs" Name="clk_wiz_0"/>
 </GenRun>
