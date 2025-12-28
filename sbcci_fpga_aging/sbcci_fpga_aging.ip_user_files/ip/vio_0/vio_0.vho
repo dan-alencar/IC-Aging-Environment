@@ -56,16 +56,23 @@ COMPONENT vio_0
     clk : IN STD_LOGIC;
     probe_in0 : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     probe_in1 : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
-    probe_in2 : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
-    probe_in3 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    probe_in4 : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+    probe_in2 : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+    probe_in3 : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+    probe_in4 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     probe_in5 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     probe_in6 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     probe_in7 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     probe_in8 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     probe_in9 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     probe_in10 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    probe_in11 : IN STD_LOGIC_VECTOR(2 DOWNTO 0) 
+    probe_in11 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    probe_in12 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    probe_in13 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    probe_in14 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    probe_in15 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    probe_out0 : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    probe_out1 : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    probe_out2 : OUT STD_LOGIC_VECTOR(0 DOWNTO 0) 
   );
 END COMPONENT;
 -- COMP_TAG_END ------ End COMPONENT Declaration ------------
@@ -88,7 +95,14 @@ your_instance_name : vio_0
     probe_in8 => probe_in8,
     probe_in9 => probe_in9,
     probe_in10 => probe_in10,
-    probe_in11 => probe_in11
+    probe_in11 => probe_in11,
+    probe_in12 => probe_in12,
+    probe_in13 => probe_in13,
+    probe_in14 => probe_in14,
+    probe_in15 => probe_in15,
+    probe_out0 => probe_out0,
+    probe_out1 => probe_out1,
+    probe_out2 => probe_out2
   );
 -- INST_TAG_END ------ End INSTANTIATION Template ---------
 

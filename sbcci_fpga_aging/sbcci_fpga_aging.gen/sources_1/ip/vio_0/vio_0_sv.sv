@@ -60,11 +60,11 @@ module vio_0_sv (
   (* X_INTERFACE_IGNORE = "true" *)
   input wire [15:0] probe_in1,
   (* X_INTERFACE_IGNORE = "true" *)
-  input wire [2:0] probe_in2,
+  input wire [15:0] probe_in2,
   (* X_INTERFACE_IGNORE = "true" *)
-  input wire [0:0] probe_in3,
+  input wire [2:0] probe_in3,
   (* X_INTERFACE_IGNORE = "true" *)
-  input wire [15:0] probe_in4,
+  input wire [0:0] probe_in4,
   (* X_INTERFACE_IGNORE = "true" *)
   input wire [0:0] probe_in5,
   (* X_INTERFACE_IGNORE = "true" *)
@@ -78,7 +78,21 @@ module vio_0_sv (
   (* X_INTERFACE_IGNORE = "true" *)
   input wire [0:0] probe_in10,
   (* X_INTERFACE_IGNORE = "true" *)
-  input wire [2:0] probe_in11
+  input wire [0:0] probe_in11,
+  (* X_INTERFACE_IGNORE = "true" *)
+  input wire [0:0] probe_in12,
+  (* X_INTERFACE_IGNORE = "true" *)
+  input wire [0:0] probe_in13,
+  (* X_INTERFACE_IGNORE = "true" *)
+  input wire [0:0] probe_in14,
+  (* X_INTERFACE_IGNORE = "true" *)
+  input wire [0:0] probe_in15,
+  (* X_INTERFACE_IGNORE = "true" *)
+  output wire [0:0] probe_out0,
+  (* X_INTERFACE_IGNORE = "true" *)
+  output wire [0:0] probe_out1,
+  (* X_INTERFACE_IGNORE = "true" *)
+  output wire [0:0] probe_out2
 );
 
   vio_0 inst (
@@ -94,7 +108,14 @@ module vio_0_sv (
     .probe_in8(probe_in8),
     .probe_in9(probe_in9),
     .probe_in10(probe_in10),
-    .probe_in11(probe_in11)
+    .probe_in11(probe_in11),
+    .probe_in12(probe_in12),
+    .probe_in13(probe_in13),
+    .probe_in14(probe_in14),
+    .probe_in15(probe_in15),
+    .probe_out0(probe_out0),
+    .probe_out1(probe_out1),
+    .probe_out2(probe_out2)
   );
 
 endmodule

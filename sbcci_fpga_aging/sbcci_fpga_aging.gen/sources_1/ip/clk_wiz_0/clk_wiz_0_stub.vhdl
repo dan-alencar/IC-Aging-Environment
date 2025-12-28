@@ -2,7 +2,7 @@
 -- Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 -- --------------------------------------------------------------------------------
 -- Tool Version: Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
--- Date        : Tue Dec 23 17:32:24 2025
+-- Date        : Sat Dec 27 22:59:54 2025
 -- Host        : dan-alencar running 64-bit Linux Mint 22.2
 -- Command     : write_vhdl -force -mode synth_stub
 --               /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/clk_wiz_0/clk_wiz_0_stub.vhdl
@@ -24,8 +24,7 @@ entity clk_wiz_0 is
     psdone : out STD_LOGIC;
     reset : in STD_LOGIC;
     locked : out STD_LOGIC;
-    clk_in1_p : in STD_LOGIC;
-    clk_in1_n : in STD_LOGIC
+    clk_in1 : in STD_LOGIC
   );
 
   attribute CORE_GENERATION_INFO : string;
@@ -36,6 +35,6 @@ architecture stub of clk_wiz_0 is
   attribute syn_black_box : boolean;
   attribute black_box_pad_pin : string;
   attribute syn_black_box of stub : architecture is true;
-  attribute black_box_pad_pin of stub : architecture is "clk_out1,clk_out2,clk_out3,psclk,psen,psincdec,psdone,reset,locked,clk_in1_p,clk_in1_n";
+  attribute black_box_pad_pin of stub : architecture is "clk_out1,clk_out2,clk_out3,psclk,psen,psincdec,psdone,reset,locked,clk_in1";
 begin
 end;

@@ -2,7 +2,7 @@
 -- Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 -- --------------------------------------------------------------------------------
 -- Tool Version: Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
--- Date        : Tue Dec 23 17:32:24 2025
+-- Date        : Sat Dec 27 22:59:54 2025
 -- Host        : dan-alencar running 64-bit Linux Mint 22.2
 -- Command     : write_vhdl -force -mode funcsim
 --               /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/clk_wiz_0/clk_wiz_0_sim_netlist.vhdl
@@ -26,14 +26,12 @@ entity clk_wiz_0_clk_wiz is
     psdone : out STD_LOGIC;
     reset : in STD_LOGIC;
     locked : out STD_LOGIC;
-    clk_in1_p : in STD_LOGIC;
-    clk_in1_n : in STD_LOGIC
+    clk_in1 : in STD_LOGIC
   );
 end clk_wiz_0_clk_wiz;
 
 architecture STRUCTURE of clk_wiz_0_clk_wiz is
   signal clk_in1_clk_wiz_0 : STD_LOGIC;
-  signal clk_in1_clk_wiz_0_buf : STD_LOGIC;
   signal clk_out1_clk_wiz_0 : STD_LOGIC;
   signal clk_out2_clk_wiz_0 : STD_LOGIC;
   signal clk_out3_clk_wiz_0 : STD_LOGIC;
@@ -54,50 +52,31 @@ architecture STRUCTURE of clk_wiz_0_clk_wiz is
   signal NLW_mmcme4_adv_inst_DRDY_UNCONNECTED : STD_LOGIC;
   signal NLW_mmcme4_adv_inst_DO_UNCONNECTED : STD_LOGIC_VECTOR ( 15 downto 0 );
   attribute BOX_TYPE : string;
-  attribute BOX_TYPE of clkin1_bufg1 : label is "PRIMITIVE";
-  attribute XILINX_LEGACY_PRIM : string;
-  attribute XILINX_LEGACY_PRIM of clkin1_bufg1 : label is "BUFG";
-  attribute XILINX_TRANSFORM_PINMAP : string;
-  attribute XILINX_TRANSFORM_PINMAP of clkin1_bufg1 : label is "VCC:CE";
-  attribute BOX_TYPE of clkin1_ibufds : label is "PRIMITIVE";
+  attribute BOX_TYPE of clkin1_ibuf : label is "PRIMITIVE";
   attribute CAPACITANCE : string;
-  attribute CAPACITANCE of clkin1_ibufds : label is "DONT_CARE";
+  attribute CAPACITANCE of clkin1_ibuf : label is "DONT_CARE";
   attribute IBUF_DELAY_VALUE : string;
-  attribute IBUF_DELAY_VALUE of clkin1_ibufds : label is "0";
+  attribute IBUF_DELAY_VALUE of clkin1_ibuf : label is "0";
   attribute IFD_DELAY_VALUE : string;
-  attribute IFD_DELAY_VALUE of clkin1_ibufds : label is "AUTO";
+  attribute IFD_DELAY_VALUE of clkin1_ibuf : label is "AUTO";
   attribute BOX_TYPE of clkout1_buf : label is "PRIMITIVE";
+  attribute XILINX_LEGACY_PRIM : string;
   attribute XILINX_LEGACY_PRIM of clkout1_buf : label is "BUFG";
+  attribute XILINX_TRANSFORM_PINMAP : string;
   attribute XILINX_TRANSFORM_PINMAP of clkout1_buf : label is "VCC:CE";
   attribute BOX_TYPE of clkout2_buf : label is "PRIMITIVE";
-  attribute XILINX_LEGACY_PRIM of clkout2_buf : label is "BUFG";
-  attribute XILINX_TRANSFORM_PINMAP of clkout2_buf : label is "VCC:CE";
   attribute BOX_TYPE of clkout3_buf : label is "PRIMITIVE";
-  attribute XILINX_LEGACY_PRIM of clkout3_buf : label is "BUFG";
-  attribute XILINX_TRANSFORM_PINMAP of clkout3_buf : label is "VCC:CE";
   attribute BOX_TYPE of mmcme4_adv_inst : label is "PRIMITIVE";
   attribute OPT_MODIFIED : string;
   attribute OPT_MODIFIED of mmcme4_adv_inst : label is "MLO";
 begin
-clkin1_bufg1: unisim.vcomponents.BUFGCE
+clkin1_ibuf: unisim.vcomponents.IBUF
     generic map(
-      CE_TYPE => "ASYNC",
-      SIM_DEVICE => "ULTRASCALE_PLUS"
-    )
-        port map (
-      CE => '1',
-      I => clk_in1_clk_wiz_0_buf,
-      O => clk_in1_clk_wiz_0
-    );
-clkin1_ibufds: unisim.vcomponents.IBUFDS
-    generic map(
-      DIFF_TERM => false,
       IOSTANDARD => "DEFAULT"
     )
         port map (
-      I => clk_in1_p,
-      IB => clk_in1_n,
-      O => clk_in1_clk_wiz_0_buf
+      I => clk_in1,
+      O => clk_in1_clk_wiz_0
     );
 clkout1_buf: unisim.vcomponents.BUFGCE
     generic map(
@@ -109,23 +88,37 @@ clkout1_buf: unisim.vcomponents.BUFGCE
       I => clk_out1_clk_wiz_0,
       O => clk_out1
     );
-clkout2_buf: unisim.vcomponents.BUFGCE
+clkout2_buf: unisim.vcomponents.BUFGCE_DIV
     generic map(
-      CE_TYPE => "ASYNC",
-      SIM_DEVICE => "ULTRASCALE_PLUS"
+      BUFGCE_DIVIDE => 1,
+      CE_TYPE => "SYNC",
+      HARDSYNC_CLR => "FALSE",
+      IS_CE_INVERTED => '0',
+      IS_CLR_INVERTED => '0',
+      IS_I_INVERTED => '0',
+      SIM_DEVICE => "ULTRASCALE",
+      STARTUP_SYNC => "FALSE"
     )
         port map (
       CE => '1',
+      CLR => '0',
       I => clk_out2_clk_wiz_0,
       O => clk_out2
     );
-clkout3_buf: unisim.vcomponents.BUFGCE
+clkout3_buf: unisim.vcomponents.BUFGCE_DIV
     generic map(
-      CE_TYPE => "ASYNC",
-      SIM_DEVICE => "ULTRASCALE_PLUS"
+      BUFGCE_DIVIDE => 1,
+      CE_TYPE => "SYNC",
+      HARDSYNC_CLR => "FALSE",
+      IS_CE_INVERTED => '0',
+      IS_CLR_INVERTED => '0',
+      IS_I_INVERTED => '0',
+      SIM_DEVICE => "ULTRASCALE",
+      STARTUP_SYNC => "FALSE"
     )
         port map (
       CE => '1',
+      CLR => '0',
       I => clk_out3_clk_wiz_0,
       O => clk_out3
     );
@@ -139,7 +132,7 @@ mmcme4_adv_inst: unisim.vcomponents.MMCME4_ADV
       CLKIN2_PERIOD => 0.000000,
       CLKOUT0_DIVIDE_F => 9.000000,
       CLKOUT0_DUTY_CYCLE => 0.500000,
-      CLKOUT0_PHASE => 100.000000,
+      CLKOUT0_PHASE => 50.000000,
       CLKOUT0_USE_FINE_PS => "FALSE",
       CLKOUT1_DIVIDE => 9,
       CLKOUT1_DUTY_CYCLE => 0.500000,
@@ -236,8 +229,7 @@ entity clk_wiz_0 is
     psdone : out STD_LOGIC;
     reset : in STD_LOGIC;
     locked : out STD_LOGIC;
-    clk_in1_p : in STD_LOGIC;
-    clk_in1_n : in STD_LOGIC
+    clk_in1 : in STD_LOGIC
   );
   attribute NotValidForBitStream : boolean;
   attribute NotValidForBitStream of clk_wiz_0 : entity is true;
@@ -247,8 +239,7 @@ architecture STRUCTURE of clk_wiz_0 is
 begin
 inst: entity work.clk_wiz_0_clk_wiz
      port map (
-      clk_in1_n => clk_in1_n,
-      clk_in1_p => clk_in1_p,
+      clk_in1 => clk_in1,
       clk_out1 => clk_out1,
       clk_out2 => clk_out2,
       clk_out3 => clk_out3,

@@ -8,7 +8,7 @@ set_property PACKAGE_PIN AE20 [get_ports sys_clk_n]
 set_property IOSTANDARD DIFF_SSTL12 [get_ports sys_clk_p]
 set_property IOSTANDARD DIFF_SSTL12 [get_ports sys_clk_n]
 
-#create_clock -period 10.000 -name clk_sys -waveform {0.000 5.000} [get_ports sys_clk_p]
+create_clock -period 10.000 -name sys_clk_se -waveform {0.000 5.000} [get_ports sys_clk_p]
 
 # ==============================================================================
 # 2. PC INTERFACE & CONTROL (Bank 65 - 1.2V)

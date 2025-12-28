@@ -137,18 +137,10 @@ module aging_sensor_top(
     temp_catcher temp_reader (
         .clk(sys_clk),
         .reset(sys_reset_n),
-        
-        // SYSMON connections
         .drdy(sysmon_drdy),
         .do_data(sysmon_do),
         .daddr(sysmon_daddr),
         .den(sysmon_den),
-        
-        // Control connections
-        .trigger(temp_trigger),      // NEW: Starts acquisition
-        .measure_done(temp_meas_done), // NEW: Signals completion
-        
-        // Data outputs
         .temp(temp_data),
         .vccint(vccint_data)
     );
@@ -211,7 +203,7 @@ module aging_sensor_top(
     // Sensor Stream
     //========================================================================
     sensor_stream #(
-        .BAUDRATE(125000),
+        .BAUDRATE(9600),
         .CLK_FREQ(100000000)
     ) data_streamer (
         .temp({3'b000, temp_data}),
@@ -220,10 +212,7 @@ module aging_sensor_top(
         .failure(failure_held),
         .reset(sys_reset_n),
         .clk(sys_clk),
-        
-        // CHANGE: Wait for Temp Catcher to finish before streaming!
-        .sendin(temp_meas_done), 
-        
+        .sendin(uart_send_trigger | vio_force_send),
         .send(uart_send),
         .data(uart_data)
     );
@@ -232,7 +221,7 @@ module aging_sensor_top(
     // UART Transmitter
     //========================================================================
     uart_tx #(
-        .BAUDRATE(125000),
+        .BAUDRATE(9600),
         .CLK_FREQ(100000000)
     ) uart_transmitter (
         .clk(sys_clk),

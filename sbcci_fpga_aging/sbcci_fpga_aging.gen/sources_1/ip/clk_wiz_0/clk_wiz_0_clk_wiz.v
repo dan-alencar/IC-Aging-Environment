@@ -53,7 +53,7 @@
 //  Output     Output      Phase    Duty Cycle   Pk-to-Pk     Phase
 //   Clock     Freq (MHz)  (degrees)    (%)     Jitter (ps)  Error (ps)
 //----------------------------------------------------------------------------
-// clk_out1__100.00000____100.000______50.0______137.681____105.461
+// clk_out1__100.00000_____50.000______50.0______137.681____105.461
 // clk_out2__100.00000______0.000______50.0______137.681____105.461
 // clk_out3__100.00000______0.000______50.0______137.681____105.461
 //
@@ -79,21 +79,16 @@ module clk_wiz_0_clk_wiz
   // Status and control signals
   input         reset,
   output        locked,
-  input         clk_in1_p,
-  input         clk_in1_n
+  input         clk_in1
  );
   // Input buffering
   //------------------------------------
 wire clk_in1_clk_wiz_0;
 wire clk_in1_clk_wiz_0_buf;
 wire clk_in2_clk_wiz_0;
-  IBUFDS clkin1_ibufds
-   (.O  (clk_in1_clk_wiz_0_buf),
-    .I  (clk_in1_p),
-    .IB (clk_in1_n));
-    BUFG clkin1_bufg1
+  IBUF clkin1_ibuf
    (.O (clk_in1_clk_wiz_0),
-    .I (clk_in1_clk_wiz_0_buf));
+    .I (clk_in1));
 
 
 
@@ -143,7 +138,7 @@ wire clk_in2_clk_wiz_0;
     .CLKFBOUT_PHASE       (0.000),
     .CLKFBOUT_USE_FINE_PS ("FALSE"),
     .CLKOUT0_DIVIDE_F     (9.000),
-    .CLKOUT0_PHASE        (100.000),
+    .CLKOUT0_PHASE        (50.000),
     .CLKOUT0_DUTY_CYCLE   (0.500),
     .CLKOUT0_USE_FINE_PS  ("FALSE"),
     .CLKOUT1_DIVIDE       (9),
@@ -217,12 +212,32 @@ wire clk_in2_clk_wiz_0;
     .I   (clk_out1_clk_wiz_0));
 
 
-  BUFG clkout2_buf
+  BUFGCE_DIV 
+ #(
+      .BUFGCE_DIVIDE(1),      // 1-8
+      // Programmable Inversion Attributes: Specifies built-in programmable inversion on specific pins
+      .IS_CE_INVERTED(1'b0),  // Optional inversion for CE
+      .IS_CLR_INVERTED(1'b0), // Optional inversion for CLR
+      .IS_I_INVERTED(1'b0)    // Optional inversion for I
+   )
+  clkout2_buf
    (.O   (clk_out2),
+    .CE  (1'b1),   // 1-bit input: Buffer enable
+    .CLR (1'b0),
     .I   (clk_out2_clk_wiz_0));
 
-  BUFG clkout3_buf
+  BUFGCE_DIV 
+ #(
+      .BUFGCE_DIVIDE(1),      // 1-8
+      // Programmable Inversion Attributes: Specifies built-in programmable inversion on specific pins
+      .IS_CE_INVERTED(1'b0),  // Optional inversion for CE
+      .IS_CLR_INVERTED(1'b0), // Optional inversion for CLR
+      .IS_I_INVERTED(1'b0)    // Optional inversion for I
+   )
+  clkout3_buf
    (.O   (clk_out3),
+    .CE  (1'b1),   // 1-bit input: Buffer enable
+    .CLR (1'b0),
     .I   (clk_out3_clk_wiz_0));
 
 

@@ -2,7 +2,7 @@
 // Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 // --------------------------------------------------------------------------------
 // Tool Version: Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
-// Date        : Tue Dec 23 17:32:24 2025
+// Date        : Sat Dec 27 22:59:54 2025
 // Host        : dan-alencar running 64-bit Linux Mint 22.2
 // Command     : write_verilog -force -mode funcsim
 //               /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/clk_wiz_0/clk_wiz_0_sim_netlist.v
@@ -24,8 +24,7 @@ module clk_wiz_0
     psdone,
     reset,
     locked,
-    clk_in1_p,
-    clk_in1_n);
+    clk_in1);
   output clk_out1;
   output clk_out2;
   output clk_out3;
@@ -35,11 +34,9 @@ module clk_wiz_0
   output psdone;
   input reset;
   output locked;
-  input clk_in1_p;
-  input clk_in1_n;
+  input clk_in1;
 
-  (* IBUF_LOW_PWR *) wire clk_in1_n;
-  (* IBUF_LOW_PWR *) wire clk_in1_p;
+  (* IBUF_LOW_PWR *) wire clk_in1;
   wire clk_out1;
   wire clk_out2;
   wire clk_out3;
@@ -51,8 +48,7 @@ module clk_wiz_0
   wire reset;
 
   clk_wiz_0_clk_wiz inst
-       (.clk_in1_n(clk_in1_n),
-        .clk_in1_p(clk_in1_p),
+       (.clk_in1(clk_in1),
         .clk_out1(clk_out1),
         .clk_out2(clk_out2),
         .clk_out3(clk_out3),
@@ -74,8 +70,7 @@ module clk_wiz_0_clk_wiz
     psdone,
     reset,
     locked,
-    clk_in1_p,
-    clk_in1_n);
+    clk_in1);
   output clk_out1;
   output clk_out2;
   output clk_out3;
@@ -85,13 +80,10 @@ module clk_wiz_0_clk_wiz
   output psdone;
   input reset;
   output locked;
-  input clk_in1_p;
-  input clk_in1_n;
+  input clk_in1;
 
+  wire clk_in1;
   wire clk_in1_clk_wiz_0;
-  wire clk_in1_clk_wiz_0_buf;
-  wire clk_in1_n;
-  wire clk_in1_p;
   wire clk_out1;
   wire clk_out1_clk_wiz_0;
   wire clk_out2;
@@ -122,26 +114,14 @@ module clk_wiz_0_clk_wiz
   wire [15:0]NLW_mmcme4_adv_inst_DO_UNCONNECTED;
 
   (* BOX_TYPE = "PRIMITIVE" *) 
-  (* XILINX_LEGACY_PRIM = "BUFG" *) 
-  (* XILINX_TRANSFORM_PINMAP = "VCC:CE" *) 
-  BUFGCE #(
-    .CE_TYPE("ASYNC"),
-    .SIM_DEVICE("ULTRASCALE_PLUS")) 
-    clkin1_bufg1
-       (.CE(1'b1),
-        .I(clk_in1_clk_wiz_0_buf),
-        .O(clk_in1_clk_wiz_0));
-  (* BOX_TYPE = "PRIMITIVE" *) 
   (* CAPACITANCE = "DONT_CARE" *) 
   (* IBUF_DELAY_VALUE = "0" *) 
   (* IFD_DELAY_VALUE = "AUTO" *) 
-  IBUFDS #(
-    .DIFF_TERM("FALSE"),
+  IBUF #(
     .IOSTANDARD("DEFAULT")) 
-    clkin1_ibufds
-       (.I(clk_in1_p),
-        .IB(clk_in1_n),
-        .O(clk_in1_clk_wiz_0_buf));
+    clkin1_ibuf
+       (.I(clk_in1),
+        .O(clk_in1_clk_wiz_0));
   (* BOX_TYPE = "PRIMITIVE" *) 
   (* XILINX_LEGACY_PRIM = "BUFG" *) 
   (* XILINX_TRANSFORM_PINMAP = "VCC:CE" *) 
@@ -153,23 +133,33 @@ module clk_wiz_0_clk_wiz
         .I(clk_out1_clk_wiz_0),
         .O(clk_out1));
   (* BOX_TYPE = "PRIMITIVE" *) 
-  (* XILINX_LEGACY_PRIM = "BUFG" *) 
-  (* XILINX_TRANSFORM_PINMAP = "VCC:CE" *) 
-  BUFGCE #(
-    .CE_TYPE("ASYNC"),
-    .SIM_DEVICE("ULTRASCALE_PLUS")) 
+  BUFGCE_DIV #(
+    .BUFGCE_DIVIDE(1),
+    .CE_TYPE("SYNC"),
+    .HARDSYNC_CLR("FALSE"),
+    .IS_CE_INVERTED(1'b0),
+    .IS_CLR_INVERTED(1'b0),
+    .IS_I_INVERTED(1'b0),
+    .SIM_DEVICE("ULTRASCALE"),
+    .STARTUP_SYNC("FALSE")) 
     clkout2_buf
        (.CE(1'b1),
+        .CLR(1'b0),
         .I(clk_out2_clk_wiz_0),
         .O(clk_out2));
   (* BOX_TYPE = "PRIMITIVE" *) 
-  (* XILINX_LEGACY_PRIM = "BUFG" *) 
-  (* XILINX_TRANSFORM_PINMAP = "VCC:CE" *) 
-  BUFGCE #(
-    .CE_TYPE("ASYNC"),
-    .SIM_DEVICE("ULTRASCALE_PLUS")) 
+  BUFGCE_DIV #(
+    .BUFGCE_DIVIDE(1),
+    .CE_TYPE("SYNC"),
+    .HARDSYNC_CLR("FALSE"),
+    .IS_CE_INVERTED(1'b0),
+    .IS_CLR_INVERTED(1'b0),
+    .IS_I_INVERTED(1'b0),
+    .SIM_DEVICE("ULTRASCALE"),
+    .STARTUP_SYNC("FALSE")) 
     clkout3_buf
        (.CE(1'b1),
+        .CLR(1'b0),
         .I(clk_out3_clk_wiz_0),
         .O(clk_out3));
   (* BOX_TYPE = "PRIMITIVE" *) 
@@ -183,7 +173,7 @@ module clk_wiz_0_clk_wiz
     .CLKIN2_PERIOD(0.000000),
     .CLKOUT0_DIVIDE_F(9.000000),
     .CLKOUT0_DUTY_CYCLE(0.500000),
-    .CLKOUT0_PHASE(100.000000),
+    .CLKOUT0_PHASE(50.000000),
     .CLKOUT0_USE_FINE_PS("FALSE"),
     .CLKOUT1_DIVIDE(9),
     .CLKOUT1_DUTY_CYCLE(0.500000),

@@ -9,8 +9,6 @@ set_property src_info {type:XDC file:1 line:20 export:INPUT save:INPUT read:READ
 set_property PACKAGE_PIN W26 [get_ports fpga_uart_rx]
 set_property src_info {type:XDC file:1 line:24 export:INPUT save:INPUT read:READ} [current_design]
 set_property PACKAGE_PIN R26 [get_ports fpga_button]
-set_property src_info {type:XDC file:1 line:25 export:INPUT save:INPUT read:READ} [current_design]
-set_property IOSTANDARD LVCMOS12 [get_ports fpga_button]
 set_property src_info {type:XDC file:1 line:32 export:INPUT save:INPUT read:READ} [current_design]
 set_property PACKAGE_PIN W12 [get_ports mcu_usart1_rx]
 set_property src_info {type:XDC file:1 line:36 export:INPUT save:INPUT read:READ} [current_design]
