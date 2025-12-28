@@ -1,6 +1,8 @@
 """
 Widget de Gráfico Auxiliar (pyqtgraph + PySide6)
-Exibe dados de Tensão e Corrente da Fonte.
+Exibe dados de Tensão, Corrente da Fonte e Slack do Sensor de Aging.
+
+ATUALIZADO: Slack exibido como valor numérico (TextItem), sem curva
 """
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 from PySide6.QtCore import Slot, Qt
@@ -18,10 +20,11 @@ class AuxPlotWidget(QWidget):
         self.dut_voltage_data = deque(maxlen=plot_window_size)
         self.voltage_data = deque(maxlen=plot_window_size)
         self.current_data = deque(maxlen=plot_window_size)
+        self.current_slack = 0  # Valor atual do slack
 
         # --- Configuração do Gráfico pyqtgraph ---
         self.plot_view = pg.PlotWidget() 
-        self.plot_view.setTitle("Tensão e Corrente da PSU e FPGA")
+        self.plot_view.setTitle("PSU, FPGA Voltage & Aging Slack")
 
         # Configuração do Eixo Principal (Tensão e Corrente)
         self.plot_view.setLabel('left', "Tensão (V) / Corrente (A)")
@@ -34,12 +37,11 @@ class AuxPlotWidget(QWidget):
         # --- CONFIGURAÇÃO DE AUTO-RANGE ---
         self.vb_main.enableAutoRange(axis='y')
         self.vb_main.disableAutoRange(axis='x')
-        # --- FIM DA CONFIGURAÇÃO ---
 
         # --- Criação das Linhas (Eixo Esquerdo: V / A) ---
         self.dut_voltage_curve = self.plot_view.plot(
             pen=pg.mkPen('green', width=2, style=Qt.DashLine), 
-            name="Tensão DUT (V)"
+            name="VCCINT DUT (V)"
         )
         self.voltage_curve = self.plot_view.plot(
             pen=pg.mkPen('blue', width=2), 
@@ -49,11 +51,30 @@ class AuxPlotWidget(QWidget):
             pen=pg.mkPen('red', width=2, style=Qt.DotLine), 
             name="Corrente PSU (A)"
         )
+
+        # --- Slack Display (TextItem no canto superior direito) ---
+        self.slack_text = pg.TextItem(
+            text="Slack: -- steps",
+            color='magenta',
+            anchor=(1, 0)  # Ancora no canto superior direito
+        )
+        self.slack_text.setFont(pg.QtGui.QFont('Arial', 12, pg.QtGui.QFont.Bold))
+        self.plot_view.addItem(self.slack_text, ignoreBounds=True)
         
         # --- Layout do Widget ---
         layout = QVBoxLayout()
         layout.addWidget(self.plot_view)
         self.setLayout(layout)
+        
+        # Conecta redimensionamento para reposicionar o texto
+        self.vb_main.sigResized.connect(self._update_slack_text_position)
+
+    def _update_slack_text_position(self):
+        """Reposiciona o texto do slack no canto superior direito."""
+        view_range = self.vb_main.viewRange()
+        x_max = view_range[0][1]
+        y_max = view_range[1][1]
+        self.slack_text.setPos(x_max, y_max)
 
     @Slot(dict)
     def update_plot_data(self, data_row):
@@ -65,10 +86,13 @@ class AuxPlotWidget(QWidget):
         time_sec = data_row.get('time_sec')
         
         self.time_data.append(time_sec)
-        self.dut_voltage_data.append(data_row.get('dut_volt'))
-        self.voltage_data.append(data_row.get('psu_voltage'))
-        self.current_data.append(data_row.get('psu_current'))
-
+        self.dut_voltage_data.append(data_row.get('dut_volt', 0.0))
+        self.voltage_data.append(data_row.get('psu_voltage', 0.0))
+        self.current_data.append(data_row.get('psu_current', 0.0))
+        
+        # Atualiza valor do slack
+        self.current_slack = data_row.get('dut_slack', 0)
+        self.slack_text.setText(f"Slack: {self.current_slack} steps")
         
         # 2. Atualiza as curvas com os novos dados
         time_list = list(self.time_data) 
@@ -81,6 +105,9 @@ class AuxPlotWidget(QWidget):
             self.vb_main.setXRange(time_list[0], time_list[-1], padding=0.01)
         
         self.vb_main.autoRange()
+        
+        # Reposiciona texto após auto-range
+        self._update_slack_text_position()
 
     @Slot()
     def clear_plot(self):
@@ -91,11 +118,15 @@ class AuxPlotWidget(QWidget):
         self.dut_voltage_data.clear()
         self.voltage_data.clear()
         self.current_data.clear()
+        self.current_slack = 0
         
         # 2. Limpa as curvas no gráfico
         self.dut_voltage_curve.setData([], [])
         self.voltage_curve.setData([], [])
         self.current_curve.setData([], [])
         
-        # 3. Reseta o zoom/pan
+        # 3. Reseta o texto do slack
+        self.slack_text.setText("Slack: -- steps")
+        
+        # 4. Reseta o zoom/pan
         self.vb_main.autoRange()
