@@ -89,9 +89,10 @@ read_verilog -library xil_defaultlib -sv {
 }
 read_verilog -library xil_defaultlib {
   /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/new/controller_controller.v
-  /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/new/holder_button.v
   /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/imports/Projects/aging_Nexys4DDR/aging_Nexys4DDR.srcs/sources_1/new/modern_sensible.v
   /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/imports/Projects/aging_Nexys4DDR/aging_Nexys4DDR.srcs/sources_1/imports/new/nand_series.v
+  /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/imports/Projects/uart_test/uart_test.srcs/sources_1/new/sensor_stream.v
+  /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/imports/Projects/uart_test/uart_test.srcs/sources_1/new/uart_tx.v
 }
 read_ip -quiet /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/ip/clk_wiz_0/clk_wiz_0.xci
 set_property used_in_implementation false [get_files -all /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/sbcci_fpga_aging/sbcci_fpga_aging.gen/sources_1/ip/clk_wiz_0/clk_wiz_0_board.xdc]

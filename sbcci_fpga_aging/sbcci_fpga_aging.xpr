@@ -65,12 +65,12 @@
     <Option Name="WTVcsLaunchSim" Val="0"/>
     <Option Name="WTRivieraLaunchSim" Val="0"/>
     <Option Name="WTActivehdlLaunchSim" Val="0"/>
-    <Option Name="WTXSimExportSim" Val="12"/>
-    <Option Name="WTModelSimExportSim" Val="12"/>
-    <Option Name="WTQuestaExportSim" Val="12"/>
+    <Option Name="WTXSimExportSim" Val="17"/>
+    <Option Name="WTModelSimExportSim" Val="17"/>
+    <Option Name="WTQuestaExportSim" Val="17"/>
     <Option Name="WTIesExportSim" Val="0"/>
-    <Option Name="WTVcsExportSim" Val="12"/>
-    <Option Name="WTRivieraExportSim" Val="12"/>
+    <Option Name="WTVcsExportSim" Val="17"/>
+    <Option Name="WTRivieraExportSim" Val="17"/>
     <Option Name="WTActivehdlExportSim" Val="0"/>
     <Option Name="GenerateIPUpgradeLog" Val="TRUE"/>
     <Option Name="XSimRadix" Val="hex"/>
@@ -99,30 +99,10 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/sources_1/imports/Projects/uart_test/uart_test.srcs/sources_1/new/sensor_stream.v">
-        <FileInfo>
-          <Attr Name="UserDisabled" Val="1"/>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/imports/Projects/uart_test/uart_test.srcs/sources_1/new/sensor_stream.v"/>
-          <Attr Name="ImportTime" Val="1766195167"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
       <File Path="$PSRCDIR/sources_1/imports/sources_1/new/temp_catcher.v">
         <FileInfo>
           <Attr Name="UserDisabled" Val="1"/>
           <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/new/temp_catcher.v"/>
-          <Attr Name="ImportTime" Val="1766195167"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PSRCDIR/sources_1/imports/sources_1/imports/Projects/uart_test/uart_test.srcs/sources_1/new/uart_tx.v">
-        <FileInfo>
-          <Attr Name="UserDisabled" Val="1"/>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/imports/Projects/uart_test/uart_test.srcs/sources_1/new/uart_tx.v"/>
           <Attr Name="ImportTime" Val="1766195167"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -147,18 +127,20 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/sources_1/new/controller_controller.v">
+      <File Path="$PSRCDIR/sources_1/imports/sources_1/new/holder_button.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/new/controller_controller.v"/>
+          <Attr Name="UserDisabled" Val="1"/>
+          <Attr Name="AutoDisabled" Val="1"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/new/holder_button.v"/>
           <Attr Name="ImportTime" Val="1766195167"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/sources_1/new/holder_button.v">
+      <File Path="$PSRCDIR/sources_1/imports/sources_1/new/controller_controller.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/new/holder_button.v"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/new/controller_controller.v"/>
           <Attr Name="ImportTime" Val="1766195167"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -177,6 +159,24 @@
       <File Path="$PSRCDIR/sources_1/imports/sources_1/imports/Projects/aging_Nexys4DDR/aging_Nexys4DDR.srcs/sources_1/imports/new/nand_series.v">
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/imports/Projects/aging_Nexys4DDR/aging_Nexys4DDR.srcs/sources_1/imports/new/nand_series.v"/>
+          <Attr Name="ImportTime" Val="1766195167"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/imports/sources_1/imports/Projects/uart_test/uart_test.srcs/sources_1/new/sensor_stream.v">
+        <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/imports/Projects/uart_test/uart_test.srcs/sources_1/new/sensor_stream.v"/>
+          <Attr Name="ImportTime" Val="1766195167"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/imports/sources_1/imports/Projects/uart_test/uart_test.srcs/sources_1/new/uart_tx.v">
+        <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/imports/Projects/uart_test/uart_test.srcs/sources_1/new/uart_tx.v"/>
           <Attr Name="ImportTime" Val="1766195167"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>

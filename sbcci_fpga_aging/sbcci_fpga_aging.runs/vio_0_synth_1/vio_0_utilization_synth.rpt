@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
-| Date         : Sat Dec 27 19:14:39 2025
+| Date         : Sat Dec 27 22:20:24 2025
 | Host         : dan-alencar running 64-bit Linux Mint 22.2
 | Command      : report_utilization -file vio_0_utilization_synth.rpt -pb vio_0_utilization_synth.pb
 | Design       : vio_0
@@ -32,17 +32,17 @@ Table of Contents
 +-------------------------+------+-------+------------+-----------+-------+
 |        Site Type        | Used | Fixed | Prohibited | Available | Util% |
 +-------------------------+------+-------+------------+-----------+-------+
-| CLB LUTs*               |  303 |     0 |          0 |     77760 |  0.39 |
-|   LUT as Logic          |  303 |     0 |          0 |     77760 |  0.39 |
+| CLB LUTs*               |  315 |     0 |          0 |     77760 |  0.41 |
+|   LUT as Logic          |  315 |     0 |          0 |     77760 |  0.41 |
 |   LUT as Memory         |    0 |     0 |          0 |     40320 |  0.00 |
-| CLB Registers           |  562 |     0 |          0 |    155520 |  0.36 |
-|   Register as Flip Flop |  562 |     0 |          0 |    155520 |  0.36 |
+| CLB Registers           |  582 |     0 |          0 |    155520 |  0.37 |
+|   Register as Flip Flop |  582 |     0 |          0 |    155520 |  0.37 |
 |   Register as Latch     |    0 |     0 |          0 |    155520 |  0.00 |
 | CARRY8                  |    0 |     0 |          0 |      9720 |  0.00 |
 | F7 Muxes                |    0 |     0 |          0 |     38880 |  0.00 |
 | F8 Muxes                |    0 |     0 |          0 |     19440 |  0.00 |
 | F9 Muxes                |    0 |     0 |          0 |      9720 |  0.00 |
-| Unique Control Sets     |    9 |       |          0 |     19440 |  0.05 |
+| Unique Control Sets     |   12 |       |          0 |     19440 |  0.06 |
 +-------------------------+------+-------+------------+-----------+-------+
 * Warning! The Final LUT count, after physical optimizations and full implementation, is typically lower. Run opt_design after synthesis, if not already completed, for a more realistic count.
 Warning! LUT value is adjusted to account for LUT combining.
@@ -65,7 +65,7 @@ Warning! For any ECO changes, please run place_design if there are unplaced inst
 | 0     |          Yes |           - |          Set |
 | 0     |          Yes |           - |        Reset |
 | 0     |          Yes |         Set |            - |
-| 562   |          Yes |       Reset |            - |
+| 582   |          Yes |       Reset |            - |
 +-------+--------------+-------------+--------------+
 
 
@@ -167,11 +167,11 @@ Warning! For any ECO changes, please run place_design if there are unplaced inst
 +----------+------+---------------------+
 | Ref Name | Used | Functional Category |
 +----------+------+---------------------+
-| FDRE     |  562 |            Register |
-| LUT4     |  131 |                 CLB |
-| LUT6     |  121 |                 CLB |
-| LUT5     |   34 |                 CLB |
-| LUT3     |   25 |                 CLB |
+| FDRE     |  582 |            Register |
+| LUT4     |  133 |                 CLB |
+| LUT6     |  119 |                 CLB |
+| LUT5     |   41 |                 CLB |
+| LUT3     |   30 |                 CLB |
 | LUT2     |    6 |                 CLB |
 | LUT1     |    3 |                 CLB |
 +----------+------+---------------------+

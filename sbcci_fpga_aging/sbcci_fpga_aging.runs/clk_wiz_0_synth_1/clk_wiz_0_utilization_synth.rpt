@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
-| Date         : Tue Dec 23 17:32:23 2025
+| Date         : Sat Dec 27 22:59:54 2025
 | Host         : dan-alencar running 64-bit Linux Mint 22.2
 | Command      : report_utilization -file clk_wiz_0_utilization_synth.rpt -pb clk_wiz_0_utilization_synth.pb
 | Design       : clk_wiz_0
@@ -98,7 +98,7 @@ Warning! For any ECO changes, please run place_design if there are unplaced inst
 +------------------+------+-------+------------+-----------+-------+
 |     Site Type    | Used | Fixed | Prohibited | Available | Util% |
 +------------------+------+-------+------------+-----------+-------+
-| Bonded IOB       |    2 |     0 |          0 |       228 |  0.88 |
+| Bonded IOB       |    1 |     0 |          0 |       228 |  0.44 |
 |   HPIOB_M        |    0 |     0 |          0 |        72 |  0.00 |
 |   HPIOB_S        |    0 |     0 |          0 |        72 |  0.00 |
 |   HDIOB_M        |    0 |     0 |          0 |        36 |  0.00 |
@@ -120,8 +120,8 @@ Warning! For any ECO changes, please run place_design if there are unplaced inst
 +------------+------+-------+------------+-----------+-------+
 |  Site Type | Used | Fixed | Prohibited | Available | Util% |
 +------------+------+-------+------------+-----------+-------+
-| BUFGCE     |    4 |     0 |          0 |        84 |  4.76 |
-| BUFGCE_DIV |    0 |     0 |          0 |        12 |  0.00 |
+| BUFGCE     |    1 |     0 |          0 |        84 |  1.19 |
+| BUFGCE_DIV |    2 |     0 |          0 |        12 | 16.67 |
 | BUFG_GT    |    0 |     0 |          0 |        72 |  0.00 |
 | BUFGCTRL*  |    0 |     0 |          0 |        24 |  0.00 |
 | PLL        |    0 |     0 |          0 |         6 |  0.00 |
@@ -167,10 +167,11 @@ Warning! For any ECO changes, please run place_design if there are unplaced inst
 +------------+------+---------------------+
 |  Ref Name  | Used | Functional Category |
 +------------+------+---------------------+
-| BUFGCE     |    4 |               Clock |
+| BUFGCE_DIV |    2 |               Clock |
 | MMCME4_ADV |    1 |               Clock |
+| INBUF      |    1 |                 I/O |
 | IBUFCTRL   |    1 |              Others |
-| DIFFINBUF  |    1 |                 I/O |
+| BUFGCE     |    1 |               Clock |
 +------------+------+---------------------+
 
 

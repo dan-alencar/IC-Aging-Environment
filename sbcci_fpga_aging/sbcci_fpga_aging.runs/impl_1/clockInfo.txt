@@ -1,6 +1,6 @@
 -------------------------------------
 | Tool Version : Vivado v.2025.2
-| Date         : Sat Dec 27 19:16:01 2025
+| Date         : Sat Dec 27 23:12:33 2025
 | Host         : dan-alencar
 | Design       : design_1
 | Device       : xcau15p-ffvb676-1-I-
@@ -12,10 +12,10 @@ For more information on clockInfo.txt clock routing debug file see https://suppo
 Running Pre-CRP Checker
 ***********************
 Number of global clocks: 5
-	Number of BUFGCE: 5
+	Number of BUFGCE: 3
 	Number of BUFGCE_HDIO: 0
 	Number of BUFG_CTRL: 0
-	Number of BUFGCE_DIV: 0
+	Number of BUFGCE_DIV: 2
 	Number of BUFG_GT: 0
 	Number of BUFG_PS: 0
 	Number of BUFG_FABRIC: 0
@@ -26,37 +26,39 @@ Pre-CRP Checker took 0 secs
 Clock Nets/Source Overview (CRP Input)
 **************************************
 Clock 1: clock_gen/inst/clk_out3
-	Clock source type: BUFGCE
+	Clock source type: BUFG_DIV
 	Clock source region: X0Y0
 	Clock regions with locked loads: X0Y0 X1Y2 
 	initial rect ((0, 0), (1, 2))
 
 Clock 2: dbg_hub/inst/BSCANID.u_xsdbm_id/itck_i
 	Clock source type: BUFGCE
+	Clock source region: X0Y1
+	initial rect ((0, 1), (1, 2))
+
+Clock 3: clock_gen/inst/psdone_BUFGCE
+	Clock source type: BUFGCE
+	Clock source region: X0Y2
+	initial rect ((0, 2), (1, 2))
+
+Clock 4: clock_gen/inst/clk_out2
+	Clock source type: BUFG_DIV
 	Clock source region: X0Y0
 	initial rect ((0, 0), (1, 2))
 
-Clock 3: clock_gen/inst/clk_out2
+Clock 5: clock_gen/inst/clk_out1
 	Clock source type: BUFGCE
 	Clock source region: X0Y0
 	initial rect ((0, 0), (1, 2))
-
-Clock 4: clock_gen/inst/clk_out1
-	Clock source type: BUFGCE
-	Clock source region: X0Y0
-	initial rect ((0, 0), (1, 2))
-
-Clock 5: clock_gen/inst/clk_in1_clk_wiz_0
-	Clock source type: BUFGCE
-	Clock source region: X0Y0
-	Clock regions with locked loads: X0Y0 
-	initial rect ((0, 0), (0, 0))
 
 
 
 *****************************
 Clocks With User Constraints:
 *****************************
-No clocks with user constraints found
+The following 2 clock nets belong to CLOCK_DELAY_GROUP clock_gen_inst_group_clk_wiz_0:
+	clock_gen/inst/clk_out3
+	clock_gen/inst/clk_out2
+
 
 

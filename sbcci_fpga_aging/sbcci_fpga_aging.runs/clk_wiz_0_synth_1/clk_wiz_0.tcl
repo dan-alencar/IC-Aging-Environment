@@ -56,10 +56,15 @@ if {$::dispatch::connected} {
 }
 
 OPTRACE "clk_wiz_0_synth_1" START { ROLLUP_AUTO }
+set_param chipscope.maxJobs 3
+set_param power.BramSDPPropagationFix 1
 set_param xicom.use_bs_reader 1
+set_param tcl.collectionResultDisplayLimit 0
 set_param general.usePosixSpawnForFork 1
 set_param physdb.placeDBImplUsesPlaceStorage 0
-set_msg_config -id {HDL-1065} -limit 10000
+set_param power.enableUnconnectedCarry8PinPower 1
+set_param power.enableCarry8RouteBelPower 1
+set_param power.enableLutRouteBelPower 1
 set_param project.vivado.isBlockSynthRun true
 set_msg_config -msgmgr_mode ooc_run
 OPTRACE "Creating in-memory project" START { }
