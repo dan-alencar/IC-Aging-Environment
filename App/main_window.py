@@ -91,7 +91,7 @@ class MainWindow(QMainWindow):
         self.sp_input.setPrefix("Forno: ")
         
         self.vcore_monitor = QDoubleSpinBox()
-        self.vcore_monitor.setRange(0, 1.2); self.vcore_monitor.setValue(1.0); self.vcore_monitor.setSuffix(" V")
+        self.vcore_monitor.setRange(0, 1.2); self.vcore_monitor.setValue(0.85); self.vcore_monitor.setSuffix(" V")
         self.vcore_monitor.setPrefix("Vcore: ")
         
         # Status Slack (Destaque)
@@ -143,7 +143,7 @@ class MainWindow(QMainWindow):
         v_stm = QVBoxLayout()
         
         h_vcore = QHBoxLayout()
-        self.vcore_manual_spin = QDoubleSpinBox(); self.vcore_manual_spin.setRange(0, 1.8); self.vcore_manual_spin.setValue(1.0)
+        self.vcore_manual_spin = QDoubleSpinBox(); self.vcore_manual_spin.setRange(0, 1.8); self.vcore_manual_spin.setValue(0.85)
         btn_set_vcore = QPushButton("Aplicar Tensão"); btn_set_vcore.clicked.connect(lambda: self.w_stm.set_voltage(self.vcore_manual_spin.value()))
         h_vcore.addWidget(QLabel("Vcore:")); h_vcore.addWidget(self.vcore_manual_spin); h_vcore.addWidget(btn_set_vcore)
         
