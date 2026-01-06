@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenRun Id="impl_1" LaunchPart="xcau15p-ffvb676-1-i" LaunchTime="1766887876">
+  <File Type="POSTROUTE-PHYSOPT-RQS-RPT" Name="postroute_physopt_report_qor_suggestions_0.rpt"/>
+  <File Type="ROUTE-RQS-RPT" Name="route_report_qor_suggestions_0.rpt"/>
+  <File Type="POSTROUTE-PHYSOPT-RQS" Name="fpga_unified_top_postroute_physopted.rqs"/>
+  <File Type="ROUTE-RQS" Name="fpga_unified_top_routed.rqs"/>
+  <File Type="WBT-USG" Name="usage_statistics_webtalk.html"/>
+  <File Type="RDI-RDI" Name="fpga_unified_top.vdi"/>
+  <File Type="BG-DRC" Name="fpga_unified_top.drc"/>
+  <File Type="BG-BGN" Name="fpga_unified_top.bgn"/>
+  <File Type="BITSTR-SYSDEF" Name="fpga_unified_top.sysdef"/>
+  <File Type="BITSTR-LTX" Name="debug_nets.ltx"/>
+  <File Type="BITSTR-LTX" Name="fpga_unified_top.ltx"/>
+  <File Type="PL-LTX-FILE" Name="fpga_unified_top_pld.ltx"/>
+  <File Type="BOOT-LTX-FILE" Name="fpga_unified_top_boot.ltx"/>
+  <File Type="LTX-FILE" Name="fpga_unified_top.ltx"/>
+  <File Type="PL-BIF-FILE" Name="fpga_unified_top_pld.bif"/>
+  <File Type="BOOT-BIF-FILE" Name="fpga_unified_top_boot.bif"/>
+  <File Type="BIF-FILE" Name="fpga_unified_top.bif"/>
+  <File Type="MMI-FILE" Name="fpga_unified_top.mmi"/>
+  <File Type="RBD_FILE" Name="fpga_unified_top.rbd"/>
+  <File Type="NPI_FILE" Name="fpga_unified_top.npi"/>
+  <File Type="PL_UNMASK_RCDO_FILE" Name="fpga_unified_top_pld_unmask.rcdo"/>
+  <File Type="PL_UNMASK_MARKER_RCDO_FILE" Name="fpga_unified_top_pld_unmask_markers.rcdo"/>
+  <File Type="PL_MASK_RCDO_FILE" Name="fpga_unified_top_pld_mask.rcdo"/>
+  <File Type="PL_MARKER_RCDO_FILE" Name="fpga_unified_top_pld_markers.rcdo"/>
+  <File Type="PL-CLEAR-RCDO-FILE" Name="fpga_unified_top_pld_clear.rcdo"/>
+  <File Type="PL-RCDO-FILE" Name="fpga_unified_top_pld.rcdo"/>
+  <File Type="PL_UNMASK_RNPI_FILE" Name="fpga_unified_top_pld_unmask.rnpi"/>
+  <File Type="PL_SHUTDOWN_RNPI_FILE" Name="fpga_unified_top_pld_shutdown.rnpi"/>
+  <File Type="PL_MASK_RNPI_FILE" Name="fpga_unified_top_pld_mask.rnpi"/>
+  <File Type="PL_MARKER_RNPI_FILE" Name="fpga_unified_top_pld_markers.rnpi"/>
+  <File Type="PL_RNPI_FILE" Name="fpga_unified_top_pld.rnpi"/>
+  <File Type="BOOT_MARKER_RNPI_FILE" Name="fpga_unified_top_boot_markers.rnpi"/>
+  <File Type="BOOT_RNPI_FILE" Name="fpga_unified_top_boot.rnpi"/>
+  <File Type="MARKER-RCDO-FILE" Name="fpga_unified_top_markers.rcdo"/>
+  <File Type="MARKER-RNPI-FILE" Name="fpga_unified_top_markers.rnpi"/>
+  <File Type="RCDO-FILE" Name="fpga_unified_top.rcdo"/>
+  <File Type="RNPI_FILE" Name="fpga_unified_top.rnpi"/>
+  <File Type="CFI_FILE" Name="fpga_unified_top.cfi"/>
+  <File Type="RCFI_FILE" Name="fpga_unified_top.rcfi"/>
+  <File Type="PL-PDI-FILE" Name="fpga_unified_top_pld.pdi"/>
+  <File Type="BOOT-PDI-FILE" Name="fpga_unified_top_boot.pdi"/>
+  <File Type="PDI-FILE" Name="fpga_unified_top.pdi"/>
+  <File Type="BITSTR-MMI" Name="fpga_unified_top.mmi"/>
+  <File Type="BITSTR-BMM" Name="fpga_unified_top_bd.bmm"/>
+  <File Type="BITSTR-NKY" Name="fpga_unified_top.nky"/>
+  <File Type="BITSTR-RBT" Name="fpga_unified_top.rbt"/>
+  <File Type="BITSTR-MSK" Name="fpga_unified_top.msk"/>
+  <File Type="BG-BIN" Name="fpga_unified_top.bin"/>
+  <File Type="BG-BIT" Name="fpga_unified_top.bit"/>
+  <File Type="NOC_SOLUTION_FILE" Name="fpga_unified_top.ncr"/>
+  <File Type="NOC_TRAFFIC_SPEC_FILE" Name="fpga_unified_top.nts"/>
+  <File Type="POSTROUTE-PHYSOPT-BUS-SKEW-RPX" Name="fpga_unified_top_bus_skew_postroute_physopted.rpx"/>
+  <File Type="POSTROUTE-PHYSOPT-BUS-SKEW-PB" Name="fpga_unified_top_bus_skew_postroute_physopted.pb"/>
+  <File Type="POSTROUTE-PHYSOPT-BUS-SKEW" Name="fpga_unified_top_bus_skew_postroute_physopted.rpt"/>
+  <File Type="POSTROUTE-PHYSOPT-TIMING-RPX" Name="fpga_unified_top_timing_summary_postroute_physopted.rpx"/>
+  <File Type="POSTROUTE-PHYSOPT-TIMING-PB" Name="fpga_unified_top_timing_summary_postroute_physopted.pb"/>
+  <File Type="POSTROUTE-PHYSOPT-TIMING" Name="fpga_unified_top_timing_summary_postroute_physopted.rpt"/>
+  <File Type="POSTROUTE-PHYSOPT-BLACKBOX-DCP" Name="fpga_unified_top_postroute_physopt_bb.dcp"/>
+  <File Type="POSTROUTE-PHYSOPT-DCP" Name="fpga_unified_top_postroute_physopt.dcp"/>
+  <File Type="ROUTE-RQS-PB" Name="fpga_unified_top_rqs_routed.pb"/>
+  <File Type="ROUTE-BUS-SKEW-RPX" Name="fpga_unified_top_bus_skew_routed.rpx"/>
+  <File Type="ROUTE-BUS-SKEW-PB" Name="fpga_unified_top_bus_skew_routed.pb"/>
+  <File Type="ROUTE-BUS-SKEW" Name="fpga_unified_top_bus_skew_routed.rpt"/>
+  <File Type="ROUTE-CLK" Name="fpga_unified_top_clock_utilization_routed.rpt"/>
+  <File Type="ROUTE-SIMILARITY" Name="fpga_unified_top_incremental_reuse_routed.rpt"/>
+  <File Type="ROUTE-TIMING-RPX" Name="fpga_unified_top_timing_summary_routed.rpx"/>
+  <File Type="ROUTE-TIMING-PB" Name="fpga_unified_top_timing_summary_routed.pb"/>
+  <File Type="ROUTE-TIMINGSUMMARY" Name="fpga_unified_top_timing_summary_routed.rpt"/>
+  <File Type="ROUTE-STATUS-PB" Name="fpga_unified_top_route_status.pb"/>
+  <File Type="ROUTE-STATUS" Name="fpga_unified_top_route_status.rpt"/>
+  <File Type="ROUTE-PWR-RPX" Name="fpga_unified_top_power_routed.rpx"/>
+  <File Type="ROUTE-PWR-SUM" Name="fpga_unified_top_power_summary_routed.pb"/>
+  <File Type="ROUTE-PWR" Name="fpga_unified_top_power_routed.rpt"/>
+  <File Type="ROUTE-METHODOLOGY-DRC-PB" Name="fpga_unified_top_methodology_drc_routed.pb"/>
+  <File Type="ROUTE-METHODOLOGY-DRC-RPX" Name="fpga_unified_top_methodology_drc_routed.rpx"/>
+  <File Type="ROUTE-METHODOLOGY-DRC" Name="fpga_unified_top_methodology_drc_routed.rpt"/>
+  <File Type="ROUTE-DRC-RPX" Name="fpga_unified_top_drc_routed.rpx"/>
+  <File Type="ROUTE-DRC-PB" Name="fpga_unified_top_drc_routed.pb"/>
+  <File Type="ROUTE-DRC" Name="fpga_unified_top_drc_routed.rpt"/>
+  <File Type="ROUTE-UTIL-PB" Name="fpga_unified_top_utilization_routed.pb"/>
+  <File Type="ROUTE-UTIL" Name="fpga_unified_top_utilization_routed.rpt"/>
+  <File Type="ROUTE-BLACKBOX-DCP" Name="fpga_unified_top_routed_bb.dcp"/>
+  <File Type="ROUTE-DCP" Name="fpga_unified_top_routed.dcp"/>
+  <File Type="ROUTE-ERROR-DCP" Name="fpga_unified_top_routed_error.dcp"/>
+  <File Type="PHYSOPT-TIMING" Name="fpga_unified_top_timing_summary_physopted.rpt"/>
+  <File Type="PHYSOPT-DRC" Name="fpga_unified_top_drc_physopted.rpt"/>
+  <File Type="PHYSOPT-DCP" Name="fpga_unified_top_physopt.dcp"/>
+  <File Type="POSTPLACE-PWROPT-TIMING" Name="fpga_unified_top_timing_summary_postplace_pwropted.rpt"/>
+  <File Type="POSTPLACE-PWROPT-DCP" Name="fpga_unified_top_postplace_pwropt.dcp"/>
+  <File Type="PLACE-RQA-PB" Name="fpga_unified_top_rqa_placed.pb"/>
+  <File Type="PLACE-TIMING" Name="fpga_unified_top_timing_summary_placed.rpt"/>
+  <File Type="PLACE-PRE-SIMILARITY" Name="fpga_unified_top_incremental_reuse_pre_placed.rpt"/>
+  <File Type="PLACE-SIMILARITY" Name="fpga_unified_top_incremental_reuse_placed.rpt"/>
+  <File Type="PLACE-CTRL" Name="fpga_unified_top_control_sets_placed.rpt"/>
+  <File Type="PLACE-UTIL-PB" Name="fpga_unified_top_utilization_placed.pb"/>
+  <File Type="PLACE-UTIL" Name="fpga_unified_top_utilization_placed.rpt"/>
+  <File Type="PLACE-CLK" Name="fpga_unified_top_clock_utilization_placed.rpt"/>
+  <File Type="PLACE-IO" Name="fpga_unified_top_io_placed.rpt"/>
+  <File Type="PLACE-DCP" Name="fpga_unified_top_placed.dcp"/>
+  <File Type="PWROPT-TIMING" Name="fpga_unified_top_timing_summary_pwropted.rpt"/>
+  <File Type="PWROPT-DRC" Name="fpga_unified_top_drc_pwropted.rpt"/>
+  <File Type="PWROPT-DCP" Name="fpga_unified_top_pwropt.dcp"/>
+  <File Type="OPT-RQA-PB" Name="fpga_unified_top_rqa_opted.pb"/>
+  <File Type="OPT-TIMING" Name="fpga_unified_top_timing_summary_opted.rpt"/>
+  <File Type="OPT-HWDEF" Name="fpga_unified_top.hwdef"/>
+  <File Type="OPT-METHODOLOGY-DRC" Name="fpga_unified_top_methodology_drc_opted.rpt"/>
+  <File Type="OPT-UTIL-PB" Name="fpga_unified_top_utilization_opted.pb"/>
+  <File Type="OPT-UTIL" Name="fpga_unified_top_utilization_opted.rpt"/>
+  <File Type="OPT-DRC" Name="fpga_unified_top_drc_opted.rpt"/>
+  <File Type="OPT-DCP" Name="fpga_unified_top_opt.dcp"/>
+  <File Type="INIT-TIMING" Name="fpga_unified_top_timing_summary_init.rpt"/>
+  <File Type="REPORTS-TCL" Name="fpga_unified_top_reports.tcl"/>
+  <File Type="PA-TCL" Name="fpga_unified_top.tcl"/>
+  <FileSet Name="sources" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1" RelGenDir="$PGENDIR/sources_1">
+    <Filter Type="Srcs"/>
+    <File Path="$PSRCDIR/sources_1/imports/sources_1/new/xadc_raw.v">
+      <FileInfo>
+        <Attr Name="UserDisabled" Val="1"/>
+        <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/new/xadc_raw.v"/>
+        <Attr Name="ImportTime" Val="1766195167"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/sources_1/new/temp_catcher.v">
+      <FileInfo>
+        <Attr Name="UserDisabled" Val="1"/>
+        <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/new/temp_catcher.v"/>
+        <Attr Name="ImportTime" Val="1766195167"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/new/fpga_aging_top.v">
+      <FileInfo>
+        <Attr Name="UserDisabled" Val="1"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/sources_1/new/failure_holder.v">
+      <FileInfo>
+        <Attr Name="UserDisabled" Val="1"/>
+        <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/new/failure_holder.v"/>
+        <Attr Name="ImportTime" Val="1766195167"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/sources_1/new/holder_button.v">
+      <FileInfo>
+        <Attr Name="UserDisabled" Val="1"/>
+        <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/new/holder_button.v"/>
+        <Attr Name="ImportTime" Val="1766195167"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/sources_1/new/controller_controller.v">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/new/controller_controller.v"/>
+        <Attr Name="ImportTime" Val="1766195167"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/sources_1/imports/Projects/aging_Nexys4DDR/aging_Nexys4DDR.srcs/sources_1/new/modern_sensible.v">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/imports/Projects/aging_Nexys4DDR/aging_Nexys4DDR.srcs/sources_1/new/modern_sensible.v"/>
+        <Attr Name="ImportTime" Val="1766195167"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/sources_1/imports/Projects/aging_Nexys4DDR/aging_Nexys4DDR.srcs/sources_1/imports/new/nand_series.v">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/imports/Projects/aging_Nexys4DDR/aging_Nexys4DDR.srcs/sources_1/imports/new/nand_series.v"/>
+        <Attr Name="ImportTime" Val="1766195167"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/sources_1/imports/Projects/uart_test/uart_test.srcs/sources_1/new/sensor_stream.v">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/imports/Projects/uart_test/uart_test.srcs/sources_1/new/sensor_stream.v"/>
+        <Attr Name="ImportTime" Val="1766195167"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/sources_1/imports/Projects/uart_test/uart_test.srcs/sources_1/new/uart_tx.v">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/../../Aging/Vivado Projects/aging-study/aging-study.srcs/sources_1/imports/Projects/uart_test/uart_test.srcs/sources_1/new/uart_tx.v"/>
+        <Attr Name="ImportTime" Val="1766195167"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/new/sysmon_monitor.sv">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/rtl/uart_arbiter.sv">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/../fpga-aging-project/sources/croc-main/rtl/uart_arbiter.sv"/>
+        <Attr Name="ImportTime" Val="1766196544"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/rtl/uart_router.sv">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/../fpga-aging-project/sources/croc-main/rtl/uart_router.sv"/>
+        <Attr Name="ImportTime" Val="1766018986"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/new/fpga_unified_top.sv">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <Config>
+      <Option Name="DesignMode" Val="RTL"/>
+      <Option Name="TopModule" Val="fpga_unified_top"/>
+    </Config>
+  </FileSet>
+  <FileSet Name="constrs_in" Type="Constrs" RelSrcDir="$PSRCDIR/constrs_1" RelGenDir="$PGENDIR/constrs_1">
+    <Filter Type="Constrs"/>
+    <File Path="$PSRCDIR/constrs_1/imports/constraints/fpga_aging_constraints.xdc">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/../fpga-aging-project/sources/constraints/fpga_aging_constraints.xdc"/>
+        <Attr Name="ImportTime" Val="1765841932"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+      </FileInfo>
+    </File>
+    <Config>
+      <Option Name="ConstrsType" Val="XDC"/>
+    </Config>
+  </FileSet>
+  <FileSet Name="utils" Type="Utils" RelSrcDir="$PSRCDIR/utils_1" RelGenDir="$PGENDIR/utils_1">
+    <Filter Type="Utils"/>
+    <File Path="$PSRCDIR/utils_1/imports/synth_1/fpga_aging_top.dcp">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedInSteps" Val="synth_1"/>
+        <Attr Name="AutoDcp" Val="1"/>
+      </FileInfo>
+    </File>
+    <Config>
+      <Option Name="TopAutoSet" Val="TRUE"/>
+    </Config>
+  </FileSet>
+  <Strategy Version="1" Minor="2">
+    <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2025"/>
+    <Step Id="init_design"/>
+    <Step Id="opt_design"/>
+    <Step Id="power_opt_design"/>
+    <Step Id="place_design"/>
+    <Step Id="post_place_power_opt_design"/>
+    <Step Id="phys_opt_design"/>
+    <Step Id="route_design"/>
+    <Step Id="post_route_phys_opt_design"/>
+    <Step Id="write_bitstream"/>
+  </Strategy>
+  <BlockFileSet Type="BlockSrcs" Name="vio_0"/>
+  <BlockFileSet Type="BlockSrcs" Name="xadc_wiz_0"/>
+  <BlockFileSet Type="BlockSrcs" Name="clk_wiz_0"/>
+</GenRun>

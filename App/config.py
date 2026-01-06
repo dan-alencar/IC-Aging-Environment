@@ -1,36 +1,67 @@
-"""
-Arquivo de Configuração Central
+import json
+import os
+import platform
 
-Edite os valores aqui para ajustar os parâmetros do sistema
-sem precisar alterar o código da HMI ou dos workers.
-"""
+SETTINGS_FILE = "settings.json"
 
-# --- Configurações das Portas Seriais (Linux) ---
-# Use 'dmesg | grep tty' ou 'ls /dev/serial/by-id/' para encontrar
-ARDUINO_PORT = "/dev/serial/by-id/usb-Arduino_LLC_Arduino_NANO_33_IoT_40C381DB51544C3954202020FF082015-if00"
-PSU_PORT = "/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller-if00-port0"
-DUT_PORT = "/dev/serial/by-id/usb-Digilent_Digilent_USB_Device_210292A6E9A7-if01-port0"
+# --- Variáveis Globais ---
+ARDUINO_PORT = ""       # Arduino Nano 33 IoT (PID Forno)
+ESP32_PORT = ""         # ESP32 WROOM (Ponte para o Sistema)
 
-# --- Configurações das Portas Seriais (Windows) ---
-# ARDUINO_PORT = "COM3"
-# PSU_PORT = "COM4"
-# DUT_PORT = "COM5"
-
-# --- Configurações de Comunicação ---
-ARDUINO_BAUD = 115200
-PSU_BAUD = 9600
-DUT_BAUD = 9600
+# Baudrates (Alinhados com seus firmwares)
+ARDUINO_BAUD = 115200   # PID_Controller.ino usa 115200
+SYSTEM_BAUD = 115200    # esp32wroom_uart-reader.ino usa 125000
 
 # --- Parâmetros de Teste ---
-LOG_FOLDER = "test_logs" # Pasta para salvar os CSVs
-LOG_INTERVAL_MS = 1000   # Intervalo de log (1 segundo)
+LOG_FOLDER = os.path.join(os.getcwd(), "test_logs") 
+LOG_INTERVAL_MS = 500  
+DEFAULT_KP = 2.78      # Atualizado conforme seu firmware
+DEFAULT_KI = 0.00106
+DEFAULT_KD = 5.0
 
-# --- Ganhos PID Padrão (Sintonizados) ---
-# O operador poderá mudar isso na HMI
-DEFAULT_KP = 2.78 #testar com 1.39
-DEFAULT_KI = 0.00106  # Ki correto para ArduPID (Kp / Tau_I)
-DEFAULT_KD = 5.0  #testar com 4.0
+def get_default_ports():
+    system = platform.system()
+    if system == "Windows":
+        return {"arduino": "COM3", "esp32": "COM4"}
+    elif system == "Linux":
+        return {"arduino": "/dev/ttyUSB0", "esp32": "/dev/ttyUSB1"}
+    return {"arduino": "", "esp32": ""}
 
-# --- Outros Parâmetros do PID ---
-DEFAULT_RAMP_RATE_C_PER_SEC = 0.5 # °C por segundo
-DEFAULT_OVEN_SAMPLE_TIME_MS = 5000 # 5 segundos
+def load_config():
+    global ARDUINO_PORT, ESP32_PORT, ARDUINO_BAUD, SYSTEM_BAUD
+    defaults = get_default_ports()
+    
+    if os.path.exists(SETTINGS_FILE):
+        try:
+            with open(SETTINGS_FILE, 'r') as f:
+                data = json.load(f)
+                ARDUINO_PORT = data.get("arduino_port", defaults["arduino"])
+                ESP32_PORT = data.get("esp32_port", defaults["esp32"])
+        except Exception as e:
+            print(f"Erro config: {e}")
+            _apply_defaults(defaults)
+    else:
+        _apply_defaults(defaults)
+
+def _apply_defaults(defaults):
+    global ARDUINO_PORT, ESP32_PORT
+    ARDUINO_PORT = defaults["arduino"]
+    ESP32_PORT = defaults["esp32"]
+
+def save_config(ard_port, esp_port):
+    global ARDUINO_PORT, ESP32_PORT
+    data = {
+        "arduino_port": ard_port,
+        "esp32_port": esp_port
+    }
+    try:
+        with open(SETTINGS_FILE, 'w') as f:
+            json.dump(data, f, indent=4)
+        ARDUINO_PORT = ard_port
+        ESP32_PORT = esp_port
+        return True
+    except Exception as e:
+        print(f"Erro ao salvar: {e}")
+        return False
+
+load_config()
