@@ -1,0 +1,46 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
+| Date         : Fri Dec 19 23:36:25 2025
+| Host         : dan-alencar running 64-bit Linux Mint 22.2
+| Command      : report_methodology -file croc_xilinx_methodology_drc_routed.rpt -pb croc_xilinx_methodology_drc_routed.pb -rpx croc_xilinx_methodology_drc_routed.rpx
+| Design       : croc_xilinx
+| Device       : xcau15p-ffvb676-1-i
+| Speed File   : -1
+| Design State : Fully Routed
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Report Methodology
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: netlist
+          Floorplan: design_1
+      Design limits: <entire design considered>
+             Max checks: <unlimited>
+             Checks found: 2
++----------+------------------+----------------------------------------------------+--------+
+| Rule     | Severity         | Description                                        | Checks |
++----------+------------------+----------------------------------------------------+--------+
+| TIMING-2 | Critical Warning | Invalid primary clock source pin                   | 1      |
+| TIMING-4 | Critical Warning | Invalid primary clock redefinition on a clock tree | 1      |
++----------+------------------+----------------------------------------------------+--------+
+
+2. REPORT DETAILS
+-----------------
+TIMING-2#1 Critical Warning
+Invalid primary clock source pin  
+A primary clock i_clkwiz/inst/clk_in1 is created on an inappropriate pin i_clkwiz/inst/clk_in1. It is recommended to create a primary clock only on a proper clock source (input port or primitive output pin with no timing arc)
+Related violations: <none>
+
+TIMING-4#1 Critical Warning
+Invalid primary clock redefinition on a clock tree  
+Invalid clock redefinition on a clock tree. The primary clock i_clkwiz/inst/clk_in1 is defined downstream of clock sys_clk and overrides its insertion delay and/or waveform definition
+Related violations: <none>
+
+

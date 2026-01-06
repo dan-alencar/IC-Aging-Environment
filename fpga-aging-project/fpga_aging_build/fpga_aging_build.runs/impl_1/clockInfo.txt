@@ -1,0 +1,60 @@
+-------------------------------------
+| Tool Version : Vivado v.2025.2
+| Date         : Fri Dec 19 23:35:39 2025
+| Host         : dan-alencar
+| Design       : design_1
+| Device       : xcau15p-ffvb676-1-I-
+-------------------------------------
+
+For more information on clockInfo.txt clock routing debug file see https://support.xilinx.com/s/article/000035660?language=en_US
+
+***********************
+Running Pre-CRP Checker
+***********************
+Number of global clocks: 5
+	Number of BUFGCE: 1
+	Number of BUFGCE_HDIO: 0
+	Number of BUFG_CTRL: 4
+	Number of BUFGCE_DIV: 0
+	Number of BUFG_GT: 0
+	Number of BUFG_PS: 0
+	Number of BUFG_FABRIC: 0
+	Running suboptimal placement checker for 3 clocks (and their loads) which do not have the CLOCK_LOW_FANOUT property but have a fanout less than 2000...
+Pre-CRP Checker took 0 secs
+
+**************************************
+Clock Nets/Source Overview (CRP Input)
+**************************************
+Clock 1: i_clkwiz/inst/clk_out1
+	Clock source type: BUFGCE
+	Clock source region: X0Y0
+	initial rect ((0, 0), (1, 0))
+
+Clock 2: i_croc_soc/i_rstgen/i_rstgen_bypass/i_tc_clk_mux2_rst_no/synced_rst_n
+	Clock source type: BUFG_CTRL
+	Clock source region: X0Y0
+	initial rect ((0, 0), (1, 0))
+
+Clock 3: i_rstgen/i_rstgen_bypass/i_tc_clk_mux2_rst_no/rst_n
+	Clock source type: BUFG_CTRL
+	Clock source region: X0Y0
+	initial rect ((0, 0), (0, 0))
+
+Clock 4: i_croc_soc/i_rstgen/i_rstgen_bypass/i_tc_clk_mux2_rst_n/rst_n_0
+	Clock source type: BUFG_CTRL
+	Clock source region: X0Y0
+	initial rect ((0, 0), (0, 0))
+
+Clock 5: i_rstgen/i_rstgen_bypass/i_tc_clk_mux2_rst_n/rst_n_1
+	Clock source type: BUFG_CTRL
+	Clock source region: X0Y1
+	initial rect ((0, 0), (0, 1))
+
+
+
+*****************************
+Clocks With User Constraints:
+*****************************
+No clocks with user constraints found
+
+

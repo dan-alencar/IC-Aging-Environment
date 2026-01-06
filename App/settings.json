@@ -1,0 +1,4 @@
+{
+    "arduino_port": "/dev/ttyS0",
+    "esp32_port": "/dev/ttyUSB0"
+}

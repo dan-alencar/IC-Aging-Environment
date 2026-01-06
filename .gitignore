@@ -1,0 +1,5 @@
+# Ambientes Virtuais (Virtual Environments)
+App/.venv/
+App/venv
+/app_caio/venv
+pcb-serial
