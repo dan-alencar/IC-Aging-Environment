@@ -23,55 +23,47 @@ class SetupDialog(QDialog):
 
     def _get_serial_ports(self):
         """
-        Lista portas seriais (pyserial) e recursos VISA (PyVISA).
-        Prioriza endereços canônicos para USBTMC e by-id para Serial.
+        Lista portas seriais e recursos VISA USB (Prioridade para USBTMC).
         """
         system_os = platform.system()
         port_list = []
         port_list.append(("", "Selecione uma porta..."))
 
-        # --- PARTE 1: Listar Recursos VISA (PSU - Prioridade) ---
+        # --- PARTE 1: Listar Recursos VISA (USB-TMC) ---
+        # Isso é o que fará a mágica funcionar sem sudo/permissão de arquivo
         try:
             rm = visa.ResourceManager('@py')
             visa_resources = rm.list_resources()
             rm.close()
-            
             for res in visa_resources:
-                # Filtrar apenas recursos USB (nossa fonte ITech)
+                # O endereço da sua fonte começa com USB0
+                print(res)
                 if res.startswith("USB"):
+                    # Tenta limpar o nome para ficar legível no menu
+                    # Ex: USB0::65535::25856::SERIAL::0::INSTR
+                    parts = res.split('::')
+                    if len(parts) > 3:
+                        serial_num = parts[3]
+                        display_name = f"FONTE ITECH (USB) - SN:{serial_num}"
+                    else:
+                        display_name = f"Dispositivo VISA USB ({res})"
                     
-                    # Usa o endereço completo como valor e um nome amigável para display
-                    display_name = f"VISA USBTMC ({res.split('::')[3]})" # Exibe o Serial Number
-                    port_list.append((res, display_name))
+                    # Adiciona no TOPO da lista (Prioridade)
+                    port_list.insert(1, (res, display_name))
         
         except Exception as e:
-            # Se PyVISA falhar (dependência ausente), logamos e continuamos com serial
-            print(f"AVISO: Falha ao listar recursos VISA. Usando apenas Serial: {e}")
+            print(f"AVISO: Falha ao listar VISA: {e}")
             
-        # --- PARTE 2: Listar Portas Seriais (Arduino, DUT) ---
+        # --- PARTE 2: Listar Portas Seriais (Legado/Arduino) ---
+        # Mantemos isso para o Arduino e FPGA
         ports = serial.tools.list_ports.comports()
-        by_id_map = {}
-        
-        if system_os == "Linux":
-            # 1. Mapear nomes persistentes (/dev/serial/by-id/)
-            path = "/dev/serial/by-id/"
-            if os.path.exists(path):
-                for f in glob.glob(os.path.join(path, "*")):
-                    try: by_id_map[os.path.realpath(f)] = f
-                    except: pass
-        
         for p in ports:
-            device_path = p.device
-            if "ttyS" in device_path or "ASRL" in device_path: continue # Filtro de poluição
+            # Ignora o usbtmc aqui, pois queremos pegá-lo via VISA acima
+            if "usbtmc" in p.device or "ttyS" in p.device:
+                continue 
 
-            if system_os == "Linux" and device_path in by_id_map:
-                stable = by_id_map[device_path]
-                display = f"{os.path.basename(stable)} (Serial Persistente)"
-                val = stable
-            else:
-                display = f"{device_path} - {p.description}"
-                val = device_path
-            port_list.append((val, display))
+            display = f"{p.device} - {p.description}"
+            port_list.append((p.device, display))
             
         return port_list
 

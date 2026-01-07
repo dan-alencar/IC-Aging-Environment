@@ -192,20 +192,16 @@ class ArduinoWorker(QObject):
 #   WORKER 2: Controlador da Fonte (PSU) - PyVISA
 # =================================================================
 class PSUWorker(QObject):
-    """
-    Controla a Fonte de Tensão (PSU) usando PyVISA (padrão USBTMC/SCPI).
-    """
     log_message = Signal(str)
     data_ready = Signal(float, float) # voltage_v, current_a
     
     def __init__(self):
         super().__init__()
-        # PyVISA Objects
-        self.rm = None       # Resource Manager
-        self.inst = None     # Instrument Handle (substitui self.ser)
-        
+        self.rm = None
+        self.inst = None
         self.is_running = False
         self._latest_data = (0.0, 0.0)
+        
         self.poll_timer = QTimer(self)
         self.poll_timer.setInterval(config.LOG_INTERVAL_MS)
         self.poll_timer.timeout.connect(self.poll_data)
@@ -213,35 +209,37 @@ class PSUWorker(QObject):
     @Slot()
     def start(self):
         try:
-            port_address = config.PSU_PORT # Assume que este é o endereço VISA ('USB0::...')
+            port_address = config.PSU_PORT 
             
-            # 1. Cria o Resource Manager (Backend PyVISA-py)
+            # Validação: Se o usuário selecionou uma porta serial comum (COM/tty) por engano, avisa
+            if "USB" not in port_address and "ASRL" not in port_address:
+                self.log_message.emit(f"AVISO: O endereço '{port_address}' parece ser Serial, não VISA. Pode falhar.")
+
             self.rm = visa.ResourceManager('@py')
-            self.log_message.emit(f"Conectando PSU via PyVISA em {port_address}...")
+            self.log_message.emit(f"Conectando PSU em: {port_address}...")
             
-            # 2. Abre o Recurso
             self.inst = self.rm.open_resource(port_address)
-            self.inst.timeout = 5000 # Timeout de 5s para comunicações
+            self.inst.timeout = 5000 
             
-            # 3. Inicializa e Configura
+            # Limpa qualquer lixo anterior no buffer
+            try:
+                self.inst.clear() 
+            except: pass
+
+            # Identificação
             idn = self.send_query('*IDN?')
-            self.log_message.emit(f"PSU Identificada: {idn.strip()}")
+            self.log_message.emit(f"PSU Conectada: {idn}")
+            
+            # Inicialização Segura
+            self.send_command("SYST:REMote")
+            self.send_command("OUTP OFF")   # Começa desligado por segurança
+            self.send_command("VOLT 1.0")   # Tensão segura inicial
             
             self.is_running = True
-            
-            # Comandos de Inicialização
-            self.send_command("SYST:REMote")
-            self.log_message.emit("Fonte PSU definida para modo remoto.")
-            self.send_command("VOLT 1.0") # Seta a tensão para 0V inicial
-            self.send_command("OUTP ON") # Garante que a saída está desligada
-            
             self.poll_timer.start()
             
-        except visa.errors.VisaIOError as e:
-            self.log_message.emit(f"ERRO (PSU): Falha VISA/Resource Not Found: {e}")
-            self.stop()
         except Exception as e:
-            self.log_message.emit(f"ERRO (PSU): {e}")
+            self.log_message.emit(f"ERRO FATAL (PSU): {e}")
             self.stop()
 
     @Slot()
@@ -251,75 +249,57 @@ class PSUWorker(QObject):
         
         if self.inst:
             try:
-                # 1. Envia comandos de segurança para desligar
-                self.send_command("OUTP ON") 
-                self.send_command("VOLT 1.0") 
-                self.send_command("SYST:LOCal") # Retorna ao modo LOCAL
-            except:
-                pass
-            
-            self.inst.close()
+                self.send_command("OUTP OFF") # Desliga saída ao fechar
+                self.send_command("SYST:LOCal") # Devolve controle ao painel frontal
+                self.inst.close()
+            except: pass
             
         if self.rm:
-            self.rm.close()
+            try: self.rm.close()
+            except: pass
             
-        self.log_message.emit("Fonte (PSU) desconectada.")
-        
-    def poll_data(self):
-        if not self.is_running:
-            return
-            
-        try:
-            # PyVISA query é thread-safe
-            v_str = self.send_query("MEAS:VOLT?") 
-            c_str = self.send_query("MEAS:CURR?") 
-            
-            # Conversão
-            try:
-                # O PyVISA retorna strings que podem ter caracteres de terminação, usamos strip()
-                voltage = float(v_str) if v_str else 0.0
-                current = float(c_str) if c_str else 0.0
-                #print(f"Tensão da fonte: {voltage}")
-                #print(f"Corrente da fonte: {current}")
-            except ValueError:
-                self.log_message.emit(f"AVISO (PSU) Erro de conversão. Dados: ('{v_str}', '{c_str}')")
-                voltage, current = 0.0, 0.0
+        self.log_message.emit("PSU Desconectada.")
 
-            self._latest_data = (voltage, current)
-            self.data_ready.emit(voltage, current)
+    def poll_data(self):
+        if not self.is_running: return
+        try:
+            # Leitura sequencial segura
+            v_str = self.send_query("MEAS:VOLT?")
+            # Pequeno delay entre comandos VISA previne colisão em USB lento
+            # time.sleep(0.01) 
+            c_str = self.send_query("MEAS:CURR?")
+            
+            v = float(v_str) if v_str else 0.0
+            c = float(c_str) if c_str else 0.0
+            
+            self._latest_data = (v, c)
+            self.data_ready.emit(v, c)
             
         except Exception as e:
-            self.log_message.emit(f"AVISO (PSU) ao ler dados: {e}. Retornando 0.0.")
-            self._latest_data = (0.0, 0.0)
-
-    # --- Funções de Comunicação PyVISA (Sem adaptação) ---
+            # Não paramos o worker por um erro de leitura isolado, apenas logamos
+            # self.log_message.emit(f"Erro leitura PSU: {e}")
+            pass
 
     def send_command(self, cmd):
-        """Envia um comando de configuração (WRITE) sem esperar resposta."""
         try:
             if self.inst:
                 self.inst.write(cmd)
-                return "OK"
-            return None
         except Exception as e:
-             self.log_message.emit(f"ERRO (PSU) na escrita '{cmd}': {e}")
-             return None
+            self.log_message.emit(f"Erro CMD PSU '{cmd}': {e}")
 
     def send_query(self, cmd):
-        """Envia uma consulta (QUERY) e retorna a resposta (STRING)."""
         try:
             if self.inst:
-                # PyVISA query faz Write e Read em sequência
                 return self.inst.query(cmd).strip()
-            return None
         except Exception as e:
-             self.log_message.emit(f"ERRO (PSU) na consulta '{cmd}': {e}")
-             return None
-             
+            # self.log_message.emit(f"Erro Query PSU '{cmd}': {e}")
+            return None
+        return None
+
     def get_latest_data(self):
         return self._latest_data
-        
-    # --- Slots Públicos ---
+
+    # Slots de Controle
     @Slot(float)
     def set_voltage(self, volts):
         self.send_command(f"VOLT {volts:.3f}")
