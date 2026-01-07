@@ -1,3 +1,4 @@
 # Ambientes Virtuais (Virtual Environments)
 App/.venv/
 App/venv
+App_Nexys/.venv

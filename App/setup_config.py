@@ -37,7 +37,6 @@ class SetupDialog(QDialog):
             rm.close()
             for res in visa_resources:
                 # O endereço da sua fonte começa com USB0
-                print(res)
                 if res.startswith("USB"):
                     # Tenta limpar o nome para ficar legível no menu
                     # Ex: USB0::65535::25856::SERIAL::0::INSTR
