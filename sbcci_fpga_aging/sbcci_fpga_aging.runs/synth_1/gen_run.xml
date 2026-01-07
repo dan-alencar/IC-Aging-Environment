@@ -1,14 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <GenRun Id="synth_1" LaunchPart="xcau15p-ffvb676-1-i" LaunchTime="1766887876" LaunchIncrCheckpoint="$PSRCDIR/utils_1/imports/synth_1/fpga_aging_top.dcp">
-  <File Type="VDS-TIMINGSUMMARY" Name="fpga_unified_top_timing_summary_synth.rpt"/>
   <File Type="RDS-DCP" Name="fpga_unified_top.dcp"/>
-  <File Type="RDS-UTIL-PB" Name="fpga_unified_top_utilization_synth.pb"/>
-  <File Type="RDS-UTIL" Name="fpga_unified_top_utilization_synth.rpt"/>
-  <File Type="RDS-PROPCONSTRS" Name="fpga_unified_top_drc_synth.rpt"/>
   <File Type="RDS-RDS" Name="fpga_unified_top.vds"/>
   <File Type="REPORTS-TCL" Name="fpga_unified_top_reports.tcl"/>
-  <File Type="VDS-TIMING-PB" Name="fpga_unified_top_timing_summary_synth.pb"/>
   <File Type="PA-TCL" Name="fpga_unified_top.tcl"/>
+  <File Type="RDS-UTIL" Name="fpga_unified_top_utilization_synth.rpt"/>
+  <File Type="RDS-UTIL-PB" Name="fpga_unified_top_utilization_synth.pb"/>
   <FileSet Name="sources" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1" RelGenDir="$PGENDIR/sources_1">
     <Filter Type="Srcs"/>
     <File Path="$PSRCDIR/sources_1/imports/sources_1/new/xadc_raw.v">
@@ -173,7 +170,7 @@
     <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2025"/>
     <Step Id="synth_design"/>
   </Strategy>
-  <BlockFileSet Type="BlockSrcs" Name="vio_0"/>
-  <BlockFileSet Type="BlockSrcs" Name="xadc_wiz_0"/>
   <BlockFileSet Type="BlockSrcs" Name="clk_wiz_0"/>
+  <BlockFileSet Type="BlockSrcs" Name="xadc_wiz_0"/>
+  <BlockFileSet Type="BlockSrcs" Name="vio_0"/>
 </GenRun>
