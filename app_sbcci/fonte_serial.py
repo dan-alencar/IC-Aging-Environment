@@ -3,7 +3,7 @@ import time
 
 # Configure the serial connection
 ser = serial.Serial(
-    port='/dev/usbtmc1',  # Replace with your port, e.g., 'COM3' on Windows or '/dev/ttyUSB0' on Linux
+    port='/dev/usbtmc0',  # Replace with your port, e.g., 'COM3' on Windows or '/dev/ttyUSB0' on Linux
     baudrate=9600,        # Ensure this matches the power supply setting
     bytesize=serial.EIGHTBITS,
     parity=serial.PARITY_NONE,

@@ -3,3 +3,4 @@ App/.venv/
 App/venv
 /app_caio/venv
 pcb-serial
+App_Nexys/.venv
