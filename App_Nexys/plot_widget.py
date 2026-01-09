@@ -106,6 +106,7 @@ class PlotWidget(QWidget):
         
         self.time_data.append(time_sec)
         self.temp_oven_data.append(data_row.get('oven_temp'))
+        print(data_row.get('oven_temp'))
         self.temp_setpoint_data.append(data_row.get('oven_setpoint'))
         self.temp_dut_data.append(data_row.get('dut_temp'))
         self.output_pid_data.append(data_row.get('oven_output')) 

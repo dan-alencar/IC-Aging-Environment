@@ -234,6 +234,7 @@ class PSUWorker(QObject):
             self.send_command("SYST:REMote")
             self.send_command("OUTP OFF")   # Começa desligado por segurança
             self.send_command("VOLT 1.0")   # Tensão segura inicial
+            self.send_command("CURR 1.0")   # Coloca o limite de corrente máxima como 1.0 Ampere
             
             self.is_running = True
             self.poll_timer.start()
