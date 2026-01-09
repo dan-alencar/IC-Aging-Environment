@@ -93,7 +93,7 @@ class MainWindow(QMainWindow):
         self.psu_setpoint_input = QDoubleSpinBox()
         self.psu_setpoint_input.setRange(0.0, 5.0)
         self.psu_setpoint_input.setValue(1.0)
-        self.psu_setpoint_input.setSingleStep(0.1)
+        self.psu_setpoint_input.setSingleStep(0.01)
         self.psu_setpoint_input.setToolTip("Altere o valor e pressione ENTER para atualizar em tempo real.")
 
         # NOVO WIDGET: Exibição do Slack
