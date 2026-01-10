@@ -1,26 +1,40 @@
 """
-Workers (Trabalhadores) de Thread
+=============================================================================
+TCC - Workers de Thread (VERSÃO FINAL)
+=============================================================================
+Cada classe roda em thread separada (QThread) para comunicação com hardware
+sem travar a interface gráfica.
 
-Cada classe aqui roda em seu próprio thread (QThread) para
-conversar com um dispositivo de hardware sem travar a HMI.
+Workers:
+  - ArduinoWorker: Controle do forno (PID, SSR, NTC)
+  - PSUWorker: Controle da fonte de alimentação (VISA/SCPI)
+  - DUTWorker: Comunicação com FPGA (sensor de slack)
+  - TestSequencer: Orquestrador do teste
+
+Autor: [Seu Nome]
+Data: Janeiro/2026
+=============================================================================
 """
-from PySide6.QtCore import QObject, Signal, Slot, QThread, QTimer
+from PySide6.QtCore import QObject, Signal, Slot, QTimer
 import serial
 import time
 from datetime import datetime
 import config
-import usbtmc
 import pyvisa as visa
-from logger import DataLogger # Importa a classe DataLogger
+from logger import DataLogger
 import threading
 
-# =================================================================
-#   WORKER 1: Controlador do Forno (Arduino) - BLINDADO
-# =================================================================
+
+# =============================================================================
+#   WORKER 1: Controlador do Forno (Arduino)
+# =============================================================================
 class ArduinoWorker(QObject):
     """
     Controla o Arduino (PID, SSR, NTC) com proteção de Thread (Lock).
-    Evita colisão entre o envio de comandos e a leitura automática.
+    
+    Sinais:
+        log_message(str): Mensagem para o log da UI
+        data_ready(float, float, float): temp, setpoint, output
     """
     log_message = Signal(str)
     data_ready = Signal(float, float, float) 
@@ -30,33 +44,34 @@ class ArduinoWorker(QObject):
         self.ser = None
         self.is_running = False
         self._latest_data = (0.0, 0.0, 0.0)
-        self.kp = config.DEFAULT_KP
-        self.ki = config.DEFAULT_KI
-        self.kd = config.DEFAULT_KD
-        
-        # O 'Lock' é o semáforo que impede acesso simultâneo à porta serial
         self.serial_lock = threading.Lock()
-        self.is_ready = False # <--- NOVO: Flag de Prontidão
+        self.is_ready = False
 
     @Slot()
     def start(self):
+        """Inicializa conexão com Arduino."""
         try:
-            self.ser = serial.Serial(config.ARDUINO_PORT, config.ARDUINO_BAUD, timeout=2)
+            self.ser = serial.Serial(
+                config.ARDUINO_PORT, 
+                config.ARDUINO_BAUD, 
+                timeout=2
+            )
             
-            self.log_message.emit("Arduino conectado. Aguardando boot e estabilização (3s)...")
-            time.sleep(3.0) # Aumentei para 3s por segurança
+            self.log_message.emit("Arduino conectado. Aguardando boot (3s)...")
+            time.sleep(3.0)
             
-            # Limpeza profunda do buffer inicial
+            # Limpeza do buffer inicial
             with self.serial_lock:
                 self.ser.reset_input_buffer()
                 self.ser.reset_output_buffer()
-                # Lê e descarta qualquer linha quebrada que sobrou
                 while self.ser.in_waiting:
                     self.ser.readline()
 
-            self.log_message.emit(f"Arduino pronto e sincronizado em {config.ARDUINO_PORT}")
+            self.log_message.emit(f"Arduino pronto em {config.ARDUINO_PORT}")
+            self.log_message.emit(f"Parâmetros PID fixos: {config.get_pid_info_string()}")
+            
             self.is_running = True
-            self.is_ready = True # <--- AGORA ESTÁ PRONTO
+            self.is_ready = True
             
             self.poll_timer = QTimer(self)
             self.poll_timer.setInterval(config.LOG_INTERVAL_MS)
@@ -65,135 +80,108 @@ class ArduinoWorker(QObject):
             
         except serial.SerialException as e:
             self.log_message.emit(f"ERRO (Arduino): {e}")
-            self.is_ready = False # Se falhar, a flag fica False
+            self.is_ready = False
 
     @Slot()
     def stop(self):
+        """Encerra conexão com Arduino."""
         self.is_running = False
         if hasattr(self, 'poll_timer'):
             self.poll_timer.stop()
         
-        # Usa o Lock para fechar com segurança
         with self.serial_lock:
             if self.ser and self.ser.is_open:
                 try:
-                    # Tenta enviar STOP, mas sem esperar resposta para não travar
                     self.ser.write(b"STOP_TEST\n") 
-                except: pass
+                except: 
+                    pass
                 self.ser.close()
         self.log_message.emit("Arduino desconectado.")
 
     def poll_data(self):
-            """Leitura periódica protegida pelo Lock (AGORA BLOQUEANTE)."""
-            if not self.is_running: return
-            
-            # O 'with' garante que esta leitura não conflita com o send_command
-            with self.serial_lock: 
-                try:
-                    if self.ser and self.ser.is_open:
+        """Leitura periódica de dados do Arduino."""
+        if not self.is_running: 
+            return
+        
+        with self.serial_lock: 
+            try:
+                if self.ser and self.ser.is_open:
+                    self.ser.write(b"GET_DATA\n") 
+                    line = self.ser.readline().decode('ascii', errors='ignore').strip()
                         
-                        # 1. ENVIA O COMANDO DE SOLICITAÇÃO DE DADOS (Trigger)
-                        self.ser.write(b"GET_DATA\n") 
-                        
-                        # 2. LÊ A RESPOSTA
-                        # O timeout de 2s da porta serial será usado se o Arduino não responder.
-                        line = self.ser.readline().decode('ascii', errors='ignore').strip()
+                    if line.startswith("DATA,"):
+                        try:
+                            parts = line.split(',')
+                            temp_c = float(parts[1])
+                            setpoint_c = float(parts[2])
+                            output_pct = float(parts[3])
                             
-                        # 3. PROCESSA A LINHA
-                        if line.startswith("DATA,"):
-                            # Debug temporário: ver o que o Arduino está mandando
-                            #print(f"DEBUG ARDUINO RAW: {line}") 
-                            try:
-                                parts = line.split(',')
-                                temp_c = float(parts[1])
-                                setpoint_c = float(parts[2])
-                                output_pct = float(parts[3])
-                                
-                                self._latest_data = (temp_c, setpoint_c, output_pct)
-                                self.data_ready.emit(temp_c, setpoint_c, output_pct)
-                            except Exception as e:
-                                print(f"Erro de Parse Arduino: {e} na linha: {line}")
-                                
-                except Exception as e:
-                    self.log_message.emit(f"Erro Leitura Arduino: {e}")
+                            self._latest_data = (temp_c, setpoint_c, output_pct)
+                            self.data_ready.emit(temp_c, setpoint_c, output_pct)
+                        except Exception as e:
+                            print(f"Erro Parse Arduino: {e} - Linha: {line}")
+                            
+            except Exception as e:
+                self.log_message.emit(f"Erro Leitura Arduino: {e}")
 
     def get_latest_data(self):
+        """Retorna últimos dados lidos."""
         return self._latest_data
 
     def send_command(self, cmd):
-        """Envia comando de forma atômica (protegida)."""
+        """Envia comando de forma thread-safe."""
         response = None
         
         try:
-            # Tenta adquirir o Lock e executar a operação de I/O atômica
             with self.serial_lock:
                 if self.ser and self.ser.is_open:
-                    # 1. Limpa o buffer de entrada
                     self.ser.reset_input_buffer()
-                    
-                    # 2. Envia
                     self.ser.write(f"{cmd}\n".encode('ascii'))
-                    
-                    # 3. Lê a confirmação
                     response = self.ser.readline().decode('ascii', errors='ignore').strip()
 
         except Exception as e:
-            # CRÍTICO: Qualquer exceção de I/O/Lock retorna None
-            print(f"DEBUG CRASH: Comando '{cmd}' falhou. EXCEÇÃO: {type(e).__name__} - {e}")
-            self.log_message.emit(f"ERRO fatal enviando '{cmd}'")
+            print(f"Erro comando '{cmd}': {type(e).__name__} - {e}")
+            self.log_message.emit(f"ERRO enviando '{cmd}'")
             return None 
-        
-        # Lógica de Checagem e Retorno AGORA ESTÁ FORA DO BLOCO de I/O do Lock
-        # Se chegamos aqui, o I/O foi concluído sem exceções críticas.
-        
-        #print(f"DEBUG RESPOSTA BRUTA: CMD='{cmd}' -> '{response}'")
         
         if response is None or "OK" not in response:
             self.log_message.emit(f"CMD '{cmd}' -> Resposta: '{response}' (FALHOU)")
 
         return response
             
-    # --- Slots Públicos ---
     @Slot(float)
     def set_target_setpoint(self, temp):
+        """Define setpoint de temperatura."""
         return self.send_command(f"SET_SP,{int(temp)}")
-
-    # @Slot(float, float, float)
-    # def update_pid_gains(self, kp, ki, kd):
-        # self.kp, self.ki, self.kd = kp, ki, kd
-        # return self.send_command(f"SET_GAINS,{kp:.2f},{ki:.5f},{kd:.2f}")
-    
-    @Slot(float)
-    def update_kp(self, kp):
-        self.kp = kp
-        return self.send_command(f"SET_KP,{kp:.2f}")
-    
-    @Slot(float)
-    def update_ki(self, ki):
-        self.ki = ki
-        return self.send_command(f"SET_KI,{ki:.2f}")
-    
-    @Slot(float)
-    def update_kd(self, kd):
-        self.kd = kd
-        return self.send_command(f"SET_KD,{kd:.2f}")
         
     @Slot()
     def start_test_oven(self):
+        """Inicia controle PID."""
         return self.send_command("START_TEST")
 
     @Slot()
     def stop_test_oven(self):
+        """Para controle PID."""
         return self.send_command("STOP_TEST")
+    
+    def get_config(self):
+        """Solicita configuração atual do Arduino."""
+        return self.send_command("GET_CONFIG")
 
-# workers.py (Assegure-se de que 'import pyvisa as visa' está no topo!)
 
-# =================================================================
+# =============================================================================
 #   WORKER 2: Controlador da Fonte (PSU) - PyVISA
-# =================================================================
+# =============================================================================
 class PSUWorker(QObject):
+    """
+    Controla a fonte de alimentação programável via PyVISA (SCPI).
+    
+    Sinais:
+        log_message(str): Mensagem para o log
+        data_ready(float, float): voltage_v, current_a
+    """
     log_message = Signal(str)
-    data_ready = Signal(float, float) # voltage_v, current_a
+    data_ready = Signal(float, float)
     
     def __init__(self):
         super().__init__()
@@ -208,129 +196,115 @@ class PSUWorker(QObject):
 
     @Slot()
     def start(self):
+        """Inicializa conexão com PSU via VISA."""
         try:
-            port_address = config.PSU_PORT 
-            
-            # Validação: Se o usuário selecionou uma porta serial comum (COM/tty) por engano, avisa
-            if "USB" not in port_address and "ASRL" not in port_address:
-                self.log_message.emit(f"AVISO: O endereço '{port_address}' parece ser Serial, não VISA. Pode falhar.")
-
             self.rm = visa.ResourceManager('@py')
-            self.log_message.emit(f"Conectando PSU em: {port_address}...")
+            self.inst = self.rm.open_resource(config.PSU_PORT)
+            self.inst.timeout = 5000
+            self.inst.read_termination = '\n'
+            self.inst.write_termination = '\n'
             
-            self.inst = self.rm.open_resource(port_address)
-            self.inst.timeout = 5000 
+            idn = self.inst.query("*IDN?").strip()
+            self.log_message.emit(f"PSU conectada: {idn}")
             
-            # Limpa qualquer lixo anterior no buffer
-            try:
-                self.inst.clear() 
-            except: pass
-
-            # Identificação
-            idn = self.send_query('*IDN?')
-            self.log_message.emit(f"PSU Conectada: {idn}")
-            
-            # Inicialização Segura
-            self.send_command("SYST:REMote")
-            self.send_command("OUTP OFF")   # Começa desligado por segurança
-            self.send_command("VOLT 1.0")   # Tensão segura inicial
-            self.send_command("CURR 1.0")   # Coloca o limite de corrente máxima como 1.0 Ampere
+            # Configura limites de segurança
+            self.inst.write(f"CURR {config.MAX_PSU_CURRENT_A}")
+            self.inst.write(f"VOLT {config.MAX_PSU_VOLTAGE_V}")
             
             self.is_running = True
             self.poll_timer.start()
             
         except Exception as e:
-            self.log_message.emit(f"ERRO FATAL (PSU): {e}")
-            self.stop()
+            self.log_message.emit(f"ERRO (PSU): {e}")
 
     @Slot()
     def stop(self):
+        """Encerra conexão com PSU."""
         self.is_running = False
         self.poll_timer.stop()
         
-        if self.inst:
-            try:
-                self.send_command("OUTP OFF") # Desliga saída ao fechar
-                self.send_command("SYST:LOCal") # Devolve controle ao painel frontal
+        try:
+            if self.inst:
+                self.inst.write("OUTP OFF")
                 self.inst.close()
-            except: pass
-            
-        if self.rm:
-            try: self.rm.close()
-            except: pass
-            
-        self.log_message.emit("PSU Desconectada.")
+            if self.rm:
+                self.rm.close()
+        except: 
+            pass
+        self.log_message.emit("PSU desconectada.")
 
     def poll_data(self):
-        if not self.is_running: return
+        """Leitura periódica de tensão e corrente."""
+        if not self.is_running or not self.inst:
+            return
+            
         try:
-            # Leitura sequencial segura
-            v_str = self.send_query("MEAS:VOLT?")
-            # Pequeno delay entre comandos VISA previne colisão em USB lento
-            # time.sleep(0.01) 
-            c_str = self.send_query("MEAS:CURR?")
+            voltage = float(self.inst.query("MEAS:VOLT?").strip())
+            current = float(self.inst.query("MEAS:CURR?").strip())
             
-            v = float(v_str) if v_str else 0.0
-            c = float(c_str) if c_str else 0.0
-            
-            self._latest_data = (v, c)
-            self.data_ready.emit(v, c)
+            self._latest_data = (voltage, current)
+            self.data_ready.emit(voltage, current)
             
         except Exception as e:
-            # Não paramos o worker por um erro de leitura isolado, apenas logamos
-            # self.log_message.emit(f"Erro leitura PSU: {e}")
-            pass
-
-    def send_command(self, cmd):
-        try:
-            if self.inst:
-                self.inst.write(cmd)
-        except Exception as e:
-            self.log_message.emit(f"Erro CMD PSU '{cmd}': {e}")
-
-    def send_query(self, cmd):
-        try:
-            if self.inst:
-                return self.inst.query(cmd).strip()
-        except Exception as e:
-            # self.log_message.emit(f"Erro Query PSU '{cmd}': {e}")
-            return None
-        return None
+            self.log_message.emit(f"Erro Leitura PSU: {e}")
 
     def get_latest_data(self):
         return self._latest_data
 
-    # Slots de Controle
     @Slot(float)
-    def set_voltage(self, volts):
-        self.send_command(f"VOLT {volts:.3f}")
-        
+    def set_voltage(self, voltage):
+        """Define tensão de saída."""
+        if self.inst:
+            try:
+                self.inst.write(f"VOLT {voltage:.3f}")
+                self.log_message.emit(f"PSU: Tensão definida para {voltage:.3f}V")
+            except Exception as e:
+                self.log_message.emit(f"Erro ao definir tensão: {e}")
+
     @Slot()
     def turn_on(self):
-        self.send_command("OUTP ON")
-        
+        """Liga saída da PSU."""
+        if self.inst:
+            try:
+                self.inst.write("OUTP ON")
+                self.log_message.emit("PSU: Saída LIGADA")
+            except Exception as e:
+                self.log_message.emit(f"Erro ao ligar PSU: {e}")
+
     @Slot()
     def turn_off(self):
-        self.send_command("OUTP OFF")
+        """Desliga saída da PSU."""
+        if self.inst:
+            try:
+                self.inst.write("OUTP OFF")
+                self.log_message.emit("PSU: Saída DESLIGADA")
+            except Exception as e:
+                self.log_message.emit(f"Erro ao desligar PSU: {e}")
 
-# =================================================================
-#   WORKER 3: Leitor do DUT (FPGA) - Modo Binário
-# =================================================================
+
+# =============================================================================
+#   WORKER 3: Controlador do DUT (FPGA)
+# =============================================================================
 class DUTWorker(QObject):
     """
-    Controla o DUT (FPGA) usando protocolo binário.
-    Envia 'F', recebe 9 bytes brutos (Temp, Slack, Tensão, Status).
+    Comunicação com FPGA para leitura do sensor de slack.
+    
+    Protocolo: Comando 'F' + 9 bytes binários (Little Endian)
+    Formato: [TEMP 3 bytes][SLACK 2 bytes][VOLT 3 bytes][FAIL 1 byte]
+    
+    Sinais:
+        log_message(str): Mensagem para o log
+        data_ready(float, int, float): temp_c, slack, voltage
     """
     log_message = Signal(str)
-    # Atualizei o sinal para passar mais dados se precisar no futuro, 
-    # mas por enquanto mantive temp(float) e slack(int) para compatibilidade com o gráfico.
-    data_ready = Signal(float, int, float) 
+    data_ready = Signal(float, int, float)
     
     def __init__(self):
         super().__init__()
         self.ser = None
         self.is_running = False
         self._latest_data = (0.0, 0, 0.0) # temp, slack, voltage
+        
         self.poll_timer = QTimer(self)
         self.poll_timer.setInterval(config.LOG_INTERVAL_MS) 
         self.poll_timer.timeout.connect(self.poll_data)
@@ -338,13 +312,19 @@ class DUTWorker(QObject):
     @Slot()
     def start(self):
         try:
-            # Abre a porta serial normalmente
-            self.ser = serial.Serial(config.DUT_PORT, config.DUT_BAUD, timeout=2)
-            self.log_message.emit(f"DUT (FPGA) conectado em {config.DUT_PORT}")
+            # Abre a porta serial
+            # IMPORTANTE: Verifique se config.DUT_BAUD está correto (ex: 115200)
+            self.ser = serial.Serial(
+                config.DUT_PORT, 
+                config.DUT_BAUD, 
+                timeout=2 # Timeout de 2s é crucial para o read(9) funcionar
+            )
+            self.log_message.emit(f"DUT (FPGA) conectado em {config.DUT_PORT} @ {config.DUT_BAUD}")
+            
             self.is_running = True
             self.poll_timer.start()
         except serial.SerialException as e:
-            self.log_message.emit(f"ERRO (DUT): Porta Serial não encontrada ou ocupada: {e}")
+            self.log_message.emit(f"ERRO (DUT): Porta Serial inacessível: {e}")
 
     @Slot()
     def stop(self):
@@ -355,37 +335,35 @@ class DUTWorker(QObject):
         self.log_message.emit("DUT (FPGA) desconectado.")
         
     def poll_data(self):
-        """Envia 'F' e lê 9 bytes binários."""
+        """Envia 'F' e espera bloqueando até receber 9 bytes."""
         if not self.is_running or not self.ser or not self.ser.is_open:
             return
             
         try:
-            # 1. Limpa buffer antigo para não ler dados velhos acumulados
-            self.ser.reset_input_buffer()
+            # 1. Limpa buffer antigo para garantir que lemos a resposta do comando ATUAL
+            #self.ser.reset_input_buffer()
             
             # 2. Envia o comando 'F' (Trigger)
             self.ser.write(b'F')
             
-            # 3. Lê exatos 9 bytes (conforme seu código antigo)
-            # Estrutura: 3 bytes (Temp) + 2 bytes (Slack) + 3 bytes (Volt) + 1 byte (Fail)
+            # 3. Lê exatos 9 bytes. 
+            # REMOVIDO time.sleep(0.1): O read já espera os dados chegarem (devido ao timeout=2)
             BYTES_TO_READ = 9
             data = self.ser.read(BYTES_TO_READ)
             
             if len(data) == BYTES_TO_READ:
                 # 4. Decodifica Binário (Little Endian)
-                raw_temp = int.from_bytes(data[:3], byteorder='little')
+                raw_temp = int.from_bytes(data[0:3], byteorder='little')
                 raw_slack = int.from_bytes(data[3:5], byteorder='little')
-                raw_voltage = int.from_bytes(data[5:8], byteorder='little') # Não usado no gráfico ainda
-                # raw_failed = data[8] > 0                                    # Não usado no gráfico ainda
+                raw_voltage = int.from_bytes(data[5:8], byteorder='little')
+                # raw_fail = data[8] # Byte de falha (não usado por enquanto)
 
-                # AVISO: Seu código antigo usava int puro para temp. 
-                # Se a FPGA manda "2500" para representar 25.0°C, divida por 100.0 aqui.
-                # Por enquanto, vou manter o valor bruto como float.
+                # Conversão para unidades físicas
                 temp_c = float(raw_temp) / 1000.0
                 slack = int(raw_slack)
-                voltage = int(raw_voltage) / 1000.0
+                voltage = float(raw_voltage) / 1000.0
 
-                # Validação simples (conforme seu código antigo: ignora zeros)
+                # Filtra leituras zeradas (comum na inicialização do FPGA)
                 if temp_c == 0 and slack == 0 and voltage == 0:
                     return
 
@@ -393,26 +371,42 @@ class DUTWorker(QObject):
                 self.data_ready.emit(temp_c, slack, voltage)
                 
             else:
-                # Timeout ou dados incompletos
-                pass 
+                # Se cair aqui, ocorreu TIMEOUT (FPGA não respondeu em 2s)
+                # O print b'' e "Nope" que você via indicava que data estava vazio.
+                # Não vamos spammar o log, apenas ignorar ou logar silenciosamente no terminal
+                if len(data) == 0:
+                    print(f"DUT: Sem resposta (Timeout). Baud rate {config.DUT_BAUD} correto?")
+                else:
+                    print(f"DUT: Pacote incompleto ({len(data)}/{BYTES_TO_READ} bytes)")
                 
         except Exception as e:
-            self.log_message.emit(f"ERRO (DUT): Falha de comunicação: {e}")
+            self.log_message.emit(f"ERRO (DUT): {e}")
             self._latest_data = (0.0, 0, 0.0)
 
     def get_latest_data(self):
         return self._latest_data
-    
-# =================================================================
-#   WORKER 4: O Sequenciador de Teste (O Mestre)
-# =================================================================
+
+# =============================================================================
+#   WORKER 4: Sequenciador de Teste (Orquestrador)
+# =============================================================================
 class TestSequencer(QObject):
     """
-    Orquestra todos os workers e gerencia o log de dados principal.
-    Este é o "cérebro" do teste.
+    Orquestra todos os workers e gerencia o log de dados.
+    
+    Responsabilidades:
+      - Iniciar/parar teste coordenadamente
+      - Coletar dados de todos os workers
+      - Gravar log CSV sincronizado
+      - Monitorar limites de segurança
+      - Calcular e logar estatísticas em tempo real
+    
+    Sinais:
+        log_message(str): Mensagem para o log
+        plot_data_update(dict): Dados para atualização do gráfico
+        test_finished(): Sinal de fim de teste
     """
     log_message = Signal(str)
-    plot_data_update = Signal(dict) # Envia a linha de dados completa para o gráfico
+    plot_data_update = Signal(dict)
     test_finished = Signal()
     
     def __init__(self, arduino_worker, psu_worker, dut_worker):
@@ -425,6 +419,11 @@ class TestSequencer(QObject):
         self.is_running = False
         self.start_time = time.time()
         
+        # Estatísticas em tempo real
+        self.temp_samples = []
+        self.error_samples = []
+        self.output_samples = []
+        
         self.log_timer = QTimer(self)
         self.log_timer.setInterval(config.LOG_INTERVAL_MS)
         self.log_timer.timeout.connect(self.log_data_tick)
@@ -432,8 +431,10 @@ class TestSequencer(QObject):
     @Slot(dict)
     def start_test(self, settings):
         """
-        Inicia o teste. Espera o Arduino, envia comandos críticos 
-        com validação de resposta 'OK'.
+        Inicia o teste com as configurações especificadas.
+        
+        Args:
+            settings: Dict com 'test_name', 'oven_setpoint', 'psu_voltage'
         """
         if self.is_running:
             self.log_message.emit("ERRO: Teste já em execução.")
@@ -442,10 +443,13 @@ class TestSequencer(QObject):
         try:
             # 1. Criar o Logger
             self.logger = DataLogger(config.LOG_FOLDER, settings['test_name'])
-            self.log_message.emit(f"Novo log: {self.logger.filepath}")
+            self.log_message.emit(f"Log criado: {self.logger.filepath}")
             
-            # --- ESPERA ROBUSTA: Garantir que o Worker terminou o sleep ---
-            self.log_message.emit("Aguardando Arduino finalizar boot (máx 6s)...")
+            # Log dos parâmetros do sistema
+            self._log_system_config(settings)
+            
+            # 2. Aguardar Arduino
+            self.log_message.emit("Aguardando Arduino (máx 6s)...")
             
             timeout_s = 6
             start_wait = time.time()
@@ -453,73 +457,68 @@ class TestSequencer(QObject):
                 time.sleep(0.5) 
 
             if not self.arduino.is_ready:
-                 raise Exception("Arduino não respondeu após o tempo de inicialização.")
+                raise Exception("Arduino não respondeu após inicialização.")
 
-            self.log_message.emit("Arduino está pronto. Enviando configurações...")
+            self.log_message.emit("Arduino pronto. Configurando...")
             
-            # 2. Configurações críticas com validação
-            
-            # Ganhos PID (Comando sequencial: 3 comandos)
-            # update_pid_gains agora envia 3 comandos e retorna OK se todos tiverem sucesso.
-            response_kp = self.arduino.update_kp(settings['kp'])
-            if response_kp is None or "OK" not in response_kp:
-                raise Exception(f"Falha ao configurar PID. Resposta: {response_kp}")
-            time.sleep(0.1)
-
-            response_ki = self.arduino.update_ki(settings['ki'])
-            if response_ki is None or "OK" not in response_ki:
-                raise Exception(f"Falha ao configurar PID. Resposta: {response_ki}")
-            time.sleep(0.1)
-
-            response_kd = self.arduino.update_kd(settings['kd'])
-            if response_kd is None or "OK" not in response_kd:
-                raise Exception(f"Falha ao configurar PID. Resposta: {response_kd}")
-            time.sleep(0.1)
-
-            self.log_message.emit(f"Ganhos atualizados: KP = {settings['kp']}, KI = {settings['ki']}, KD = {settings['kd']}")
-
-            # Setpoint (SP) (Usa integer/float minimalista)
+            # 3. Configurar Setpoint
             response_sp = self.arduino.set_target_setpoint(settings['oven_setpoint'])
-            
             if response_sp is None or "OK" not in response_sp:
                 raise Exception(f"Falha ao configurar SP. Resposta: {response_sp}")
             time.sleep(0.1)
             
-            # 3. Configuração de Tensão
+            # 4. Configurar PSU
             self.psu.set_voltage(settings['psu_voltage'])
             time.sleep(0.3)
             
-            # 4. Ligar os dispositivos e iniciar o teste
-            self.log_message.emit("Ligando saídas e ativando controle...")
+            # 5. Ligar dispositivos
+            self.log_message.emit("Ligando saídas...")
             self.psu.turn_on()
             time.sleep(0.3)
             
             response_start = self.arduino.start_test_oven() 
             if response_start is None or "OK" not in response_start:
-                 raise Exception(f"Falha ao iniciar teste. Resposta: {response_start}")
+                raise Exception(f"Falha ao iniciar teste. Resposta: {response_start}")
 
             time.sleep(0.5) 
             
-            # 5. Iniciar o timer de log
+            # 6. Iniciar timer de log
             self.is_running = True
             self.start_time = time.time()
+            
+            # Limpa estatísticas
+            self.temp_samples.clear()
+            self.error_samples.clear()
+            self.output_samples.clear()
+            
             self.log_timer.start()
+            self.log_message.emit("=" * 50)
             self.log_message.emit(">>> TESTE INICIADO <<<")
+            self.log_message.emit(f"Setpoint: {settings['oven_setpoint']}°C | PSU: {settings['psu_voltage']}V")
+            self.log_message.emit(f"PID: {config.get_pid_info_string()}")
+            self.log_message.emit("=" * 50)
             
         except Exception as e:
-            self.log_message.emit(f"ERRO CRÍTICO ao iniciar teste: {e}")
-            
-            # --- CORREÇÃO: Remova self.stop_test() para evitar loops ---
-            # Em vez de self.stop_test, fazemos a limpeza mínima:
-            
+            self.log_message.emit(f"ERRO CRÍTICO: {e}")
             self.is_running = False
             if self.logger:
-                 self.logger.close()
-            
-            # self.stop_test() # <--- REMOVA ESTA LINHA
-            
-            self.log_message.emit(">>> TESTE PARADO <<<")
-            self.test_finished.emit() # <--- Mantenha apenas o sinal de parada
+                self.logger.close()
+            self.test_finished.emit()
+
+    def _log_system_config(self, settings):
+        """Registra configuração do sistema no início do teste."""
+        self.log_message.emit("-" * 50)
+        self.log_message.emit("CONFIGURAÇÃO DO TESTE")
+        self.log_message.emit("-" * 50)
+        self.log_message.emit(f"Nome: {settings['test_name']}")
+        self.log_message.emit(f"Setpoint Forno: {settings['oven_setpoint']}°C")
+        self.log_message.emit(f"Tensão PSU: {settings['psu_voltage']}V")
+        self.log_message.emit(f"Kp = {config.PID_KP:.4f}")
+        self.log_message.emit(f"Ki = {config.PID_KI:.6f}")
+        self.log_message.emit(f"Kd = {config.PID_KD:.4f}")
+        self.log_message.emit(f"Taxa Rampa: {config.DEFAULT_RAMP_RATE_C_PER_SEC}°C/s")
+        self.log_message.emit(f"Intervalo Log: {config.LOG_INTERVAL_MS}ms")
+        self.log_message.emit("-" * 50)
 
     @Slot()
     def stop_test(self):
@@ -528,6 +527,9 @@ class TestSequencer(QObject):
         self.is_running = False
         self.log_timer.stop()
         
+        # Log estatísticas finais
+        self._log_final_statistics()
+        
         self.arduino.stop_test_oven()
         self.psu.turn_off()
         
@@ -535,28 +537,83 @@ class TestSequencer(QObject):
             self.logger.close()
             self.logger = None
             
-        self.log_message.emit(">>> TESTE PARADO <<<")
+        self.log_message.emit("=" * 50)
+        self.log_message.emit(">>> TESTE FINALIZADO <<<")
+        self.log_message.emit("=" * 50)
         self.test_finished.emit()
 
-    def log_data_tick(self):
-        """
-        Local de Registro (Tick de Log)
+    def _log_final_statistics(self):
+        """Calcula e registra estatísticas finais do teste."""
+        if len(self.temp_samples) < 10:
+            return
+            
+        import statistics
+        
+        # Usa apenas últimas 60 amostras (1 minuto) para estatísticas de regime
+        n_samples = min(60, len(self.temp_samples))
+        temp_regime = self.temp_samples[-n_samples:]
+        error_regime = self.error_samples[-n_samples:]
+        output_regime = self.output_samples[-n_samples:]
+        
+        self.log_message.emit("-" * 50)
+        self.log_message.emit("ESTATÍSTICAS FINAIS (último minuto)")
+        self.log_message.emit("-" * 50)
+        
+        # Temperatura
+        temp_mean = statistics.mean(temp_regime)
+        temp_std = statistics.stdev(temp_regime) if len(temp_regime) > 1 else 0
+        temp_min = min(temp_regime)
+        temp_max = max(temp_regime)
+        
+        self.log_message.emit(f"Temperatura:")
+        self.log_message.emit(f"  Média: {temp_mean:.2f}°C")
+        self.log_message.emit(f"  Desvio Padrão: {temp_std:.3f}°C")
+        self.log_message.emit(f"  Mín/Máx: {temp_min:.2f}°C / {temp_max:.2f}°C")
+        self.log_message.emit(f"  Oscilação P-P: {temp_max - temp_min:.2f}°C")
+        
+        # Erro
+        error_mean = statistics.mean(error_regime)
+        self.log_message.emit(f"Erro Médio: {error_mean:.2f}°C")
+        
+        # Output
+        output_mean = statistics.mean(output_regime)
+        self.log_message.emit(f"Output PID Médio: {output_mean:.1f}%")
+        
+        # Decomposição P/I estimada
+        contrib_P = config.PID_KP * error_mean
+        contrib_I = output_mean - contrib_P
+        self.log_message.emit(f"Contribuição P estimada: {contrib_P:.2f}%")
+        self.log_message.emit(f"Contribuição I estimada: {contrib_I:.2f}%")
+        
+        # Conformidade JEDEC
+        if (temp_max - temp_min) <= 4.0:
+            self.log_message.emit("✓ CONFORME JEDEC (±2°C)")
+        else:
+            self.log_message.emit("✗ NÃO CONFORME JEDEC")
+        
+        self.log_message.emit("-" * 50)
 
-        Função chamada pelo QTimer (a cada LOG_INTERVAL_MS) para coletar dados
-        e salvar no CSV.
-        """
+    def log_data_tick(self):
+        """Callback do timer para coleta e registro de dados."""
         if not self.is_running:
             return
             
         try:
-            # 1. Coletar dados de todos os workers (simplificado)
+            # 1. Coletar dados
             t_oven, sp_oven, out_oven = self.arduino.get_latest_data()
             v_psu, c_psu = self.psu.get_latest_data()
             t_dut, s_dut, v_dut = self.dut.get_latest_data()
             
-            # 2. Montar a linha de dados
+            elapsed_time = time.time() - self.start_time
+            
+            # 2. Atualizar estatísticas
+            self.temp_samples.append(t_oven)
+            self.error_samples.append(sp_oven - t_oven)
+            self.output_samples.append(out_oven)
+            
+            # 3. Montar linha de dados
             data_row = {
-                'time_sec': time.time() - self.start_time, # <--- TEMPO RELATIVO
+                'time_sec': elapsed_time,
                 'oven_temp': t_oven,
                 'oven_setpoint': sp_oven,
                 'oven_output': out_oven,
@@ -567,19 +624,44 @@ class TestSequencer(QObject):
                 'dut_volt': v_dut
             }
             
-            # 3. Escrever no log
+            # 4. Log no arquivo
             if self.logger:
                 self.logger.write_data_row(data_row)
+            
+            # 5. Log periódico no terminal (a cada 30s)
+            if int(elapsed_time) % 30 == 0 and int(elapsed_time) > 0:
+                error = sp_oven - t_oven
+                self._log_periodic_status(elapsed_time, t_oven, sp_oven, out_oven, error)
                 
-            # 4. Emitir dados para o gráfico
-            self.plot_data_update.emit(data_row) # <--- Emite o dicionário completo
+            # 6. Emitir para gráfico
+            self.plot_data_update.emit(data_row)
 
-            # 5. (Opcional) Lógica de Proteção
-            if t_dut > 130.0 or c_psu > 1.5:
-                self.log_message.emit("!!! ALERTA DE PROTEÇÃO: LIMITE EXCEDIDO !!!")
-                self.log_message.emit(f"Temp DUT: {t_dut}°C, Corrente PSU: {c_psu}A. Parando o teste.")
-                self.stop_test()
+            # 7. Verificar limites de segurança
+            self._check_safety_limits(t_dut, c_psu, t_oven)
 
         except Exception as e:
-            self.log_message.emit(f"ERRO CRÍTICO no loop de log: {e}")
+            self.log_message.emit(f"ERRO no loop de log: {e}")
+            self.stop_test()
+
+    def _log_periodic_status(self, elapsed, temp, setpoint, output, error):
+        """Log periódico de status."""
+        contrib_P = config.PID_KP * error
+        contrib_I = output - contrib_P
+        
+        print(f"[{elapsed:.0f}s] T={temp:.2f}°C | SP={setpoint:.1f}°C | "
+              f"Erro={error:.2f}°C | Out={output:.1f}% | "
+              f"P={contrib_P:.1f}% | I≈{contrib_I:.1f}%")
+
+    def _check_safety_limits(self, t_dut, c_psu, t_oven):
+        """Verifica limites de segurança e para o teste se excedidos."""
+        if t_dut > config.MAX_DUT_TEMP_C:
+            self.log_message.emit(f"!!! ALERTA: Temp DUT ({t_dut:.1f}°C) > {config.MAX_DUT_TEMP_C}°C !!!")
+            self.stop_test()
+            
+        if c_psu > config.MAX_PSU_CURRENT_A:
+            self.log_message.emit(f"!!! ALERTA: Corrente PSU ({c_psu:.3f}A) > {config.MAX_PSU_CURRENT_A}A !!!")
+            self.stop_test()
+            
+        if t_oven > config.MAX_OVEN_TEMP_C:
+            self.log_message.emit(f"!!! ALERTA: Temp Forno ({t_oven:.1f}°C) > {config.MAX_OVEN_TEMP_C}°C !!!")
             self.stop_test()
