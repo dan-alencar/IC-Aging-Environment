@@ -63,9 +63,9 @@ DEFAULT_OVEN_SAMPLE_TIME_MS = 5000
 #   LIMITES DE SEGURANÇA
 # =============================================================================
 MAX_OVEN_TEMP_C = 130.0      # Temperatura máxima do forno
-MAX_DUT_TEMP_C = 130.0       # Temperatura máxima do DUT
+MAX_DUT_TEMP_C = 140.0       # Temperatura máxima do DUT
 MAX_PSU_CURRENT_A = 1.5      # Corrente máxima da fonte
-MAX_PSU_VOLTAGE_V = 1.2      # Tensão máxima da fonte
+MAX_PSU_VOLTAGE_V = 1.5      # Tensão máxima da fonte
 
 # =============================================================================
 #   FUNÇÕES DE CONFIGURAÇÃO
