@@ -1,5 +1,5 @@
 {
-    "arduino_port": "/dev/ttyACM1",
+    "arduino_port": "/dev/ttyACM0",
     "psu_port": "USB0::65535::25856::800630011777420110::0::INSTR",
     "dut_port": "/dev/ttyUSB1",
     "arduino_baud": "115200",
