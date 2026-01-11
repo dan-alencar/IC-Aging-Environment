@@ -1,0 +1,38 @@
+# ==============================================
+# TCC - Log de Teste de Envelhecimento
+# ==============================================
+# Data/Hora Início: 2026-01-11 16:07:55
+# 
+# PARÂMETROS PID (FIXOS):
+#   Kp = 2.780000
+#   Ki = 0.00106000
+#   Kd = 5.000000
+# 
+# MODELO FOPDT IDENTIFICADO:
+#   G(s) = 1.56 * exp(-150.6s) / (1307.2s + 1)
+#   K = 1.56 °C/%
+#   θ = 150.6 s
+#   τ = 1307.2 s
+# 
+# CONFIGURAÇÃO:
+#   Taxa de Rampa: 1.0 °C/s
+#   Intervalo de Amostragem: 1000 ms
+#   Janela PWM (SSR): 5000 ms
+# 
+# LIMITES DE SEGURANÇA:
+#   Temp. Máx. Forno: 130.0 °C
+#   Temp. Máx. DUT: 140.0 °C
+#   Corrente Máx. PSU: 1.5 A
+# ==============================================
+# 
+time_sec,oven_temp_c,oven_setpoint_c,oven_output_pct,psu_voltage_v,psu_current_a,dut_temp_c,dut_slack,dut_volt
+0.952,28.05,28.06,0.00,1.000,0.0470,34.471,57,0.995
+1.939,28.00,29.06,0.00,1.000,0.0470,35.475,59,0.995
+2.939,28.07,29.06,0.00,1.000,0.0470,34.574,58,0.993
+3.939,28.03,30.06,0.00,1.000,0.0470,35.057,60,0.993
+# 
+# ==============================================
+# FIM DO LOG
+# Data/Hora Fim: 2026-01-11 16:08:02
+# Duração Total: 7.2 segundos (0.1 minutos)
+# ==============================================
