@@ -1,17 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Protocol definitions and parser for CROC FPGA System
+Protocol Definitions for CROC System
 
-Handles:
-- STM32 binary protocol frames
-- Text output from CROC firmware
-
-Updated for text-based sensor output format.
+STM32 communication protocol and utilities.
 """
 
-from PySide6.QtCore import QDateTime
-
-# --------- Constantes / Enums do protocolo STM32 ---------
+# --------- STM32 Protocol Constants ---------
 STM_MASTER  = 0x80
 STM_SLAVE   = 0x00
 
@@ -22,9 +16,9 @@ ERR_LEN     = 0x30
 ERROR_MASK  = 0x70
 
 FUNC_UNK = 0x00
-FUNC_P   = 0x01
-FUNC_M   = 0x02
-FUNC_V   = 0x03
+FUNC_P   = 0x01  # Page
+FUNC_M   = 0x02  # Message
+FUNC_V   = 0x03  # Voltage
 
 ERR_STR = {
     NO_ERROR:    "NONE",
@@ -35,70 +29,46 @@ ERR_STR = {
 
 FUNC_STR = {
     FUNC_UNK: "UNK",
-    FUNC_P:   "P",
-    FUNC_M:   "M",
-    FUNC_V:   "V",
+    FUNC_P:   "PAGE",
+    FUNC_M:   "MSG",
+    FUNC_V:   "VOLT",
 }
 
-CRC_ENDIAN = "little"  # ordem dos 2 bytes de CRC no fio
-LEN_ENDIAN = "big"     # ordem dos 2 bytes do campo de tamanho
+CRC_ENDIAN = "little"
+LEN_ENDIAN = "big"
 
-# --------- Conversão XADC (para uso futuro) ---------
-def raw_to_temp(raw_16bit):
-    """
-    Converts XADC raw 16-bit value to Celsius.
-    Logic: ((ADC[15:4] * 503.975) / 4096) - 273.15
-    """
-    adc_12bit = (raw_16bit >> 4) & 0xFFF
-    return (adc_12bit * 503.975 / 4096.0) - 273.15
 
-def raw_to_vcc(raw_16bit):
-    """
-    Converts XADC raw 16-bit value to Voltage.
-    Logic: (ADC[15:4] * 3.0) / 4096
-    """
-    adc_12bit = (raw_16bit >> 4) & 0xFFF
-    return (adc_12bit * 3.0) / 4096.0
-
-# -------------------------------------------------------------------------
-# Funções Auxiliares de Protocolo (STM32)
-# -------------------------------------------------------------------------
-def make_ctrl(origin, error, func):
+def make_ctrl(origin: int, error: int, func: int) -> int:
+    """Create control byte from components."""
     return (origin & 0x80) | (error & 0x70) | (func & 0x0F)
 
-def decode_ctrl(byte_val):
+
+def decode_ctrl(byte_val: int) -> tuple:
+    """Decode control byte into components."""
     origin = byte_val & 0x80
     error  = byte_val & 0x70
     func   = byte_val & 0x0F
     return origin, error, func
 
+
 def compute_crc16_modbus(data: bytes) -> int:
-    """Calcula CRC-16 Modbus"""
+    """Calculate Modbus CRC-16."""
     crc = 0xFFFF
     for b in data:
         crc ^= b
         for _ in range(8):
-            if (crc & 0x0001):
-                crc >>= 1
-                crc ^= 0xA001
+            if crc & 0x0001:
+                crc = (crc >> 1) ^ 0xA001
             else:
                 crc >>= 1
     return crc
 
-# -------------------------------------------------------------------------
-# CLASSE: ProtocolParser
-# -------------------------------------------------------------------------
+
 class ProtocolParser:
     """
-    Parser para respostas do protocolo STM32.
+    Parser for STM32 protocol responses.
     
-    Formato de resposta STM32:
-      [Ctrl][CRC_L][CRC_H]  (resposta simples, 3 bytes)
-    
-    Onde Ctrl contém:
-      - Bits 7: Direction (0x00 = Slave response)
-      - Bits 6-4: Error code
-      - Bits 3-0: Function code
+    Response format: [Ctrl][CRC_L][CRC_H] (3 bytes)
     """
     
     def __init__(self):
@@ -106,57 +76,51 @@ class ProtocolParser:
 
     def feed(self, chunk: bytes) -> list:
         """
-        Recebe bytes e retorna eventos identificados.
+        Process incoming bytes and return parsed events.
         
-        Eventos possíveis:
-          ('ok', (status, ctrl, crc_l, crc_h)) -> Resposta OK
-          ('error', (status, ctrl, crc_l, crc_h)) -> Resposta com erro
-          ('line', "texto") -> Linha de texto
+        Returns:
+            List of tuples: ('ok'/'error', data) or ('line', text)
         """
         events = []
         self._rx_buf.extend(chunk)
 
         while len(self._rx_buf) >= 3:
-            # Tenta parsear como resposta STM32 (3 bytes: Ctrl + CRC)
             ctrl = self._rx_buf[0]
             origin, error, func = decode_ctrl(ctrl)
             
-            # Verifica se parece uma resposta válida do STM32
-            # Origin deve ser 0x00 (STM_SLAVE) para resposta
-            # Func deve ser válido (0x01, 0x02, 0x03)
+            # Check for valid STM32 response
             if origin == STM_SLAVE and func in (FUNC_P, FUNC_M, FUNC_V):
-                # Resposta STM32: [Ctrl][CRC_L][CRC_H]
-                if len(self._rx_buf) >= 3:
-                    ctrl_byte = self._rx_buf[0]
-                    crc_l = self._rx_buf[1]
-                    crc_h = self._rx_buf[2]
+                ctrl_byte = self._rx_buf[0]
+                crc_l = self._rx_buf[1]
+                crc_h = self._rx_buf[2]
+                
+                # Validate CRC
+                recv_crc = crc_l | (crc_h << 8)
+                calc_crc = compute_crc16_modbus(bytes([ctrl_byte]))
+                
+                if recv_crc == calc_crc:
+                    del self._rx_buf[:3]
                     
-                    # Valida CRC
-                    recv_crc = crc_l | (crc_h << 8)
-                    calc_crc = compute_crc16_modbus(bytes([ctrl_byte]))
+                    meta = {
+                        'func': FUNC_STR.get(func, 'UNK'),
+                        'ctrl': ctrl_byte,
+                    }
                     
-                    if recv_crc == calc_crc:
-                        # CRC válido
-                        del self._rx_buf[:3]
-                        
-                        if error == NO_ERROR:
-                            events.append(('ok', (ctrl_byte, ctrl_byte, crc_l, crc_h)))
-                        else:
-                            events.append(('error', (ctrl_byte, ctrl_byte, crc_l, crc_h)))
-                        continue
+                    if error == NO_ERROR:
+                        events.append(('ok', meta))
                     else:
-                        # CRC inválido - pode não ser frame STM32
-                        # Descarta primeiro byte e tenta novamente
-                        del self._rx_buf[0]
-                        continue
+                        meta['err'] = ERR_STR.get(error, 'UNK')
+                        events.append(('error', meta))
+                    continue
                 else:
-                    # Precisa de mais bytes
-                    break
+                    # CRC mismatch - discard byte
+                    del self._rx_buf[0]
+                    continue
             else:
-                # Não parece resposta STM32, pode ser texto
-                # Procura por caracteres printáveis
+                # Not a valid protocol byte
+                # Check for printable text
                 if 32 <= self._rx_buf[0] <= 126 or self._rx_buf[0] in [0x0A, 0x0D]:
-                    # Tenta encontrar fim de linha
+                    # Find newline
                     newline_idx = -1
                     for i, b in enumerate(self._rx_buf):
                         if b == 0x0A:
@@ -174,15 +138,69 @@ class ProtocolParser:
                             pass
                         continue
                     else:
-                        # Sem newline ainda, espera mais dados
                         break
                 else:
-                    # Byte não reconhecido, descarta
+                    # Unknown byte, discard
                     del self._rx_buf[0]
                     continue
         
         return events
 
     def clear(self):
-        """Limpa o buffer interno"""
+        """Clear internal buffer."""
         self._rx_buf.clear()
+
+
+# --------- Command Builders ---------
+
+HEADER_STM = 0x20
+
+
+def build_page_command(page: int) -> tuple:
+    """
+    Build page change command.
+    
+    Returns:
+        (payload_bytes, log_string, metadata)
+    """
+    page = max(1, min(6, page))
+    ctrl = make_ctrl(STM_SLAVE, NO_ERROR, FUNC_P)
+    attrs = str(page).encode("utf-8")
+    
+    payload = bytes([HEADER_STM, ctrl]) + attrs
+    
+    return payload, f"PAGE {page}", {"func": "P", "page": page}
+
+
+def build_voltage_command(voltage: float) -> tuple:
+    """
+    Build voltage set command.
+    
+    Returns:
+        (payload_bytes, log_string, metadata)
+    """
+    value_str = f"{voltage:.2f}"
+    ctrl = make_ctrl(STM_SLAVE, NO_ERROR, FUNC_V)
+    
+    payload = bytes([HEADER_STM, ctrl]) + value_str.encode("utf-8")
+    
+    return payload, f"VOLT {value_str}V", {"func": "V", "voltage": voltage}
+
+
+def build_message_command(msg: str) -> tuple:
+    """
+    Build message command.
+    
+    Returns:
+        (payload_bytes, log_string, metadata)
+    """
+    msg_bytes = msg.encode("utf-8")
+    if len(msg_bytes) > 0xFFFF:
+        raise ValueError("Message exceeds maximum length (65535 bytes)")
+    
+    size_bin = len(msg_bytes).to_bytes(2, LEN_ENDIAN)
+    ctrl = make_ctrl(STM_SLAVE, NO_ERROR, FUNC_M)
+    
+    payload = bytes([HEADER_STM, ctrl]) + size_bin + msg_bytes
+    
+    return payload, f"MSG \"{msg[:20]}...\"" if len(msg) > 20 else f"MSG \"{msg}\"", {"func": "M", "len": len(msg_bytes)}

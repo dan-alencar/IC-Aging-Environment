@@ -1,394 +1,661 @@
-import sys
+# -*- coding: utf-8 -*-
+"""
+Main Window for CROC FPGA Monitor
+
+Redesigned interface with:
+- Visual sensor status grid
+- Large logging terminal
+- FPGA programming controls
+- STM32 voltage control
+"""
+
+import os
 import time
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
-    QPushButton, QGroupBox, QFormLayout, QLineEdit, QTextEdit,
-    QLabel, QDoubleSpinBox, QComboBox, QGridLayout, QTabWidget, QSplitter,
-    QCheckBox, QSpinBox, QFrame
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
+    QPushButton, QGroupBox, QLabel, QTextEdit, QLineEdit,
+    QDoubleSpinBox, QComboBox, QFileDialog, QProgressBar,
+    QTabWidget, QSplitter, QFrame, QSpinBox, QCheckBox,
+    QMessageBox, QSizePolicy
 )
-from PySide6.QtCore import QThread, Signal, Slot, Qt, QTimer
-import config
+from PySide6.QtCore import Qt, Signal, Slot, QTimer, QThread
+from PySide6.QtGui import QFont, QTextCursor
 
+import config
 from router import UARTRouter
-from workers import STMWorker, CROCWorker, ArduinoWorker, TestSequencer
-from plot_widget import PlotWidget 
-from aux_plot_widget import AuxPlotWidget 
+from fpga_manager import FPGAManager, BitstreamManager
+from sensor_widget import SensorVisualizationWidget
+from serial_thread import get_available_ports
+from protocol import (
+    build_voltage_command, build_page_command, build_message_command,
+    compute_crc16_modbus, CRC_ENDIAN
+)
+
 
 class MainWindow(QMainWindow):
-    start_test_signal = Signal(dict)
-    stop_test_signal = Signal()
+    """Main application window."""
     
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Sistema Integrado de Envelhecimento (Burn-in)")
-        self.resize(1200, 850)
+        self.setWindowTitle("CROC FPGA Sensor Monitor & Programmer")
+        self.resize(1400, 900)
         
+        # Core components
         self.router = UARTRouter()
+        self.fpga_manager = FPGAManager()
+        self.bitstream_manager = BitstreamManager()
         
-        # Timer dedicado para o Trigger Cíclico do FPGA (0x0F)
-        self.sweep_timer = QTimer()
-        self.sweep_timer.timeout.connect(self._send_sweep_trigger)
+        # State
+        self._last_alarm_f = 0
+        self._last_alarm_rf = 0
         
+        # Build UI
         self._init_ui()
+        self._connect_signals()
         
-        # Conexões do Router
-        self.router.connection_status.connect(self.log_message)
-        self.router.log_message.connect(self.log_message)
-        self.router.log_text_received.connect(self.log_message)
-        
-        # Inicia Hardware
-        self.router.connect_serial()
-        self._start_workers()
-        self._start_sequencer()
+        # Auto-connect if port is configured
+        QTimer.singleShot(500, self._auto_connect)
 
     def _init_ui(self):
-        self.tabs = QTabWidget()
+        """Initialize the user interface."""
+        central = QWidget()
+        self.setCentralWidget(central)
         
-        # --- ABA 1: MONITORAMENTO (A "Outra IHM") ---
-        self.tab_monitor = QWidget()
-        self._setup_monitor_tab()
-        self.tabs.addTab(self.tab_monitor, "Monitoramento & Gráficos")
+        main_layout = QVBoxLayout(central)
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(10)
         
-        # --- ABA 2: ENGENHARIA (Controles Manuais) ---
-        self.tab_config = QWidget()
-        self._setup_config_tab()
-        self.tabs.addTab(self.tab_config, "Engenharia & Configuração")
+        # Top: Status bar
+        self._create_status_bar(main_layout)
         
-        # Layout Principal
-        main_layout = QVBoxLayout()
-        main_layout.addWidget(self.tabs)
+        # Middle: Main content (splitter)
+        splitter = QSplitter(Qt.Horizontal)
         
-        # Log Global (Fixo na parte inferior)
-        self.log_box = QTextEdit()
-        self.log_box.setReadOnly(True)
-        self.log_box.setMaximumHeight(120)
-        self.log_box.setPlaceholderText("Logs do sistema...")
-        main_layout.addWidget(self.log_box)
+        # Left panel: Sensor visualization + Controls
+        left_panel = QWidget()
+        left_layout = QVBoxLayout(left_panel)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Sensor visualization
+        self.sensor_widget = SensorVisualizationWidget()
+        left_layout.addWidget(self.sensor_widget)
+        
+        # Control tabs
+        self.control_tabs = QTabWidget()
+        self._create_fpga_tab()
+        self._create_stm32_tab()
+        self._create_settings_tab()
+        left_layout.addWidget(self.control_tabs)
+        
+        splitter.addWidget(left_panel)
+        
+        # Right panel: Log terminal
+        right_panel = self._create_log_panel()
+        splitter.addWidget(right_panel)
+        
+        # Set splitter proportions (60% left, 40% right)
+        splitter.setSizes([800, 500])
+        
+        main_layout.addWidget(splitter, 1)
 
-        container = QWidget()
-        container.setLayout(main_layout)
-        self.setCentralWidget(container)
+    def _create_status_bar(self, parent_layout):
+        """Create the status bar at the top."""
+        status_frame = QFrame()
+        status_frame.setFrameShape(QFrame.StyledPanel)
+        status_frame.setStyleSheet("background-color: #252526; padding: 5px;")
+        
+        status_layout = QHBoxLayout(status_frame)
+        status_layout.setContentsMargins(10, 5, 10, 5)
+        
+        # Connection status
+        self.lbl_connection = QLabel("● Disconnected")
+        self.lbl_connection.setStyleSheet("color: #dc3545; font-weight: bold;")
+        status_layout.addWidget(self.lbl_connection)
+        
+        status_layout.addStretch()
+        
+        # Current bitstream
+        self.lbl_bitstream = QLabel("Bitstream: None")
+        self.lbl_bitstream.setStyleSheet("color: #888;")
+        status_layout.addWidget(self.lbl_bitstream)
+        
+        status_layout.addStretch()
+        
+        # Timestamp
+        self.lbl_time = QLabel("")
+        self.lbl_time.setStyleSheet("color: #888;")
+        status_layout.addWidget(self.lbl_time)
+        
+        # Timer for clock update
+        self.clock_timer = QTimer()
+        self.clock_timer.timeout.connect(self._update_clock)
+        self.clock_timer.start(1000)
+        self._update_clock()
+        
+        parent_layout.addWidget(status_frame)
 
-    def _setup_monitor_tab(self):
-        """Recria a interface focada em Gráficos da IHM de Burn-in"""
-        layout = QVBoxLayout(self.tab_monitor)
+    def _create_fpga_tab(self):
+        """Create the FPGA programming tab."""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
         
-        # Barra de Controle Superior
-        top_bar = QHBoxLayout()
+        # Bitstream selection group
+        bitstream_group = QGroupBox("Bitstream Selection")
+        bg_layout = QVBoxLayout(bitstream_group)
         
-        # Controle do Teste
-        self.txt_test_name = QLineEdit("Teste_01")
-        self.txt_test_name.setPlaceholderText("Nome do Teste")
-        self.btn_test = QPushButton("INICIAR EXPERIMENTO")
-        self.btn_test.setCheckable(True)
-        self.btn_test.setMinimumHeight(40)
-        self.btn_test.setStyleSheet("background-color: #2E7D32; color: white; font-weight: bold; font-size: 11pt;")
-        self.btn_test.clicked.connect(self._toggle_test)
+        # Directory selection
+        dir_layout = QHBoxLayout()
+        self.txt_bitstream_dir = QLineEdit(config.BITSTREAM_DIR)
+        self.txt_bitstream_dir.setPlaceholderText("Bitstream directory...")
+        btn_browse = QPushButton("Browse...")
+        btn_browse.clicked.connect(self._browse_bitstream_dir)
+        dir_layout.addWidget(self.txt_bitstream_dir, 1)
+        dir_layout.addWidget(btn_browse)
+        bg_layout.addLayout(dir_layout)
         
-        # Setpoints Rápidos
-        self.sp_input = QDoubleSpinBox()
-        self.sp_input.setRange(20, 150); self.sp_input.setValue(100); self.sp_input.setSuffix(" °C")
-        self.sp_input.setPrefix("Forno: ")
+        # Bitstream list
+        list_layout = QHBoxLayout()
+        self.cmb_bitstreams = QComboBox()
+        self.cmb_bitstreams.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        btn_refresh = QPushButton("↻")
+        btn_refresh.setMaximumWidth(40)
+        btn_refresh.setToolTip("Refresh bitstream list")
+        btn_refresh.clicked.connect(self._refresh_bitstreams)
+        list_layout.addWidget(self.cmb_bitstreams, 1)
+        list_layout.addWidget(btn_refresh)
+        bg_layout.addLayout(list_layout)
         
-        self.vcore_monitor = QDoubleSpinBox()
-        self.vcore_monitor.setRange(0, 1.2); self.vcore_monitor.setValue(0.85); self.vcore_monitor.setSuffix(" V")
-        self.vcore_monitor.setPrefix("Vcore: ")
+        # Navigation buttons
+        nav_layout = QHBoxLayout()
+        self.btn_prev = QPushButton("◀ Previous")
+        self.btn_prev.clicked.connect(self._prev_bitstream)
+        self.btn_next = QPushButton("Next ▶")
+        self.btn_next.clicked.connect(self._next_bitstream)
+        nav_layout.addWidget(self.btn_prev)
+        nav_layout.addWidget(self.btn_next)
+        bg_layout.addLayout(nav_layout)
         
-        # Status Slack (Destaque)
-        self.lbl_slack = QLabel("Slack: ---")
-        self.lbl_slack.setAlignment(Qt.AlignCenter)
-        self.lbl_slack.setStyleSheet("background-color: #333; color: white; font-weight: bold; padding: 5px; border-radius: 4px;")
+        layout.addWidget(bitstream_group)
         
-        top_bar.addWidget(QLabel("Experimento:"))
-        top_bar.addWidget(self.txt_test_name)
-        top_bar.addWidget(self.sp_input)
-        top_bar.addWidget(self.vcore_monitor)
-        top_bar.addWidget(self.btn_test)
-        top_bar.addSpacing(20)
-        top_bar.addWidget(self.lbl_slack)
+        # Programming group
+        prog_group = QGroupBox("FPGA Programming")
+        pg_layout = QVBoxLayout(prog_group)
         
-        layout.addLayout(top_bar)
+        # Progress bar
+        self.prog_bar = QProgressBar()
+        self.prog_bar.setRange(0, 100)
+        self.prog_bar.setValue(0)
+        pg_layout.addWidget(self.prog_bar)
         
-        # Área dos Gráficos (Splitter Vertical)
-        splitter = QSplitter(Qt.Vertical)
+        # Program button
+        self.btn_program = QPushButton("▶ PROGRAM FPGA")
+        self.btn_program.setMinimumHeight(50)
+        self.btn_program.setStyleSheet("""
+            QPushButton {
+                background-color: #0d6efd;
+                color: white;
+                font-weight: bold;
+                font-size: 12pt;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #0b5ed7;
+            }
+            QPushButton:pressed {
+                background-color: #0a58ca;
+            }
+            QPushButton:disabled {
+                background-color: #4a4a52;
+                color: #7f7f7f;
+            }
+        """)
+        self.btn_program.clicked.connect(self._program_fpga)
+        pg_layout.addWidget(self.btn_program)
         
-        self.plot1 = PlotWidget(plot_window_size=200) # Gráfico Térmico
-        self.plot2 = AuxPlotWidget(plot_window_size=200) # Gráfico Elétrico
+        # Vivado path display
+        vivado_path = config.VIVADO_PATH or "Not found"
+        self.lbl_vivado = QLabel(f"Vivado: {vivado_path[:50]}...")
+        self.lbl_vivado.setStyleSheet("color: #888; font-size: 9pt;")
+        self.lbl_vivado.setToolTip(vivado_path)
+        pg_layout.addWidget(self.lbl_vivado)
         
-        splitter.addWidget(self.plot1)
-        splitter.addWidget(self.plot2)
-        layout.addWidget(splitter)
+        layout.addWidget(prog_group)
+        layout.addStretch()
+        
+        self.control_tabs.addTab(tab, "FPGA Programming")
 
-    def _setup_config_tab(self):
-        """Controles técnicos do Arduino, STM32 e Console Manual"""
-        layout = QHBoxLayout(self.tab_config)
+    def _create_stm32_tab(self):
+        """Create the STM32 control tab."""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
         
-        # Coluna 1: Controle PID (Arduino)
-        grp_pid = QGroupBox("Parâmetros PID (Forno)")
-        form_pid = QFormLayout()
-        self.kp_input = QDoubleSpinBox(); self.kp_input.setValue(config.DEFAULT_KP)
-        self.ki_input = QDoubleSpinBox(); self.ki_input.setValue(config.DEFAULT_KI); self.ki_input.setDecimals(5)
-        self.kd_input = QDoubleSpinBox(); self.kd_input.setValue(config.DEFAULT_KD)
-        self.btn_update_pid = QPushButton("Enviar PID para Arduino")
-        self.btn_update_pid.clicked.connect(self._update_pid)
+        # Voltage control group
+        volt_group = QGroupBox("Voltage Control (Vcore)")
+        vg_layout = QVBoxLayout(volt_group)
         
-        form_pid.addRow("Proporcional (Kp):", self.kp_input)
-        form_pid.addRow("Integral (Ki):", self.ki_input)
-        form_pid.addRow("Derivativo (Kd):", self.kd_input)
-        form_pid.addRow(self.btn_update_pid)
-        grp_pid.setLayout(form_pid)
+        volt_layout = QHBoxLayout()
+        self.spin_voltage = QDoubleSpinBox()
+        self.spin_voltage.setRange(0.0, 1.8)
+        self.spin_voltage.setValue(0.85)
+        self.spin_voltage.setSingleStep(0.05)
+        self.spin_voltage.setSuffix(" V")
+        self.spin_voltage.setDecimals(2)
         
-        # Coluna 2: Controle STM32 (Display/Vcore Manual)
-        grp_stm = QGroupBox("Controle STM32 (Fonte/Display)")
-        v_stm = QVBoxLayout()
+        self.btn_set_voltage = QPushButton("Set Voltage")
+        self.btn_set_voltage.clicked.connect(self._set_voltage)
         
-        h_vcore = QHBoxLayout()
-        self.vcore_manual_spin = QDoubleSpinBox(); self.vcore_manual_spin.setRange(0, 1.8); self.vcore_manual_spin.setValue(0.85)
-        btn_set_vcore = QPushButton("Aplicar Tensão"); btn_set_vcore.clicked.connect(lambda: self.w_stm.set_voltage(self.vcore_manual_spin.value()))
-        h_vcore.addWidget(QLabel("Vcore:")); h_vcore.addWidget(self.vcore_manual_spin); h_vcore.addWidget(btn_set_vcore)
+        volt_layout.addWidget(QLabel("Target:"))
+        volt_layout.addWidget(self.spin_voltage)
+        volt_layout.addWidget(self.btn_set_voltage)
+        vg_layout.addLayout(volt_layout)
         
-        h_page = QHBoxLayout()
-        self.page_combo = QComboBox(); self.page_combo.addItems([f"Página {i}" for i in range(1, 7)])
-        btn_page = QPushButton("Mudar Página OLED"); btn_page.clicked.connect(lambda: self.w_stm.set_page(self.page_combo.currentIndex()+1))
-        h_page.addWidget(self.page_combo); h_page.addWidget(btn_page)
+        # Quick voltage buttons
+        quick_layout = QHBoxLayout()
+        for v in [0.7, 0.85, 1.0, 1.2]:
+            btn = QPushButton(f"{v}V")
+            btn.clicked.connect(lambda checked, val=v: self._quick_voltage(val))
+            quick_layout.addWidget(btn)
+        vg_layout.addLayout(quick_layout)
         
-        btn_reset = QPushButton("HARD RESET SYSTEM"); btn_reset.setStyleSheet("background-color: #800; color: white;")
-        btn_reset.clicked.connect(lambda: self.w_stm.send_manual_message("reset"))
+        layout.addWidget(volt_group)
         
-        v_stm.addLayout(h_vcore)
-        v_stm.addLayout(h_page)
-        v_stm.addStretch()
-        v_stm.addWidget(btn_reset)
-        grp_stm.setLayout(v_stm)
+        # Display control group
+        disp_group = QGroupBox("Display Control")
+        dg_layout = QVBoxLayout(disp_group)
         
-        # Coluna 3: Console Manual & Varredura
-        grp_manual = QGroupBox("Terminal & Varredura FPGA")
-        v_man = QVBoxLayout()
+        page_layout = QHBoxLayout()
+        self.cmb_page = QComboBox()
+        self.cmb_page.addItems([f"Page {i}" for i in range(1, 7)])
+        self.btn_set_page = QPushButton("Set Page")
+        self.btn_set_page.clicked.connect(self._set_page)
+        page_layout.addWidget(self.cmb_page)
+        page_layout.addWidget(self.btn_set_page)
+        dg_layout.addLayout(page_layout)
         
-        # --- Parte Manual ---
-        self.txt_manual = QLineEdit()
-        self.txt_manual.setPlaceholderText("Comando raw...")
-        self.cmb_target = QComboBox(); self.cmb_target.addItems(["STM32 (Protocolo)", "CROC (Raw)"])
-        self.btn_send_manual = QPushButton("Enviar Comando Texto")
-        self.btn_send_manual.clicked.connect(self._manual_send)
+        layout.addWidget(disp_group)
         
-        v_man.addWidget(QLabel("Destino:"))
-        v_man.addWidget(self.cmb_target)
-        v_man.addWidget(QLabel("Payload:"))
-        v_man.addWidget(self.txt_manual)
-        v_man.addWidget(self.btn_send_manual)
+        # Manual command group
+        cmd_group = QGroupBox("Manual Command")
+        cg_layout = QVBoxLayout(cmd_group)
         
-        # --- Separador Visual ---
-        line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
-        v_man.addSpacing(10)
-        v_man.addWidget(line)
-        v_man.addSpacing(10)
+        self.txt_command = QLineEdit()
+        self.txt_command.setPlaceholderText("Enter command...")
+        self.txt_command.returnPressed.connect(self._send_command)
         
-        # --- Nova Parte: Controle de Varredura (0x0F) ---
-        lbl_sweep = QLabel("<b>FPGA Sensor Sweep (0x0F)</b>")
-        lbl_sweep.setAlignment(Qt.AlignCenter)
-        v_man.addWidget(lbl_sweep)
+        cmd_btn_layout = QHBoxLayout()
+        self.cmb_target = QComboBox()
+        self.cmb_target.addItems(["CROC (Text)", "STM32 (Protocol)"])
+        self.btn_send = QPushButton("Send")
+        self.btn_send.clicked.connect(self._send_command)
+        cmd_btn_layout.addWidget(self.cmb_target)
+        cmd_btn_layout.addWidget(self.btn_send)
         
-        h_sweep = QHBoxLayout()
+        cg_layout.addWidget(self.txt_command)
+        cg_layout.addLayout(cmd_btn_layout)
         
-        # Switch Cíclico
-        self.chk_auto_sweep = QCheckBox("Ciclo Automático")
-        self.chk_auto_sweep.setToolTip("Envia 0x0F repetidamente")
-        self.chk_auto_sweep.toggled.connect(self._toggle_sweep_timer)
+        layout.addWidget(cmd_group)
+        layout.addStretch()
         
-        # Intervalo
-        self.spin_sweep_interval = QSpinBox()
-        self.spin_sweep_interval.setRange(50, 5000)
-        self.spin_sweep_interval.setValue(100) # Default 100ms
-        self.spin_sweep_interval.setSuffix(" ms")
-        self.spin_sweep_interval.setToolTip("Período entre triggers")
-        
-        h_sweep.addWidget(self.chk_auto_sweep)
-        h_sweep.addWidget(self.spin_sweep_interval)
-        v_man.addLayout(h_sweep)
-        
-        # Botão de Disparo Único
-        self.btn_single_sweep = QPushButton("DISPARAR AGORA (Single)")
-        self.btn_single_sweep.clicked.connect(self._send_sweep_trigger)
-        self.btn_single_sweep.setStyleSheet("background-color: #0097A7; color: white; font-weight: bold;")
-        self.btn_single_sweep.setToolTip("Envia um único byte 0x0F")
-        v_man.addWidget(self.btn_single_sweep)
-        
-        v_man.addStretch()
-        grp_manual.setLayout(v_man)
-        
-        layout.addWidget(grp_pid)
-        layout.addWidget(grp_stm)
-        layout.addWidget(grp_manual)
+        self.control_tabs.addTab(tab, "STM32 Control")
 
-    # --- Lógica de Negócio ---
-
-    def _start_workers(self):
-        # --- Arduino Worker ---
-        self.w_ard = ArduinoWorker()
-        self.t_ard = QThread()
-        self.t_ard.setTerminationEnabled(True) 
-        self.w_ard.moveToThread(self.t_ard)
-        self.w_ard.log_message.connect(self.log_message)
-        self.t_ard.start()
-        self.w_ard.start() # Inicia loop lógico
-
-        # --- STM Worker ---
-        self.w_stm = STMWorker(self.router)
-        self.t_stm = QThread()
-        self.t_stm.setTerminationEnabled(True)
-        self.w_stm.moveToThread(self.t_stm)
-        self.w_stm.log_message.connect(self.log_message)
-        self.t_stm.start()
-        self.w_stm.start()
-
-        # --- CROC Worker ---
-        self.w_croc = CROCWorker(self.router)
-        self.t_croc = QThread()
-        self.t_croc.setTerminationEnabled(True)
-        self.w_croc.moveToThread(self.t_croc)
-        self.w_croc.log_message.connect(self.log_message)
-        self.t_croc.start()
-        self.w_croc.start()
-
-    def closeEvent(self, event):
-        """Evento disparado ao tentar fechar a janela."""
-        self.log_message("Encerrando sistema e parando threads...")
+    def _create_settings_tab(self):
+        """Create the settings tab."""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
         
-        # Para Timer de Sweep
-        if self.sweep_timer.isActive():
-            self.sweep_timer.stop()
+        # Serial port group
+        serial_group = QGroupBox("Serial Port")
+        sg_layout = QVBoxLayout(serial_group)
         
-        # 1. Para o sequenciador (Logger e Updates automáticos)
-        if hasattr(self, 'seq'):
-            self.stop_test_signal.emit()
-            if hasattr(self, 't_seq') and self.t_seq.isRunning():
-                self.t_seq.quit()
-                self.t_seq.wait(100) 
-
-        # 2. Desconecta o Router
-        if hasattr(self, 'router'):
-            self.router.disconnect_serial()
-
-        # 3. Encerra Workers
-        workers_threads = [
-            (self.w_ard, self.t_ard), 
-            (self.w_stm, self.t_stm), 
-            (self.w_croc, self.t_croc)
-        ]
-
-        for worker, thread in workers_threads:
-            if hasattr(worker, 'stop'): worker.stop()
-            if thread.isRunning():
-                thread.quit()
-                if not thread.wait(100): thread.terminate() 
-
-        event.accept() 
-        super().closeEvent(event)
-
-    def _start_sequencer(self):
-        self.seq = TestSequencer(self.w_ard, self.w_stm, self.w_croc)
-        self.t_seq = QThread()
-        self.seq.moveToThread(self.t_seq)
+        port_layout = QHBoxLayout()
+        self.cmb_ports = QComboBox()
+        self.cmb_ports.setEditable(True)
+        self._refresh_ports()
         
-        self.start_test_signal.connect(self.seq.start_test)
-        self.stop_test_signal.connect(self.seq.stop_test)
+        self.btn_refresh_ports = QPushButton("↻")
+        self.btn_refresh_ports.setMaximumWidth(40)
+        self.btn_refresh_ports.clicked.connect(self._refresh_ports)
         
-        # Conecta Plots e Slack
-        self.seq.plot_data_update.connect(self.plot1.update_plot_data)
-        self.seq.plot_data_update.connect(self.plot2.update_plot_data)
-        self.seq.plot_data_update.connect(self.update_slack_display)
+        port_layout.addWidget(QLabel("Port:"))
+        port_layout.addWidget(self.cmb_ports, 1)
+        port_layout.addWidget(self.btn_refresh_ports)
+        sg_layout.addLayout(port_layout)
         
-        self.seq.test_finished.connect(self.on_finished)
-        self.seq.log_message.connect(self.log_message)
-        self.t_seq.start()
+        baud_layout = QHBoxLayout()
+        self.cmb_baud = QComboBox()
+        self.cmb_baud.addItems(["9600", "19200", "38400", "57600", "115200", "230400", "460800"])
+        self.cmb_baud.setCurrentText(str(config.SYSTEM_BAUD))
+        baud_layout.addWidget(QLabel("Baud:"))
+        baud_layout.addWidget(self.cmb_baud)
+        baud_layout.addStretch()
+        sg_layout.addLayout(baud_layout)
+        
+        # Connect button
+        self.btn_connect = QPushButton("Connect")
+        self.btn_connect.setCheckable(True)
+        self.btn_connect.clicked.connect(self._toggle_connection)
+        sg_layout.addWidget(self.btn_connect)
+        
+        layout.addWidget(serial_group)
+        
+        # Vivado path group
+        vivado_group = QGroupBox("Vivado Configuration")
+        vg_layout = QVBoxLayout(vivado_group)
+        
+        vpath_layout = QHBoxLayout()
+        self.txt_vivado_path = QLineEdit(config.VIVADO_PATH)
+        self.txt_vivado_path.setPlaceholderText("Path to vivado executable...")
+        btn_browse_vivado = QPushButton("Browse...")
+        btn_browse_vivado.clicked.connect(self._browse_vivado)
+        vpath_layout.addWidget(self.txt_vivado_path, 1)
+        vpath_layout.addWidget(btn_browse_vivado)
+        vg_layout.addLayout(vpath_layout)
+        
+        layout.addWidget(vivado_group)
+        
+        # Save button
+        self.btn_save_settings = QPushButton("Save Settings")
+        self.btn_save_settings.clicked.connect(self._save_settings)
+        layout.addWidget(self.btn_save_settings)
+        
+        layout.addStretch()
+        
+        self.control_tabs.addTab(tab, "Settings")
+
+    def _create_log_panel(self) -> QWidget:
+        """Create the log terminal panel."""
+        panel = QWidget()
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Header
+        header = QLabel("Communication Log")
+        header.setStyleSheet("font-weight: bold; font-size: 11pt; padding: 5px;")
+        layout.addWidget(header)
+        
+        # Log text area
+        self.log_text = QTextEdit()
+        self.log_text.setReadOnly(True)
+        self.log_text.setFont(QFont("Consolas" if config.IS_WINDOWS else "Monospace", 10))
+        self.log_text.setStyleSheet("""
+            QTextEdit {
+                background-color: #1e1e1e;
+                color: #d4d4d4;
+                border: 1px solid #3f3f46;
+            }
+        """)
+        layout.addWidget(self.log_text, 1)
+        
+        # Log controls
+        ctrl_layout = QHBoxLayout()
+        
+        self.chk_autoscroll = QCheckBox("Auto-scroll")
+        self.chk_autoscroll.setChecked(True)
+        ctrl_layout.addWidget(self.chk_autoscroll)
+        
+        ctrl_layout.addStretch()
+        
+        btn_clear = QPushButton("Clear")
+        btn_clear.clicked.connect(self.log_text.clear)
+        ctrl_layout.addWidget(btn_clear)
+        
+        btn_save_log = QPushButton("Save Log")
+        btn_save_log.clicked.connect(self._save_log)
+        ctrl_layout.addWidget(btn_save_log)
+        
+        layout.addLayout(ctrl_layout)
+        
+        return panel
+
+    def _connect_signals(self):
+        """Connect all signals."""
+        # Router signals
+        self.router.connection_status.connect(self._on_connection_status)
+        self.router.log_message.connect(self.log)
+        self.router.log_text_received.connect(self.log)
+        self.router.aging_data_received.connect(self._on_sensor_data)
+        self.router.stm_frame_received.connect(self._on_stm_frame)
+        
+        # FPGA manager signals
+        self.fpga_manager.started.connect(self._on_program_started)
+        self.fpga_manager.output.connect(self.log)
+        self.fpga_manager.finished.connect(self._on_program_finished)
+        self.fpga_manager.progress.connect(self.prog_bar.setValue)
+
+    def _auto_connect(self):
+        """Attempt to auto-connect to configured port."""
+        if config.FPGA_PORT:
+            self.cmb_ports.setCurrentText(config.FPGA_PORT)
+            self._toggle_connection(True)
+            self.btn_connect.setChecked(True)
+
+    # ========== Slot Handlers ==========
+    
+    @Slot(str)
+    def _on_connection_status(self, status: str):
+        """Handle connection status changes."""
+        if "Connected" in status or "opened" in status.lower():
+            self.lbl_connection.setText(f"● {status}")
+            self.lbl_connection.setStyleSheet("color: #28a745; font-weight: bold;")
+            self.btn_connect.setText("Disconnect")
+            self.btn_connect.setChecked(True)
+        else:
+            self.lbl_connection.setText("● Disconnected")
+            self.lbl_connection.setStyleSheet("color: #dc3545; font-weight: bold;")
+            self.btn_connect.setText("Connect")
+            self.btn_connect.setChecked(False)
 
     @Slot(dict)
-    def update_slack_display(self, d):
-        s = d.get('dut_slack', 0)
-        self.lbl_slack.setText(f"Slack Crítico: {s}")
-        # Lógica visual de alerta
-        if s < 0: color = "#D32F2F" # Vermelho forte (violação)
-        elif s < 20: color = "#F57C00" # Laranja (alerta)
-        else: color = "#388E3C" # Verde (ok)
-        self.lbl_slack.setStyleSheet(f"background-color: {color}; color: white; font-weight: bold; padding: 5px; border-radius: 4px;")
+    def _on_sensor_data(self, data: dict):
+        """Handle incoming sensor data."""
+        alarm_f = data.get('alarm_f', 0)
+        alarm_rf = data.get('alarm_rf', 0)
+        
+        # Update visualization
+        self.sensor_widget.updateSensorData(alarm_f, alarm_rf)
+        
+        # Store last values
+        self._last_alarm_f = alarm_f
+        self._last_alarm_rf = alarm_rf
 
-    @Slot(bool)
-    def _toggle_test(self, checked):
-        if checked:
-            # Configuração do Experimento
-            cfg = {
-                'test_name': self.txt_test_name.text(),
-                'oven_setpoint': self.sp_input.value(),
-                'psu_voltage': self.vcore_monitor.value(), 
-                'kp': self.kp_input.value(), 
-                'ki': self.ki_input.value(), 
-                'kd': self.kd_input.value()
-            }
-            self.plot1.clear_plot(); self.plot2.clear_plot()
-            self.start_test_signal.emit(cfg)
-            self.btn_test.setText("PARAR EXPERIMENTO")
-            self.btn_test.setStyleSheet("background-color: #C62828; color: white; font-weight: bold; font-size: 11pt;")
-            
-            self.vcore_monitor.setEnabled(False)
-            
-            # Opcional: Ativar varredura automática ao iniciar teste?
-            # self.chk_auto_sweep.setChecked(True)
-        else:
-            self.stop_test_signal.emit()
-
-    @Slot()
-    def on_finished(self):
-        self.btn_test.setChecked(False)
-        self.btn_test.setText("INICIAR EXPERIMENTO")
-        self.btn_test.setStyleSheet("background-color: #2E7D32; color: white; font-weight: bold; font-size: 11pt;")
-        self.vcore_monitor.setEnabled(True)
-        # self.chk_auto_sweep.setChecked(False)
-
-    @Slot()
-    def _manual_send(self):
-        cmd = self.txt_manual.text()
-        if "STM32" in self.cmb_target.currentText():
-            self.w_stm.send_manual_message(cmd)
-        else:
-            self.w_croc.send_manual_command(cmd)
-    
-    # --- NOVOS SLOTS PARA TRIGGER 0x0F ---
-    
-    @Slot()
-    def _send_sweep_trigger(self):
-        """Envia o byte 0x0F cru para o Router -> FPGA"""
-        # Usa _write_raw para evitar headers adicionais, garantindo que o FPGA Sniffer pegue '0F' limpo.
-        # Se usar send_to_croc, ele envia 10 0F. O Sniffer deve pegar 0F de qualquer jeito, 
-        # mas enviar raw é mais garantido para gatilhos de baixo nível.
-        self.router._write_raw(b'\x0F\x0F')
-
-    @Slot(bool)
-    def _toggle_sweep_timer(self, checked):
-        if checked:
-            ms = self.spin_sweep_interval.value()
-            self.sweep_timer.setInterval(ms)
-            self.sweep_timer.start()
-            self.btn_single_sweep.setEnabled(False)
-            # ERROR WAS HERE: self.log_message.emit(...)
-            # FIX: Call directly
-            self.log_message(f"Varredura Automática Iniciada ({ms}ms)") 
-        else:
-            self.sweep_timer.stop()
-            self.btn_single_sweep.setEnabled(True)
-            # FIX: Call directly
-            self.log_message("Varredura Automática Parada")
-
-    @Slot()
-    def _update_pid(self):
-        self.w_ard.update_kp(self.kp_input.value())
-        self.w_ard.update_ki(self.ki_input.value())
-        self.w_ard.update_kd(self.kd_input.value())
-        # FIX: Call directly
-        self.log_message("PID Atualizado Manualmente.")
+    @Slot(object)
+    def _on_stm_frame(self, event):
+        """Handle STM32 protocol response."""
+        if len(event) >= 2:
+            evt_type, data = event[0], event[1]
+            if evt_type == 'ok':
+                self.log(f"[STM32] OK - {data.get('func', 'UNK')}")
+            elif evt_type == 'error':
+                self.log(f"[STM32] ERROR - {data.get('err', 'UNK')}")
 
     @Slot(str)
-    def log_message(self, msg):
-        self.log_box.append(f"[{time.strftime('%H:%M:%S')}] {msg}")
+    def _on_program_started(self, bitstream: str):
+        """Handle FPGA programming started."""
+        self.btn_program.setEnabled(False)
+        self.btn_program.setText("Programming...")
+        self.lbl_bitstream.setText(f"Programming: {bitstream}")
+
+    @Slot(bool, str)
+    def _on_program_finished(self, success: bool, msg: str):
+        """Handle FPGA programming finished."""
+        self.btn_program.setEnabled(True)
+        self.btn_program.setText("▶ PROGRAM FPGA")
+        
+        if success:
+            self.lbl_bitstream.setText(f"Bitstream: {self.bitstream_manager.current_name()}")
+        else:
+            self.lbl_bitstream.setText("Bitstream: Programming failed")
+
+    # ========== UI Actions ==========
+    
+    def _toggle_connection(self, checked: bool):
+        """Toggle serial connection."""
+        if checked:
+            port = self.cmb_ports.currentText()
+            baud = int(self.cmb_baud.currentText())
+            self.router.connect_serial(port, baud)
+        else:
+            self.router.disconnect_serial()
+
+    def _refresh_ports(self):
+        """Refresh available serial ports."""
+        current = self.cmb_ports.currentText()
+        self.cmb_ports.clear()
+        
+        ports = get_available_ports()
+        for port, desc in ports:
+            self.cmb_ports.addItem(f"{port}", port)
+        
+        # Restore selection if possible
+        idx = self.cmb_ports.findData(current)
+        if idx >= 0:
+            self.cmb_ports.setCurrentIndex(idx)
+
+    def _browse_bitstream_dir(self):
+        """Browse for bitstream directory."""
+        path = QFileDialog.getExistingDirectory(
+            self, "Select Bitstream Directory",
+            self.txt_bitstream_dir.text()
+        )
+        if path:
+            self.txt_bitstream_dir.setText(path)
+            self._refresh_bitstreams()
+
+    def _refresh_bitstreams(self):
+        """Refresh bitstream list."""
+        path = self.txt_bitstream_dir.text()
+        count = self.bitstream_manager.load_directory(path)
+        
+        self.cmb_bitstreams.clear()
+        self.cmb_bitstreams.addItems(self.bitstream_manager.get_all_names())
+        
+        self.log(f"Found {count} bitstream files in {path}")
+
+    def _prev_bitstream(self):
+        """Select previous bitstream."""
+        if self.bitstream_manager.back():
+            self.cmb_bitstreams.setCurrentIndex(self.bitstream_manager.get_index())
+
+    def _next_bitstream(self):
+        """Select next bitstream."""
+        if self.bitstream_manager.advance():
+            self.cmb_bitstreams.setCurrentIndex(self.bitstream_manager.get_index())
+
+    def _program_fpga(self):
+        """Start FPGA programming."""
+        idx = self.cmb_bitstreams.currentIndex()
+        self.bitstream_manager.set_index(idx)
+        
+        bitstream = self.bitstream_manager.current()
+        if not bitstream:
+            self.log("No bitstream selected!")
+            return
+        
+        self.fpga_manager.program(bitstream)
+
+    def _set_voltage(self):
+        """Send voltage command to STM32."""
+        voltage = self.spin_voltage.value()
+        self._send_stm_command(build_voltage_command(voltage))
+
+    def _quick_voltage(self, voltage: float):
+        """Quick voltage button handler."""
+        self.spin_voltage.setValue(voltage)
+        self._set_voltage()
+
+    def _set_page(self):
+        """Send page command to STM32."""
+        page = self.cmb_page.currentIndex() + 1
+        self._send_stm_command(build_page_command(page))
+
+    def _send_command(self):
+        """Send manual command."""
+        cmd = self.txt_command.text().strip()
+        if not cmd:
+            return
+        
+        target = self.cmb_target.currentText()
+        
+        if "CROC" in target:
+            self.router.send_text_to_croc(cmd)
+            self.log(f"[TX → CROC] {cmd}")
+        else:
+            self._send_stm_command(build_message_command(cmd))
+        
+        self.txt_command.clear()
+
+    def _send_stm_command(self, cmd_tuple):
+        """Send command to STM32 with CRC."""
+        payload, log_str, _ = cmd_tuple
+        
+        # Remove header byte, add CRC
+        core = payload[1:]
+        crc = compute_crc16_modbus(core)
+        final = core + crc.to_bytes(2, CRC_ENDIAN)
+        
+        self.router.send_to_stm(final)
+        self.log(f"[TX → STM32] {log_str}")
+
+    def _browse_vivado(self):
+        """Browse for Vivado executable."""
+        filter_str = "Vivado (vivado*.bat vivado)" if config.IS_WINDOWS else "Vivado (vivado*)"
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Select Vivado Executable",
+            os.path.dirname(self.txt_vivado_path.text()),
+            filter_str
+        )
+        if path:
+            self.txt_vivado_path.setText(path)
+
+    def _save_settings(self):
+        """Save current settings."""
+        config.save_config(
+            fpga_port=self.cmb_ports.currentText(),
+            baud_rate=int(self.cmb_baud.currentText()),
+            vivado_path=self.txt_vivado_path.text(),
+            bitstream_dir=self.txt_bitstream_dir.text()
+        )
+        self.log("Settings saved!")
+
+    def _save_log(self):
+        """Save log to file."""
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Save Log",
+            f"croc_log_{time.strftime('%Y%m%d_%H%M%S')}.txt",
+            "Text Files (*.txt)"
+        )
+        if path:
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(self.log_text.toPlainText())
+            self.log(f"Log saved to {path}")
+
+    def _update_clock(self):
+        """Update clock display."""
+        self.lbl_time.setText(time.strftime("%Y-%m-%d %H:%M:%S"))
+
+    def log(self, message: str):
+        """Add message to log."""
+        timestamp = time.strftime("%H:%M:%S")
+        self.log_text.append(f"[{timestamp}] {message}")
+        
+        # Auto-scroll
+        if self.chk_autoscroll.isChecked():
+            cursor = self.log_text.textCursor()
+            cursor.movePosition(QTextCursor.End)
+            self.log_text.setTextCursor(cursor)
+
+    def closeEvent(self, event):
+        """Handle window close."""
+        self.log("Shutting down...")
+        
+        # Stop clock timer
+        self.clock_timer.stop()
+        
+        # Disconnect serial
+        self.router.disconnect_serial()
+        
+        # Cancel any FPGA programming
+        if self.fpga_manager.is_programming:
+            self.fpga_manager.cancel()
+        
+        event.accept()
