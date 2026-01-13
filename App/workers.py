@@ -1,3 +1,10 @@
+"""
+Workers para o Sistema de Burn-in
+
+Atualizado para o novo formato de dados do CROC (texto):
+  "F: 0x<alarm_f> | RF: 0x<alarm_rf>"
+"""
+
 from PySide6.QtCore import QObject, Signal, Slot, QTimer
 import time
 import serial
@@ -155,17 +162,21 @@ class STMWorker(QObject):
 
     @Slot(object)
     def _on_frame_received(self, event):
-        status, ctrl, c1, c2 = event
-        if status == 'error':
-            _, err_code, _ = decode_ctrl(ctrl)
-            err_name = ERR_STR.get(err_code, f"0x{err_code:02X}")
-            self.log_message.emit(f"[STM RX] Erro: {err_name}")
+        """Processa resposta do STM32"""
+        if len(event) >= 2:
+            evt_type = event[0]
+            if evt_type == 'error':
+                data = event[1] if len(event) > 1 else {}
+                err_name = data.get('err', 'UNKNOWN') if isinstance(data, dict) else 'UNKNOWN'
+                self.log_message.emit(f"[STM RX] Erro: {err_name}")
+            elif evt_type == 'ok':
+                self.log_message.emit(f"[STM RX] OK")
 
     def get_latest_data(self): return (self._curr_v, 0.0)
 
 
 # =================================================================
-#   WORKER 3: CROC (FPGA DUT) - POLLING ATIVADO
+#   WORKER 3: CROC (FPGA DUT) - Texto-Based
 # =================================================================
 class CROCWorker(QObject):
     log_message = Signal(str)
@@ -175,17 +186,22 @@ class CROCWorker(QObject):
         self.router = router
         self.is_running = False
         
-        # Variáveis de Estado da FPGA
+        # Dados do sensor (novo formato)
+        self._alarm_f = 0
+        self._alarm_rf = 0
+        self._alarm_f_count = 0
+        self._alarm_rf_count = 0
+        
+        # Compatibilidade
         self._temp = 0.0
-        self._slack = 0
         self._volt = 0.0
         
     @Slot()
     def start(self):
         self.is_running = True
-        # Conecta ao novo sinal do Router
+        # Conecta ao sinal de dados do Router
         self.router.aging_data_received.connect(self._on_aging_data)
-        self.log_message.emit("CROC Worker iniciado (Monitoramento FPGA).")
+        self.log_message.emit("CROC Worker iniciado (Monitoramento FPGA via Texto).")
 
     @Slot()
     def stop(self):
@@ -197,26 +213,49 @@ class CROCWorker(QObject):
 
     @Slot(dict)
     def _on_aging_data(self, data):
-        """Recebe dados processados do Router (0x1A Packet)."""
-        if not self.is_running: return
+        """
+        Recebe dados parseados do Router.
         
-        self._temp  = data.get('dut_temp', 0.0)
-        self._volt  = data.get('dut_volt', 0.0)
-        self._slack = data.get('dut_slack', 0)
+        Formato esperado do dict:
+        {
+            'alarm_f': int,
+            'alarm_rf': int,
+            'alarm_f_count': int,
+            'alarm_rf_count': int,
+            'dut_temp': float,
+            'dut_volt': float,
+            'dut_slack': int,
+            'raw_alarm': int
+        }
+        """
+        if not self.is_running: 
+            return
         
-        # Opcional: Logar alarmes críticos
-        if self._slack > 0:
-             # Evita spam de log, logar só mudanças de estado se quiser
-             pass 
+        self._alarm_f = data.get('alarm_f', 0)
+        self._alarm_rf = data.get('alarm_rf', 0)
+        self._alarm_f_count = data.get('alarm_f_count', 0)
+        self._alarm_rf_count = data.get('alarm_rf_count', 0)
+        self._temp = data.get('dut_temp', 0.0)
+        self._volt = data.get('dut_volt', 0.0)
 
     def get_latest_data(self):
-        """Retorna (Temp, Slack, Vcc_Internal) para o Logger/Gráfico"""
-        return self._temp, self._slack, self._volt
+        """
+        Retorna (Temp, Slack, Vcc_Internal) para o Logger/Gráfico.
+        
+        Slack = número total de alarmes ativos (bits em 1)
+        """
+        slack = self._alarm_f_count + self._alarm_rf_count
+        return self._temp, slack, self._volt
+    
+    def get_alarm_data(self):
+        """Retorna os valores brutos dos registradores de alarme"""
+        return self._alarm_f, self._alarm_rf
 
     def send_manual_command(self, cmd: str):
-        # Envia texto puro + Enter para o terminal do CROC
+        """Envia texto puro + Enter para o terminal do CROC"""
         payload = (cmd + "\n").encode('utf-8')
         self.router.send_to_croc(payload)
+
 
 # =================================================================
 #   SEQUENCIADOR
@@ -292,16 +331,19 @@ class TestSequencer(QObject):
             t_oven, sp, out = self.arduino.get_latest_data()
             v_stm, _ = self.stm.get_latest_data()
             
-            # AGORA O CROC RETORNA DADOS REAIS!
+            # Dados do CROC (agora retorna dados reais!)
             t_dut, s_dut, v_dut = self.croc.get_latest_data() 
             
             row = {
                 'time_sec': time.time() - self.t0,
-                'oven_temp': t_oven, 'oven_setpoint': sp, 'oven_output': out,
-                'psu_voltage': v_stm, 'psu_current': 0.0,
-                'dut_temp': t_dut,    # Temperatura interna da FPGA
-                'dut_slack': s_dut,   # Alarme de Timing
-                'dut_volt': v_dut     # VCCINT da FPGA
+                'oven_temp': t_oven, 
+                'oven_setpoint': sp, 
+                'oven_output': out,
+                'psu_voltage': v_stm, 
+                'psu_current': 0.0,
+                'dut_temp': t_dut,     # Temperatura interna (0 por enquanto)
+                'dut_slack': s_dut,    # Total de alarmes ativos
+                'dut_volt': v_dut      # VCCINT (0 por enquanto)
             }
             
             # Salva no CSV

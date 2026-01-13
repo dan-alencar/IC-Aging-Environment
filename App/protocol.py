@@ -1,7 +1,17 @@
 # -*- coding: utf-8 -*-
+"""
+Protocol definitions and parser for CROC FPGA System
+
+Handles:
+- STM32 binary protocol frames
+- Text output from CROC firmware
+
+Updated for text-based sensor output format.
+"""
+
 from PySide6.QtCore import QDateTime
 
-# --------- Constantes / Enums do protocolo ---------
+# --------- Constantes / Enums do protocolo STM32 ---------
 STM_MASTER  = 0x80
 STM_SLAVE   = 0x00
 
@@ -22,6 +32,7 @@ ERR_STR = {
     ERR_CRC:     "CRC",
     ERR_LEN:     "LEN"
 }
+
 FUNC_STR = {
     FUNC_UNK: "UNK",
     FUNC_P:   "P",
@@ -32,16 +43,12 @@ FUNC_STR = {
 CRC_ENDIAN = "little"  # ordem dos 2 bytes de CRC no fio
 LEN_ENDIAN = "big"     # ordem dos 2 bytes do campo de tamanho
 
-# UPDATED: Packet is now 9 bytes: [TL, TH, 00, SL, SH, VL, VH, 00, AL]
-AGING_PKT_LEN = 9
-
-# --------- Fatores de Conversão Xilinx UltraScale+ (Matches debugger.py) ---------
+# --------- Conversão XADC (para uso futuro) ---------
 def raw_to_temp(raw_16bit):
     """
     Converts XADC raw 16-bit value to Celsius.
     Logic: ((ADC[15:4] * 503.975) / 4096) - 273.15
     """
-    # Shift right by 4 (discard lower 4 bits)
     adc_12bit = (raw_16bit >> 4) & 0xFFF
     return (adc_12bit * 503.975 / 4096.0) - 273.15
 
@@ -66,6 +73,7 @@ def decode_ctrl(byte_val):
     return origin, error, func
 
 def compute_crc16_modbus(data: bytes) -> int:
+    """Calcula CRC-16 Modbus"""
     crc = 0xFFFF
     for b in data:
         crc ^= b
@@ -81,86 +89,100 @@ def compute_crc16_modbus(data: bytes) -> int:
 # CLASSE: ProtocolParser
 # -------------------------------------------------------------------------
 class ProtocolParser:
+    """
+    Parser para respostas do protocolo STM32.
+    
+    Formato de resposta STM32:
+      [Ctrl][CRC_L][CRC_H]  (resposta simples, 3 bytes)
+    
+    Onde Ctrl contém:
+      - Bits 7: Direction (0x00 = Slave response)
+      - Bits 6-4: Error code
+      - Bits 3-0: Function code
+    """
+    
     def __init__(self):
-        self._rx_buf = bytes()
+        self._rx_buf = bytearray()
 
     def feed(self, chunk: bytes) -> list:
         """
-        Recebe bytes e retorna eventos do STM32 ou Texto.
-        (A detecção de Aging Packet agora é feita no Router via Sliding Window)
-        Eventos:
-          ('line', "texto") -> Logs
-          ('ok', meta), ('error', meta) -> Respostas de Comandos
+        Recebe bytes e retorna eventos identificados.
+        
+        Eventos possíveis:
+          ('ok', (status, ctrl, crc_l, crc_h)) -> Resposta OK
+          ('error', (status, ctrl, crc_l, crc_h)) -> Resposta com erro
+          ('line', "texto") -> Linha de texto
         """
         events = []
-        # Concatena ao buffer existente
-        self._rx_buf += chunk
+        self._rx_buf.extend(chunk)
 
-        while len(self._rx_buf) > 0:
-            byte = self._rx_buf[0]
-
-            # ------------------------------------------------------------------
-            # DETECÇÃO STM32 (Headers 0x10, 0x20 ou Texto)
-            # ------------------------------------------------------------------
-            
-            # Verifica tamanho mínimo para header binário (min 4 bytes: Head+Ctrl+LenH+LenL)
-            if len(self._rx_buf) < 4:
-                # Se for caractere imprimível, pode ser texto, tentamos processar linha
-                if (32 <= byte <= 126) or byte in [10, 13]:
-                    # Processamento simples de linha
-                    idx = -1
-                    if 10 in self._rx_buf: idx = self._rx_buf.find(10)
-                    elif 13 in self._rx_buf: idx = self._rx_buf.find(13)
-                    
-                    if idx != -1:
-                        line_bytes = self._rx_buf[:idx+1]
-                        self._rx_buf = self._rx_buf[idx+1:]
-                        line_str = line_bytes.decode('utf-8', errors='ignore').strip()
-                        if line_str:
-                            events.append(('line', line_str))
-                        continue
-                # Se não tem tamanho e não formou linha, espera.
-                break
-
-            # Se chegamos aqui, temos > 4 bytes. Tenta decodificar binário STM32.
-            head = self._rx_buf[0]
-            ctrl = self._rx_buf[1]
+        while len(self._rx_buf) >= 3:
+            # Tenta parsear como resposta STM32 (3 bytes: Ctrl + CRC)
+            ctrl = self._rx_buf[0]
             origin, error, func = decode_ctrl(ctrl)
-
-            if (head == 0x20 or head == 0x10): 
-                # Lê tamanho
-                payload_len = int.from_bytes(self._rx_buf[2:4], LEN_ENDIAN)
-                total_len = 4 + payload_len + 2 # Header(4) + Payload + CRC(2)
-
-                if len(self._rx_buf) >= total_len:
-                    # Pacote completo!
-                    packet = self._rx_buf[:total_len]
-                    self._rx_buf = self._rx_buf[total_len:]
-
+            
+            # Verifica se parece uma resposta válida do STM32
+            # Origin deve ser 0x00 (STM_SLAVE) para resposta
+            # Func deve ser válido (0x01, 0x02, 0x03)
+            if origin == STM_SLAVE and func in (FUNC_P, FUNC_M, FUNC_V):
+                # Resposta STM32: [Ctrl][CRC_L][CRC_H]
+                if len(self._rx_buf) >= 3:
+                    ctrl_byte = self._rx_buf[0]
+                    crc_l = self._rx_buf[1]
+                    crc_h = self._rx_buf[2]
+                    
                     # Valida CRC
-                    msg_crc = packet[:-2]
-                    recv_crc = int.from_bytes(packet[-2:], CRC_ENDIAN)
-                    calc_crc = compute_crc16_modbus(msg_crc)
-
-                    meta = {"func": FUNC_STR.get(func, "UNK"), "origin": origin}
-
-                    if calc_crc == recv_crc:
+                    recv_crc = crc_l | (crc_h << 8)
+                    calc_crc = compute_crc16_modbus(bytes([ctrl_byte]))
+                    
+                    if recv_crc == calc_crc:
+                        # CRC válido
+                        del self._rx_buf[:3]
+                        
                         if error == NO_ERROR:
-                            events.append(('ok', meta))
+                            events.append(('ok', (ctrl_byte, ctrl_byte, crc_l, crc_h)))
                         else:
-                            meta["err"] = ERR_STR.get(error, "UNK")
-                            events.append(('error', meta))
+                            events.append(('error', (ctrl_byte, ctrl_byte, crc_l, crc_h)))
+                        continue
                     else:
-                        meta["err"] = "CRC_FAIL"
-                        events.append(('error', meta))
-                    continue
+                        # CRC inválido - pode não ser frame STM32
+                        # Descarta primeiro byte e tenta novamente
+                        del self._rx_buf[0]
+                        continue
                 else:
-                    # Pacote STM incompleto, espera
+                    # Precisa de mais bytes
                     break
             else:
-                # Não é Header STM. Pode ser texto solto ou lixo.
-                # Consome 1 byte e continua
-                self._rx_buf = self._rx_buf[1:]
-                continue
-                
+                # Não parece resposta STM32, pode ser texto
+                # Procura por caracteres printáveis
+                if 32 <= self._rx_buf[0] <= 126 or self._rx_buf[0] in [0x0A, 0x0D]:
+                    # Tenta encontrar fim de linha
+                    newline_idx = -1
+                    for i, b in enumerate(self._rx_buf):
+                        if b == 0x0A:
+                            newline_idx = i
+                            break
+                    
+                    if newline_idx >= 0:
+                        line_bytes = bytes(self._rx_buf[:newline_idx])
+                        del self._rx_buf[:newline_idx + 1]
+                        try:
+                            line_str = line_bytes.decode('utf-8', errors='ignore').strip()
+                            if line_str:
+                                events.append(('line', line_str))
+                        except:
+                            pass
+                        continue
+                    else:
+                        # Sem newline ainda, espera mais dados
+                        break
+                else:
+                    # Byte não reconhecido, descarta
+                    del self._rx_buf[0]
+                    continue
+        
         return events
+
+    def clear(self):
+        """Limpa o buffer interno"""
+        self._rx_buf.clear()
