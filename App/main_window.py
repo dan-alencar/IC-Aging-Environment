@@ -3,9 +3,10 @@
 Main Window for CROC FPGA Monitor
 
 Redesigned interface with:
-- Visual sensor status grid
-- Large logging terminal
-- FPGA programming controls
+- Visual sensor status grid (4 registers, 2 active + 2 placeholder)
+- Aging analysis and logging system
+- Telemetry graphs
+- FPGA programming controls with auto-reprogram
 - STM32 voltage control
 """
 
@@ -26,6 +27,7 @@ from router import UARTRouter
 from fpga_manager import FPGAManager, BitstreamManager
 from sensor_widget import SensorVisualizationWidget
 from telemetry_widget import TelemetryWidget, TelemetryData
+from aging_analysis_widget import AgingAnalysisWidget
 from serial_thread import get_available_ports
 from protocol import (
     build_voltage_command, build_page_command, build_message_command,
@@ -54,6 +56,11 @@ class MainWindow(QMainWindow):
         self._init_ui()
         self._connect_signals()
         
+        # Timer for periodic updates (radiation time, etc.)
+        self.update_timer = QTimer()
+        self.update_timer.timeout.connect(self._periodic_update)
+        self.update_timer.start(1000)
+        
         # Auto-connect if port is configured
         QTimer.singleShot(500, self._auto_connect)
 
@@ -76,15 +83,23 @@ class MainWindow(QMainWindow):
         sensors_tab = self._create_sensors_tab()
         self.main_tabs.addTab(sensors_tab, "🎛 Sensors & Control")
         
-        # Tab 2: Telemetry Graphs
+        # Tab 2: Aging Analysis (NEW)
+        self.aging_widget = AgingAnalysisWidget()
+        self.main_tabs.addTab(self.aging_widget, "📈 Aging Analysis")
+        
+        # Tab 3: Telemetry Graphs
         telemetry_tab = self._create_telemetry_tab()
         self.main_tabs.addTab(telemetry_tab, "📊 Telemetry")
         
-        # Tab 3: Communication Log
+        # Tab 4: Communication Log
         log_tab = self._create_log_tab()
         self.main_tabs.addTab(log_tab, "📋 Log")
         
         main_layout.addWidget(self.main_tabs, 1)
+    
+    def _periodic_update(self):
+        """Periodic updates for time-dependent displays."""
+        self.aging_widget.update_display()
     
     def _create_sensors_tab(self) -> QWidget:
         """Create the sensors and control tab."""
@@ -495,6 +510,9 @@ class MainWindow(QMainWindow):
         self.fpga_manager.output.connect(self.log)
         self.fpga_manager.finished.connect(self._on_program_finished)
         self.fpga_manager.progress.connect(self.prog_bar.setValue)
+        
+        # Aging analysis signals
+        self.aging_widget.request_reprogram.connect(self._on_auto_reprogram_request)
 
     def _auto_connect(self):
         """Attempt to auto-connect to configured port."""
@@ -527,6 +545,13 @@ class MainWindow(QMainWindow):
         
         # Update visualization
         self.sensor_widget.updateSensorData(alarm_f, alarm_rf)
+        
+        # Check for new alarms and log to aging analysis
+        # This also handles auto-reprogram if enabled
+        new_alarms = self.aging_widget.check_alarms(alarm_f, alarm_rf)
+        
+        if new_alarms:
+            self.log(f"[AGING] New alarm detected! F=0x{alarm_f:08X} RF=0x{alarm_rf:08X}")
         
         # Store last values
         self._last_alarm_f = alarm_f
@@ -567,6 +592,14 @@ class MainWindow(QMainWindow):
         iout = data.get('iout', 0.0)
         power = vcore * iout
         self.lbl_power.setText(f"Power: {power:.3f} W")
+        
+        # Update aging logger with environmental data
+        self.aging_widget.set_environmental_data(
+            fpga_temp=data.get('fpga_temp'),
+            vccint=data.get('vccint'),
+            vcore=data.get('vcore'),
+            ambient_temp=data.get('ext_temp')
+        )
 
     @Slot(str)
     def _on_program_started(self, bitstream: str):
@@ -582,9 +615,37 @@ class MainWindow(QMainWindow):
         self.btn_program.setText("▶ PROGRAM FPGA")
         
         if success:
-            self.lbl_bitstream.setText(f"Bitstream: {self.bitstream_manager.current_name()}")
+            bitstream_name = self.bitstream_manager.current_name()
+            self.lbl_bitstream.setText(f"Bitstream: {bitstream_name}")
+            
+            # Update aging widget with new bitstream
+            self.aging_widget.set_current_bitstream(bitstream_name)
+            
+            # Log bitstream change to aging logger
+            cal = self.aging_widget.cal_manager.get_calibration(bitstream_name)
+            if cal:
+                self.log(f"[AGING] Bitstream changed to {bitstream_name} (Phase: {cal.phase_degrees:.2f}°, Slack: {cal.slack_ns:.3f} ns)")
         else:
             self.lbl_bitstream.setText("Bitstream: Programming failed")
+    
+    @Slot(str)
+    def _on_auto_reprogram_request(self, bitstream_name: str):
+        """Handle auto-reprogram request from aging analysis."""
+        self.log(f"[AUTO-REPROGRAM] Alarm triggered! Switching to: {bitstream_name}")
+        
+        # Find bitstream in list and program it
+        names = self.bitstream_manager.get_all_names()
+        if bitstream_name in names:
+            idx = names.index(bitstream_name)
+            self.bitstream_manager.set_index(idx)
+            self.cmb_bitstreams.setCurrentIndex(idx)
+            
+            # Start programming
+            bitstream_path = self.bitstream_manager.current()
+            if bitstream_path:
+                self.fpga_manager.program(bitstream_path)
+        else:
+            self.log(f"[ERROR] Bitstream not found: {bitstream_name}")
 
     # ========== UI Actions ==========
     
@@ -748,8 +809,16 @@ class MainWindow(QMainWindow):
         """Handle window close."""
         self.log("Shutting down...")
         
-        # Stop clock timer
+        # Stop timers
         self.clock_timer.stop()
+        self.update_timer.stop()
+        
+        # Save aging analysis data
+        try:
+            self.aging_widget.save_all()
+            self.log("Aging data saved.")
+        except Exception as e:
+            self.log(f"Warning: Could not save aging data: {e}")
         
         # Disconnect serial
         self.router.disconnect_serial()
