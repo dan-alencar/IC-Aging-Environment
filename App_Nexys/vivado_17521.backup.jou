@@ -1,0 +1,24 @@
+#-----------------------------------------------------------
+# Vivado v2025.2 (64-bit)
+# SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
+# IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+# SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+# Start of session at: Mon Jan 12 22:16:40 2026
+# Process ID         : 17521
+# Current directory  : /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/App_Nexys
+# Command line       : vivado
+# Log file           : /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/App_Nexys/vivado.log
+# Journal file       : /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/App_Nexys/vivado.jou
+# Running On         : dan-alencar
+# Platform           : Linuxmint
+# Operating System   : Linux Mint 22.2
+# Processor Detail   : Intel(R) Core(TM) 5 210H
+# CPU Frequency      : 434.306 MHz
+# CPU Physical cores : 8
+# CPU Logical cores  : 12
+# Host memory        : 24783 MB
+# Swap memory        : 2147 MB
+# Total Virtual      : 26931 MB
+# Available Virtual  : 22810 MB
+#-----------------------------------------------------------
+start_gui
