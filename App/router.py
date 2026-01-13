@@ -9,6 +9,12 @@ Handles bidirectional communication between:
 
 Parses text-based sensor output from CROC firmware:
   "F: 0x<alarm_f> | RF: 0x<alarm_rf>"
+  
+Parses telemetry from STM32:
+  "$TEL,Vc,X.XXX,Vi,X.XXX,Io,X.XXX,Et,XX.X,Mt,XX.X*CS"
+  
+Parses system telemetry from FPGA:
+  "$SYS,FT,XX.XX,VI,X.XXX,AF,XXXXXXXX,AR,XXXXXXXX*CS"
 """
 
 from PySide6.QtCore import QObject, Signal, Slot, QMutex
@@ -34,6 +40,7 @@ class UARTRouter(QObject):
         connection_status(str): Connection state changed
         log_message(str): General log message
         aging_data_received(dict): Parsed sensor data
+        telemetry_received(dict): Parsed telemetry data (STM32 + FPGA)
         raw_data_received(bytes): Raw bytes for debugging
     """
     
@@ -47,6 +54,9 @@ class UARTRouter(QObject):
     
     # Sensor data (parsed)
     aging_data_received = Signal(dict)
+    
+    # Telemetry data (STM32 + FPGA System Monitor)
+    telemetry_received = Signal(dict)
     
     # Raw data for debugging
     raw_data_received = Signal(bytes)
@@ -63,6 +73,19 @@ class UARTRouter(QObject):
         # RX buffer for reassembling fragmented data
         self._rx_buffer = bytearray()
         
+        # Latest telemetry values (accumulated from multiple sources)
+        self._telemetry = {
+            'vcore': 0.0,
+            'vin': 0.0,
+            'iout': 0.0,
+            'ext_temp': 0.0,
+            'mcu_temp': 0.0,
+            'fpga_temp': 0.0,
+            'vccint': 0.0,
+            'alarm_f': 0,
+            'alarm_rf': 0,
+        }
+        
         # Regex patterns for CROC output
         # Pattern 1: "F: 0x<hex> | RF: 0x<hex>"
         self._sensor_regex = re.compile(
@@ -74,6 +97,18 @@ class UARTRouter(QObject):
         self._sensor_regex_ext = re.compile(
             r'F:\s*0x([0-9A-Fa-f]+).*?RF:\s*0x([0-9A-Fa-f]+).*?'
             r'OBI_DMX:\s*0x([0-9A-Fa-f]+).*?UART:\s*0x([0-9A-Fa-f]+)',
+            re.IGNORECASE
+        )
+        
+        # Pattern 3: STM32 telemetry "$TEL,Vc,X.XXX,Vi,X.XXX,Io,X.XXX,Et,XX.X,Mt,XX.X*CS"
+        self._stm_telemetry_regex = re.compile(
+            r'\$TEL,Vc,([0-9.]+),Vi,([0-9.]+),Io,([0-9.]+),Et,([0-9.]+),Mt,([0-9.]+)\*([0-9A-Fa-f]{2})',
+            re.IGNORECASE
+        )
+        
+        # Pattern 4: FPGA system telemetry "$SYS,FT,XX.XX,VI,X.XXX,AF,XXXXXXXX,AR,XXXXXXXX*CS"
+        self._sys_telemetry_regex = re.compile(
+            r'\$SYS,FT,([0-9.]+),VI,([0-9.]+),AF,([0-9A-Fa-f]+),AR,([0-9A-Fa-f]+)\*([0-9A-Fa-f]{2})',
             re.IGNORECASE
         )
 
@@ -202,7 +237,7 @@ class UARTRouter(QObject):
             self._rx_buffer = self._rx_buffer[-1024:]
 
     def _process_line(self, line_bytes: bytes):
-        """Process a complete text line from CROC."""
+        """Process a complete text line from CROC/STM32."""
         try:
             line_str = line_bytes.decode('utf-8', errors='ignore').strip()
         except:
@@ -210,6 +245,80 @@ class UARTRouter(QObject):
         
         if not line_str:
             return
+        
+        # Check for STM32 telemetry format: $TEL,...*CS
+        stm_match = self._stm_telemetry_regex.search(line_str)
+        if stm_match:
+            try:
+                vcore = float(stm_match.group(1))
+                vin = float(stm_match.group(2))
+                iout = float(stm_match.group(3))
+                ext_temp = float(stm_match.group(4))
+                mcu_temp = float(stm_match.group(5))
+                # checksum = stm_match.group(6)  # Could verify
+                
+                # Update telemetry
+                self._telemetry.update({
+                    'vcore': vcore,
+                    'vin': vin,
+                    'iout': iout,
+                    'ext_temp': ext_temp,
+                    'mcu_temp': mcu_temp,
+                })
+                
+                # Emit combined telemetry
+                self.telemetry_received.emit(self._telemetry.copy())
+                
+                # Log
+                self.log_text_received.emit(
+                    f"[STM32] Vc={vcore:.3f}V Vi={vin:.2f}V Io={iout:.3f}A T={ext_temp:.1f}°C"
+                )
+                return
+            except ValueError:
+                pass
+        
+        # Check for FPGA system telemetry format: $SYS,...*CS
+        sys_match = self._sys_telemetry_regex.search(line_str)
+        if sys_match:
+            try:
+                fpga_temp = float(sys_match.group(1))
+                vccint = float(sys_match.group(2))
+                alarm_f = int(sys_match.group(3), 16)
+                alarm_rf = int(sys_match.group(4), 16)
+                # checksum = sys_match.group(5)
+                
+                # Update telemetry
+                self._telemetry.update({
+                    'fpga_temp': fpga_temp,
+                    'vccint': vccint,
+                    'alarm_f': alarm_f,
+                    'alarm_rf': alarm_rf,
+                })
+                
+                # Emit combined telemetry
+                self.telemetry_received.emit(self._telemetry.copy())
+                
+                # Also emit as aging data for sensor widget
+                sensor_data = {
+                    'alarm_f': alarm_f,
+                    'alarm_rf': alarm_rf,
+                    'alarm_f_count': bin(alarm_f).count('1'),
+                    'alarm_rf_count': bin(alarm_rf).count('1'),
+                    'dut_temp': fpga_temp,
+                    'dut_volt': vccint,
+                    'dut_slack': bin(alarm_f).count('1') + bin(alarm_rf).count('1'),
+                }
+                self.aging_data_received.emit(sensor_data)
+                
+                # Log
+                f_count = bin(alarm_f).count('1')
+                rf_count = bin(alarm_rf).count('1')
+                self.log_text_received.emit(
+                    f"[FPGA] T={fpga_temp:.2f}°C VCCINT={vccint:.3f}V Alarms={f_count+rf_count}"
+                )
+                return
+            except ValueError:
+                pass
         
         # Try extended sensor pattern first
         match = self._sensor_regex_ext.search(line_str)
@@ -231,6 +340,11 @@ class UARTRouter(QObject):
                     'dut_volt': 0.0,
                     'dut_slack': bin(alarm_f).count('1') + bin(alarm_rf).count('1'),
                 }
+                
+                # Update telemetry alarms
+                self._telemetry['alarm_f'] = alarm_f
+                self._telemetry['alarm_rf'] = alarm_rf
+                
                 self.aging_data_received.emit(sensor_data)
             except ValueError:
                 pass
@@ -251,12 +365,18 @@ class UARTRouter(QObject):
                         'dut_volt': 0.0,
                         'dut_slack': bin(alarm_f).count('1') + bin(alarm_rf).count('1'),
                     }
+                    
+                    # Update telemetry alarms
+                    self._telemetry['alarm_f'] = alarm_f
+                    self._telemetry['alarm_rf'] = alarm_rf
+                    
                     self.aging_data_received.emit(sensor_data)
                 except ValueError:
                     pass
         
-        # Always emit line to log
-        self.log_text_received.emit(f"[CROC] {line_str}")
+        # Always emit line to log (unless it was a telemetry packet)
+        if not line_str.startswith('$'):
+            self.log_text_received.emit(f"[CROC] {line_str}")
 
     def _handle_protocol_event(self, evt):
         """Handle parsed protocol events."""

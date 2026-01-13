@@ -25,6 +25,7 @@ import config
 from router import UARTRouter
 from fpga_manager import FPGAManager, BitstreamManager
 from sensor_widget import SensorVisualizationWidget
+from telemetry_widget import TelemetryWidget, TelemetryData
 from serial_thread import get_available_ports
 from protocol import (
     build_voltage_command, build_page_command, build_message_command,
@@ -68,35 +69,107 @@ class MainWindow(QMainWindow):
         # Top: Status bar
         self._create_status_bar(main_layout)
         
-        # Middle: Main content (splitter)
-        splitter = QSplitter(Qt.Horizontal)
+        # Main content: Tab widget with different views
+        self.main_tabs = QTabWidget()
         
-        # Left panel: Sensor visualization + Controls
+        # Tab 1: Sensors + Controls
+        sensors_tab = self._create_sensors_tab()
+        self.main_tabs.addTab(sensors_tab, "🎛 Sensors & Control")
+        
+        # Tab 2: Telemetry Graphs
+        telemetry_tab = self._create_telemetry_tab()
+        self.main_tabs.addTab(telemetry_tab, "📊 Telemetry")
+        
+        # Tab 3: Communication Log
+        log_tab = self._create_log_tab()
+        self.main_tabs.addTab(log_tab, "📋 Log")
+        
+        main_layout.addWidget(self.main_tabs, 1)
+    
+    def _create_sensors_tab(self) -> QWidget:
+        """Create the sensors and control tab."""
+        tab = QWidget()
+        layout = QHBoxLayout(tab)
+        
+        # Left: Sensor visualization
         left_panel = QWidget()
         left_layout = QVBoxLayout(left_panel)
         left_layout.setContentsMargins(0, 0, 0, 0)
         
-        # Sensor visualization
         self.sensor_widget = SensorVisualizationWidget()
         left_layout.addWidget(self.sensor_widget)
         
-        # Control tabs
+        # Control tabs below sensors
         self.control_tabs = QTabWidget()
         self._create_fpga_tab()
         self._create_stm32_tab()
         self._create_settings_tab()
         left_layout.addWidget(self.control_tabs)
         
-        splitter.addWidget(left_panel)
+        layout.addWidget(left_panel, 2)
         
-        # Right panel: Log terminal
-        right_panel = self._create_log_panel()
-        splitter.addWidget(right_panel)
+        # Right: Quick info panel
+        right_panel = self._create_quick_info_panel()
+        layout.addWidget(right_panel, 1)
         
-        # Set splitter proportions (60% left, 40% right)
-        splitter.setSizes([800, 500])
+        return tab
+    
+    def _create_telemetry_tab(self) -> QWidget:
+        """Create the telemetry graphs tab."""
+        self.telemetry_widget = TelemetryWidget()
+        return self.telemetry_widget
+    
+    def _create_log_tab(self) -> QWidget:
+        """Create the communication log tab."""
+        return self._create_log_panel()
+    
+    def _create_quick_info_panel(self) -> QWidget:
+        """Create a quick info panel showing current values."""
+        panel = QGroupBox("Quick Status")
+        layout = QVBoxLayout(panel)
         
-        main_layout.addWidget(splitter, 1)
+        # Current values
+        grid = QGridLayout()
+        
+        # STM32 values
+        grid.addWidget(QLabel("STM32 Power:"), 0, 0, 1, 2)
+        
+        self.lbl_vcore = QLabel("Vcore: ---")
+        self.lbl_vcore.setStyleSheet("color: #4fc3f7;")
+        grid.addWidget(self.lbl_vcore, 1, 0)
+        
+        self.lbl_vin = QLabel("Vin: ---")
+        self.lbl_vin.setStyleSheet("color: #ffc107;")
+        grid.addWidget(self.lbl_vin, 1, 1)
+        
+        self.lbl_iout = QLabel("Iout: ---")
+        self.lbl_iout.setStyleSheet("color: #ff5722;")
+        grid.addWidget(self.lbl_iout, 2, 0)
+        
+        self.lbl_ext_temp = QLabel("Ext T: ---")
+        self.lbl_ext_temp.setStyleSheet("color: #4caf50;")
+        grid.addWidget(self.lbl_ext_temp, 2, 1)
+        
+        # FPGA values
+        grid.addWidget(QLabel("FPGA Monitor:"), 3, 0, 1, 2)
+        
+        self.lbl_fpga_temp = QLabel("FPGA T: ---")
+        self.lbl_fpga_temp.setStyleSheet("color: #e91e63;")
+        grid.addWidget(self.lbl_fpga_temp, 4, 0)
+        
+        self.lbl_vccint = QLabel("VCCINT: ---")
+        self.lbl_vccint.setStyleSheet("color: #9c27b0;")
+        grid.addWidget(self.lbl_vccint, 4, 1)
+        
+        # Power calculation
+        self.lbl_power = QLabel("Power: ---")
+        self.lbl_power.setStyleSheet("font-weight: bold; color: #fff;")
+        grid.addWidget(self.lbl_power, 5, 0, 1, 2)
+        
+        layout.addLayout(grid)
+        layout.addStretch()
+        
+        return panel
 
     def _create_status_bar(self, parent_layout):
         """Create the status bar at the top."""
@@ -415,6 +488,7 @@ class MainWindow(QMainWindow):
         self.router.log_text_received.connect(self.log)
         self.router.aging_data_received.connect(self._on_sensor_data)
         self.router.stm_frame_received.connect(self._on_stm_frame)
+        self.router.telemetry_received.connect(self._on_telemetry_data)
         
         # FPGA manager signals
         self.fpga_manager.started.connect(self._on_program_started)
@@ -467,6 +541,32 @@ class MainWindow(QMainWindow):
                 self.log(f"[STM32] OK - {data.get('func', 'UNK')}")
             elif evt_type == 'error':
                 self.log(f"[STM32] ERROR - {data.get('err', 'UNK')}")
+
+    @Slot(dict)
+    def _on_telemetry_data(self, data: dict):
+        """Handle telemetry data from router."""
+        # Update telemetry widget
+        self.telemetry_widget.updateFromDict(data)
+        
+        # Update quick info labels
+        if 'vcore' in data:
+            self.lbl_vcore.setText(f"Vcore: {data['vcore']:.3f} V")
+        if 'vin' in data:
+            self.lbl_vin.setText(f"Vin: {data['vin']:.2f} V")
+        if 'iout' in data:
+            self.lbl_iout.setText(f"Iout: {data['iout']:.3f} A")
+        if 'ext_temp' in data:
+            self.lbl_ext_temp.setText(f"Ext T: {data['ext_temp']:.1f} °C")
+        if 'fpga_temp' in data:
+            self.lbl_fpga_temp.setText(f"FPGA T: {data['fpga_temp']:.2f} °C")
+        if 'vccint' in data:
+            self.lbl_vccint.setText(f"VCCINT: {data['vccint']:.3f} V")
+        
+        # Calculate and display power
+        vcore = data.get('vcore', 0.0)
+        iout = data.get('iout', 0.0)
+        power = vcore * iout
+        self.lbl_power.setText(f"Power: {power:.3f} W")
 
     @Slot(str)
     def _on_program_started(self, bitstream: str):
