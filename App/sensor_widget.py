@@ -203,7 +203,7 @@ class SensorVisualizationWidget(QWidget):
     """
     
     # Signal emitted when sensor data is updated
-    data_updated = Signal(int, int)  # alarm_f, alarm_rf
+    data_updated = Signal(object, object)  # alarm_f, alarm_rf
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -272,8 +272,8 @@ class SensorVisualizationWidget(QWidget):
         
         layout.addLayout(summary_layout)
     
-    @Slot(int, int)
-    def updateSensorData(self, alarm_f: int, alarm_rf: int):
+    @Slot(object, object)
+    def updateSensorData(self, alarm_f, alarm_rf):
         """Update both active sensor registers with new values."""
         self.alarm_f_widget.setValue(alarm_f)
         self.alarm_rf_widget.setValue(alarm_rf)

@@ -1,0 +1,122 @@
+#-----------------------------------------------------------
+# Vivado v2025.1 (64-bit)
+# SW Build 6140274 on Wed May 21 22:58:25 MDT 2025
+# IP Build 6138677 on Thu May 22 03:10:11 MDT 2025
+# SharedData Build 6139179 on Tue May 20 17:58:58 MDT 2025
+# Start of session at: Tue Jan 13 21:43:17 2026
+# Process ID         : 277756
+# Current directory  : /home/danilo-alencar/Documents/GitHub/IC-Aging-Environment/App
+# Command line       : vivado -mode batch -source /home/danilo-alencar/Documents/GitHub/IC-Aging-Environment/App/reset_fpga.tcl -tclargs /home/danilo-alencar/AGINGSENSORS/AGINGSENSORS.runs/impl_1/croc_xilinx.ltx
+# Log file           : /home/danilo-alencar/Documents/GitHub/IC-Aging-Environment/App/vivado.log
+# Journal file       : /home/danilo-alencar/Documents/GitHub/IC-Aging-Environment/App/vivado.jou
+# Running On         : daniloalencar.lesc.ufc.br
+# Platform           : Linuxmint
+# Operating System   : Linux Mint 22.1
+# Processor Detail   : Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz
+# CPU Frequency      : 3999.895 MHz
+# CPU Physical cores : 4
+# CPU Logical cores  : 8
+# Host memory        : 33603 MB
+# Swap memory        : 2147 MB
+# Total Virtual      : 35751 MB
+# Available Virtual  : 23946 MB
+#-----------------------------------------------------------
+source /home/danilo-alencar/Documents/GitHub/IC-Aging-Environment/App/reset_fpga.tcl
+# if { $argc > 0 } {
+#     set probes_file [lindex $argv 0]
+# } else {
+#     set probes_file ""
+# }
+# puts "============================================================"
+============================================================
+# puts "FPGA Soft Reset via VIO"
+FPGA Soft Reset via VIO
+# if { $probes_file != "" } {
+#     puts "Probes File: $probes_file"
+# }
+Probes File: /home/danilo-alencar/AGINGSENSORS/AGINGSENSORS.runs/impl_1/croc_xilinx.ltx
+# puts "============================================================"
+============================================================
+# open_hw_manager
+# if { [catch {connect_hw_server -url localhost:3121 -allow_non_jtag} err] } {
+#     if { [catch {connect_hw_server -url localhost:3121} err2] } {
+#         puts "ERROR: Failed to connect to hardware server: $err2"
+#         exit 1
+#     }
+# }
+INFO: [Labtools 27-2285] Connecting to hw_server url TCP:localhost:3121
+INFO: [Labtools 27-3415] Connecting to cs_server url TCP:localhost:0
+INFO: [Labtools 27-3417] Launching cs_server...
+INFO: [Labtools 27-2221] Launch Output:
+
+
+******** Xilinx cs_server v2025.1.0
+  ****** Build date   : May 13 2025-16:15:27
+    **** Build number : 2025.1.1747163727
+      ** Copyright 2017-2022 Xilinx, Inc. All Rights Reserved.
+      ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+
+
+# if { [catch {open_hw_target} err] } {
+#     puts "ERROR: Failed to open hardware target: $err"
+#     exit 1
+# }
+INFO: [Labtoolstcl 44-466] Opening hw_target localhost:3121/xilinx_tcf/Xilinx/0ABC01
+# set devices [get_hw_devices]
+# if { [llength $devices] == 0 } {
+#     puts "ERROR: No FPGA devices found."
+#     exit 1
+# }
+# set device [lindex $devices 0]
+# current_hw_device $device
+# puts "Selected device: $device"
+Selected device: xcau15p_0
+# if { $probes_file != "" && [file exists $probes_file] } {
+#     puts "Setting PROBES.FILE to: $probes_file"
+#     set_property PROBES.FILE $probes_file $device
+# } else {
+#     puts "WARNING: No probes file provided or file not found."
+#     puts "Vivado might not match the VIO core correctly."
+# }
+Setting PROBES.FILE to: /home/danilo-alencar/AGINGSENSORS/AGINGSENSORS.runs/impl_1/croc_xilinx.ltx
+# refresh_hw_device $device
+INFO: [Labtools 27-2302] Device xcau15p (JTAG device index = 0) is programmed with a design that has 1 VIO core(s).
+INFO: [Labtools 27-1889] Uploading output probe values for VIO core [hw_vio_1]
+# puts "Locating VIO core (i_vio)..."
+Locating VIO core (i_vio)...
+# set vios [get_hw_vios -of_objects $device -filter {CELL_NAME=~"i_vio"}]
+# if { $vios == "" } {
+#     puts "ERROR: VIO core 'i_vio' not found."
+#     puts "Debug info: [get_hw_vios -of_objects $device]"
+#     exit 1
+# }
+# set vio [lindex $vios 0]
+# puts "Found VIO: $vio"
+Found VIO: hw_vio_1
+# set reset_probe [get_hw_probes vio_reset -of_objects $vio]
+# if { $reset_probe == "" } {
+#     puts "ERROR: Probe 'vio_reset' not found in VIO core."
+#     exit 1
+# }
+# puts "Step 1: Asserting Reset (0)..."
+Step 1: Asserting Reset (0)...
+# set_property OUTPUT_VALUE 0 $reset_probe
+# commit_hw_vio $reset_probe
+# after 100
+# puts "Step 2: Deasserting Reset (1)..."
+Step 2: Deasserting Reset (1)...
+# set_property OUTPUT_VALUE 1 $reset_probe
+# commit_hw_vio $reset_probe
+# puts "============================================================"
+============================================================
+# puts "SUCCESS: FPGA Reset Sequence Completed."
+SUCCESS: FPGA Reset Sequence Completed.
+# puts "============================================================"
+============================================================
+# close_hw_target
+INFO: [Labtoolstcl 44-464] Closing hw_target localhost:3121/xilinx_tcf/Xilinx/0ABC01
+# disconnect_hw_server
+# close_hw_manager
+# exit 0
+INFO: [Common 17-206] Exiting Vivado at Tue Jan 13 21:43:25 2026...

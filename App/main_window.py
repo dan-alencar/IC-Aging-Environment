@@ -123,9 +123,39 @@ class MainWindow(QMainWindow):
         
         layout.addWidget(left_panel, 2)
         
-        # Right: Quick info panel
-        right_panel = self._create_quick_info_panel()
-        layout.addWidget(right_panel, 1)
+        # Criamos um container para empilhar o painel e o botão
+        right_container = QWidget()
+        right_layout = QVBoxLayout(right_container)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(10)
+
+        # 1. Quick Info Panel
+        quick_info = self._create_quick_info_panel()
+        right_layout.addWidget(quick_info)
+
+        # 2. Reset Button (NOVO)
+        self.btn_reset_fpga = QPushButton("⚠️ RESET FPGA (VIO)")
+        self.btn_reset_fpga.setMinimumHeight(45)
+        self.btn_reset_fpga.setToolTip("Triggers a soft reset via VIO 'vio_reset' probe")
+        self.btn_reset_fpga.setStyleSheet("""
+            QPushButton {
+                background-color: #d32f2f;
+                color: white;
+                font-weight: bold;
+                font-size: 11pt;
+                border: 1px solid #b71c1c;
+                border-radius: 5px;
+            }
+            QPushButton:hover { background-color: #f44336; }
+            QPushButton:pressed { background-color: #b71c1c; }
+        """)
+        self.btn_reset_fpga.clicked.connect(self._reset_fpga_action)
+        right_layout.addWidget(self.btn_reset_fpga)
+        
+        # Empurra tudo para cima
+        right_layout.addStretch()
+        
+        layout.addWidget(right_container, 1)
         
         return tab
     
@@ -265,7 +295,7 @@ class MainWindow(QMainWindow):
         
         layout.addWidget(bitstream_group)
         
-        # Programming group
+        # --- Programming group ---
         prog_group = QGroupBox("FPGA Programming")
         pg_layout = QVBoxLayout(prog_group)
         
@@ -275,30 +305,34 @@ class MainWindow(QMainWindow):
         self.prog_bar.setValue(0)
         pg_layout.addWidget(self.prog_bar)
         
-        # Program button
-        self.btn_program = QPushButton("▶ PROGRAM FPGA")
+        # Buttons Layout
+        btns_layout = QHBoxLayout()
+        
+        # SRAM Button (Default)
+        self.btn_program = QPushButton("▶ PROGRAM (SRAM)")
         self.btn_program.setMinimumHeight(50)
+        self.btn_program.setToolTip("Fast, volatile programming (lost on power cycle). Uses .bit files.")
         self.btn_program.setStyleSheet("""
-            QPushButton {
-                background-color: #0d6efd;
-                color: white;
-                font-weight: bold;
-                font-size: 12pt;
-                border-radius: 5px;
-            }
-            QPushButton:hover {
-                background-color: #0b5ed7;
-            }
-            QPushButton:pressed {
-                background-color: #0a58ca;
-            }
-            QPushButton:disabled {
-                background-color: #4a4a52;
-                color: #7f7f7f;
-            }
+            QPushButton { background-color: #0d6efd; color: white; font-weight: bold; font-size: 11pt; border-radius: 5px; }
+            QPushButton:hover { background-color: #0b5ed7; }
+            QPushButton:pressed { background-color: #0a58ca; }
         """)
-        self.btn_program.clicked.connect(self._program_fpga)
-        pg_layout.addWidget(self.btn_program)
+        self.btn_program.clicked.connect(lambda: self._program_fpga(mode="sram"))
+        btns_layout.addWidget(self.btn_program)
+        
+        # FLASH Button (New)
+        self.btn_flash = QPushButton("⚡ BURN FLASH")
+        self.btn_flash.setMinimumHeight(50)
+        self.btn_flash.setToolTip("Slow, persistent programming (keeps after reboot). Requires .bin files.")
+        self.btn_flash.setStyleSheet("""
+            QPushButton { background-color: #d63384; color: white; font-weight: bold; font-size: 11pt; border-radius: 5px; }
+            QPushButton:hover { background-color: #c2185b; }
+            QPushButton:pressed { background-color: #a0134a; }
+        """)
+        self.btn_flash.clicked.connect(lambda: self._program_fpga(mode="flash"))
+        btns_layout.addWidget(self.btn_flash)
+        
+        pg_layout.addLayout(btns_layout)
         
         # Vivado path display
         vivado_path = config.VIVADO_PATH or "Not found"
@@ -522,6 +556,36 @@ class MainWindow(QMainWindow):
             self.btn_connect.setChecked(True)
 
     # ========== Slot Handlers ==========
+
+    @Slot()
+    def _reset_fpga_action(self):
+        """Handler for the Reset FPGA button."""
+        
+        # Tenta achar o arquivo LTX baseado no bitstream selecionado
+        current_bit = self.bitstream_manager.current()
+        ltx_path = None
+        
+        if current_bit:
+            # Remove a extensão (.bit ou .bin) e adiciona .ltx
+            base_path = os.path.splitext(current_bit)[0]
+            candidate = base_path + ".ltx"
+            
+            if os.path.exists(candidate):
+                ltx_path = candidate
+            else:
+                # Se não achar, avisa mas permite tentar (vai falhar no TCL provavelmente)
+                self.router.log_message.emit(f"⚠ Warning: .ltx file not found for {os.path.basename(current_bit)}")
+
+        reply = QMessageBox.question(
+            self, "Confirm Reset",
+            "Are you sure you want to reset the FPGA logic?\n"
+            "This will toggle the VIO reset probe.",
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            # Passa o caminho do LTX para o manager
+            self.fpga_manager.reset(ltx_path)
     
     @Slot(str)
     def _on_connection_status(self, status: str):
@@ -702,17 +766,31 @@ class MainWindow(QMainWindow):
         if self.bitstream_manager.advance():
             self.cmb_bitstreams.setCurrentIndex(self.bitstream_manager.get_index())
 
-    def _program_fpga(self):
-        """Start FPGA programming."""
+    def _program_fpga(self, mode="sram"):
+        """Start FPGA programming (SRAM or FLASH)."""
         idx = self.cmb_bitstreams.currentIndex()
         self.bitstream_manager.set_index(idx)
         
-        bitstream = self.bitstream_manager.current()
-        if not bitstream:
-            self.log("No bitstream selected!")
+        current_file = self.bitstream_manager.current()
+        if not current_file:
+            self.log("No file selected!")
             return
         
-        self.fpga_manager.program(bitstream)
+        target_file = current_file
+        
+        # Se for Flash, tenta achar o .bin correspondente ao .bit selecionado
+        if mode == "flash":
+            if current_file.lower().endswith('.bit'):
+                bin_candidate = current_file[:-4] + ".bin"
+                if os.path.exists(bin_candidate):
+                    target_file = bin_candidate
+                    self.log(f"Auto-selected .bin file for flash: {os.path.basename(target_file)}")
+                else:
+                    self.log(f"Error: .bin file not found for flash programming. Expected: {bin_candidate}")
+                    QMessageBox.warning(self, "Missing File", f"Flash programming requires a .bin file.\nCould not find: {bin_candidate}\n\nPlease generate a bin file in Vivado.")
+                    return
+        
+        self.fpga_manager.program(target_file, mode=mode)
 
     def _set_voltage(self):
         """Send voltage command to STM32."""

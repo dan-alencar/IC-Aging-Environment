@@ -1,112 +1,146 @@
 # ==============================================================================
-# FPGA Programming Script for Vivado
+# FPGA Programming Script for Vivado (JTAG & FLASH Support)
 # ==============================================================================
-# Usage: vivado -mode batch -source program_fpga.tcl -tclargs <bitstream_path>
-#
-# This script programs an FPGA via JTAG using Vivado Hardware Manager.
-# Compatible with both Vivado and Vivado Lab editions.
+# Usage: 
+#   SRAM:  vivado -mode batch -source program_fpga.tcl -tclargs <file.bit>
+#   FLASH: vivado -mode batch -source program_fpga.tcl -tclargs <file.bin> -flash
 # ==============================================================================
 
-# Check arguments
+# --- Configuration ---
+set FLASH_PART "mt25qu01g-spi-x1_x2_x4"
+
+# --- Argument Parsing ---
 if { $argc < 1 } {
-    puts "ERROR: Bitstream path not provided."
-    puts "Usage: vivado -mode batch -source program_fpga.tcl -tclargs <bitstream.bit>"
+    puts "ERROR: File path not provided."
     exit 1
 }
 
-set bit_file [lindex $argv 0]
+set file_path [lindex $argv 0]
+set mode "sram"
 
-# Verify bitstream file exists
-if { ![file exists $bit_file] } {
-    puts "ERROR: Bitstream file not found: $bit_file"
+if { $argc > 1 && [lindex $argv 1] == "-flash" } {
+    set mode "flash"
+}
+
+# Verify file exists
+if { ![file exists $file_path] } {
+    puts "ERROR: File not found: $file_path"
     exit 1
 }
 
 puts "============================================================"
-puts "FPGA Programming Script"
-puts "============================================================"
-puts "Bitstream: $bit_file"
+puts "FPGA Programming Script ($mode mode)"
+puts "File: $file_path"
 puts "============================================================"
 
 # Open Hardware Manager
 puts "Opening Hardware Manager..."
 open_hw_manager
 
-# Connect to local hardware server
-# The -allow_non_jtag flag permits connections even if non-JTAG devices are present
-puts "Connecting to hardware server (localhost:3121)..."
+# Connect to Server
+puts "Connecting to hardware server..."
+# Try connecting allowing non-JTAG devices (sometimes needed for xvc/bridges)
 if { [catch {connect_hw_server -url localhost:3121 -allow_non_jtag} err] } {
-    puts "WARNING: Could not connect with -allow_non_jtag, trying without..."
     if { [catch {connect_hw_server -url localhost:3121} err2] } {
         puts "ERROR: Failed to connect to hardware server: $err2"
-        puts "Make sure hw_server is running or Vivado can start it."
-        close_hw_manager
         exit 1
     }
 }
 
-# Open the hardware target (JTAG cable)
+# Open Target
 puts "Opening hardware target..."
 if { [catch {open_hw_target} err] } {
     puts "ERROR: Failed to open hardware target: $err"
-    puts "Check that the JTAG cable is connected and detected."
-    disconnect_hw_server
-    close_hw_manager
     exit 1
 }
 
-# Get list of devices on the JTAG chain
+# Select Device
 set devices [get_hw_devices]
 if { [llength $devices] == 0 } {
-    puts "ERROR: No FPGA devices found on JTAG chain."
-    close_hw_target
-    disconnect_hw_server
-    close_hw_manager
+    puts "ERROR: No FPGA devices found."
     exit 1
 }
-
-puts "Found [llength $devices] device(s) on JTAG chain:"
-foreach dev $devices {
-    puts "  - $dev"
-}
-
-# Select the first device (typically the FPGA)
 set device [lindex $devices 0]
-puts "Selecting device: $device"
 current_hw_device $device
+puts "Selected device: $device"
 
-# Refresh the device to ensure it's ready
-puts "Refreshing device..."
+# Initial Refresh
 refresh_hw_device -update_hw_probes false $device
 
-# Configure the programming file
-puts "Setting bitstream file..."
-set_property PROGRAM.FILE $bit_file $device
+if { $mode == "sram" } {
+    # ==============================================================
+    # SRAM Programming (Bitstream .bit)
+    # ==============================================================
+    puts "Configuring SRAM programming..."
+    set_property PROGRAM.FILE $file_path $device
+    
+    puts "Programming FPGA (SRAM)..."
+    if { [catch {program_hw_devices $device} err] } {
+        puts "ERROR: Programming failed: $err"
+        exit 1
+    }
 
-# Program the FPGA
-puts "Programming FPGA..."
-puts "This may take a moment..."
+} else {
+    # ==============================================================
+    # FLASH Programming (Configuration Memory .bin)
+    # ==============================================================
+    puts "Configuring FLASH programming ($FLASH_PART)..."
 
-if { [catch {program_hw_devices $device} err] } {
-    puts "ERROR: Programming failed: $err"
-    close_hw_target
-    disconnect_hw_server
-    close_hw_manager
-    exit 1
+    # 1. CLEANUP: Delete existing cfgmem object if it exists (Crucial fix!)
+    set existing_mem [get_property PROGRAM.HW_CFGMEM $device]
+    if { $existing_mem != "" } {
+        puts "Cleaning up previous memory configuration..."
+        delete_hw_cfgmem $existing_mem
+    }
+
+    # 2. Create configuration memory device (Explicit SPIx4 interface)
+    puts "Creating configuration memory device..."
+    create_hw_cfgmem -hw_device $device -interface SPIx4 -size 1024 [lindex [get_cfgmem_parts $FLASH_PART] 0]
+    
+    # Refresh to get the handle properly
+    set mem_obj [get_property PROGRAM.HW_CFGMEM $device]
+
+    if { $mem_obj == "" } {
+        puts "ERROR: Failed to create hardware configuration memory object."
+        exit 1
+    }
+
+    # 3. Configure Programming Properties
+    set_property PROGRAM.BLANK_CHECK  0 $mem_obj
+    set_property PROGRAM.ERASE        1 $mem_obj
+    set_property PROGRAM.CFG_PROGRAM  1 $mem_obj
+    set_property PROGRAM.VERIFY       1 $mem_obj
+    set_property PROGRAM.CHECKSUM     0 $mem_obj
+    
+    # 4. Set the file
+    set_property PROGRAM.ADDRESS_RANGE {use_file} $mem_obj
+    set_property PROGRAM.FILES [list $file_path] $mem_obj
+    set_property PROGRAM.PRM_FILE {} $mem_obj
+    set_property PROGRAM.UNUSED_PIN_TERMINATION {pull-none} $mem_obj
+
+    # 5. Refresh device before programming (Ensures indirect core is ready)
+    puts "Refreshing device state..."
+    refresh_hw_device $device
+
+    # 6. Program Flash
+    puts "Starting Flash Erase/Program/Verify cycle..."
+    puts "This takes significantly longer than SRAM programming. Please wait."
+    
+    if { [catch {program_hw_cfgmem -hw_cfgmem $mem_obj} err] } {
+        puts "ERROR: Flash programming failed: $err"
+        exit 1
+    }
 }
 
-# Verify programming (optional - refresh device state)
-puts "Verifying..."
+# Cleanup
+puts "Verifying state..."
 refresh_hw_device $device
-
-# Clean up
 puts "Closing connections..."
 close_hw_target
 disconnect_hw_server
 close_hw_manager
 
 puts "============================================================"
-puts "FPGA Programming Completed Successfully!"
+puts "SUCCESS: Operation Complete."
 puts "============================================================"
-
 exit 0

@@ -13,6 +13,7 @@ import time
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Optional
+import numpy as np # Garanta que numpy está importado no topo ou aqui
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
@@ -407,6 +408,13 @@ class TelemetryWidget(QWidget):
             self.disp_alarms.setColor('#ffc107')  # Amber
         else:
             self.disp_alarms.setColor('#4caf50')  # Green
+
+    # Função auxiliar para limpar dados (substitui NaN/Inf por 0)
+    def clean(self, arr):
+        # Converte para array numpy se ainda não for
+        a = np.array(arr, dtype=np.float64)
+        # Substitui Infinite e NaN por 0.0
+        return np.nan_to_num(a, nan=0.0, posinf=0.0, neginf=0.0)
     
     def _update_plots(self):
         """Update plot curves with current data."""
@@ -416,27 +424,42 @@ class TelemetryWidget(QWidget):
         data = self.buffer.get_arrays()
         t = data['time']
         
+        # Proteção contra vetores vazios ou únicos
         if len(t) < 2:
             return
-        
-        # Update curves
+
+        # Import numpy localmente para garantir limpeza de dados
+        import numpy as np
+        def clean(arr):
+            # Substitui NaN e Inf por 0.0 para evitar crash do Qt
+            return np.nan_to_num(np.array(arr, dtype=np.float64), nan=0.0, posinf=0.0, neginf=0.0)
+
+        # Atualiza as curvas com dados limpos
         if 'vcore' in self.curves:
-            self.curves['vcore'].setData(t, data['vcore'])
+            self.curves['vcore'].setData(t, clean(data['vcore']))
         if 'vin' in self.curves:
-            self.curves['vin'].setData(t, data['vin'])
+            self.curves['vin'].setData(t, clean(data['vin']))
         if 'vccint' in self.curves:
-            self.curves['vccint'].setData(t, data['vccint'])
+            self.curves['vccint'].setData(t, clean(data['vccint']))
         if 'iout' in self.curves:
-            self.curves['iout'].setData(t, data['iout'])
+            self.curves['iout'].setData(t, clean(data['iout']))
         if 'ext_temp' in self.curves:
-            self.curves['ext_temp'].setData(t, data['ext_temp'])
+            self.curves['ext_temp'].setData(t, clean(data['ext_temp']))
         if 'fpga_temp' in self.curves:
-            self.curves['fpga_temp'].setData(t, data['fpga_temp'])
+            self.curves['fpga_temp'].setData(t, clean(data['fpga_temp']))
         
-        # Auto-scale if enabled
+        # LÓGICA CORRIGIDA DE ESCALA:
         if self.chk_autoscale.isChecked():
             for plot in self.plots.values():
-                plot.enableAutoRange()
+                # 1. Trava o Eixo Y no modo automático (acompanha amplitude do sinal)
+                plot.enableAutoRange(axis='y')
+                
+                # 2. Desativa AutoRange no X (evita o tremor/interpolação)
+                plot.disableAutoRange(axis='x')
+                
+                # 3. Define manualmente o intervalo X para seguir os dados (scrolling suave)
+                # padding=0 garante que não haja margem branca tremendo nas bordas
+                plot.setXRange(t[0], t[-1], padding=0)
     
     def _on_history_changed(self, value: int):
         """Handle history size change."""
