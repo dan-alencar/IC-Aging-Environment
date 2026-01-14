@@ -1,0 +1,24 @@
+#-----------------------------------------------------------
+# Vivado v2025.1 (64-bit)
+# SW Build 6140274 on Wed May 21 22:58:25 MDT 2025
+# IP Build 6138677 on Thu May 22 03:10:11 MDT 2025
+# SharedData Build 6139179 on Tue May 20 17:58:58 MDT 2025
+# Start of session at: Tue Jan 13 21:41:12 2026
+# Process ID         : 276700
+# Current directory  : /home/danilo-alencar/Documents/GitHub/IC-Aging-Environment/App
+# Command line       : vivado -mode batch -source /home/danilo-alencar/Documents/GitHub/IC-Aging-Environment/App/reset_fpga.tcl -tclargs /home/danilo-alencar/AGINGSENSORS/AGINGSENSORS.runs/impl_1/croc_xilinx.ltx
+# Log file           : /home/danilo-alencar/Documents/GitHub/IC-Aging-Environment/App/vivado.log
+# Journal file       : /home/danilo-alencar/Documents/GitHub/IC-Aging-Environment/App/vivado.jou
+# Running On         : daniloalencar.lesc.ufc.br
+# Platform           : Linuxmint
+# Operating System   : Linux Mint 22.1
+# Processor Detail   : Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz
+# CPU Frequency      : 4089.001 MHz
+# CPU Physical cores : 4
+# CPU Logical cores  : 8
+# Host memory        : 33603 MB
+# Swap memory        : 2147 MB
+# Total Virtual      : 35751 MB
+# Available Virtual  : 24000 MB
+#-----------------------------------------------------------
+source /home/danilo-alencar/Documents/GitHub/IC-Aging-Environment/App/reset_fpga.tcl

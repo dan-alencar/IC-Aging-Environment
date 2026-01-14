@@ -39,6 +39,7 @@ class FPGAManager(QObject):
         
         # Get TCL script path (same directory as this module)
         self._tcl_script = str(Path(__file__).parent / "program_fpga.tcl")
+        self._tcl_reset = str(Path(__file__).parent / "reset_fpga.tcl") # NOVO
 
     def _find_vivado(self) -> str:
         """
@@ -77,24 +78,29 @@ class FPGAManager(QObject):
         """Check if Vivado is available for programming."""
         return bool(self._find_vivado())
 
-    def program(self, bitstream_path: str):
+    def program(self, file_path: str, mode: str = "sram"):
         """
-        Start programming the FPGA with the specified bitstream.
+        Start programming the FPGA.
         
         Args:
-            bitstream_path: Path to the .bit file
+            file_path: Path to the .bit or .bin file
+            mode: "sram" (default) or "flash"
         """
         if self.is_programming:
             self.output.emit("⚠ Another programming operation is in progress.")
             return
         
-        # Validate bitstream file
-        if not os.path.exists(bitstream_path):
-            self.output.emit(f"✗ Bitstream file not found: {bitstream_path}")
-            self.finished.emit(False, "Bitstream file not found")
+        # Validate file
+        if not os.path.exists(file_path):
+            self.output.emit(f"✗ File not found: {file_path}")
+            self.finished.emit(False, "File not found")
             return
+            
+        # Check extensions warning
+        if mode == "flash" and not file_path.lower().endswith('.bin'):
+            self.output.emit("⚠ Warning: Flash programming usually requires a .bin file.")
         
-        # Find Vivado
+        # Find Vivado and Script (Copy existing logic here...)
         vivado_exe = self._find_vivado()
         if not vivado_exe:
             msg = (
@@ -120,25 +126,79 @@ class FPGAManager(QObject):
         self.process.errorOccurred.connect(self._handle_error)
         
         # Build command arguments
-        bit_abspath = os.path.abspath(bitstream_path)
+        file_abspath = os.path.abspath(file_path)
         tcl_abspath = os.path.abspath(self._tcl_script)
         
-        args = ["-mode", "batch", "-source", tcl_abspath, "-tclargs", bit_abspath]
+        # Base arguments
+        args = ["-mode", "batch", "-source", tcl_abspath, "-tclargs", file_abspath]
         
-        # Start programming
-        self._current_bitstream = os.path.basename(bitstream_path)
+        # Add flash flag if needed
+        if mode == "flash":
+            args.append("-flash")
+        
+        # UI Updates
+        self._current_bitstream = os.path.basename(file_path)
         self.is_programming = True
         
+        mode_str = "FLASH (Persistent)" if mode == "flash" else "SRAM (Volatile)"
+        
         self.output.emit("=" * 60)
-        self.output.emit(f"▶ Starting FPGA Programming")
-        self.output.emit(f"  Bitstream: {self._current_bitstream}")
-        self.output.emit(f"  Vivado: {vivado_exe}")
+        self.output.emit(f"▶ Starting FPGA Programming [{mode_str}]")
+        self.output.emit(f"  File: {self._current_bitstream}")
         self.output.emit("=" * 60)
         
         self.started.emit(self._current_bitstream)
-        self.progress.emit(10)
+        self.progress.emit(5)
         
-        # Start the process
+        # Start
+        self.process.start(vivado_exe, args)
+
+    def reset(self, ltx_path: str = None):
+        """
+        Trigger FPGA Reset via VIO.
+        Args:
+            ltx_path: Full path to the .ltx debug probes file.
+        """
+        if self.is_programming:
+            self.output.emit("⚠ Another operation is in progress.")
+            return
+
+        vivado_exe = self._find_vivado()
+        if not vivado_exe:
+            self.output.emit("✗ Vivado executable not found.")
+            return
+
+        if not os.path.exists(self._tcl_reset):
+            self.output.emit(f"✗ Reset script not found: {self._tcl_reset}")
+            return
+
+        self.process = QProcess(self)
+        self.process.readyReadStandardOutput.connect(self._handle_stdout)
+        self.process.readyReadStandardError.connect(self._handle_stderr)
+        self.process.finished.connect(self._handle_finished)
+        self.process.errorOccurred.connect(self._handle_error)
+
+        # Pass the LTX file to the TCL script
+        args = ["-mode", "batch", "-source", self._tcl_reset]
+        
+        if ltx_path:
+            # Check if file exists before passing
+            if os.path.exists(ltx_path):
+                args.extend(["-tclargs", ltx_path])
+            else:
+                self.output.emit(f"⚠ Warning: LTX file not found at {ltx_path}")
+                # We try running anyway, maybe user relies on luck (but likely fails)
+
+        self.is_programming = True
+        
+        self.output.emit("=" * 60)
+        self.output.emit("▶ STARTING FPGA RESET (VIO)...")
+        if ltx_path:
+             self.output.emit(f"  Probes: {os.path.basename(ltx_path)}")
+        self.output.emit("=" * 60)
+        self.started.emit("Reset Sequence")
+        self.progress.emit(10)
+
         self.process.start(vivado_exe, args)
 
     def cancel(self):
