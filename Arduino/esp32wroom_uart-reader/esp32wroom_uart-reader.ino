@@ -5,7 +5,7 @@ const int RX_PIN = 16; // RX2 (Connect to FPGA TX)
 const int TX_PIN = 17; // TX2 (Connect to FPGA RX)
 
 // O sistema todo foi alinhado para 125000 bps
-const int TARGET_BAUD_RATE = 125000; 
+const int TARGET_BAUD_RATE = 125000;
 
 // Instance UART2
 HardwareSerial SerialSTM(2); 
