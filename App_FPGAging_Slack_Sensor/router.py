@@ -104,13 +104,12 @@ class UARTRouter(QObject):
                 raw_slack = pkt[3] | (pkt[4] << 8)
                 raw_vcc   = pkt[5] | (pkt[6] << 8)
                 alarm     = pkt[8] & 0x01
-                
+
                 # Validação Extra: Valores razoáveis
                 # Temp != 0xFFFF e Vcc != 0xFFFF (evita falsos positivos com tudo zero)
                 valid_values = (raw_temp != 0xFFFF) and (raw_vcc != 0xFFFF)
-                
+
                 if valid_values:
-                    # Pacote Válido! Processa e remove do buffer.
                     phys_data = {
                         'dut_temp':  round(raw_to_temp(raw_temp), 2),
                         'dut_volt':  round(raw_to_vcc(raw_vcc), 3),
@@ -118,10 +117,11 @@ class UARTRouter(QObject):
                         'raw_alarm': alarm
                     }
                     self.aging_data_received.emit(phys_data)
-                    
-                    # Remove pacote processado
-                    del self._rx_buffer[:AGING_PKT_LEN]
-                    continue
+
+                # Sempre consome o pacote quando padding está correto,
+                # evita desalinhamento nos pacotes seguintes
+                del self._rx_buffer[:AGING_PKT_LEN]
+                continue
             
             # Se não validou (padding errado ou valores inválidos),
             # verifica se pode ser um cabeçalho STM (0x10 ou 0x20)
@@ -139,17 +139,11 @@ class UARTRouter(QObject):
         # Se sobrou algo no buffer (que não foi consumido como Aging), passamos para o Parser.
         if self._rx_buffer:
             chunk = bytes(self._rx_buffer)
-            
-            # O parser processa e retorna eventos identificados
+            # Limpa ANTES de fazer feed para não re-alimentar os mesmos bytes
+            # na próxima chamada caso o parser não produza eventos
+            self._rx_buffer.clear()
+
             events = self.parser.feed(chunk)
-            
-            # Limpeza do Buffer:
-            # Como o parser do STM é robusto, se ele encontrou eventos válidos, 
-            # podemos assumir que os dados foram consumidos.
-            # Para evitar crescimento infinito em caso de ruído, limpamos se eventos ocorreram.
-            # (Numa implementação perfeita, o parser retornaria bytes consumidos)
-            if events:
-                self._rx_buffer.clear()
 
             for evt in events:
                 evt_type = evt[0]

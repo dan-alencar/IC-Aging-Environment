@@ -53,28 +53,26 @@ class AuxPlotWidget(QWidget):
         )
 
         # --- Slack Display (TextItem no canto superior direito) ---
-        #self.slack_text = pg.TextItem(
-        #    text="Slack: -- steps",
-        #    color='magenta',
-        #    anchor=(1, 0)  # Ancora no canto superior direito
-        #)
-        #self.slack_text.setFont(pg.QtGui.QFont('Arial', 12, pg.QtGui.QFont.Bold))
-        #self.plot_view.addItem(self.slack_text, ignoreBounds=True)
-        
+        self.slack_text = pg.TextItem(
+            text="Slack: -- steps",
+            color='magenta',
+            anchor=(1, 0)
+        )
+        self.slack_text.setFont(pg.QtGui.QFont('Arial', 12, pg.QtGui.QFont.Bold))
+        self.plot_view.addItem(self.slack_text, ignoreBounds=True)
+
         # --- Layout do Widget ---
         layout = QVBoxLayout()
         layout.addWidget(self.plot_view)
         self.setLayout(layout)
-        
-        # Conecta redimensionamento para reposicionar o texto
-        #self.vb_main.sigResized.connect(self._update_slack_text_position)
 
-    #def _update_slack_text_position(self):
-    #    """Reposiciona o texto do slack no canto superior direito."""
-    #    view_range = self.vb_main.viewRange()
-    #    x_max = view_range[0][1]
-    #    y_max = view_range[1][1]
-    #    self.slack_text.setPos(x_max, y_max)
+        self.vb_main.sigResized.connect(self._reposition_slack_text)
+
+    def _reposition_slack_text(self):
+        view_range = self.vb_main.viewRange()
+        x_max = view_range[0][1]
+        y_max = view_range[1][1]
+        self.slack_text.setPos(x_max, y_max)
 
     @Slot(dict)
     def update_plot_data(self, data_row):
@@ -106,8 +104,7 @@ class AuxPlotWidget(QWidget):
         
         self.vb_main.autoRange()
         
-        # Reposiciona texto após auto-range
-        self._update_slack_text_position()
+        self._reposition_slack_text()
 
     @Slot()
     def clear_plot(self):
@@ -125,8 +122,7 @@ class AuxPlotWidget(QWidget):
         self.voltage_curve.setData([], [])
         self.current_curve.setData([], [])
         
-        # 3. Reseta o texto do slack
-        #self.slack_text.setText("Slack: -- steps")
+        self.slack_text.setText("Slack: -- steps")
         
         # 4. Reseta o zoom/pan
         self.vb_main.autoRange()

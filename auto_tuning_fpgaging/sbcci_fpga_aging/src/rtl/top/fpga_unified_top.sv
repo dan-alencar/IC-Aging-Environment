@@ -185,7 +185,7 @@ module fpga_unified_top (
 
     controller_controller ctrl (
         .clk(clk_sys),
-        .reset(~fpga_button),
+        .reset(ctrl_rst_n & ~fpga_button),
         .alarm(sensor_alarm),
         .psdone(psdone),
         .display_value(phase_count),
@@ -261,18 +261,18 @@ module fpga_unified_top (
     assign mcu_usart1_rx = route_to_stm;
     
     uart_router #(
-        .CLK_FREQ(100000000), 
+        .CLK_FREQ(100000000),
         .BAUD_RATE(125000)
     ) u_router (
-        .clk(clk_sys), 
+        .clk(clk_sys),
         .rst_n(global_rst_n),
-        .uart_rx_phys(fpga_uart_rx), 
-        .uart_tx_phys(router_tx_out), 
-        .uart_tx_to_stm(route_to_stm), 
+        .uart_rx_phys(fpga_uart_rx),
+        .uart_tx_phys(router_tx_out),
+        .uart_tx_to_stm(route_to_stm),
         .uart_tx_from_stm(mcu_usart1_tx),
-        .uart_tx_to_croc(), 
+        .uart_tx_to_croc(),
         .uart_tx_from_croc(1'b1),
-        .heartbeat_pin(1'b0), 
+        .heartbeat_pin(1'b0),
         .safe_rst_n()
     );
 
