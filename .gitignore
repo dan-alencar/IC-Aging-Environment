@@ -4,3 +4,26 @@ App/venv
 /app_caio/venv
 pcb-serial
 App_Nexys/.venv
+
+# Vivado generated output
+.Xil/
+*.jou
+*.log
+*.str
+*.wdb
+*.wdf
+*.pb
+*.rpx
+*.dcp
+*.bit
+*.bin
+*.ltx
+*.mmi
+*.runs/
+*.gen/
+*.cache/
+*.hw/
+*.sim/
+*.ip_user_files/
+vivado/sbcci_fpga_aging/build/
+vivado/sbcci_fpga_aging/artifacts/
