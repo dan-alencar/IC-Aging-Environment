@@ -33,8 +33,11 @@ set_property PACKAGE_PIN W12 [get_ports mcu_usart1_rx]
 set_property IOSTANDARD LVCMOS33 [get_ports mcu_usart1_rx]
 
 # mcu_usart1_tx: Input to FPGA <- Output from STM32
+# PULLUP keeps the line HIGH (UART idle) when STM32 is not connected,
+# preventing the uart_router from locking onto a phantom start bit.
 set_property PACKAGE_PIN AB16 [get_ports mcu_usart1_tx]
 set_property IOSTANDARD LVCMOS33 [get_ports mcu_usart1_tx]
+set_property PULLTYPE PULLUP [get_ports mcu_usart1_tx]
 
 # Status LED
 set_property PACKAGE_PIN AF14 [get_ports status_o]
