@@ -9,7 +9,7 @@
 
 /** @brief Tamanho do buffer de mensagens. */
 #define MESSAGE_BUFFER_SIZE 64 // Se precisar de mensagens maiores (logs), aumente aqui.
-#define RESPONSE_BUFFER_SIZE 3
+#define RESPONSE_BUFFER_SIZE 6  // [0x20, ctrl, len_H, len_L, CRC_L, CRC_H]
 #define TIMEOUT_MS 70u
 
 #define DIRECTION_MASK 0x80
