@@ -10,7 +10,7 @@ ESP32_PORT = ""         # ESP32 WROOM (Ponte para o Sistema)
 
 # Baudrates (Alinhados com seus firmwares)
 ARDUINO_BAUD = 115200   # PID_Controller.ino usa 115200
-SYSTEM_BAUD = 125000    # esp32wroom_uart-reader.ino usa 125000
+SYSTEM_BAUD = 115200    # ESP32 USB serial to PC (Serial.begin); FPGA<->ESP32 is TARGET_BAUD_RATE in .ino
 
 # --- Parâmetros de Teste ---
 LOG_FOLDER = os.path.join(os.getcwd(), "test_logs") 
