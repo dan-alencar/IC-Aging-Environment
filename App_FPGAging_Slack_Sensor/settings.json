@@ -1,4 +1,5 @@
 {
-    "arduino_port": "/dev/ttyS0",
-    "esp32_port": "/dev/ttyUSB0"
+    "esp32_port": "/dev/ttyUSB0",
+    "arduino_port": "",
+    "arduino_enabled": false
 }
