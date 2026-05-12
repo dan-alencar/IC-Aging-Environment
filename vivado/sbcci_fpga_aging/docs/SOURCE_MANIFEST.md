@@ -4,6 +4,10 @@ This file lists the reproducible inputs used by `scripts/create_project.tcl`.
 Generated Vivado folders such as `.runs`, `.gen`, `.cache`, `.hw`, `.sim`, and
 `ip_user_files` are intentionally excluded from this clean project.
 
+This tree is the consolidated version of the former
+`auto_tuning_fpgaging/sbcci_fpga_aging/` project. The duplicate auto-tuning
+project copy has been removed.
+
 ## Active Build Inputs
 
 | Path | Module / Core | Purpose |
@@ -38,13 +42,23 @@ in the current `fpga_unified_top` build. They are preserved for reference under
 
 ## Original Source Locations
 
-The clean tree was copied from the old project paths below:
+The clean tree consolidates sources that were scattered across generated Vivado
+project directories. These legacy folders are retained only for reference.
 
-| Clean area | Original area |
+| Clean area | Legacy reference area |
 | --- | --- |
-| `src/rtl/top/` | `../../sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/` |
-| `src/rtl/monitor/` | `../../sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/new/` |
-| `src/rtl/aging_sensor/` | `../../sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/sources_1/...` |
-| `src/rtl/uart/` | `../../sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/imports/...` |
-| `src/constraints/` | `../../sbcci_fpga_aging/sbcci_fpga_aging.srcs/constrs_1/imports/constraints/` |
-| `src/ip/` | `../../sbcci_fpga_aging/sbcci_fpga_aging.srcs/sources_1/ip/` |
+| `src/rtl/top/` | `../../aging_study_ultrascale/aging_study_ultrascale.srcs/sources_1/new/` and cleaned integration work |
+| `src/rtl/monitor/` | Cleaned integration work around the XADC/System Monitor IP |
+| `src/rtl/aging_sensor/` | `../../aging_study_ultrascale/aging_study_ultrascale.srcs/sources_1/imports/...` and `../../aging-study/aging-study.srcs/sources_1/imports/...` |
+| `src/rtl/uart/` | `../../aging-study/aging-study.srcs/sources_1/imports/Projects/uart_test/...` |
+| `src/constraints/` | `../../aging_study_ultrascale/aging_study_ultrascale.srcs/constrs_1/new/` with board-specific cleanup |
+| `src/ip/` | `../../aging_study_ultrascale/aging_study_ultrascale.srcs/sources_1/ip/` and regenerated active IP configurations |
+
+## Generated Outputs
+
+The scripts create local generated output only in these ignored directories:
+
+| Path | Contents |
+| --- | --- |
+| `build/` | Recreated `.xpr`, Vivado runs, generated IP products, and intermediate outputs |
+| `artifacts/` | Copied bitstream, timing report, utilization report, IP status report, and optional debug probes |

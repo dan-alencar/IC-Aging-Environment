@@ -26,6 +26,7 @@ set target_part  [env_or_default VIVADO_PART "xcau15p-ffvb676-1-i"]
 set top_module   [env_or_default VIVADO_TOP "fpga_unified_top"]
 set build_dir    [file normalize [env_or_default VIVADO_BUILD_DIR [file join $project_root "build"]]]
 set project_dir  [file join $build_dir $project_name]
+set reports_dir  [file join $project_root "artifacts"]
 
 puts "============================================================"
 puts "Creating Vivado project: $project_name"
@@ -36,6 +37,7 @@ puts "Top module:             $top_module"
 puts "============================================================"
 
 file mkdir $build_dir
+file mkdir $reports_dir
 
 if {[llength [get_projects -quiet]] > 0} {
     close_project
@@ -77,6 +79,9 @@ foreach input_file $all_inputs {
 
 puts "Adding RTL sources..."
 add_files -norecurse -fileset sources_1 $active_rtl
+foreach sv_file [get_files -quiet "*.sv"] {
+    set_property file_type SystemVerilog $sv_file
+}
 
 puts "Adding IP cores..."
 add_files -norecurse -fileset sources_1 $ip_cores
@@ -88,7 +93,11 @@ set_property top $top_module [get_filesets sources_1]
 update_compile_order -fileset sources_1
 
 puts "Generating IP targets..."
-generate_target all [get_files -quiet *.xci]
-export_ip_user_files -of_objects [get_files -quiet *.xci] -no_script -sync -force -quiet
+set project_ip [get_files -quiet *.xci]
+if {[llength $project_ip] > 0} {
+    generate_target all $project_ip
+    export_ip_user_files -of_objects $project_ip -no_script -sync -force -quiet
+    report_ip_status -file [file join $reports_dir "ip_status.rpt"]
+}
 
 puts "Project created at: $project_dir/$project_name.xpr"

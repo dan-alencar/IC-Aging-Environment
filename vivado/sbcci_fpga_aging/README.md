@@ -1,9 +1,15 @@
-# sbcci_fpga_aging Vivado Project
+# SBCCI FPGA Aging Vivado Project
 
-This is the cleaned, reproducible Vivado layout for the SBCCI FPGA aging design.
-The original Vivado project remains in `../../sbcci_fpga_aging`; this folder keeps
-only source-controlled inputs plus scripts. Vivado-generated output is written to
-`build/` and `artifacts/`.
+This is the cleaned, reproducible Vivado layout for the SBCCI FPGA aging
+design. It keeps only source-controlled inputs plus scripts. Vivado-generated
+output is written to `build/` and `artifacts/`.
+
+Older generated Vivado projects still exist elsewhere in the repository for
+reference. This directory is the active buildable source of truth.
+
+The latest source updates from the former
+`auto_tuning_fpgaging/sbcci_fpga_aging/` copy have been moved here. That old
+duplicate project tree was removed.
 
 ## Directory Layout
 
@@ -15,6 +21,7 @@ sbcci_fpga_aging/
 ├── scripts/
 │   ├── build_bitstream.sh
 │   ├── build_bitstream.tcl
+│   ├── check_layout.sh
 │   ├── clean.sh
 │   ├── create_project.sh
 │   └── create_project.tcl
@@ -31,7 +38,7 @@ sbcci_fpga_aging/
 
 ## Requirements
 
-- AMD Vivado 2025.2 or newer is recommended because the source project was last
+- AMD Vivado 2025.2 or newer is recommended because the XCI files were last
   saved with Vivado 2025.2.1.
 - The Vivado executable must be on `PATH`, or set `VIVADO_BIN`.
 
@@ -39,6 +46,15 @@ Example:
 
 ```bash
 source /tools/Xilinx/Vivado/2025.2/settings64.sh
+```
+
+## Check the Layout
+
+This check does not require Vivado. It verifies that all scripted project inputs
+exist and that the shell wrappers parse correctly:
+
+```bash
+scripts/check_layout.sh
 ```
 
 ## Create the Vivado Project
@@ -61,16 +77,26 @@ To create and open the project in the Vivado GUI:
 scripts/create_project.sh --gui
 ```
 
+Useful options:
+
+```bash
+scripts/create_project.sh --project-name sbcci_fpga_aging
+scripts/create_project.sh --part xcau15p-ffvb676-1-i
+scripts/create_project.sh --build-dir /tmp/sbcci_fpga_build
+```
+
 ## Build the Bitstream
 
 ```bash
 scripts/build_bitstream.sh --jobs 8
 ```
 
-The generated bitstream is copied to:
+The generated bitstream and reports are copied to:
 
 ```text
 artifacts/sbcci_fpga_aging.bit
+artifacts/timing_summary.rpt
+artifacts/utilization.rpt
 ```
 
 ## Clean Generated Output
@@ -92,4 +118,10 @@ The default target is:
 ```text
 Part: xcau15p-ffvb676-1-i
 Top:  fpga_unified_top
+```
+
+Equivalent command-line options are also supported by the wrappers:
+
+```bash
+scripts/build_bitstream.sh --jobs 16 --part xcau15p-ffvb676-1-i
 ```

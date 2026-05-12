@@ -85,16 +85,25 @@ module fpga_unified_top (
     // =========================================================================
     // 4. CALIBRATION TRIGGER SYSTEM
     // =========================================================================
-    // VIO controls
+    // VIO controls (manual debug triggers only; periodic is always-on)
     wire vio_manual_trigger;
-    wire vio_enable_periodic;
+    wire vio_enable_periodic;  // kept in VIO for visibility, no longer gates periodic
     wire vio_force_reset;
-    
-    // Periodic timer trigger
+
+    // Button edge detection (active-high button: 0=idle, 1=pressed)
+    reg button_prev = 1'b0;
+    wire button_edge;
+    always @(posedge clk_sys) begin
+        if (!global_rst_n) button_prev <= 1'b0;
+        else               button_prev <= fpga_button;
+    end
+    assign button_edge = fpga_button & ~button_prev;  // rising edge = press
+
+    // Periodic timer trigger (always active, no VIO gate)
     reg [27:0] sweep_timer = 28'd0;
     reg periodic_trigger = 1'b0;
     localparam SWEEP_PERIOD = 28'd100_000_000;  // 1 second at 100MHz
-    
+
     always @(posedge clk_sys) begin
         if (!global_rst_n) begin
             sweep_timer <= 28'd0;
@@ -109,17 +118,17 @@ module fpga_unified_top (
             end
         end
     end
-    
-    // Combined trigger
+
+    // Combined trigger: auto every second, or manual via button/VIO
     wire combined_trigger;
-    assign combined_trigger = (periodic_trigger & vio_enable_periodic) | vio_manual_trigger | vio_force_reset;
-    
-    // Generate reset pulse for controller (active-low)
+    assign combined_trigger = periodic_trigger | button_edge | vio_manual_trigger | vio_force_reset;
+
+    // Generate reset pulse for controller (active-low, 100-cycle pulse)
     reg [7:0] reset_pulse_cnt = 8'd0;
     reg ctrl_rst_n = 1'b1;
     reg trigger_prev = 1'b0;
     wire trigger_edge;
-    
+
     assign trigger_edge = combined_trigger & ~trigger_prev;
     
     always @(posedge clk_sys) begin
@@ -185,7 +194,7 @@ module fpga_unified_top (
 
     controller_controller ctrl (
         .clk(clk_sys),
-        .reset(~fpga_button),
+        .reset(ctrl_rst_n),
         .alarm(sensor_alarm),
         .psdone(psdone),
         .display_value(phase_count),
@@ -223,7 +232,7 @@ module fpga_unified_top (
     wire mon_tx_busy;
 
     sensor_stream #(
-        .BAUDRATE(125000),
+        .BAUDRATE(9600),
         .CLK_FREQ(100000000)
     ) u_stream (
         .clk(clk_sys),
@@ -238,7 +247,7 @@ module fpga_unified_top (
     );
 
     uart_tx #(
-        .BAUDRATE(125000),
+        .BAUDRATE(9600),
         .CLK_FREQ(100000000)
     ) u_uart_tx (
         .clk(clk_sys),
@@ -261,18 +270,18 @@ module fpga_unified_top (
     assign mcu_usart1_rx = route_to_stm;
     
     uart_router #(
-        .CLK_FREQ(100000000), 
-        .BAUD_RATE(125000)
+        .CLK_FREQ(100000000),
+        .BAUD_RATE(9600)
     ) u_router (
-        .clk(clk_sys), 
+        .clk(clk_sys),
         .rst_n(global_rst_n),
-        .uart_rx_phys(fpga_uart_rx), 
-        .uart_tx_phys(router_tx_out), 
-        .uart_tx_to_stm(route_to_stm), 
+        .uart_rx_phys(fpga_uart_rx),
+        .uart_tx_phys(router_tx_out),
+        .uart_tx_to_stm(route_to_stm),
         .uart_tx_from_stm(mcu_usart1_tx),
-        .uart_tx_to_croc(), 
+        .uart_tx_to_croc(),
         .uart_tx_from_croc(1'b1),
-        .heartbeat_pin(1'b0), 
+        .heartbeat_pin(1'b0),
         .safe_rst_n()
     );
 
