@@ -25,21 +25,24 @@ class ArduinoWorker(QObject):
 
     @Slot()
     def start(self):
+        if not config.ARDUINO_ENABLED or not config.ARDUINO_PORT:
+            self.log_message.emit("Arduino desabilitado — controle de forno inativo.")
+            return
         try:
             self.ser = serial.Serial(config.ARDUINO_PORT, config.ARDUINO_BAUD, timeout=2)
             self.log_message.emit("Arduino conectado. Aguardando boot...")
-            time.sleep(2.0) 
+            time.sleep(2.0)
             with self.serial_lock:
                 self.ser.reset_input_buffer()
                 self.ser.reset_output_buffer()
-            
+
             self.is_running = True
-            
+
             self.poll_timer = QTimer()
             self.poll_timer.setInterval(config.LOG_INTERVAL_MS)
             self.poll_timer.timeout.connect(self.poll_data)
             self.poll_timer.start()
-            
+
         except Exception as e:
             self.log_message.emit(f"ERRO Arduino: {e}")
 
@@ -252,30 +255,31 @@ class TestSequencer(QObject):
         if self.running: return
         try:
             self.logger = DataLogger(config.LOG_FOLDER, settings['test_name'])
-            
-            self.arduino.update_kp(settings['kp'])
-            time.sleep(0.1)
-            self.arduino.update_ki(settings['ki'])
-            time.sleep(0.1)
-            self.arduino.update_kd(settings['kd'])
-            time.sleep(0.1)
-            self.arduino.set_target_setpoint(settings['oven_setpoint'])
-            
+
+            if config.ARDUINO_ENABLED and self.arduino.is_running:
+                self.arduino.update_kp(settings['kp'])
+                time.sleep(0.05)
+                self.arduino.update_ki(settings['ki'])
+                time.sleep(0.05)
+                self.arduino.update_kd(settings['kd'])
+                time.sleep(0.05)
+                self.arduino.set_target_setpoint(settings['oven_setpoint'])
+                time.sleep(0.05)
+                self.arduino.start_test_oven()
+
             self.stm.set_voltage(settings['psu_voltage'])
-            time.sleep(0.5)
-            
-            self.arduino.start_test_oven()
-            
+            time.sleep(0.2)
+
             self.running = True
             self.t0 = time.time()
-            
+
             self.log_timer = QTimer()
             self.log_timer.setInterval(config.LOG_INTERVAL_MS)
             self.log_timer.timeout.connect(self.log_data_tick)
             self.log_timer.start()
-            
+
             self.log_message.emit(">>> TESTE INICIADO <<<")
-            
+
         except Exception as e:
             self.log_message.emit(f"ERRO CRÍTICO START: {e}")
             self.stop_test()
@@ -288,7 +292,8 @@ class TestSequencer(QObject):
             self.log_timer.deleteLater()
             self.log_timer = None
             
-        self.arduino.stop_test_oven()
+        if config.ARDUINO_ENABLED and self.arduino.is_running:
+            self.arduino.stop_test_oven()
         self.stm.turn_off()
         if self.logger: self.logger.close()
         self.log_message.emit(">>> TESTE PARADO <<<")
