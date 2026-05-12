@@ -155,10 +155,10 @@ class STMWorker(QObject):
 
     @Slot(object)
     def _on_frame_received(self, event):
-        status, ctrl, c1, c2 = event
+        status = event[0]
+        meta   = event[1]
         if status == 'error':
-            _, err_code, _ = decode_ctrl(ctrl)
-            err_name = ERR_STR.get(err_code, f"0x{err_code:02X}")
+            err_name = meta.get('err', 'UNK') if isinstance(meta, dict) else str(meta)
             self.log_message.emit(f"[STM RX] Erro: {err_name}")
 
     def get_latest_data(self): return (self._curr_v, 0.0)
