@@ -5,7 +5,7 @@ import threading
 import config
 
 # Imports da Nova IHM
-from commands import build_vcore_command, build_page_command, build_message_command
+from commands import build_vcore_command, build_page_command, build_message_command, build_ping_command
 from protocol import decode_ctrl, compute_crc16_modbus, CRC_ENDIAN, ERR_STR
 
 # =================================================================
@@ -153,11 +153,20 @@ class STMWorker(QObject):
     @Slot()
     def turn_off(self): self.set_voltage(0.0)
 
+    @Slot()
+    def send_ping(self):
+        if not self.is_running: return
+        payload, log_str, _ = build_ping_command()
+        self._send_with_crc(payload, log_str)
+
     @Slot(object)
     def _on_frame_received(self, event):
         status = event[0]
-        meta   = event[1]
-        if status == 'error':
+        meta   = event[1] if len(event) > 1 else {}
+        if status == 'ok':
+            func = meta.get('func', '?') if isinstance(meta, dict) else '?'
+            self.log_message.emit(f"[STM RX] OK: func={func}")
+        elif status == 'error':
             err_name = meta.get('err', 'UNK') if isinstance(meta, dict) else str(meta)
             self.log_message.emit(f"[STM RX] Erro: {err_name}")
 

@@ -152,12 +152,18 @@ class MainWindow(QMainWindow):
         btn_page = QPushButton("Mudar Página OLED"); btn_page.clicked.connect(lambda: self.w_stm.set_page(self.page_combo.currentIndex()+1))
         h_page.addWidget(self.page_combo); h_page.addWidget(btn_page)
         
+        btn_ping = QPushButton("Ping STM32 (Debug)")
+        btn_ping.setToolTip("Envia PING pelo caminho PC→ESP32→FPGA→STM32→FPGA→ESP32→PC\n"
+                            "Uma resposta [STM RX] OK: func=M no log confirma o caminho completo.")
+        btn_ping.clicked.connect(lambda: self.w_stm.send_ping())
+
         btn_reset = QPushButton("HARD RESET SYSTEM"); btn_reset.setStyleSheet("background-color: #800; color: white;")
         btn_reset.clicked.connect(lambda: self.w_stm.send_manual_message("reset"))
-        
+
         v_stm.addLayout(h_vcore)
         v_stm.addLayout(h_page)
         v_stm.addStretch()
+        v_stm.addWidget(btn_ping)
         v_stm.addWidget(btn_reset)
         grp_stm.setLayout(v_stm)
         

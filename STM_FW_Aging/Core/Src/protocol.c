@@ -92,12 +92,17 @@ void Initialize_Message(Data_ctx *message) {
 // Helper para enviar resposta imediatamente
 static void Prepare_Response(Data_ctx *message) {
     if (message->direction == STM_SLAVE) {
-        message->response[0] = message->direction + message->error + message->function;
-        // Calcula CRC da resposta (1 byte payload + 2 CRC)
-        crc_calc_hex(message->response, 1);
+        // Frame: [0x20 header, ctrl, len_H=0, len_L=0, CRC_L, CRC_H]
+        // The 0x20 header lets the Python ProtocolParser identify this as a
+        // valid STM32 frame instead of discarding it as noise.
+        message->response[0] = ROUTER_HEADER_STM;
+        message->response[1] = message->error + message->function;
+        message->response[2] = 0x00;  // payload length high byte
+        message->response[3] = 0x00;  // payload length low byte
+        // CRC over all 4 header bytes
+        crc_calc_hex(message->response, 4);
         Enable_Send_data();
     }
-    // Reseta para esperar próximo comando
     message->state = IDLE_STATE;
 }
 

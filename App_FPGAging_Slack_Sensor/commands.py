@@ -34,6 +34,15 @@ def build_message_command(msg: str) -> tuple[bytes, str, dict]:
     meta = {"func":"M", "len": len(msg_bytes), "size_hex": size_hex, "ctrl": ctrl}
     return payload, log_str, meta
 
+def build_ping_command() -> tuple[bytes, str, dict]:
+    """Send a FUNC_M 'PING' to the STM32 and expect an 'ok' response back.
+    Used to verify the full PC->ESP32->FPGA->STM32->FPGA->ESP32->PC path."""
+    msg = b"PING"
+    ctrl = make_ctrl(STM_SLAVE, NO_ERROR, FUNC_M)
+    size_bin = len(msg).to_bytes(2, 'big')
+    payload = bytes([HEADER_STM, ctrl]) + size_bin + msg
+    return payload, "PING", {"func": "M", "msg": "PING"}
+
 def build_vcore_command(value: float) -> tuple[bytes, str, dict]:
     value_str = f"{value:.2f}"
     ctrl = make_ctrl(STM_SLAVE, NO_ERROR, FUNC_V)
