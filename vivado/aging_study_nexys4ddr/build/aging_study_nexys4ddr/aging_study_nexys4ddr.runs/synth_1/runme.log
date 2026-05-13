@@ -1,0 +1,532 @@
+
+*** Running vivado
+    with args -log design_1_wrapper.vds -m64 -product Vivado -mode batch -messageDb vivado.pb -notrace -source design_1_wrapper.tcl
+
+
+****** Vivado v2025.2.1 (64-bit)
+  **** SW Build 6403652 on Thu Mar 19 13:47:00 MDT 2026
+  **** IP Build 6403511 on Thu Mar 19 12:41:45 MDT 2026
+  **** SharedData Build 6403650 on Thu Mar 19 14:02:13 MDT 2026
+  **** Start of session at: Wed May 13 12:49:31 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source design_1_wrapper.tcl -notrace
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/home/dan-alencar/2025.2.1/data/ip'.
+INFO: [Project 1-5698] Found the below utility IPs instantiated in block design /home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/design_1.bd which have equivalent inline hdl with improved performance and reduced diskspace.
+It is recommended to migrate these utility IPs to inline hdl  using the command upgrade_project -migrate_to_inline_hdl.  The utility IPs may be deprecated in future releases.
+More information on inline hdl is available in UG994.
+Utility IP Component Instances:
+ design_1_util_vector_logic_0_0
+design_1_util_vector_logic_0_1
+Command: synth_design -top design_1_wrapper -part xc7a100tcsg324-1
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Device 21-403] Loading part xc7a100tcsg324-1
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 476305
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 2262.871 ; gain = 482.844 ; free physical = 5241 ; free virtual = 58477
+---------------------------------------------------------------------------------
+INFO: [Synth 8-11241] undeclared symbol 'clk_en_design_1_clk_wiz_0_0_en_clk', assumed default net type 'wire' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0_clk_wiz.v:221]
+INFO: [Synth 8-11241] undeclared symbol 'sensor0_design_1_clk_wiz_0_0_en_clk', assumed default net type 'wire' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0_clk_wiz.v:240]
+INFO: [Synth 8-11241] undeclared symbol 'clk_sys_design_1_clk_wiz_0_0_en_clk', assumed default net type 'wire' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0_clk_wiz.v:260]
+INFO: [Synth 8-6157] synthesizing module 'design_1_wrapper' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/hdl/design_1_wrapper.v:13]
+INFO: [Synth 8-6157] synthesizing module 'design_1' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/synth/design_1.v:13]
+INFO: [Synth 8-6157] synthesizing module 'design_1_BinToBCD_0_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_BinToBCD_0_0/synth/design_1_BinToBCD_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'BinToBCD' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/display/BINtoBCD.v:23]
+INFO: [Synth 8-6155] done synthesizing module 'BinToBCD' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/display/BINtoBCD.v:23]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_BinToBCD_0_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_BinToBCD_0_0/synth/design_1_BinToBCD_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'design_1_DisplayController_0_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_DisplayController_0_0/synth/design_1_DisplayController_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'DisplayController' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/display/DisplayController.v:3]
+INFO: [Synth 8-226] default block is never used [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/display/DisplayController.v:103]
+INFO: [Synth 8-6155] done synthesizing module 'DisplayController' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/display/DisplayController.v:3]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_DisplayController_0_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_DisplayController_0_0/synth/design_1_DisplayController_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'design_1_clk_wiz_0_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0.v:67]
+INFO: [Synth 8-6157] synthesizing module 'design_1_clk_wiz_0_0_clk_wiz' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0_clk_wiz.v:67]
+INFO: [Synth 8-6157] synthesizing module 'MMCME2_ADV' [/home/dan-alencar/2025.2.1/Vivado/scripts/rt/data/unisim_comp.v:95710]
+	Parameter BANDWIDTH bound to: OPTIMIZED - type: string 
+	Parameter CLKFBOUT_MULT_F bound to: 9.000000e+00 - type: double 
+	Parameter CLKFBOUT_PHASE bound to: 0.000000e+00 - type: double 
+	Parameter CLKFBOUT_USE_FINE_PS bound to: FALSE - type: string 
+	Parameter CLKIN1_PERIOD bound to: 1.000000e+01 - type: double 
+	Parameter CLKOUT0_DIVIDE_F bound to: 9.000000e+00 - type: double 
+	Parameter CLKOUT0_DUTY_CYCLE bound to: 5.000000e-01 - type: double 
+	Parameter CLKOUT0_PHASE bound to: 1.000000e+02 - type: double 
+	Parameter CLKOUT0_USE_FINE_PS bound to: FALSE - type: string 
+	Parameter CLKOUT1_DIVIDE bound to: 9 - type: integer 
+	Parameter CLKOUT1_DUTY_CYCLE bound to: 5.000000e-01 - type: double 
+	Parameter CLKOUT1_PHASE bound to: 0.000000e+00 - type: double 
+	Parameter CLKOUT1_USE_FINE_PS bound to: TRUE - type: string 
+	Parameter CLKOUT2_DIVIDE bound to: 9 - type: integer 
+	Parameter CLKOUT2_DUTY_CYCLE bound to: 5.000000e-01 - type: double 
+	Parameter CLKOUT2_PHASE bound to: 0.000000e+00 - type: double 
+	Parameter CLKOUT2_USE_FINE_PS bound to: FALSE - type: string 
+	Parameter CLKOUT4_CASCADE bound to: FALSE - type: string 
+	Parameter COMPENSATION bound to: ZHOLD - type: string 
+	Parameter DIVCLK_DIVIDE bound to: 1 - type: integer 
+	Parameter STARTUP_WAIT bound to: FALSE - type: string 
+INFO: [Synth 8-6155] done synthesizing module 'MMCME2_ADV' (0#1) [/home/dan-alencar/2025.2.1/Vivado/scripts/rt/data/unisim_comp.v:95710]
+INFO: [Synth 8-6157] synthesizing module 'BUFG' [/home/dan-alencar/2025.2.1/Vivado/scripts/rt/data/unisim_comp.v:2678]
+INFO: [Synth 8-6155] done synthesizing module 'BUFG' (0#1) [/home/dan-alencar/2025.2.1/Vivado/scripts/rt/data/unisim_comp.v:2678]
+INFO: [Synth 8-6157] synthesizing module 'BUFGCE' [/home/dan-alencar/2025.2.1/Vivado/scripts/rt/data/unisim_comp.v:2688]
+INFO: [Synth 8-6155] done synthesizing module 'BUFGCE' (0#1) [/home/dan-alencar/2025.2.1/Vivado/scripts/rt/data/unisim_comp.v:2688]
+INFO: [Synth 8-6157] synthesizing module 'BUFH' [/home/dan-alencar/2025.2.1/Vivado/scripts/rt/data/unisim_comp.v:2926]
+INFO: [Synth 8-6155] done synthesizing module 'BUFH' (0#1) [/home/dan-alencar/2025.2.1/Vivado/scripts/rt/data/unisim_comp.v:2926]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_clk_wiz_0_0_clk_wiz' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0_clk_wiz.v:67]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_clk_wiz_0_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0.v:67]
+INFO: [Synth 8-6157] synthesizing module 'design_1_controller_controller_0_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_controller_controller_0_0/synth/design_1_controller_controller_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'controller_controller' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/controller_controller.v:23]
+WARNING: [Synth 8-567] referenced signal 'alarm' should be on the sensitivity list [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/controller_controller.v:55]
+WARNING: [Synth 8-567] referenced signal 'inc_count' should be on the sensitivity list [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/controller_controller.v:55]
+INFO: [Synth 8-6155] done synthesizing module 'controller_controller' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/controller_controller.v:23]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_controller_controller_0_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_controller_controller_0_0/synth/design_1_controller_controller_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'design_1_failure_holder_0_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_failure_holder_0_0/synth/design_1_failure_holder_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'failure_holder' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/failure_holder.v:23]
+INFO: [Synth 8-6155] done synthesizing module 'failure_holder' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/failure_holder.v:23]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_failure_holder_0_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_failure_holder_0_0/synth/design_1_failure_holder_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'design_1_modern_sensible_0_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_modern_sensible_0_0/synth/design_1_modern_sensible_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'modern_sensible' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/modern_sensible.v:23]
+INFO: [Synth 8-6157] synthesizing module 'LUT2_L' [/home/dan-alencar/2025.2.1/Vivado/scripts/rt/data/unisim_comp.v:95269]
+	Parameter INIT bound to: 4'b0110 
+INFO: [Synth 8-6155] done synthesizing module 'LUT2_L' (0#1) [/home/dan-alencar/2025.2.1/Vivado/scripts/rt/data/unisim_comp.v:95269]
+INFO: [Synth 8-6157] synthesizing module 'FDCE' [/home/dan-alencar/2025.2.1/Vivado/scripts/rt/data/unisim_comp.v:49180]
+	Parameter INIT bound to: 1'b0 
+INFO: [Synth 8-6155] done synthesizing module 'FDCE' (0#1) [/home/dan-alencar/2025.2.1/Vivado/scripts/rt/data/unisim_comp.v:49180]
+INFO: [Synth 8-6155] done synthesizing module 'modern_sensible' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/modern_sensible.v:23]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_modern_sensible_0_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_modern_sensible_0_0/synth/design_1_modern_sensible_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'design_1_not_series_0_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_not_series_0_0/synth/design_1_not_series_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'not_series' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/nand_series.v:23]
+	Parameter size bound to: 50 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'LUT1_L' [/home/dan-alencar/2025.2.1/Vivado/scripts/rt/data/unisim_comp.v:95232]
+	Parameter INIT bound to: 2'b01 
+INFO: [Synth 8-6155] done synthesizing module 'LUT1_L' (0#1) [/home/dan-alencar/2025.2.1/Vivado/scripts/rt/data/unisim_comp.v:95232]
+INFO: [Synth 8-6155] done synthesizing module 'not_series' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/nand_series.v:23]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_not_series_0_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_not_series_0_0/synth/design_1_not_series_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'design_1_sensor_stream_0_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_sensor_stream_0_0/synth/design_1_sensor_stream_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'sensor_stream' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/uart/sensor_stream.v:23]
+	Parameter BAUDRATE bound to: 9600 - type: integer 
+	Parameter CLK_FREQ bound to: 100000000 - type: integer 
+	Parameter COUNT bound to: 104160 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'sensor_stream' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/uart/sensor_stream.v:23]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_sensor_stream_0_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_sensor_stream_0_0/synth/design_1_sensor_stream_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'design_1_temp_catcher_0_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_temp_catcher_0_0/synth/design_1_temp_catcher_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'temp_catcher' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/temp_catcher.v:23]
+	Parameter ASK_TEMP bound to: 2'b00 
+	Parameter GET_TEMP bound to: 2'b01 
+	Parameter ASK_VCC bound to: 2'b10 
+	Parameter GET_VCC bound to: 2'b11 
+INFO: [Synth 8-6155] done synthesizing module 'temp_catcher' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/temp_catcher.v:23]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_temp_catcher_0_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_temp_catcher_0_0/synth/design_1_temp_catcher_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'design_1_uart_tx_0_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_uart_tx_0_0/synth/design_1_uart_tx_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'uart_tx' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/uart/uart_tx.v:23]
+	Parameter BAUDRATE bound to: 9600 - type: integer 
+	Parameter CLK_FREQ bound to: 100000000 - type: integer 
+	Parameter COUNT bound to: 10416 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'uart_tx' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/uart/uart_tx.v:23]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_uart_tx_0_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_uart_tx_0_0/synth/design_1_uart_tx_0_0.v:53]
+WARNING: [Synth 8-7071] port 'tx_busy' of module 'design_1_uart_tx_0_0' is unconnected for instance 'uart_tx_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/synth/design_1.v:176]
+WARNING: [Synth 8-7023] instance 'uart_tx_0' of module 'design_1_uart_tx_0_0' has 6 connections declared, but only 5 given [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/synth/design_1.v:176]
+INFO: [Synth 8-6157] synthesizing module 'design_1_util_vector_logic_0_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_util_vector_logic_0_0/synth/design_1_util_vector_logic_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'util_vector_logic_v2_0_5_util_vector_logic' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ipshared/e056/hdl/util_vector_logic_v2_0_vl_rfs.v:90]
+INFO: [Synth 8-6155] done synthesizing module 'util_vector_logic_v2_0_5_util_vector_logic' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ipshared/e056/hdl/util_vector_logic_v2_0_vl_rfs.v:90]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_util_vector_logic_0_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_util_vector_logic_0_0/synth/design_1_util_vector_logic_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'design_1_util_vector_logic_0_1' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_util_vector_logic_0_1/synth/design_1_util_vector_logic_0_1.v:53]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_util_vector_logic_0_1' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_util_vector_logic_0_1/synth/design_1_util_vector_logic_0_1.v:53]
+INFO: [Synth 8-6157] synthesizing module 'design_1_xadc_wiz_0_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_xadc_wiz_0_0/design_1_xadc_wiz_0_0.v:50]
+INFO: [Synth 8-6157] synthesizing module 'XADC' [/home/dan-alencar/2025.2.1/Vivado/scripts/rt/data/unisim_comp.v:170962]
+	Parameter INIT_40 bound to: 16'b0000000000000000 
+	Parameter INIT_41 bound to: 16'b0010000110100001 
+	Parameter INIT_42 bound to: 16'b0000101000000000 
+	Parameter INIT_48 bound to: 16'b0000001100000000 
+	Parameter INIT_49 bound to: 16'b0000000000000000 
+	Parameter INIT_4A bound to: 16'b0000000000000000 
+	Parameter INIT_4B bound to: 16'b0000000000000000 
+	Parameter INIT_4C bound to: 16'b0000000000000000 
+	Parameter INIT_4D bound to: 16'b0000000000000000 
+	Parameter INIT_4E bound to: 16'b0000000000000000 
+	Parameter INIT_4F bound to: 16'b0000000000000000 
+	Parameter INIT_50 bound to: 16'b1011010111101101 
+	Parameter INIT_51 bound to: 16'b0101011111100100 
+	Parameter INIT_52 bound to: 16'b1010000101000111 
+	Parameter INIT_53 bound to: 16'b1100101000110011 
+	Parameter INIT_54 bound to: 16'b1010100100111010 
+	Parameter INIT_55 bound to: 16'b0101001011000110 
+	Parameter INIT_56 bound to: 16'b1001010101010101 
+	Parameter INIT_57 bound to: 16'b1010111001001110 
+	Parameter INIT_58 bound to: 16'b0101100110011001 
+	Parameter INIT_5C bound to: 16'b0101000100010001 
+	Parameter SIM_DEVICE bound to: 7SERIES - type: string 
+	Parameter SIM_MONITOR_FILE bound to: design.txt - type: string 
+INFO: [Synth 8-6155] done synthesizing module 'XADC' (0#1) [/home/dan-alencar/2025.2.1/Vivado/scripts/rt/data/unisim_comp.v:170962]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_xadc_wiz_0_0' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_xadc_wiz_0_0/design_1_xadc_wiz_0_0.v:50]
+WARNING: [Synth 8-7071] port 'busy_out' of module 'design_1_xadc_wiz_0_0' is unconnected for instance 'xadc_wiz_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7071] port 'channel_out' of module 'design_1_xadc_wiz_0_0' is unconnected for instance 'xadc_wiz_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7071] port 'eoc_out' of module 'design_1_xadc_wiz_0_0' is unconnected for instance 'xadc_wiz_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7071] port 'eos_out' of module 'design_1_xadc_wiz_0_0' is unconnected for instance 'xadc_wiz_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7071] port 'vccaux_alarm_out' of module 'design_1_xadc_wiz_0_0' is unconnected for instance 'xadc_wiz_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7071] port 'vccint_alarm_out' of module 'design_1_xadc_wiz_0_0' is unconnected for instance 'xadc_wiz_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7071] port 'user_temp_alarm_out' of module 'design_1_xadc_wiz_0_0' is unconnected for instance 'xadc_wiz_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7071] port 'alarm_out' of module 'design_1_xadc_wiz_0_0' is unconnected for instance 'xadc_wiz_0' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7023] instance 'xadc_wiz_0' of module 'design_1_xadc_wiz_0_0' has 18 connections declared, but only 10 given [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/synth/design_1.v:188]
+INFO: [Synth 8-6155] done synthesizing module 'design_1' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/synth/design_1.v:13]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_wrapper' (0#1) [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/hdl/design_1_wrapper.v:13]
+WARNING: [Synth 8-6014] Unused sequential element inverted_bit_reg was removed.  [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/nand_series.v:47]
+WARNING: [Synth 8-7129] Port Op2[0] in module util_vector_logic_v2_0_5_util_vector_logic is either unconnected or has no load
+WARNING: [Synth 8-7129] Port do_data[3] in module temp_catcher is either unconnected or has no load
+WARNING: [Synth 8-7129] Port do_data[2] in module temp_catcher is either unconnected or has no load
+WARNING: [Synth 8-7129] Port do_data[1] in module temp_catcher is either unconnected or has no load
+WARNING: [Synth 8-7129] Port do_data[0] in module temp_catcher is either unconnected or has no load
+WARNING: [Synth 8-7129] Port bin[20] in module BinToBCD is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:05 ; elapsed = 00:00:06 . Memory (MB): peak = 2357.809 ; gain = 577.781 ; free physical = 5133 ; free virtual = 58371
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:05 ; elapsed = 00:00:06 . Memory (MB): peak = 2375.621 ; gain = 595.594 ; free physical = 5134 ; free virtual = 58371
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:05 ; elapsed = 00:00:06 . Memory (MB): peak = 2375.621 ; gain = 595.594 ; free physical = 5134 ; free virtual = 58371
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 2381.559 ; gain = 0.000 ; free physical = 5129 ; free virtual = 58367
+WARNING: [Netlist 29-345] The value of SIM_DEVICE on instance 'design_1_i/clk_wiz_0/inst/clkout1_buf' of type 'BUFGCE' is 'ULTRASCALE'; it is being changed to match the current FPGA architecture, '7SERIES'. For functional simulation to match hardware behavior, the value of SIM_DEVICE should be changed in the source netlist. 
+WARNING: [Netlist 29-345] The value of SIM_DEVICE on instance 'design_1_i/clk_wiz_0/inst/clkout2_buf' of type 'BUFGCE' is 'ULTRASCALE'; it is being changed to match the current FPGA architecture, '7SERIES'. For functional simulation to match hardware behavior, the value of SIM_DEVICE should be changed in the source netlist. 
+WARNING: [Netlist 29-345] The value of SIM_DEVICE on instance 'design_1_i/clk_wiz_0/inst/clkout3_buf' of type 'BUFGCE' is 'ULTRASCALE'; it is being changed to match the current FPGA architecture, '7SERIES'. For functional simulation to match hardware behavior, the value of SIM_DEVICE should be changed in the source netlist. 
+INFO: [Netlist 29-17] Analyzing 56 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_xadc_wiz_0_0/design_1_xadc_wiz_0_0.xdc] for cell 'design_1_i/xadc_wiz_0/inst'
+Finished Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_xadc_wiz_0_0/design_1_xadc_wiz_0_0.xdc] for cell 'design_1_i/xadc_wiz_0/inst'
+Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0_board.xdc] for cell 'design_1_i/clk_wiz_0/inst'
+Finished Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0_board.xdc] for cell 'design_1_i/clk_wiz_0/inst'
+Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0.xdc] for cell 'design_1_i/clk_wiz_0/inst'
+Finished Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0.xdc] for cell 'design_1_i/clk_wiz_0/inst'
+Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/constraints/Nexys-4-DDR-Master.xdc]
+WARNING: [Vivado 12-584] No ports matched 'button'. [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/constraints/Nexys-4-DDR-Master.xdc:20]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/constraints/Nexys-4-DDR-Master.xdc:20]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UARTsend'. [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/constraints/Nexys-4-DDR-Master.xdc:21]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/constraints/Nexys-4-DDR-Master.xdc:21]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'direction'. [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/constraints/Nexys-4-DDR-Master.xdc:23]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/constraints/Nexys-4-DDR-Master.xdc:23]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'shift'. [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/constraints/Nexys-4-DDR-Master.xdc:24]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/constraints/Nexys-4-DDR-Master.xdc:24]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'failure'. [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/constraints/Nexys-4-DDR-Master.xdc:59]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/constraints/Nexys-4-DDR-Master.xdc:59]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+Finished Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/constraints/Nexys-4-DDR-Master.xdc]
+INFO: [Project 1-236] Implementation specific constraints were found while reading constraint file [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/constraints/Nexys-4-DDR-Master.xdc]. These constraints will be ignored for synthesis but will be used in implementation. Impacted constraints are listed in the file [.Xil/design_1_wrapper_propImpl.xdc].
+Resolution: To avoid this warning, move constraints listed in [.Xil/design_1_wrapper_propImpl.xdc] to another XDC file and exclude this new file from synthesis with the used_in_synthesis property (File Properties dialog in GUI) and re-run elaboration/synthesis.
+Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging_study_nexys4ddr/aging_study_nexys4ddr.runs/synth_1/dont_touch.xdc]
+Finished Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging_study_nexys4ddr/aging_study_nexys4ddr.runs/synth_1/dont_touch.xdc]
+INFO: [Project 1-236] Implementation specific constraints were found while reading constraint file [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging_study_nexys4ddr/aging_study_nexys4ddr.runs/synth_1/dont_touch.xdc]. These constraints will be ignored for synthesis but will be used in implementation. Impacted constraints are listed in the file [.Xil/design_1_wrapper_propImpl.xdc].
+Resolution: To avoid this warning, move constraints listed in [.Xil/design_1_wrapper_propImpl.xdc] to another XDC file and exclude this new file from synthesis with the used_in_synthesis property (File Properties dialog in GUI) and re-run elaboration/synthesis.
+INFO: [Timing 38-2] Deriving generated clocks
+Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0_late.xdc] for cell 'design_1_i/clk_wiz_0/inst'
+Finished Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/imported_src/bd/design_1/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging-study.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0_late.xdc] for cell 'design_1_i/clk_wiz_0/inst'
+Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/constraints/fixed_pnr_constraints.xdc]
+Finished Parsing XDC File [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/constraints/fixed_pnr_constraints.xdc]
+INFO: [Project 1-236] Implementation specific constraints were found while reading constraint file [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/constraints/fixed_pnr_constraints.xdc]. These constraints will be ignored for synthesis but will be used in implementation. Impacted constraints are listed in the file [.Xil/design_1_wrapper_propImpl.xdc].
+Resolution: To avoid this warning, move constraints listed in [.Xil/design_1_wrapper_propImpl.xdc] to another XDC file and exclude this new file from synthesis with the used_in_synthesis property (File Properties dialog in GUI) and re-run elaboration/synthesis.
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2491.359 ; gain = 0.000 ; free physical = 5141 ; free virtual = 58379
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 54 instances were transformed.
+  BUFGCE => BUFGCTRL: 3 instances
+  LUT1_L => LUT1: 50 instances
+  LUT2_L => LUT2: 1 instance 
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 2491.395 ; gain = 0.000 ; free physical = 5141 ; free virtual = 58379
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 2491.395 ; gain = 711.367 ; free physical = 5190 ; free virtual = 58427
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7a100tcsg324-1
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 2499.363 ; gain = 719.336 ; free physical = 5190 ; free virtual = 58427
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 2499.363 ; gain = 719.336 ; free physical = 5190 ; free virtual = 58427
+---------------------------------------------------------------------------------
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'controller_controller'
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'temp_catcher'
+WARNING: [Synth 8-327] inferring latch for variable 'display_value_reg' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/controller_controller.v:63]
+WARNING: [Synth 8-327] inferring latch for variable 'FSM_sequential_next_state_reg' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/controller_controller.v:57]
+WARNING: [Synth 8-327] inferring latch for variable 'FSM_onehot_next_state_reg' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/controller_controller.v:57]
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                 iSTATE2 |                               00 |                               00
+                 iSTATE0 |                               01 |                               11
+                  iSTATE |                               10 |                               01
+                 iSTATE1 |                               11 |                               10
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'sequential' in module 'controller_controller'
+WARNING: [Synth 8-327] inferring latch for variable 'FSM_sequential_next_state_reg' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/controller_controller.v:57]
+WARNING: [Synth 8-327] inferring latch for variable 'change_enable_reg' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/controller_controller.v:57]
+WARNING: [Synth 8-327] inferring latch for variable 'psincdec_reg' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/controller_controller.v:57]
+WARNING: [Synth 8-327] inferring latch for variable 'signal_reg' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/controller_controller.v:57]
+WARNING: [Synth 8-327] inferring latch for variable 'psen_reg' [/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/src/rtl/aging_sensor/controller_controller.v:57]
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                ASK_TEMP |                               00 |                               00
+                GET_TEMP |                               01 |                               01
+                 ASK_VCC |                               10 |                               10
+                 GET_VCC |                               11 |                               11
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'sequential' in module 'temp_catcher'
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 2499.363 ; gain = 719.336 ; free physical = 5196 ; free virtual = 58434
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input   21 Bit       Adders := 1     
+	   2 Input   14 Bit       Adders := 1     
+	   2 Input    8 Bit       Adders := 1     
+	   2 Input    4 Bit       Adders := 59    
++---Registers : 
+	               32 Bit    Registers := 2     
+	               16 Bit    Registers := 1     
+	               10 Bit    Registers := 1     
+	                8 Bit    Registers := 5     
+	                7 Bit    Registers := 1     
+	                4 Bit    Registers := 10    
+	                1 Bit    Registers := 11    
++---Muxes : 
+	   2 Input   14 Bit        Muxes := 2     
+	   8 Input    8 Bit        Muxes := 1     
+	   4 Input    8 Bit        Muxes := 1     
+	   2 Input    4 Bit        Muxes := 59    
+	   4 Input    2 Bit        Muxes := 3     
+	   2 Input    2 Bit        Muxes := 4     
+	   4 Input    1 Bit        Muxes := 13    
+	  10 Input    1 Bit        Muxes := 4     
+	   2 Input    1 Bit        Muxes := 13    
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 240 (col length:80)
+BRAMs: 270 (col length: RAMB18 80 RAMB36 40)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+DSP Report: Generating DSP p_0_out, operation Mode is: (A:0x7b0a7)*B.
+DSP Report: operator p_0_out is absorbed into DSP p_0_out.
+DSP Report: Generating DSP p_0_out, operation Mode is: A*(B:0xbb8).
+DSP Report: operator p_0_out is absorbed into DSP p_0_out.
+WARNING: [Synth 8-7129] Port do_data[3] in module design_1_temp_catcher_0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port do_data[2] in module design_1_temp_catcher_0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port do_data[1] in module design_1_temp_catcher_0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port do_data[0] in module design_1_temp_catcher_0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port bin[20] in module design_1_BinToBCD_0_0 is either unconnected or has no load
+INFO: [Synth 8-3332] Sequential element (inst/psincdec_reg) is unused and will be removed from module design_1_controller_controller_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__11) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__12) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__13) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__14) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__15) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__16) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__17) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__18) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__19) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__20) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__21) is unused and will be removed from module design_1_temp_catcher_0_0.
+INFO: [Synth 8-3332] Sequential element (inst/placeholder_reg[1]__22) is unused and will be removed from module design_1_temp_catcher_0_0.
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:19 ; elapsed = 00:00:20 . Memory (MB): peak = 2499.363 ; gain = 719.336 ; free physical = 5210 ; free virtual = 58453
+---------------------------------------------------------------------------------
+ Sort Area is  p_0_out_0 : 0 0 : 958 958 : Used 1 time 0
+ Sort Area is  p_0_out_2 : 0 0 : 413 413 : Used 1 time 0
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+DSP: Preliminary Mapping Report (see note below. The ' indicates corresponding REG is set)
++-------------+---------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|Module Name  | DSP Mapping   | A Size | B Size | C Size | D Size | P Size | AREG | BREG | CREG | DREG | ADREG | MREG | PREG | 
++-------------+---------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|temp_catcher | (A:0x7b0a7)*B | 19     | 12     | -      | -      | 31     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|temp_catcher | A*(B:0xbb8)   | 12     | 12     | -      | -      | 24     | 0    | 0    | -    | -    | -     | 0    | 0    | 
++-------------+---------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+
+Note: The table above is a preliminary report that shows the DSPs inferred at the current stage of the synthesis flow. Some DSP may be reimplemented as non DSP primitives later in the synthesis flow. Multiple instantiated DSPs are reported only once.
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:25 ; elapsed = 00:00:26 . Memory (MB): peak = 2584.363 ; gain = 804.336 ; free physical = 5121 ; free virtual = 58364
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:25 ; elapsed = 00:00:26 . Memory (MB): peak = 2585.363 ; gain = 805.336 ; free physical = 5121 ; free virtual = 58364
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:26 ; elapsed = 00:00:26 . Memory (MB): peak = 2625.418 ; gain = 845.391 ; free physical = 5079 ; free virtual = 58323
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:29 ; elapsed = 00:00:29 . Memory (MB): peak = 2785.230 ; gain = 1005.203 ; free physical = 5020 ; free virtual = 58264
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:29 ; elapsed = 00:00:29 . Memory (MB): peak = 2785.230 ; gain = 1005.203 ; free physical = 5020 ; free virtual = 58264
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:29 ; elapsed = 00:00:29 . Memory (MB): peak = 2785.230 ; gain = 1005.203 ; free physical = 5025 ; free virtual = 58268
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:29 ; elapsed = 00:00:29 . Memory (MB): peak = 2785.230 ; gain = 1005.203 ; free physical = 5025 ; free virtual = 58268
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:29 ; elapsed = 00:00:29 . Memory (MB): peak = 2785.230 ; gain = 1005.203 ; free physical = 5025 ; free virtual = 58268
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:29 ; elapsed = 00:00:29 . Memory (MB): peak = 2785.230 ; gain = 1005.203 ; free physical = 5025 ; free virtual = 58268
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+DSP Final Report (the ' indicates corresponding REG is set)
++-------------+-------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|Module Name  | DSP Mapping | A Size | B Size | C Size | D Size | P Size | AREG | BREG | CREG | DREG | ADREG | MREG | PREG | 
++-------------+-------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|temp_catcher | (A*B)'      | 19     | 12     | -      | -      | 31     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|temp_catcher | (A*B)'      | 12     | 12     | -      | -      | 24     | 0    | 0    | -    | -    | -     | 0    | 1    | 
++-------------+-------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-----------+------+
+|      |Cell       |Count |
++------+-----------+------+
+|1     |BUFG       |     2|
+|2     |BUFGCE     |     3|
+|3     |BUFH       |     3|
+|4     |CARRY4     |    23|
+|5     |DSP48E1    |     2|
+|6     |LUT1       |    12|
+|7     |LUT1_L     |    50|
+|8     |LUT2       |    67|
+|9     |LUT2_L     |     1|
+|10    |LUT3       |    31|
+|11    |LUT4       |    30|
+|12    |LUT5       |    40|
+|13    |LUT6       |    96|
+|14    |MMCME2_ADV |     1|
+|15    |MUXF7      |     5|
+|16    |XADC       |     1|
+|17    |FDCE       |   137|
+|18    |FDPE       |     2|
+|19    |FDRE       |    24|
+|20    |LD         |    21|
+|21    |IBUF       |     3|
+|22    |OBUF       |    17|
++------+-----------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:29 ; elapsed = 00:00:29 . Memory (MB): peak = 2785.230 ; gain = 1005.203 ; free physical = 5025 ; free virtual = 58268
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 13 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:27 ; elapsed = 00:00:28 . Memory (MB): peak = 2785.230 ; gain = 889.430 ; free physical = 5025 ; free virtual = 58268
+Synthesis Optimization Complete : Time (s): cpu = 00:00:29 ; elapsed = 00:00:29 . Memory (MB): peak = 2785.238 ; gain = 1005.203 ; free physical = 5025 ; free virtual = 58268
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2785.238 ; gain = 0.000 ; free physical = 5025 ; free virtual = 58268
+WARNING: [Netlist 29-345] The value of SIM_DEVICE on instance 'design_1_i/clk_wiz_0/inst/clkout1_buf' of type 'BUFGCE' is 'ULTRASCALE'; it is being changed to match the current FPGA architecture, '7SERIES'. For functional simulation to match hardware behavior, the value of SIM_DEVICE should be changed in the source netlist. 
+WARNING: [Netlist 29-345] The value of SIM_DEVICE on instance 'design_1_i/clk_wiz_0/inst/clkout2_buf' of type 'BUFGCE' is 'ULTRASCALE'; it is being changed to match the current FPGA architecture, '7SERIES'. For functional simulation to match hardware behavior, the value of SIM_DEVICE should be changed in the source netlist. 
+WARNING: [Netlist 29-345] The value of SIM_DEVICE on instance 'design_1_i/clk_wiz_0/inst/clkout3_buf' of type 'BUFGCE' is 'ULTRASCALE'; it is being changed to match the current FPGA architecture, '7SERIES'. For functional simulation to match hardware behavior, the value of SIM_DEVICE should be changed in the source netlist. 
+INFO: [Netlist 29-17] Analyzing 107 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 1 inverter(s) to 2 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2841.258 ; gain = 0.000 ; free physical = 5204 ; free virtual = 58448
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 75 instances were transformed.
+  BUFGCE => BUFGCTRL: 3 instances
+  LD => LDCE: 19 instances
+  LD => LDCE (inverted pins: G): 2 instances
+  LUT1_L => LUT1: 50 instances
+  LUT2_L => LUT2: 1 instance 
+
+Synth Design complete | Checksum: 46a4acb8
+INFO: [Common 17-83] Releasing license: Synthesis
+113 Infos, 44 Warnings, 5 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:38 ; elapsed = 00:00:36 . Memory (MB): peak = 2841.293 ; gain = 1197.570 ; free physical = 5204 ; free virtual = 58447
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 1918.064; main = 1918.064; forked = 292.676
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 3516.348; main = 2841.262; forked = 1016.980
+INFO: [runtcl-6] Synthesis results are not added to the cache due to CRITICAL_WARNING
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2865.270 ; gain = 0.000 ; free physical = 5204 ; free virtual = 58447
+INFO: [Common 17-1381] The checkpoint '/home/dan-alencar/Documents/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging_study_nexys4ddr/aging_study_nexys4ddr.runs/synth_1/design_1_wrapper.dcp' has been generated.
+INFO: [Vivado 12-24828] Executing command : report_utilization -file design_1_wrapper_utilization_synth.rpt -pb design_1_wrapper_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Wed May 13 12:50:12 2026...
