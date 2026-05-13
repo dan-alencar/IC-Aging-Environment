@@ -8,7 +8,7 @@
       "rev_ctrl_bd_flag": "RevCtrlBdOff",
       "synth_flow_mode": "None",
       "tool_version": "2025.2.1",
-      "validated": "true"
+      "validated": "false"
     },
     "design_tree": {
       "xadc_wiz_0": "",
@@ -631,7 +631,7 @@
             "value": "false"
           },
           "CLK_IN1_BOARD_INTERFACE": {
-            "value": "sys_clock"
+            "value": "Custom"
           },
           "CLK_IN2_BOARD_INTERFACE": {
             "value": "Custom"
@@ -716,6 +716,9 @@
           },
           "NUM_OUT_CLKS": {
             "value": "3"
+          },
+          "PRIM_SOURCE": {
+            "value": "No_buffer"
           },
           "RESET_BOARD_INTERFACE": {
             "value": "Custom"
