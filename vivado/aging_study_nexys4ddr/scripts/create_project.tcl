@@ -102,6 +102,7 @@ set source_bd_dir [file join $project_root "src/bd/design_1"]
 set source_bd_file [file join $source_bd_dir "design_1.bd"]
 set bd_work_dir [file join $build_dir "imported_src/bd/design_1"]
 set bd_file [file join $bd_work_dir "design_1.bd"]
+set bd_gen_dir [file normalize [file join $build_dir "aging-study.gen"]]
 set bd_ip_files [glob -nocomplain [file join $source_bd_dir "ip" "*" "*" "*.xci"]]
 
 set all_inputs [concat $active_rtl $constraints [list $source_bd_file] $bd_ip_files]
@@ -113,10 +114,10 @@ foreach input_file $all_inputs {
 
 puts "Copying Block Design sources into build workspace..."
 file delete -force [file join $build_dir "imported_src"]
+file delete -force $bd_gen_dir
 file mkdir [file dirname $bd_work_dir]
 file copy -force $source_bd_dir [file dirname $bd_work_dir]
 
-set bd_gen_dir [file normalize [file join $build_dir "aging-study.gen"]]
 foreach copied_file [collect_files $bd_work_dir] {
     set copied_ext [file extension $copied_file]
     if {$copied_ext eq ".bd" || $copied_ext eq ".xci"} {
