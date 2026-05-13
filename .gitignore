@@ -15,6 +15,7 @@ App_Nexys/.venv
 *.pb
 *.rpx
 *.dcp
+!vivado/aging_study_nexys4ddr/references/fixed_pnr.dcp
 *.bit
 *.bin
 *.ltx
