@@ -35,3 +35,5 @@ App_FPGAging_Slack_Sensor/test_logs/
 vivado/*/.Xil/
 vivado/*/build/
 vivado/*/artifacts/
+/.venv/lib
+/.venv

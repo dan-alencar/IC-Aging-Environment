@@ -910,7 +910,7 @@
         "OUTPUTDIR": [ { "value": "../../../../sbcci_fpga_aging.gen/sources_1/ip/xadc_wiz_0" } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
         "SHAREDDIR": [ { "value": "." } ],
-        "SWVERSION": [ { "value": "2025.2" } ],
+        "SWVERSION": [ { "value": "2025.2.1" } ],
         "SYNTHESISFLOW": [ { "value": "OUT_OF_CONTEXT" } ]
       }
     },
@@ -958,5 +958,5 @@
       }
     }
   },
-  "checksum": "6f9dbcc9"
+  "checksum": "d3a5caae"
 }
