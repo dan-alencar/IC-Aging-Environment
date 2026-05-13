@@ -7,5 +7,7 @@ rm -rf "$project_root/build"
 rm -rf "$project_root/artifacts"
 rm -f "$project_root"/*.jou "$project_root"/*.log "$project_root"/*.str
 rm -rf "$project_root/.Xil"
+rm -rf "$project_root/aging-study.gen"
+rm -rf "$project_root/../aging-study.gen"
 
 echo "Removed generated Vivado build output from $project_root"

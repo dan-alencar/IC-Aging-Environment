@@ -4,6 +4,12 @@ App/venv
 /app_caio/venv
 pcb-serial
 App_Nexys/.venv
+App_FPGAging_Slack_Sensor/.venv/
+
+# Python generated output
+__pycache__/
+*.py[cod]
+App_FPGAging_Slack_Sensor/test_logs/
 
 # Vivado generated output
 .Xil/
