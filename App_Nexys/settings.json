@@ -1,7 +1,7 @@
 {
     "arduino_port": "",
     "psu_port": "",
-    "dut_port": "",
+    "dut_port": "/dev/ttyUSB1",
     "arduino_baud": "115200",
     "psu_baud": "9600",
     "dut_baud": "9600"
