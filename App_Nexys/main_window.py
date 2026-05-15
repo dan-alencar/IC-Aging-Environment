@@ -59,6 +59,7 @@ class MainWindow(QMainWindow):
         
         self._create_widgets()
         self._create_layout()
+        self._apply_device_state()
         self._start_device_workers()
         self._start_test_sequencer()
         self._connect_signals()
@@ -195,6 +196,15 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(main_layout)
         self.setCentralWidget(central_widget)
 
+    def _apply_device_state(self):
+        """Desabilita controles de dispositivos que não estão habilitados."""
+        if not config.ARDUINO_ENABLED:
+            self.oven_control_group.setEnabled(False)
+            self.oven_control_group.setToolTip("Arduino não habilitado — configure no Setup")
+        if not config.PSU_ENABLED:
+            self.psu_setpoint_input.setEnabled(False)
+            self.psu_setpoint_input.setToolTip("PSU não habilitada — configure no Setup")
+
     def _start_worker(self, name, worker_class_or_instance):
         """Inicia um worker em sua própria thread."""
         thread = QThread()
@@ -215,22 +225,22 @@ class MainWindow(QMainWindow):
 
     def _start_device_workers(self):
         """Inicia workers de hardware."""
-        
-        # Arduino Worker
+
+        # Arduino Worker (always created; start() guards internally)
         arduino_worker = self._start_worker("arduino", ArduinoWorker)
         self.start_arduino_signal.connect(arduino_worker.start)
         self.stop_arduino_signal.connect(arduino_worker.stop)
         self.update_oven_setpoint_signal.connect(arduino_worker.set_target_setpoint)
         self.start_arduino_signal.emit()
-        
-        # PSU Worker
+
+        # PSU Worker (always created; start() guards internally)
         psu_worker = self._start_worker("psu", PSUWorker)
         self.start_psu_signal.connect(psu_worker.start)
         self.stop_psu_signal.connect(psu_worker.stop)
         self.update_psu_voltage_signal.connect(psu_worker.set_voltage)
         self.start_psu_signal.emit()
 
-        # DUT Worker
+        # DUT Worker (always required)
         dut_worker = self._start_worker("dut", DUTWorker)
         self.start_dut_signal.connect(dut_worker.start)
         self.stop_dut_signal.connect(dut_worker.stop)
