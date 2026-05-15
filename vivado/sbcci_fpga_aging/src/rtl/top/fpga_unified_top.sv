@@ -154,18 +154,30 @@ module fpga_unified_top (
     // =========================================================================
     // 5. CRITICAL PATH (Inverter Chain)
     // =========================================================================
-    wire test_bit;
-    wire crit_start;
-    wire crit_end;
+    //wire test_bit;
+    //wire crit_start;
+    //wire crit_end; //A ACTIVER
 
-    not_series #(
-        .size(50)
-    ) critical_path (
-        .clk(clk_sys),
-        .test_bit(test_bit),
-        .start(crit_start),
-        .critpath(crit_end)
+    //not_series #(
+      //  .size(50) // i've modified this from 50 to 1000
+    //) critical_path (
+      //.clk(clk_sys),
+        //.test_bit(test_bit),
+        //.start(crit_start),
+        //.critpath(crit_end)
+    //);
+    wire [255:0] dummy_sum; 
+    wire test_bit = 1'b0; // Inutilisé maintenant mais déclaré pour éviter les erreurs de compilation
+
+    ripple_carry_adder #(
+        .WIDTH(256)
+    ) stress_adder_inst (
+        .clk(clk_sys),           
+        .reset_n(global_rst_n), 
+        .error_flag(crit_end),   
+        .sum_debug(dummy_sum)
     );
+
 
     // =========================================================================
     // 6. AGING SENSOR
