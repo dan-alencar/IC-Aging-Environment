@@ -1,170 +1,174 @@
-import sys
-import os
-import glob
 import platform
 import serial.tools.list_ports
-import pyvisa as visa
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QGridLayout, QComboBox, 
-    QPushButton, QLabel, QMessageBox, QGroupBox, QSpinBox
+    QDialog, QVBoxLayout, QHBoxLayout, QGridLayout, QComboBox,
+    QPushButton, QLabel, QGroupBox, QFrame
 )
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
 import config
+
+try:
+    import pyvisa as visa
+    _VISA_AVAILABLE = True
+except ImportError:
+    _VISA_AVAILABLE = False
+
 
 class SetupDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Configuração do Sistema")
-        self.setGeometry(200, 200, 650, 400) # Janela um pouco mais larga
+        self.setMinimumWidth(500)
         self.setModal(True)
-        
-        self.available_ports = self._get_serial_ports()
-        self._create_widgets()
+
+        self.serial_ports = sorted([p.device for p in serial.tools.list_ports.comports()])
+        self.visa_resources = self._list_visa_resources()
+
+        self._build_ui()
         self._load_current_config()
 
-    def _get_serial_ports(self):
-        """
-        Lista portas seriais e recursos VISA USB (Prioridade para USBTMC).
-        """
-        system_os = platform.system()
-        port_list = []
-        port_list.append(("", "Selecione uma porta..."))
-
-        # --- PARTE 1: Listar Recursos VISA (USB-TMC) ---
-        # Isso é o que fará a mágica funcionar sem sudo/permissão de arquivo
+    def _list_visa_resources(self):
+        if not _VISA_AVAILABLE:
+            return []
         try:
             rm = visa.ResourceManager('@py')
-            visa_resources = rm.list_resources()
+            resources = [r for r in rm.list_resources() if r.startswith("USB")]
             rm.close()
-            for res in visa_resources:
-                # O endereço da sua fonte começa com USB0
-                if res.startswith("USB"):
-                    # Tenta limpar o nome para ficar legível no menu
-                    # Ex: USB0::65535::25856::SERIAL::0::INSTR
-                    parts = res.split('::')
-                    if len(parts) > 3:
-                        serial_num = parts[3]
-                        display_name = f"FONTE ITECH (USB) - SN:{serial_num}"
-                    else:
-                        display_name = f"Dispositivo VISA USB ({res})"
-                    
-                    # Adiciona no TOPO da lista (Prioridade)
-                    port_list.insert(1, (res, display_name))
-        
+            return resources
         except Exception as e:
             print(f"AVISO: Falha ao listar VISA: {e}")
-            
-        # --- PARTE 2: Listar Portas Seriais (Legado/Arduino) ---
-        # Mantemos isso para o Arduino e FPGA
-        ports = serial.tools.list_ports.comports()
-        for p in ports:
-            # Ignora o usbtmc aqui, pois queremos pegá-lo via VISA acima
-            if "usbtmc" in p.device or "ttyS" in p.device:
-                continue 
+            return []
 
-            display = f"{p.device} - {p.description}"
-            port_list.append((p.device, display))
-            
-        return port_list
+    def _build_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setSpacing(14)
+        layout.setContentsMargins(28, 24, 28, 22)
 
-    def _create_widgets(self):
-        layout = QVBoxLayout()
-        
-        title = QLabel("Configuração de Hardware")
-        title.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 10px;")
-        layout.addWidget(title)
-        
-        group = QGroupBox("Conexões e Velocidade")
-        grid_layout = QGridLayout()
-        
-        # Cabeçalhos da Grid
-        grid_layout.addWidget(QLabel("<b>Dispositivo</b>"), 0, 0)
-        grid_layout.addWidget(QLabel("<b>Porta Serial</b>"), 0, 1)
-        grid_layout.addWidget(QLabel("<b>Baud Rate</b>"), 0, 2)
-        
-        # --- Linha 1: Arduino ---
-        grid_layout.addWidget(QLabel("Arduino (Forno):"), 1, 0)
-        self.arduino_combo = self._create_port_combo()
-        grid_layout.addWidget(self.arduino_combo, 1, 1)
-        
-        self.arduino_baud = self._create_baud_combo()
-        grid_layout.addWidget(self.arduino_baud, 1, 2)
+        lbl_title = QLabel("Configuração de Hardware")
+        lbl_title.setAlignment(Qt.AlignCenter)
+        f = QFont()
+        f.setPointSize(13)
+        f.setBold(True)
+        lbl_title.setFont(f)
+        layout.addWidget(lbl_title)
 
-        # --- Linha 2: PSU ---
-        grid_layout.addWidget(QLabel("Fonte (PSU):"), 2, 0)
-        self.psu_combo = self._create_port_combo()
-        grid_layout.addWidget(self.psu_combo, 2, 1)
-        
-        self.psu_baud = self._create_baud_combo()
-        grid_layout.addWidget(self.psu_baud, 2, 2)
+        lbl_sub = QLabel("Selecione as portas seriais do sistema")
+        lbl_sub.setAlignment(Qt.AlignCenter)
+        layout.addWidget(lbl_sub)
 
-        # --- Linha 3: DUT ---
-        grid_layout.addWidget(QLabel("DUT (FPGA):"), 3, 0)
-        self.dut_combo = self._create_port_combo()
-        grid_layout.addWidget(self.dut_combo, 3, 1)
-        
-        self.dut_baud = self._create_baud_combo()
-        grid_layout.addWidget(self.dut_baud, 3, 2)
-        
-        # Ajusta colunas para ficar bonito
-        grid_layout.setColumnStretch(1, 2) # Coluna da porta estica mais
-        group.setLayout(grid_layout)
-        layout.addWidget(group)
-        
-        # Botões
-        self.save_button = QPushButton("Salvar e Iniciar")
-        self.save_button.setStyleSheet("background-color: #28a745; color: white; font-weight: bold; padding: 8px;")
-        self.save_button.clicked.connect(self.on_save)
-        
-        self.cancel_button = QPushButton("Sair")
-        self.cancel_button.clicked.connect(self.reject)
-        
-        layout.addWidget(self.save_button)
-        layout.addWidget(self.cancel_button)
-        self.setLayout(layout)
+        layout.addWidget(_separator())
 
-    def _create_port_combo(self):
-        cb = QComboBox()
-        for val, disp in self.available_ports:
-            cb.addItem(disp, val)
-        return cb
+        # DUT (required)
+        grp_dut = QGroupBox("DUT — FPGA Nexys4DDR  (obrigatório)")
+        grid_dut = QGridLayout()
+        grid_dut.setColumnStretch(1, 1)
+        grid_dut.addWidget(QLabel("Porta Serial:"), 0, 0)
+        self.cmb_dut = _port_combo(self.serial_ports)
+        grid_dut.addWidget(self.cmb_dut, 0, 1)
+        grid_dut.addWidget(QLabel("Baud Rate:"), 1, 0)
+        self.cmb_dut_baud = _baud_combo()
+        grid_dut.addWidget(self.cmb_dut_baud, 1, 1)
+        grp_dut.setLayout(grid_dut)
+        layout.addWidget(grp_dut)
 
-    def _create_baud_combo(self):
-        """Cria uma combobox com baud rates comuns editável."""
-        cb = QComboBox()
-        cb.setEditable(True) # Permite digitar valor customizado
-        rates = [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]
-        for r in rates:
-            cb.addItem(str(r))
-        return cb
+        # Arduino (optional)
+        self.grp_ard = QGroupBox("Arduino — Controle de Forno  (opcional)")
+        self.grp_ard.setCheckable(True)
+        self.grp_ard.setChecked(config.ARDUINO_ENABLED)
+        grid_ard = QGridLayout()
+        grid_ard.setColumnStretch(1, 1)
+        grid_ard.addWidget(QLabel("Porta Serial:"), 0, 0)
+        self.cmb_ard = _port_combo(self.serial_ports)
+        grid_ard.addWidget(self.cmb_ard, 0, 1)
+        grid_ard.addWidget(QLabel("Baud Rate:"), 1, 0)
+        self.cmb_ard_baud = _baud_combo()
+        grid_ard.addWidget(self.cmb_ard_baud, 1, 1)
+        self.grp_ard.setLayout(grid_ard)
+        layout.addWidget(self.grp_ard)
+
+        # PSU (optional)
+        psu_ports = self.visa_resources + self.serial_ports
+        self.grp_psu = QGroupBox("Fonte PSU  (opcional)")
+        self.grp_psu.setCheckable(True)
+        self.grp_psu.setChecked(config.PSU_ENABLED)
+        grid_psu = QGridLayout()
+        grid_psu.setColumnStretch(1, 1)
+        grid_psu.addWidget(QLabel("Porta / VISA:"), 0, 0)
+        self.cmb_psu = _port_combo(psu_ports)
+        grid_psu.addWidget(self.cmb_psu, 0, 1)
+        grid_psu.addWidget(QLabel("Baud Rate:"), 1, 0)
+        self.cmb_psu_baud = _baud_combo()
+        grid_psu.addWidget(self.cmb_psu_baud, 1, 1)
+        self.grp_psu.setLayout(grid_psu)
+        layout.addWidget(self.grp_psu)
+
+        layout.addWidget(_separator())
+
+        btn_row = QHBoxLayout()
+        btn_cancel = QPushButton("Sair")
+        btn_cancel.clicked.connect(self.reject)
+        btn_start = QPushButton("Salvar e Iniciar →")
+        btn_start.setDefault(True)
+        btn_start.clicked.connect(self._save)
+        btn_row.addWidget(btn_cancel)
+        btn_row.addWidget(btn_start)
+        layout.addLayout(btn_row)
 
     def _load_current_config(self):
-        # Carrega Portas
-        self._set_combo_data(self.arduino_combo, config.ARDUINO_PORT)
-        self._set_combo_data(self.psu_combo, config.PSU_PORT)
-        self._set_combo_data(self.dut_combo, config.DUT_PORT)
-        
-        # Carrega Bauds
-        self.arduino_baud.setCurrentText(str(config.ARDUINO_BAUD))
-        self.psu_baud.setCurrentText(str(config.PSU_BAUD))
-        self.dut_baud.setCurrentText(str(config.DUT_BAUD))
+        _select(self.cmb_dut, config.DUT_PORT)
+        self.cmb_dut_baud.setCurrentText(str(config.DUT_BAUD))
 
-    def _set_combo_data(self, combo, value):
-        idx = combo.findData(value)
-        if idx >= 0: combo.setCurrentIndex(idx)
+        _select(self.cmb_ard, config.ARDUINO_PORT)
+        self.cmb_ard_baud.setCurrentText(str(config.ARDUINO_BAUD))
 
-    def on_save(self):
-        # Coleta Dados
-        ap, pp, dp = self.arduino_combo.currentData(), self.psu_combo.currentData(), self.dut_combo.currentData()
-        ab = self.arduino_baud.currentText()
-        pb = self.psu_baud.currentText()
-        db = self.dut_baud.currentText()
+        _select(self.cmb_psu, config.PSU_PORT)
+        self.cmb_psu_baud.setCurrentText(str(config.PSU_BAUD))
 
-        if not ap or not pp or not dp:
-             if QMessageBox.question(self, "Aviso", "Dispositivos não selecionados. Continuar?", QMessageBox.Yes | QMessageBox.No) == QMessageBox.No:
-                 return
+    def _save(self):
+        ard_on = self.grp_ard.isChecked()
+        psu_on = self.grp_psu.isChecked()
 
-        # Salva tudo (Portas + Bauds)
-        if config.save_config(ap, pp, dp, ab, pb, db):
-            self.accept()
-        else:
-            QMessageBox.critical(self, "Erro", "Falha ao salvar configurações.")
+        config.save_config(
+            dut_p=self.cmb_dut.currentText(),
+            dut_b=self.cmb_dut_baud.currentText(),
+            arduino_p=self.cmb_ard.currentText() if ard_on else "",
+            arduino_b=self.cmb_ard_baud.currentText(),
+            arduino_enabled=ard_on,
+            psu_p=self.cmb_psu.currentText() if psu_on else "",
+            psu_b=self.cmb_psu_baud.currentText(),
+            psu_enabled=psu_on,
+        )
+        self.accept()
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _port_combo(ports):
+    cb = QComboBox()
+    cb.setEditable(False)
+    cb.addItems(ports if ports else ["(nenhuma porta detectada)"])
+    return cb
+
+
+def _baud_combo():
+    cb = QComboBox()
+    cb.setEditable(True)
+    for r in [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]:
+        cb.addItem(str(r))
+    cb.setCurrentText("115200")
+    return cb
+
+
+def _select(combo, value):
+    idx = combo.findText(value)
+    if idx >= 0:
+        combo.setCurrentIndex(idx)
+
+
+def _separator():
+    line = QFrame()
+    line.setFrameShape(QFrame.HLine)
+    return line

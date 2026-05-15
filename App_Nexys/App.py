@@ -42,8 +42,14 @@ def main():
     if setup.exec() == QDialog.Accepted:
         # 2. Configuração aceita - inicia sistema principal
         print("\nConfiguração de hardware carregada:")
-        print(f"  Arduino: {config.ARDUINO_PORT} @ {config.ARDUINO_BAUD} baud")
-        print(f"  PSU:     {config.PSU_PORT}")
+        if config.ARDUINO_ENABLED:
+            print(f"  Arduino: {config.ARDUINO_PORT} @ {config.ARDUINO_BAUD} baud")
+        else:
+            print("  Arduino: desabilitado")
+        if config.PSU_ENABLED:
+            print(f"  PSU:     {config.PSU_PORT} @ {config.PSU_BAUD} baud")
+        else:
+            print("  PSU:     desabilitada")
         print(f"  DUT:     {config.DUT_PORT} @ {config.DUT_BAUD} baud")
         print("\nIniciando interface principal...")
         print("-" * 60)

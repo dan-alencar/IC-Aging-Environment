@@ -29,6 +29,9 @@ ARDUINO_BAUD = 115200
 PSU_BAUD = 9600
 DUT_BAUD = 9600
 
+ARDUINO_ENABLED = False
+PSU_ENABLED = False
+
 # =============================================================================
 #   PARÂMETROS DO SISTEMA DE TESTE
 # =============================================================================
@@ -85,22 +88,26 @@ def load_config():
     """Carrega as configurações (Portas e Bauds) do arquivo JSON."""
     global ARDUINO_PORT, PSU_PORT, DUT_PORT
     global ARDUINO_BAUD, PSU_BAUD, DUT_BAUD
-    
+    global ARDUINO_ENABLED, PSU_ENABLED
+
     defaults = get_default_ports()
-    
+
     if os.path.exists(SETTINGS_FILE):
         try:
             with open(SETTINGS_FILE, 'r') as f:
                 data = json.load(f)
-                
+
                 ARDUINO_PORT = data.get("arduino_port", defaults["arduino"])
                 PSU_PORT = data.get("psu_port", defaults["psu"])
                 DUT_PORT = data.get("dut_port", defaults["dut"])
-                
+
                 ARDUINO_BAUD = int(data.get("arduino_baud", 115200))
                 PSU_BAUD = int(data.get("psu_baud", 9600))
                 DUT_BAUD = int(data.get("dut_baud", 9600))
-                
+
+                ARDUINO_ENABLED = data.get("arduino_enabled", False)
+                PSU_ENABLED = data.get("psu_enabled", False)
+
         except Exception as e:
             print(f"Erro ao ler config: {e}. Usando padrões.")
             _apply_defaults(defaults)
@@ -112,41 +119,51 @@ def _apply_defaults(defaults):
     """Aplica configurações padrão."""
     global ARDUINO_PORT, PSU_PORT, DUT_PORT
     global ARDUINO_BAUD, PSU_BAUD, DUT_BAUD
-    
+    global ARDUINO_ENABLED, PSU_ENABLED
+
     ARDUINO_PORT = defaults["arduino"]
     PSU_PORT = defaults["psu"]
     DUT_PORT = defaults["dut"]
     ARDUINO_BAUD = 115200
     PSU_BAUD = 9600
     DUT_BAUD = 9600
+    ARDUINO_ENABLED = False
+    PSU_ENABLED = False
 
 
-def save_config(arduino_p, psu_p, dut_p, arduino_b, psu_b, dut_b):
-    """Salva Portas e Bauds no arquivo JSON."""
+def save_config(dut_p, dut_b,
+                arduino_p="", arduino_b=115200, arduino_enabled=False,
+                psu_p="", psu_b=9600, psu_enabled=False):
+    """Salva Portas, Bauds e flags de habilitação no arquivo JSON."""
     global ARDUINO_PORT, PSU_PORT, DUT_PORT
     global ARDUINO_BAUD, PSU_BAUD, DUT_BAUD
-    
+    global ARDUINO_ENABLED, PSU_ENABLED
+
     data = {
-        "arduino_port": arduino_p,
-        "psu_port": psu_p,
         "dut_port": dut_p,
+        "dut_baud": dut_b,
+        "arduino_port": arduino_p,
         "arduino_baud": arduino_b,
+        "arduino_enabled": arduino_enabled,
+        "psu_port": psu_p,
         "psu_baud": psu_b,
-        "dut_baud": dut_b
+        "psu_enabled": psu_enabled,
     }
-    
+
     try:
         with open(SETTINGS_FILE, 'w') as f:
             json.dump(data, f, indent=4)
-        
-        ARDUINO_PORT = arduino_p
-        PSU_PORT = psu_p
+
         DUT_PORT = dut_p
-        ARDUINO_BAUD = int(arduino_b)
-        PSU_BAUD = int(psu_b)
         DUT_BAUD = int(dut_b)
+        ARDUINO_PORT = arduino_p
+        ARDUINO_BAUD = int(arduino_b)
+        ARDUINO_ENABLED = arduino_enabled
+        PSU_PORT = psu_p
+        PSU_BAUD = int(psu_b)
+        PSU_ENABLED = psu_enabled
         return True
-        
+
     except Exception as e:
         print(f"Erro ao salvar configurações: {e}")
         return False

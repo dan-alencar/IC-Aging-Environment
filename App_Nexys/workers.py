@@ -50,13 +50,16 @@ class ArduinoWorker(QObject):
     @Slot()
     def start(self):
         """Inicializa conexão com Arduino."""
+        if not config.ARDUINO_ENABLED or not config.ARDUINO_PORT:
+            self.log_message.emit("Arduino desabilitado — controle de forno inativo.")
+            return
         try:
             self.ser = serial.Serial(
-                config.ARDUINO_PORT, 
-                config.ARDUINO_BAUD, 
+                config.ARDUINO_PORT,
+                config.ARDUINO_BAUD,
                 timeout=2
             )
-            
+
             self.log_message.emit("Arduino conectado. Aguardando boot (3s)...")
             time.sleep(3.0)
             
@@ -197,6 +200,9 @@ class PSUWorker(QObject):
     @Slot()
     def start(self):
         """Inicializa conexão com PSU via VISA."""
+        if not config.PSU_ENABLED or not config.PSU_PORT:
+            self.log_message.emit("PSU desabilitada — fonte de alimentação inativa.")
+            return
         try:
             self.rm = visa.ResourceManager('@py')
             self.inst = self.rm.open_resource(config.PSU_PORT)
@@ -448,37 +454,29 @@ class TestSequencer(QObject):
             # Log dos parâmetros do sistema
             self._log_system_config(settings)
             
-            # 2. Aguardar Arduino
-            self.log_message.emit("Aguardando Arduino (máx 6s)...")
-            
-            timeout_s = 6
-            start_wait = time.time()
-            while not self.arduino.is_ready and (time.time() - start_wait < timeout_s):
-                time.sleep(0.5) 
+            # 2. Configurar Arduino (se habilitado)
+            if config.ARDUINO_ENABLED and self.arduino.is_ready:
+                self.log_message.emit("Aguardando Arduino (máx 6s)...")
+                timeout_s = 6
+                start_wait = time.time()
+                while not self.arduino.is_ready and (time.time() - start_wait < timeout_s):
+                    time.sleep(0.5)
 
-            if not self.arduino.is_ready:
-                raise Exception("Arduino não respondeu após inicialização.")
+                if not self.arduino.is_ready:
+                    self.log_message.emit("AVISO: Arduino não respondeu — continuando sem controle de forno.")
+                else:
+                    self.log_message.emit("Arduino pronto. Configurando...")
+                    response_sp = self.arduino.set_target_setpoint(settings['oven_setpoint'])
+                    time.sleep(0.1)
+                    self.arduino.start_test_oven()
 
-            self.log_message.emit("Arduino pronto. Configurando...")
-            
-            # 3. Configurar Setpoint
-            response_sp = self.arduino.set_target_setpoint(settings['oven_setpoint'])
-            if response_sp is None or "OK" not in response_sp:
-                raise Exception(f"Falha ao configurar SP. Resposta: {response_sp}")
-            time.sleep(0.1)
-            
-            # 4. Configurar PSU
-            self.psu.set_voltage(settings['psu_voltage'])
-            time.sleep(0.3)
-            
-            # 5. Ligar dispositivos
-            self.log_message.emit("Ligando saídas...")
-            self.psu.turn_on()
-            time.sleep(0.3)
-            
-            response_start = self.arduino.start_test_oven() 
-            if response_start is None or "OK" not in response_start:
-                raise Exception(f"Falha ao iniciar teste. Resposta: {response_start}")
+            # 3. Configurar PSU (se habilitada)
+            if config.PSU_ENABLED and self.psu.is_running:
+                self.psu.set_voltage(settings['psu_voltage'])
+                time.sleep(0.3)
+                self.log_message.emit("Ligando saída PSU...")
+                self.psu.turn_on()
+                time.sleep(0.3)
 
             time.sleep(0.5) 
             
@@ -530,8 +528,10 @@ class TestSequencer(QObject):
         # Log estatísticas finais
         self._log_final_statistics()
         
-        self.arduino.stop_test_oven()
-        self.psu.turn_off()
+        if config.ARDUINO_ENABLED:
+            self.arduino.stop_test_oven()
+        if config.PSU_ENABLED:
+            self.psu.turn_off()
         
         if self.logger:
             self.logger.close()
@@ -657,11 +657,11 @@ class TestSequencer(QObject):
         if t_dut > config.MAX_DUT_TEMP_C:
             self.log_message.emit(f"!!! ALERTA: Temp DUT ({t_dut:.1f}°C) > {config.MAX_DUT_TEMP_C}°C !!!")
             self.stop_test()
-            
-        if c_psu > config.MAX_PSU_CURRENT_A:
+
+        if config.PSU_ENABLED and c_psu > config.MAX_PSU_CURRENT_A:
             self.log_message.emit(f"!!! ALERTA: Corrente PSU ({c_psu:.3f}A) > {config.MAX_PSU_CURRENT_A}A !!!")
             self.stop_test()
-            
-        if t_oven > config.MAX_OVEN_TEMP_C:
+
+        if config.ARDUINO_ENABLED and t_oven > config.MAX_OVEN_TEMP_C:
             self.log_message.emit(f"!!! ALERTA: Temp Forno ({t_oven:.1f}°C) > {config.MAX_OVEN_TEMP_C}°C !!!")
             self.stop_test()
