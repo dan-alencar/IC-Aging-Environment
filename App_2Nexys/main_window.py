@@ -111,6 +111,15 @@ class MainWindow(QMainWindow):
         self.pid_info_label.setStyleSheet(
             "background-color: #2d2d2d; padding: 6px; border-radius: 4px;"
         )
+        self.dut_target_input = QDoubleSpinBox()
+        self.dut_target_input.setRange(0.0, 140.0)
+        self.dut_target_input.setValue(0.0)
+        self.dut_target_input.setSuffix(" °C")
+        self.dut_target_input.setToolTip(
+            "Temperatura alvo dos DUTs (média de DUT-0 e DUT-1). "
+            "0 = desabilitado — usa setpoint do forno diretamente. "
+            "Ajuste de ±1°C/30 min até ±3°C do alvo."
+        )
 
         # --- DUT-0 panel ---
         self.dut0_group = QGroupBox("DUT-0  (IT6502D)")
@@ -174,6 +183,7 @@ class MainWindow(QMainWindow):
 
         oven_form = QFormLayout()
         oven_form.addRow("Setpoint:", self.oven_setpoint_input)
+        oven_form.addRow("Alvo DUT (0=off):", self.dut_target_input)
         oven_inner = QVBoxLayout()
         oven_inner.addLayout(oven_form)
         oven_inner.addWidget(self.pid_info_label)
@@ -368,12 +378,13 @@ class MainWindow(QMainWindow):
         if checked:
             self.log_message("Preparando teste (2 DUTs)...")
             settings = {
-                "test_name":      self.test_name_input.text(),
-                "oven_setpoint":  self.oven_setpoint_input.value(),
-                "psu0_voltage":   self.psu0_voltage_input.value(),
-                "psu1_voltage":   self.psu1_voltage_input.value(),
-                "vccint_sp0":     config.VCCINT_SETPOINT_0_V,
-                "vccint_sp1":     config.VCCINT_SETPOINT_1_V,
+                "test_name":       self.test_name_input.text(),
+                "oven_setpoint":   self.oven_setpoint_input.value(),
+                "psu0_voltage":    self.psu0_voltage_input.value(),
+                "psu1_voltage":    self.psu1_voltage_input.value(),
+                "vccint_sp0":      config.VCCINT_SETPOINT_0_V,
+                "vccint_sp1":      config.VCCINT_SETPOINT_1_V,
+                "dut_target_temp": self.dut_target_input.value(),
             }
             self.plot_widget.clear_plot()
             self.aux_plot0.clear_plot()
