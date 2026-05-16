@@ -24,6 +24,10 @@ import pyvisa as visa
 from logger import DataLogger
 import threading
 
+_DUT_OUTER_TICK_INTERVAL = 1800   # ticks between oven-sp adjustments (~30 min at 1 s/tick)
+_DUT_TEMP_TOLERANCE_C = 3.0       # ±3 °C dead-band around DUT target
+_OVEN_SP_STEP_C = 1.0             # °C per adjustment step
+
 
 # =============================================================================
 #   WORKER 1: Controlador do Forno (Arduino)
@@ -429,7 +433,11 @@ class TestSequencer(QObject):
         self.temp_samples = []
         self.error_samples = []
         self.output_samples = []
-        
+
+        # DUT temperature outer loop
+        self._dut_target_temp = 0.0
+        self._outer_tick = 0
+
         self.log_timer = QTimer(self)
         self.log_timer.setInterval(config.LOG_INTERVAL_MS)
         self.log_timer.timeout.connect(self.log_data_tick)
@@ -448,6 +456,8 @@ class TestSequencer(QObject):
                 
         try:
             # 1. Criar o Logger
+            self._dut_target_temp = float(settings.get('dut_target_temp', 0.0))
+            self._outer_tick = 0
             self.logger = DataLogger(config.LOG_FOLDER, settings['test_name'])
             self.log_message.emit(f"Log criado: {self.logger.filepath}")
             
@@ -636,7 +646,10 @@ class TestSequencer(QObject):
             # 6. Emitir para gráfico
             self.plot_data_update.emit(data_row)
 
-            # 7. Verificar limites de segurança
+            # 7. DUT temperature outer loop
+            self._adjust_oven_outer_loop(t_dut, sp_oven)
+
+            # 8. Verificar limites de segurança
             self._check_safety_limits(t_dut, c_psu, t_oven)
 
         except Exception as e:
@@ -651,6 +664,28 @@ class TestSequencer(QObject):
         print(f"[{elapsed:.0f}s] T={temp:.2f}°C | SP={setpoint:.1f}°C | "
               f"Erro={error:.2f}°C | Out={output:.1f}% | "
               f"P={contrib_P:.1f}% | I≈{contrib_I:.1f}%")
+
+    def _adjust_oven_outer_loop(self, dut_temp: float, sp_oven: float):
+        """Shift oven setpoint every ~30 min to bring DUT temp to target."""
+        if self._dut_target_temp <= 0 or dut_temp <= 0:
+            return
+        self._outer_tick += 1
+        if self._outer_tick < _DUT_OUTER_TICK_INTERVAL:
+            return
+        self._outer_tick = 0
+        error = dut_temp - self._dut_target_temp
+        if abs(error) <= _DUT_TEMP_TOLERANCE_C:
+            return
+        step = _OVEN_SP_STEP_C if error < 0 else -_OVEN_SP_STEP_C
+        new_sp = max(0.0, min(config.MAX_OVEN_TEMP_C, sp_oven + step))
+        if new_sp == sp_oven:
+            return
+        if config.ARDUINO_ENABLED and self.arduino.is_ready:
+            self.arduino.set_target_setpoint(new_sp)
+        self.log_message.emit(
+            f"DUT outer loop: DUT={dut_temp:.1f}°C target={self._dut_target_temp:.0f}°C "
+            f"→ oven_sp {sp_oven:.0f}→{new_sp:.0f}°C"
+        )
 
     def _check_safety_limits(self, t_dut, c_psu, t_oven):
         """Verifica limites de segurança e para o teste se excedidos."""

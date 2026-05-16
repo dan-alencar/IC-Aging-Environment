@@ -25,6 +25,10 @@ import pyvisa as visa
 from logger import DataLogger
 import threading
 
+_DUT_OUTER_TICK_INTERVAL = 1800   # ticks between oven-sp adjustments (~30 min at 1 s/tick)
+_DUT_TEMP_TOLERANCE_C = 3.0       # ±3 °C dead-band around DUT target
+_OVEN_SP_STEP_C = 1.0             # °C per adjustment step
+
 
 # =============================================================================
 #   ArduinoWorker — shared oven PID (identical to App_Nexys)
@@ -137,6 +141,7 @@ class PSUWorker0(QObject):
         self.inst = None
         self.is_running = False
         self._latest_data = (0.0, 0.0)
+        self._lock = threading.Lock()
 
         self.poll_timer = QTimer(self)
         self.poll_timer.setInterval(config.LOG_INTERVAL_MS)
@@ -166,33 +171,68 @@ class PSUWorker0(QObject):
     def stop(self):
         self.is_running = False
         self.poll_timer.stop()
-        try:
-            if self.inst:
-                self.inst.write("OUTP OFF")
-                self.inst.close()
-            if self.rm:
-                self.rm.close()
-        except Exception:
-            pass
+        with self._lock:
+            try:
+                if self.inst:
+                    self.inst.write("OUTP OFF")
+                    self.inst.close()
+                if self.rm:
+                    self.rm.close()
+            except Exception:
+                pass
+            self.inst = None
+            self.rm = None
         self.log_message.emit("PSU-0 desconectada.")
 
     def poll_data(self):
         if not self.is_running or not self.inst:
             return
         try:
-            voltage = float(self.inst.query("MEAS:VOLT?").strip())
-            current = float(self.inst.query("MEAS:CURR?").strip())
+            with self._lock:
+                if not self.inst:
+                    return
+                voltage = float(self.inst.query("MEAS:VOLT?").strip())
+                current = float(self.inst.query("MEAS:CURR?").strip())
             self._latest_data = (voltage, current)
             self.data_ready.emit(voltage, current)
         except Exception as e:
             self.log_message.emit(f"Erro leitura PSU-0: {e}")
+            self._try_reconnect()
+
+    def _try_reconnect(self):
+        """Close and reopen the VISA resource after a USB disruption (e.g. Vivado JTAG).
+        Runs entirely in PSUWorker0's thread (called from poll_data timer callback)."""
+        with self._lock:
+            try:
+                if self.inst: self.inst.close()
+                if self.rm: self.rm.close()
+            except Exception:
+                pass
+            self.inst = None
+            self.rm = None
+        time.sleep(2)    # wait for USB re-enumeration, outside the lock
+        try:
+            with self._lock:
+                self.rm = visa.ResourceManager("@py")
+                self.inst = self.rm.open_resource(config.PSU_0_PORT)
+                self.inst.timeout = 5000
+                self.inst.read_termination = "\n"
+                self.inst.write_termination = "\n"
+                _ = self.inst.query("*IDN?").strip()
+            self.log_message.emit("PSU-0: reconectada.")
+        except Exception as e:
+            self.log_message.emit(f"PSU-0: falha na reconexão ({e}), tentará novamente.")
+            with self._lock:
+                self.inst = None
 
     def get_latest_data(self):
         return self._latest_data
 
     @Slot(float)
     def set_voltage(self, voltage_v: float):
-        if self.inst:
+        with self._lock:
+            if not self.inst:
+                return
             try:
                 self.inst.write(f"VOLT {voltage_v:.4f}")
             except Exception as e:
@@ -200,21 +240,27 @@ class PSUWorker0(QObject):
 
     @Slot()
     def turn_on(self):
-        if self.inst:
+        with self._lock:
+            if not self.inst:
+                return
             try:
                 self.inst.write("OUTP ON")
-                self.log_message.emit("PSU-0: saída LIGADA")
             except Exception as e:
                 self.log_message.emit(f"ERRO ligar PSU-0: {e}")
+                return
+        self.log_message.emit("PSU-0: saída LIGADA")
 
     @Slot()
     def turn_off(self):
-        if self.inst:
+        with self._lock:
+            if not self.inst:
+                return
             try:
                 self.inst.write("OUTP OFF")
-                self.log_message.emit("PSU-0: saída DESLIGADA")
             except Exception as e:
                 self.log_message.emit(f"ERRO desligar PSU-0: {e}")
+                return
+        self.log_message.emit("PSU-0: saída DESLIGADA")
 
 
 class PSUWorker1(QObject):
@@ -228,13 +274,16 @@ class PSUWorker1(QObject):
         self.ser = None
         self.is_running = False
         self._latest_data = (0.0, 0.0)
+        self._lock = threading.Lock()
 
     def _query(self, cmd: str) -> str:
-        self.ser.write(f"{cmd}\r\n".encode())
-        return self.ser.readline().decode(errors="replace").strip()
+        with self._lock:
+            self.ser.write(f"{cmd}\r\n".encode())
+            return self.ser.readline().decode(errors="replace").strip()
 
     def _write(self, cmd: str):
-        self.ser.write(f"{cmd}\r\n".encode())
+        with self._lock:
+            self.ser.write(f"{cmd}\r\n".encode())
 
     @Slot()
     def start(self):
@@ -442,6 +491,10 @@ class TestSequencer(QObject):
         self._psu0_cmd_v = 0.0
         self._psu1_cmd_v = 0.0
 
+        # DUT temperature outer loop
+        self._dut_target_temp = 0.0
+        self._outer_tick = 0
+
         self.log_timer = QTimer(self)
         self.log_timer.setInterval(config.LOG_INTERVAL_MS)
         self.log_timer.timeout.connect(self.log_data_tick)
@@ -508,6 +561,8 @@ exit
             return
         try:
             self._settings = settings
+            self._dut_target_temp = float(settings.get("dut_target_temp", 0.0))
+            self._outer_tick = 0
             self.logger = DataLogger(config.LOG_FOLDER, settings["test_name"])
             self.log_message.emit(f"Log criado: {self.logger.filepath}")
 
@@ -608,6 +663,11 @@ exit
             # --- VCCINT closed-loop (P-only) ---
             self._update_vccint_loop(vcc0, vcc1)
 
+            # --- DUT temperature outer loop (slow oven setpoint trim) ---
+            valid = [t for t in [t0, t1] if t > 0]
+            avg_dut = sum(valid) / len(valid) if valid else 0.0
+            self._adjust_oven_outer_loop(avg_dut, sp_oven)
+
             row = {
                 "time_sec": elapsed,
                 "oven_temp": t_oven, "oven_setpoint": sp_oven, "oven_output": out_oven,
@@ -649,6 +709,29 @@ exit
                 min(config.PSU_MAX_V, self._psu1_cmd_v + config.VOLTAGE_KP * err1)
             )
             self.psu1.set_voltage(self._psu1_cmd_v)
+
+    def _adjust_oven_outer_loop(self, avg_dut_temp: float, sp_oven: float):
+        """Shift oven setpoint every ~30 min to bring average DUT temp to target.
+        Runs every log tick; acts only when _outer_tick reaches the interval."""
+        if self._dut_target_temp <= 0 or avg_dut_temp <= 0:
+            return
+        self._outer_tick += 1
+        if self._outer_tick < _DUT_OUTER_TICK_INTERVAL:
+            return
+        self._outer_tick = 0
+        error = avg_dut_temp - self._dut_target_temp
+        if abs(error) <= _DUT_TEMP_TOLERANCE_C:
+            return
+        step = _OVEN_SP_STEP_C if error < 0 else -_OVEN_SP_STEP_C
+        new_sp = max(0.0, min(config.MAX_OVEN_TEMP_C, sp_oven + step))
+        if new_sp == sp_oven:
+            return
+        if config.ARDUINO_ENABLED and self.arduino.is_ready:
+            self.arduino.set_target_setpoint(new_sp)
+        self.log_message.emit(
+            f"DUT outer loop: DUT_avg={avg_dut_temp:.1f}°C target={self._dut_target_temp:.0f}°C "
+            f"→ oven_sp {sp_oven:.0f}→{new_sp:.0f}°C"
+        )
 
     def _check_safety(self, t0, c0, t1, c1, t_oven):
         if t0 > config.MAX_DUT_TEMP_C:

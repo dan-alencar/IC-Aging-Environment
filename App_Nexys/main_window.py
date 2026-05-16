@@ -86,6 +86,15 @@ class MainWindow(QMainWindow):
         self.oven_setpoint_input.setValue(100.0)
         self.oven_setpoint_input.setSuffix(" °C")
         self.oven_setpoint_input.setToolTip("Setpoint de temperatura do forno")
+
+        self.dut_target_input = QDoubleSpinBox()
+        self.dut_target_input.setRange(0.0, 140.0)
+        self.dut_target_input.setValue(0.0)
+        self.dut_target_input.setSuffix(" °C")
+        self.dut_target_input.setToolTip(
+            "Temperatura alvo do DUT. 0 = desabilitado — usa setpoint do forno. "
+            "Ajuste de ±1°C/30 min até ±3°C do alvo."
+        )
         
         # Labels de parâmetros PID (somente leitura)
         self.pid_info_label = QLabel()
@@ -158,6 +167,7 @@ class MainWindow(QMainWindow):
         oven_layout = QVBoxLayout()
         oven_form = QFormLayout()
         oven_form.addRow("Setpoint:", self.oven_setpoint_input)
+        oven_form.addRow("Alvo DUT (0=off):", self.dut_target_input)
         oven_layout.addLayout(oven_form)
         oven_layout.addWidget(self.pid_info_label)
         oven_layout.addStretch()
@@ -319,9 +329,10 @@ class MainWindow(QMainWindow):
             self.log_message("Preparando teste...")
             
             settings = {
-                'test_name': self.test_name_input.text(),
-                'oven_setpoint': self.oven_setpoint_input.value(),
-                'psu_voltage': self.psu_setpoint_input.value()
+                'test_name':       self.test_name_input.text(),
+                'oven_setpoint':   self.oven_setpoint_input.value(),
+                'psu_voltage':     self.psu_setpoint_input.value(),
+                'dut_target_temp': self.dut_target_input.value(),
             }
             
             # Limpa gráficos
