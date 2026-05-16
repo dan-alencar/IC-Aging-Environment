@@ -99,15 +99,11 @@ void setup() {
   rampedSetpoint = currentCelsius;
   targetSetpoint = currentCelsius;
   
-  myPID.begin(&currentCelsius, &pidOutput, &rampedSetpoint, KP, KI, KD);
+  myPID.setTunings(KP, KI, KD);
+  myPID.setSetpoint(rampedSetpoint);
   myPID.setOutputLimits(0, 100);
-  myPID.setWindUpLimits(0, 100);
-  myPID.setSampleTime(CONTROL_PERIOD_MS);
-  
-  // NOTA: Dead Band removido para permitir acúmulo contínuo do termo integral
-  // myPID.setDeadBand(-0.2, 0.2);  // DESABILITADO
-  
-  myPID.stop();
+  myPID.setILimits(0, 100);
+  myPID.setDtMs(CONTROL_PERIOD_MS);
   myPID.reset();
   pidOutput = 0;
   
@@ -150,7 +146,8 @@ void loop() {
   updateSetpointRamp();
 
   // 4. Calcula saída do PID
-  myPID.compute();  
+  myPID.setSetpoint(rampedSetpoint);
+  pidOutput = myPID.compute(currentCelsius);
   
   // 5. Atua no SSR (time-proportioning)
   runSsrControl(pidOutput);
@@ -212,8 +209,8 @@ void handleSerialCommands() {
       currentCelsius = getOvenTemperature();
       rampedSetpoint = currentCelsius;
       myPID.reset();
-      myPID.start();
-      
+      myPID.setSetpoint(rampedSetpoint);
+
       rampTimer = millis();
       
       testRunning = true;
@@ -230,7 +227,6 @@ void handleSerialCommands() {
     
     // STOP_TEST - Para o teste
     else if (cmd.equals("STOP_TEST")) {
-      myPID.stop();
       myPID.reset();
       testRunning = false;
       digitalWrite(SSR_PIN, LOW);

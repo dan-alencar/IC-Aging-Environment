@@ -22,7 +22,9 @@ class SetupDialog(QDialog):
         self.setMinimumWidth(500)
         self.setModal(True)
 
-        self.serial_ports = sorted([p.device for p in serial.tools.list_ports.comports()])
+        all_ports = sorted([p.device for p in serial.tools.list_ports.comports()])
+        self.serial_ports = all_ports
+        self.acm_ports = [p for p in all_ports if "ttyACM" in p]
         self.visa_resources = self._list_visa_resources()
 
         self._build_ui()
@@ -79,7 +81,7 @@ class SetupDialog(QDialog):
         grid_ard = QGridLayout()
         grid_ard.setColumnStretch(1, 1)
         grid_ard.addWidget(QLabel("Porta Serial:"), 0, 0)
-        self.cmb_ard = _port_combo(self.serial_ports)
+        self.cmb_ard = _port_combo(self.acm_ports)
         grid_ard.addWidget(self.cmb_ard, 0, 1)
         grid_ard.addWidget(QLabel("Baud Rate:"), 1, 0)
         self.cmb_ard_baud = _baud_combo()

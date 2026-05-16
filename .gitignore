@@ -4,6 +4,8 @@ App/venv
 /app_caio/venv
 pcb-serial
 App_Nexys/.venv
+App_2Nexys/.venv/
+App_2Nexys/test_logs/
 App_FPGAging_Slack_Sensor/.venv/
 
 # Python generated output
