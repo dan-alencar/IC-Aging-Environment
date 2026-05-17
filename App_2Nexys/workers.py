@@ -367,18 +367,22 @@ class PSUWorker1(QObject):
 # =============================================================================
 #   DUTWorker — Nexys4 DDR FPGA
 #
-#   Protocol: send byte 'F', receive 9 binary bytes Little Endian:
-#     [TL TH 00 SL SH VL VH 00 AL]
-#   Conversions (Xilinx XADC):
-#     temp_c  = raw_temp  / 1000.0   (firmware already scales)
-#     slack   = raw_slack            (alarm counter, integer)
-#     vccint  = raw_voltage / 1000.0 (firmware already scales)
+#   Protocol: send byte 'F', receive 15 binary bytes Little Endian:
+#     [TL TH TH2  SL SH  VL VH VH2  AL  WL WH  CL CH  EL EH]
+#     temp(3)  slack(2)  vccint(3)  fail(1)  wrong(2)  correct(2)  error_count(2)
+#   Conversions:
+#     temp_c      = raw_temp    / 1000.0
+#     slack       = raw_slack   (integer phase-step count)
+#     vccint      = raw_voltage / 1000.0
+#     wrong       = raw adder canary result at first alarm (integer)
+#     correct     = expected adder result at first alarm (integer)
+#     error_count = running count of canary mismatches, saturates at 65535
 # =============================================================================
 class DUTWorker(QObject):
     log_message = Signal(str)
-    data_ready = Signal(float, int, float)  # temp_c, slack, vccint_v
+    data_ready = Signal(float, int, float)  # temp_c, slack, vccint_v (kept for compatibility)
 
-    BYTES_EXPECTED = 9
+    BYTES_EXPECTED = 15
 
     def __init__(self, dut_id: str):
         """dut_id: 'DUT-0' or 'DUT-1' (for log messages)."""
@@ -386,7 +390,7 @@ class DUTWorker(QObject):
         self._id = dut_id
         self.ser = None
         self.is_running = False
-        self._latest_data = (0.0, 0, 0.0)
+        self._latest_data = (0.0, 0, 0.0, 0, 0, 0)  # temp, slack, vccint, wrong, correct, error_count
 
     def _get_port_baud(self):
         raise NotImplementedError
@@ -423,15 +427,24 @@ class DUTWorker(QObject):
             self.ser.write(b"F")
             data = self.ser.read(self.BYTES_EXPECTED)
             if len(data) == self.BYTES_EXPECTED:
-                raw_temp = int.from_bytes(data[0:3], byteorder="little")
-                raw_slack = int.from_bytes(data[3:5], byteorder="little")
-                raw_voltage = int.from_bytes(data[5:8], byteorder="little")
-                temp_c = float(raw_temp) / 1000.0
-                slack = int(raw_slack)
-                vccint = float(raw_voltage) / 1000.0
+                raw_temp    = int.from_bytes(data[0:3],   byteorder="little")
+                raw_slack   = int.from_bytes(data[3:5],   byteorder="little")
+                raw_voltage = int.from_bytes(data[5:8],   byteorder="little")
+                # data[8] = failure byte (handled by FPGA side; not logged here)
+                raw_wrong   = int.from_bytes(data[9:11],  byteorder="little")
+                raw_correct = int.from_bytes(data[11:13], byteorder="little")
+                raw_errcnt  = int.from_bytes(data[13:15], byteorder="little")
+
+                temp_c      = float(raw_temp)    / 1000.0
+                slack       = int(raw_slack)
+                vccint      = float(raw_voltage) / 1000.0
+                wrong       = int(raw_wrong)
+                correct     = int(raw_correct)
+                error_count = int(raw_errcnt)
+
                 if temp_c == 0 and slack == 0 and vccint == 0:
                     return
-                self._latest_data = (temp_c, slack, vccint)
+                self._latest_data = (temp_c, slack, vccint, wrong, correct, error_count)
                 self.data_ready.emit(temp_c, slack, vccint)
             else:
                 if len(data) == 0:
@@ -440,7 +453,7 @@ class DUTWorker(QObject):
                     print(f"{self._id}: pacote incompleto ({len(data)}/{self.BYTES_EXPECTED} bytes)")
         except Exception as e:
             self.log_message.emit(f"ERRO ({self._id}): {e}")
-            self._latest_data = (0.0, 0, 0.0)
+            self._latest_data = (0.0, 0, 0.0, 0, 0, 0)
 
     def get_latest_data(self):
         return self._latest_data
@@ -656,9 +669,9 @@ exit
 
             t_oven, sp_oven, out_oven = self.arduino.get_latest_data()
             v0, c0 = self.psu0.get_latest_data()
-            t0, s0, vcc0 = self.dut0.get_latest_data()
+            t0, s0, vcc0, wrong0, correct0, errcnt0 = self.dut0.get_latest_data()
             v1, c1 = self.psu1.get_latest_data()
-            t1, s1, vcc1 = self.dut1.get_latest_data()
+            t1, s1, vcc1, wrong1, correct1, errcnt1 = self.dut1.get_latest_data()
 
             # --- VCCINT closed-loop (P-only) ---
             self._update_vccint_loop(vcc0, vcc1)
@@ -673,8 +686,10 @@ exit
                 "oven_temp": t_oven, "oven_setpoint": sp_oven, "oven_output": out_oven,
                 "psu0_voltage": v0, "psu0_current": c0,
                 "dut0_temp": t0, "dut0_slack": s0, "dut0_volt": vcc0,
+                "dut0_wrong": wrong0, "dut0_correct": correct0, "dut0_error_count": errcnt0,
                 "psu1_voltage": v1, "psu1_current": c1,
                 "dut1_temp": t1, "dut1_slack": s1, "dut1_volt": vcc1,
+                "dut1_wrong": wrong1, "dut1_correct": correct1, "dut1_error_count": errcnt1,
                 "psu0_cmd_v": self._psu0_cmd_v,
                 "psu1_cmd_v": self._psu1_cmd_v,
             }
