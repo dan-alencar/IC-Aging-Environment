@@ -3,12 +3,12 @@
     "design_info": {
       "boundary_crc": "0xE2EA3F3EE1546CAF",
       "device": "xc7a100tcsg324-1",
-      "gen_directory": "../../../../aging-study.gen/sources_1/bd/design_1",
+      "gen_directory": "../../../aging-study.gen/sources_1/bd/design_1",
       "name": "design_1",
       "rev_ctrl_bd_flag": "RevCtrlBdOff",
       "synth_flow_mode": "None",
       "tool_version": "2025.2.1",
-      "validated": "false"
+      "validated": "true"
     },
     "design_tree": {
       "xadc_wiz_0": "",
@@ -18,12 +18,13 @@
       "temp_catcher_0": "",
       "modern_sensible_0": "",
       "clk_wiz_0": "",
-      "not_series_0": "",
       "sensor_stream_0": "",
       "uart_tx_0": "",
       "controller_controller_0": "",
       "util_vector_logic_1": "",
-      "failure_holder_0": ""
+      "failure_holder_0": "",
+      "adder_canary_0": "",
+      "BinToBCD_1": {}
     },
     "ports": {
       "CA": {
@@ -112,6 +113,12 @@
             "value_src": "ip_prop"
           }
         }
+      },
+      "alarm_led": {
+        "direction": "O"
+      },
+      "error_any_led": {
+        "direction": "O"
       }
     },
     "components": {
@@ -457,7 +464,7 @@
                 "value_src": "ip_prop"
               },
               "CLK_DOMAIN": {
-                "value": "/clk_wiz_0_clk_out1",
+                "value": "design_1_CLK100MHZ",
                 "value_src": "ip_prop"
               }
             }
@@ -474,7 +481,7 @@
                 "value_src": "ip_prop"
               },
               "CLK_DOMAIN": {
-                "value": "/clk_wiz_0_clk_out1",
+                "value": "design_1_CLK100MHZ",
                 "value_src": "ip_prop"
               }
             }
@@ -498,7 +505,7 @@
                 "value_src": "ip_prop"
               },
               "CLK_DOMAIN": {
-                "value": "/clk_wiz_0_clk_out1",
+                "value": "design_1_CLK100MHZ",
                 "value_src": "ip_prop"
               }
             }
@@ -737,53 +744,6 @@
           }
         }
       },
-      "not_series_0": {
-        "vlnv": "xilinx.com:module_ref:not_series:1.0",
-        "ip_revision": "1",
-        "xci_name": "design_1_not_series_0_0",
-        "xci_path": "ip/design_1_not_series_0_0/design_1_not_series_0_0.xci",
-        "inst_hier_path": "not_series_0",
-        "has_run_ip_tcl": "true",
-        "parameters": {
-          "size": {
-            "value": "50"
-          }
-        },
-        "reference_info": {
-          "ref_type": "hdl",
-          "ref_name": "not_series",
-          "boundary_crc": "0x0"
-        },
-        "ports": {
-          "clk": {
-            "type": "clk",
-            "direction": "I",
-            "parameters": {
-              "FREQ_HZ": {
-                "value": "100000000",
-                "value_src": "ip_prop"
-              },
-              "PHASE": {
-                "value": "0.0",
-                "value_src": "ip_prop"
-              },
-              "CLK_DOMAIN": {
-                "value": "/clk_wiz_0_clk_out1",
-                "value_src": "ip_prop"
-              }
-            }
-          },
-          "test_bit": {
-            "direction": "I"
-          },
-          "start": {
-            "direction": "O"
-          },
-          "critpath": {
-            "direction": "O"
-          }
-        }
-      },
       "sensor_stream_0": {
         "vlnv": "xilinx.com:module_ref:sensor_stream:1.0",
         "ip_revision": "1",
@@ -814,6 +774,16 @@
           },
           "failure": {
             "direction": "I"
+          },
+          "wrong": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "correct": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
           },
           "reset": {
             "type": "rst",
@@ -847,6 +817,11 @@
             "direction": "O",
             "left": "7",
             "right": "0"
+          },
+          "error_count": {
+            "direction": "I",
+            "left": 15,
+            "right": 0
           }
         }
       },
@@ -931,7 +906,7 @@
                 "value_src": "ip_prop"
               },
               "CLK_DOMAIN": {
-                "value": "/clk_wiz_0_clk_out1",
+                "value": "design_1_CLK100MHZ",
                 "value_src": "ip_prop"
               }
             }
@@ -1008,55 +983,193 @@
             "direction": "O"
           }
         }
+      },
+      "adder_canary_0": {
+        "vlnv": "xilinx.com:module_ref:adder_canary:1.0",
+        "ip_revision": "1",
+        "xci_name": "design_1_adder_canary_0_0",
+        "xci_path": "ip/design_1_adder_canary_0_0/design_1_adder_canary_0_0.xci",
+        "inst_hier_path": "adder_canary_0",
+        "has_run_ip_tcl": "true",
+        "reference_info": {
+          "ref_type": "hdl",
+          "ref_name": "adder_canary",
+          "boundary_crc": "0x0"
+        },
+        "ports": {
+          "clk": {
+            "type": "clk",
+            "direction": "I",
+            "parameters": {
+              "ASSOCIATED_RESET": {
+                "value": "reset",
+                "value_src": "constant"
+              },
+              "FREQ_HZ": {
+                "value": "100000000",
+                "value_src": "ip_prop"
+              },
+              "PHASE": {
+                "value": "0.0",
+                "value_src": "ip_prop"
+              },
+              "CLK_DOMAIN": {
+                "value": "design_1_CLK100MHZ",
+                "value_src": "ip_prop"
+              }
+            }
+          },
+          "reset": {
+            "type": "rst",
+            "direction": "I"
+          },
+          "alarm": {
+            "direction": "I"
+          },
+          "crit_bit": {
+            "direction": "O"
+          },
+          "ref_bit": {
+            "direction": "O"
+          },
+          "wrong": {
+            "direction": "O",
+            "left": "15",
+            "right": "0"
+          },
+          "correct": {
+            "direction": "O",
+            "left": "15",
+            "right": "0"
+          },
+          "error_count": {
+            "direction": "O",
+            "left": 15,
+            "right": 0
+          },
+          "error_any": {
+            "direction": "O"
+          }
+        }
+      },
+      "BinToBCD_1": {
+        "vlnv": "xilinx.com:module_ref:BinToBCD:1.0",
+        "ip_revision": "1",
+        "xci_name": "design_1_BinToBCD_1_0",
+        "xci_path": "ip/design_1_BinToBCD_1_0/design_1_BinToBCD_1_0.xci",
+        "inst_hier_path": "BinToBCD_1",
+        "has_run_ip_tcl": "true",
+        "reference_info": {
+          "ref_type": "hdl",
+          "ref_name": "BinToBCD",
+          "boundary_crc": "0x0"
+        },
+        "ports": {
+          "clk": {
+            "type": "clk",
+            "direction": "I",
+            "parameters": {
+              "FREQ_HZ": {
+                "value": "100000000",
+                "value_src": "user_prop"
+              },
+              "CLK_DOMAIN": {
+                "value": "design_1_CLK100MHZ",
+                "value_src": "default_prop"
+              }
+            }
+          },
+          "bin": {
+            "direction": "I",
+            "left": "20",
+            "right": "0"
+          },
+          "un": {
+            "direction": "O",
+            "left": "3",
+            "right": "0"
+          },
+          "dec": {
+            "direction": "O",
+            "left": "3",
+            "right": "0"
+          },
+          "cent": {
+            "direction": "O",
+            "left": "3",
+            "right": "0"
+          },
+          "mil": {
+            "direction": "O",
+            "left": "3",
+            "right": "0"
+          },
+          "bil": {
+            "direction": "O",
+            "left": "3",
+            "right": "0"
+          },
+          "tril": {
+            "direction": "O",
+            "left": "3",
+            "right": "0"
+          },
+          "quadr": {
+            "direction": "O",
+            "left": "3",
+            "right": "0"
+          },
+          "quint": {
+            "direction": "O",
+            "left": "3",
+            "right": "0"
+          }
+        }
       }
     },
     "nets": {
       "BinToBCD_0_bil": {
         "ports": [
-          "BinToBCD_0/bil",
-          "DisplayController_0/in4"
+          "BinToBCD_0/bil"
         ]
       },
       "BinToBCD_0_cent": {
         "ports": [
           "BinToBCD_0/cent",
-          "DisplayController_0/in2"
+          "DisplayController_0/in6"
         ]
       },
       "BinToBCD_0_dec": {
         "ports": [
           "BinToBCD_0/dec",
-          "DisplayController_0/in1"
+          "DisplayController_0/in5"
         ]
       },
       "BinToBCD_0_mil": {
         "ports": [
           "BinToBCD_0/mil",
-          "DisplayController_0/in3"
+          "DisplayController_0/in7"
         ]
       },
       "BinToBCD_0_quadr": {
         "ports": [
-          "BinToBCD_0/quadr",
-          "DisplayController_0/in6"
+          "BinToBCD_0/quadr"
         ]
       },
       "BinToBCD_0_quint": {
         "ports": [
-          "BinToBCD_0/quint",
-          "DisplayController_0/in7"
+          "BinToBCD_0/quint"
         ]
       },
       "BinToBCD_0_tril": {
         "ports": [
-          "BinToBCD_0/tril",
-          "DisplayController_0/in5"
+          "BinToBCD_0/tril"
         ]
       },
       "BinToBCD_0_un": {
         "ports": [
           "BinToBCD_0/un",
-          "DisplayController_0/in0"
+          "DisplayController_0/in4"
         ]
       },
       "CLK100MHZ_1": {
@@ -1069,7 +1182,8 @@
           "sensor_stream_0/clk",
           "clk_wiz_0/clk_in1",
           "clk_wiz_0/psclk",
-          "xadc_wiz_0/dclk_in"
+          "xadc_wiz_0/dclk_in",
+          "BinToBCD_1/clk"
         ]
       },
       "Dff_0_ffoutput": {
@@ -1133,6 +1247,30 @@
           "CG"
         ]
       },
+      "adder_canary_0_correct": {
+        "ports": [
+          "adder_canary_0/correct",
+          "sensor_stream_0/correct"
+        ]
+      },
+      "adder_canary_0_crit_bit": {
+        "ports": [
+          "adder_canary_0/crit_bit",
+          "modern_sensible_0/in_sensor"
+        ]
+      },
+      "adder_canary_0_ref_bit": {
+        "ports": [
+          "adder_canary_0/ref_bit",
+          "failure_holder_0/ff1"
+        ]
+      },
+      "adder_canary_0_wrong": {
+        "ports": [
+          "adder_canary_0/wrong",
+          "sensor_stream_0/wrong"
+        ]
+      },
       "button_2": {
         "ports": [
           "rx",
@@ -1150,9 +1288,9 @@
       "clk_wiz_0_clk_orig": {
         "ports": [
           "clk_wiz_0/clk_sys",
-          "not_series_0/clk",
           "controller_controller_0/clk",
-          "modern_sensible_0/sclk"
+          "modern_sensible_0/sclk",
+          "adder_canary_0/clk"
         ]
       },
       "clk_wiz_0_psdone": {
@@ -1165,12 +1303,6 @@
         "ports": [
           "clk_wiz_0/sensor0",
           "modern_sensible_0/psclk"
-        ]
-      },
-      "controller_controller_0_change": {
-        "ports": [
-          "controller_controller_0/change",
-          "not_series_0/test_bit"
         ]
       },
       "controller_controller_0_psen": {
@@ -1200,25 +1332,15 @@
       "modern_sensible_0_alarm": {
         "ports": [
           "modern_sensible_0/alarm",
-          "controller_controller_0/alarm"
+          "controller_controller_0/alarm",
+          "adder_canary_0/alarm",
+          "alarm_led"
         ]
       },
       "modern_sensible_0_ff1_out": {
         "ports": [
           "modern_sensible_0/ff1_out",
           "failure_holder_0/ff2"
-        ]
-      },
-      "not_series_0_critpath": {
-        "ports": [
-          "not_series_0/critpath",
-          "modern_sensible_0/in_sensor"
-        ]
-      },
-      "not_series_0_start": {
-        "ports": [
-          "not_series_0/start",
-          "failure_holder_0/ff1"
         ]
       },
       "reset_1": {
@@ -1283,7 +1405,8 @@
         "ports": [
           "util_vector_logic_1/Res",
           "modern_sensible_0/reset",
-          "clk_wiz_0/reset"
+          "clk_wiz_0/reset",
+          "adder_canary_0/reset"
         ]
       },
       "xadc_wiz_0_do_out": {
@@ -1296,6 +1419,43 @@
         "ports": [
           "xadc_wiz_0/drdy_out",
           "temp_catcher_0/drdy"
+        ]
+      },
+      "BinToBCD_1_un": {
+        "ports": [
+          "BinToBCD_1/un",
+          "DisplayController_0/in0"
+        ]
+      },
+      "BinToBCD_1_dec": {
+        "ports": [
+          "BinToBCD_1/dec",
+          "DisplayController_0/in1"
+        ]
+      },
+      "BinToBCD_1_cent": {
+        "ports": [
+          "BinToBCD_1/cent",
+          "DisplayController_0/in2"
+        ]
+      },
+      "BinToBCD_1_mil": {
+        "ports": [
+          "BinToBCD_1/mil",
+          "DisplayController_0/in3"
+        ]
+      },
+      "adder_canary_0_error_count": {
+        "ports": [
+          "adder_canary_0/error_count",
+          "sensor_stream_0/error_count",
+          "BinToBCD_1/bin"
+        ]
+      },
+      "adder_canary_0_error_any": {
+        "ports": [
+          "adder_canary_0/error_any",
+          "error_any_led"
         ]
       }
     }

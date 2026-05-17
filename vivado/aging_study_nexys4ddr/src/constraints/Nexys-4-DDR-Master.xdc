@@ -22,8 +22,6 @@ set_property -dict {PACKAGE_PIN M17 IOSTANDARD LVCMOS33} [get_ports UARTsend]
 set_property -dict {PACKAGE_PIN D4 IOSTANDARD LVCMOS33} [get_ports tx]
 set_property -dict {PACKAGE_PIN J15 IOSTANDARD LVCMOS33} [get_ports direction]
 set_property -dict {PACKAGE_PIN P18 IOSTANDARD LVCMOS33} [get_ports shift]
-set_property LOC H17 [get_cells path_OBUF_inst]
-set_property LOC U14 [get_cells LED0_OBUF_inst]
 set_property LOC N17 [get_cells reset_IBUF_inst]
 set_property LOC M18 [get_cells button_IBUF_inst]
 ## This file is a general .xdc for the Nexys4 DDR Rev. C
@@ -56,7 +54,13 @@ create_clock -period 10.000 -waveform {0.000 5.000} [get_ports CLK100MHZ]
 
 ## LEDs
 
-set_property -dict { PACKAGE_PIN K15   IOSTANDARD LVCMOS33 } [get_ports { failure }]; #IO_L24P_T3_RS1_15 Sch=led[1]
+# alarm_led (LED[0] = H17): metastability sensor alarm — lights when phase-shift
+# sensor detects a timing-margin violation (slack approaching zero).
+set_property -dict {PACKAGE_PIN H17 IOSTANDARD LVCMOS33} [get_ports alarm_led]
+
+# error_any_led (LED[1] = K15): sticky functional-failure flag — lights on the
+# first clock cycle where the ripple-carry canary computes a wrong sum, stays lit.
+set_property -dict {PACKAGE_PIN K15 IOSTANDARD LVCMOS33} [get_ports error_any_led]
 #set_property -dict { PACKAGE_PIN J13   IOSTANDARD LVCMOS33 } [get_ports { LED[2] }]; #IO_L17N_T2_A25_15 Sch=led[2]
 #set_property -dict { PACKAGE_PIN N14   IOSTANDARD LVCMOS33 } [get_ports { LED[3] }]; #IO_L8P_T1_D11_14 Sch=led[3]
 #set_property -dict { PACKAGE_PIN R18   IOSTANDARD LVCMOS33 } [get_ports { LED[4] }]; #IO_L7P_T1_D09_14 Sch=led[4]

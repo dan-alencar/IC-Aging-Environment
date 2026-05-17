@@ -36,13 +36,9 @@ pyinstaller AgingMonitorApp.spec
 # Output: dist/AgingMonitorApp
 ```
 
-To package `App_Nexys` as a standalone executable:
-```bash
-cd App_Nexys
-source .venv/bin/activate
-pyinstaller AgingMonitorApp.spec
-# Output: dist/AgingMonitorApp
-```
+## No automated test suite
+
+There are no project-level unit or integration tests. All validation is done by running the app against real hardware. The `.venv/` directories contain third-party library tests — ignore those.
 
 ## Building the FPGA bitstreams (Vivado)
 
@@ -88,7 +84,7 @@ PC ──VISA───► PSU (SCPI)          [optional: programmable supply]
 Workers run in QThread via QObject + QTimer polling:
 - `ArduinoWorker` — sends `GET_DATA\n`, receives `DATA,<temp>,<sp>,<out>` ASCII
 - `PSUWorker` — PyVISA SCPI (`MEAS:VOLT?`, `MEAS:CURR?`, `OUTP ON/OFF`)
-- `DUTWorker` — sends byte `'F'`, reads 9 binary bytes Little Endian: `[TEMP×3][SLACK×2][VOLT×3][FAIL×1]`, converts temp/voltage by dividing raw by 1000
+- `DUTWorker` — sends byte `'F'`, reads 9 binary bytes Little Endian: `[TEMP×3][SLACK×2][VOLT×3][FAIL×1]`, converts temp/voltage by dividing raw by 1000. **DUT baud rate is 9600, not 115200.**
 - `TestSequencer` — orchestrates all workers, runs safety limit checks, writes CSV rows
 
 ### App_FPGAging_Slack_Sensor (SBCCI UltraScale+ target)
@@ -118,11 +114,17 @@ Conversion: `raw_to_temp` and `raw_to_vcc` in `protocol.py` use Xilinx XADC form
 PC ──serial──► DUT-0 (Nexys4 DDR, ttyUSB higher)   [required]
 PC ──serial──► DUT-1 (Nexys4 DDR, ttyUSB higher)   [required]
 PC ──VISA───► PSU-0 (IT6502D, SCPI)                 [optional]
-PC ──VISA───► PSU-1 (Agilent E3634A, SCPI)          [optional]
+PC ──serial──► PSU-1 (Agilent E3634A, RS-232)       [optional]
 PC ──serial──► Arduino (shared oven)                 [optional]
 ```
 
 **ttyUSB port pairing:** Each Nexys4 board enumerates two `ttyUSB*` ports via its FTDI chip. The **lower-numbered** port is JTAG (for Vivado programming) and must not be opened by the app. The **higher-numbered** port is the UART data channel. Always pick the higher one in the setup dialog.
+
+**USB device ID auto-resolution:** `config.resolve_hw_ports()` resolves DUT-0, DUT-1, and PSU-1 ports by following `/dev/serial/by-id/` symlinks using fixed USB serial IDs (`USB_ID_DUT0`, `USB_ID_DUT1`, `USB_ID_PSU1` in `App_2Nexys/config.py`). Update these if boards are swapped.
+
+**DUT-0 auto-programming at test start:** DUT-0's onboard flash is broken — only SRAM works. `TestSequencer.start_test()` always programs the bitstream via `vivado -mode batch` after the PSUs stabilise (`PSU_STABILISE_DELAY_S = 5 s`). The bitstream path and Digilent serial number are hardcoded in `App_2Nexys/config.py` (`BITSTREAM_DUT0`, `DUT0_DIGILENT_SERIAL`). `VIVADO_BIN` is also hardcoded to an absolute path (`/home/andre/Xilinx/...`) — update this when running on a different machine.
+
+**PSU-0 auto-reconnect:** `PSUWorker0._try_reconnect()` detects VISA errors (which can occur when Vivado claims the USB bus during JTAG programming) and automatically reopens the resource after a 2 s delay. PSU-1 (E3634A via RS-232) does not have this logic.
 
 **VCCINT closed-loop voltage control:** The FPGA XADC reports actual VCCINT (internal supply voltage) inside the 9-byte DUT packet (`dut_volt` field). `TestSequencer.log_data_tick()` runs a P-only trim every tick:
 ```
@@ -141,6 +143,7 @@ psu.set_voltage(psu_cmd)
 - `DataLogger` (`logger.py`) — writes timestamped CSV rows to `test_logs/` inside the app directory.
 - PID parameters (Kp=2.78, Ki=0.00106, Kd=5.0) were identified via FOPDT step test and tuned with SIMC (τc = θ). Do not change without a new step test; see comments in `App_Nexys/config.py`.
 - Safety limits: oven max 130°C, DUT max 140°C, PSU current max 1.5 A.
+- **DUT outer temperature loop:** `TestSequencer._adjust_oven_outer_loop()` shifts the oven setpoint by ±1°C every ~30 min (1800 ticks at 1 s/tick) to bring the DUT die temperature to its target, with a ±3°C dead-band. In `App_2Nexys`, the average of both DUT temperatures is used.
 
 ## Arduino sketches
 
