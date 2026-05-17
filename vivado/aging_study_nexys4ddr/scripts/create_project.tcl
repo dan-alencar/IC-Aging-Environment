@@ -87,6 +87,9 @@ set active_rtl [list \
     [file join $project_root "src/rtl/aging_sensor/holder_button.v"] \
     [file join $project_root "src/rtl/aging_sensor/modern_sensible.v"] \
     [file join $project_root "src/rtl/aging_sensor/nand_series.v"] \
+    [file join $project_root "src/rtl/aging_sensor/lut_full_adder.v"] \
+    [file join $project_root "src/rtl/aging_sensor/ripple_adder.v"] \
+    [file join $project_root "src/rtl/aging_sensor/adder_canary.v"] \
     [file join $project_root "src/rtl/aging_sensor/temp_catcher.v"] \
     [file join $project_root "src/rtl/aging_sensor/xadc_raw.v"] \
     [file join $project_root "src/rtl/uart/sensor_stream.v"] \
