@@ -68,6 +68,9 @@ class MainWindow(QMainWindow):
     # Real-time oven setpoint (forwarded to ArduinoWorker)
     update_oven_setpoint_signal = Signal(float)
 
+    psu0_beeper_signal = Signal(bool)
+    psu1_beeper_signal = Signal(bool)
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("App 2-Nexys — Supervisor de Envelhecimento (2 DUTs)")
@@ -133,6 +136,9 @@ class MainWindow(QMainWindow):
         )
         self.slack0_label = self._make_slack_label()
         self.dut0_info_label = QLabel("Temp: -- °C   VCCINT: -- V")
+        self.beeper0_button = QPushButton("Silenciar Buzzer PSU-0")
+        self.beeper0_button.setCheckable(True)
+        self.beeper0_button.setToolTip("Desliga/liga o buzzer da PSU-0 via SCPI")
 
         # --- DUT-1 panel ---
         self.dut1_group = QGroupBox("DUT-1  (E3634A)")
@@ -146,6 +152,9 @@ class MainWindow(QMainWindow):
         )
         self.slack1_label = self._make_slack_label()
         self.dut1_info_label = QLabel("Temp: -- °C   VCCINT: -- V")
+        self.beeper1_button = QPushButton("Silenciar Buzzer PSU-1")
+        self.beeper1_button.setCheckable(True)
+        self.beeper1_button.setToolTip("Desliga/liga o buzzer da PSU-1 via SCPI")
 
         # --- Plots ---
         self.plot_widget = PlotWidget(plot_window_size=300)
@@ -206,6 +215,7 @@ class MainWindow(QMainWindow):
         dut0_form = QFormLayout()
         dut0_form.addRow("Tensão inicial PSU-0:", self.psu0_voltage_input)
         dut0_inner.addLayout(dut0_form)
+        dut0_inner.addWidget(self.beeper0_button)
         dut0_inner.addWidget(QLabel("<b>Sensor de Degradação — DUT-0:</b>"))
         dut0_inner.addWidget(self.slack0_label)
         dut0_inner.addWidget(self.dut0_info_label)
@@ -216,6 +226,7 @@ class MainWindow(QMainWindow):
         dut1_form = QFormLayout()
         dut1_form.addRow("Tensão inicial PSU-1:", self.psu1_voltage_input)
         dut1_inner.addLayout(dut1_form)
+        dut1_inner.addWidget(self.beeper1_button)
         dut1_inner.addWidget(QLabel("<b>Sensor de Degradação — DUT-1:</b>"))
         dut1_inner.addWidget(self.slack1_label)
         dut1_inner.addWidget(self.dut1_info_label)
@@ -253,8 +264,10 @@ class MainWindow(QMainWindow):
             self.oven_group.setToolTip("Arduino não habilitado")
         if not config.PSU_0_ENABLED:
             self.psu0_voltage_input.setEnabled(False)
+            self.beeper0_button.setEnabled(False)
         if not config.PSU_1_ENABLED:
             self.psu1_voltage_input.setEnabled(False)
+            self.beeper1_button.setEnabled(False)
 
     # =========================================================================
     #   Worker lifecycle
@@ -279,11 +292,13 @@ class MainWindow(QMainWindow):
         psu0 = self._start_worker("psu0", PSUWorker0())
         self.start_psu0_signal.connect(psu0.start)
         self.stop_psu0_signal.connect(psu0.stop)
+        self.psu0_beeper_signal.connect(psu0.set_beeper)
         self.start_psu0_signal.emit()
 
         psu1 = self._start_worker("psu1", PSUWorker1())
         self.start_psu1_signal.connect(psu1.start)
         self.stop_psu1_signal.connect(psu1.stop)
+        self.psu1_beeper_signal.connect(psu1.set_beeper)
         self.start_psu1_signal.emit()
 
         dut0 = self._start_worker("dut0", DUTWorker0())
@@ -345,6 +360,8 @@ class MainWindow(QMainWindow):
     def _connect_ui_signals(self):
         self.toggle_test_button.clicked.connect(self.on_toggle_test)
         self.oven_setpoint_input.editingFinished.connect(self.on_update_oven_setpoint)
+        self.beeper0_button.clicked.connect(self._on_beeper0_toggled)
+        self.beeper1_button.clicked.connect(self._on_beeper1_toggled)
 
     # =========================================================================
     #   Slots
@@ -415,6 +432,26 @@ class MainWindow(QMainWindow):
         )
         self.toggle_test_button.setChecked(False)
         self.test_name_input.setEnabled(True)
+
+    @Slot(bool)
+    def _on_beeper0_toggled(self, checked: bool):
+        self.psu0_beeper_signal.emit(not checked)
+        if checked:
+            self.beeper0_button.setText("Buzzer PSU-0: SILENCIADO")
+            self.beeper0_button.setStyleSheet("background-color: #856404; color: white;")
+        else:
+            self.beeper0_button.setText("Silenciar Buzzer PSU-0")
+            self.beeper0_button.setStyleSheet("")
+
+    @Slot(bool)
+    def _on_beeper1_toggled(self, checked: bool):
+        self.psu1_beeper_signal.emit(not checked)
+        if checked:
+            self.beeper1_button.setText("Buzzer PSU-1: SILENCIADO")
+            self.beeper1_button.setStyleSheet("background-color: #856404; color: white;")
+        else:
+            self.beeper1_button.setText("Silenciar Buzzer PSU-1")
+            self.beeper1_button.setStyleSheet("")
 
     def closeEvent(self, event):
         self.log_message("Encerrando aplicação...")

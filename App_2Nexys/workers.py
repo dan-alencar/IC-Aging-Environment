@@ -262,6 +262,17 @@ class PSUWorker0(QObject):
                 return
         self.log_message.emit("PSU-0: saída DESLIGADA")
 
+    @Slot(bool)
+    def set_beeper(self, enabled: bool):
+        with self._lock:
+            if not self.inst:
+                return
+            try:
+                self.inst.write(f"SYSTEM:BEEPER:STATE {'ON' if enabled else 'OFF'}")
+                self.log_message.emit(f"PSU-0: buzzer {'LIGADO' if enabled else 'DESLIGADO'}")
+            except Exception as e:
+                self.log_message.emit(f"ERRO buzzer PSU-0: {e}")
+
 
 class PSUWorker1(QObject):
     """Agilent E3634A — DUT 1, RS-232 via Prolific USB-Serial adapter (ttyUSB)."""
@@ -362,6 +373,15 @@ class PSUWorker1(QObject):
                 self.log_message.emit(f"{self._id}: saída DESLIGADA")
             except Exception as e:
                 self.log_message.emit(f"ERRO desligar {self._id}: {e}")
+
+    @Slot(bool)
+    def set_beeper(self, enabled: bool):
+        if self.ser and self.ser.is_open:
+            try:
+                self._write(f"SYSTEM:BEEPER:STATE {'ON' if enabled else 'OFF'}")
+                self.log_message.emit(f"{self._id}: buzzer {'LIGADO' if enabled else 'DESLIGADO'}")
+            except Exception as e:
+                self.log_message.emit(f"ERRO buzzer {self._id}: {e}")
 
 
 # =============================================================================
