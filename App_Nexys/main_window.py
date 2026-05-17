@@ -48,6 +48,7 @@ class MainWindow(QMainWindow):
     # Sinais de controle em tempo real (apenas setpoints, não PID)
     update_psu_voltage_signal = Signal(float)
     update_oven_setpoint_signal = Signal(float)
+    psu_beeper_signal = Signal(bool)
 
     def __init__(self):
         super().__init__()
@@ -118,6 +119,10 @@ class MainWindow(QMainWindow):
         self.psu_setpoint_input.setSuffix(" V")
         self.psu_setpoint_input.setToolTip("Tensão de saída da fonte")
 
+        self.beeper_button = QPushButton("Silenciar Buzzer PSU")
+        self.beeper_button.setCheckable(True)
+        self.beeper_button.setToolTip("Desliga/liga o buzzer da PSU via SCPI")
+
         # Widget de Slack
         self.slack_label = QLabel("Slack: -- Inc.")
         slack_font = self.slack_label.font()
@@ -180,6 +185,7 @@ class MainWindow(QMainWindow):
         psu_form = QFormLayout()
         psu_form.addRow("Tensão PSU:", self.psu_setpoint_input)
         psu_layout.addLayout(psu_form)
+        psu_layout.addWidget(self.beeper_button)
         psu_layout.addWidget(QLabel("<b>Sensor de Degradação:</b>"))
         psu_layout.addWidget(self.slack_label)
         psu_layout.addStretch()
@@ -214,6 +220,7 @@ class MainWindow(QMainWindow):
         if not config.PSU_ENABLED:
             self.psu_setpoint_input.setEnabled(False)
             self.psu_setpoint_input.setToolTip("PSU não habilitada — configure no Setup")
+            self.beeper_button.setEnabled(False)
 
     def _start_worker(self, name, worker_class_or_instance):
         """Inicia um worker em sua própria thread."""
@@ -248,6 +255,7 @@ class MainWindow(QMainWindow):
         self.start_psu_signal.connect(psu_worker.start)
         self.stop_psu_signal.connect(psu_worker.stop)
         self.update_psu_voltage_signal.connect(psu_worker.set_voltage)
+        self.psu_beeper_signal.connect(psu_worker.set_beeper)
         self.start_psu_signal.emit()
 
         # DUT Worker (always required)
@@ -281,6 +289,7 @@ class MainWindow(QMainWindow):
         self.toggle_test_button.clicked.connect(self.on_toggle_test)
         self.psu_setpoint_input.editingFinished.connect(self.on_update_psu_voltage)
         self.oven_setpoint_input.editingFinished.connect(self.on_update_oven_setpoint)
+        self.beeper_button.clicked.connect(self._on_beeper_toggled)
 
     # =========================================================================
     #   SLOTS
@@ -381,6 +390,16 @@ class MainWindow(QMainWindow):
         self.toggle_test_button.setChecked(False)
         self.test_name_input.setEnabled(True)
         
+    @Slot(bool)
+    def _on_beeper_toggled(self, checked: bool):
+        self.psu_beeper_signal.emit(not checked)
+        if checked:
+            self.beeper_button.setText("Buzzer PSU: SILENCIADO")
+            self.beeper_button.setStyleSheet("background-color: #856404; color: white;")
+        else:
+            self.beeper_button.setText("Silenciar Buzzer PSU")
+            self.beeper_button.setStyleSheet("")
+
     def closeEvent(self, event):
         """Encerra todos os threads ao fechar."""
         self.log_message("Encerrando aplicação...")

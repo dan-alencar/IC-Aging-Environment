@@ -291,6 +291,15 @@ class PSUWorker(QObject):
             except Exception as e:
                 self.log_message.emit(f"Erro ao desligar PSU: {e}")
 
+    @Slot(bool)
+    def set_beeper(self, enabled: bool):
+        if self.inst:
+            try:
+                self.inst.write(f"SYSTEM:BEEPER:STATE {'ON' if enabled else 'OFF'}")
+                self.log_message.emit(f"PSU: buzzer {'LIGADO' if enabled else 'DESLIGADO'}")
+            except Exception as e:
+                self.log_message.emit(f"ERRO buzzer PSU: {e}")
+
 
 # =============================================================================
 #   WORKER 3: Controlador do DUT (FPGA)
