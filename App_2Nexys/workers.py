@@ -4,7 +4,7 @@ App_2Nexys — Hardware workers.
 Workers (all run in QThread via QObject + QTimer polling):
   ArduinoWorker  — shared oven PID controller over serial (unchanged from App_Nexys)
   PSUWorker      — one SCPI PSU per DUT (IT6502D for DUT0, E3634A for DUT1)
-  DUTWorker      — one Nexys4 DDR FPGA per slot; protocol: send 'F', read 9 binary bytes
+  DUTWorker      — one Nexys4 DDR FPGA per slot; protocol: send 'F', read 15 binary bytes
   TestSequencer  — orchestrates all workers, runs VCCINT closed-loop, writes CSV
 
 VCCINT loop (per DUT, runs every log tick):
@@ -289,6 +289,7 @@ class PSUWorker1(QObject):
 
     def _query(self, cmd: str) -> str:
         with self._lock:
+            self.ser.reset_input_buffer()   # discard any stale/unsolicited bytes
             self.ser.write(f"{cmd}\r\n".encode())
             return self.ser.readline().decode(errors="replace").strip()
 
@@ -306,9 +307,14 @@ class PSUWorker1(QObject):
                 config.PSU_1_PORT, config.PSU_1_BAUD,
                 stopbits=serial.STOPBITS_TWO, timeout=3,
             )
+            time.sleep(0.1)                   # let E3634A finish any pending TX
+            self.ser.reset_input_buffer()     # discard stale bytes from previous session
+            self._write("*CLS")              # clear error queue + STB/ESR
+            time.sleep(0.1)                   # wait for *CLS to be processed
             idn = self._query("*IDN?")
             self.log_message.emit(f"{self._id} conectado: {idn}")
             self._write(f"CURR {config.MAX_PSU_CURRENT_A}")
+            self._write("SYSTEM:BEEPER:STATE OFF")   # suppress error beeps automatically
             self.is_running = True
             self.poll_timer = QTimer(self)
             self.poll_timer.setInterval(config.LOG_INTERVAL_MS)
@@ -335,6 +341,7 @@ class PSUWorker1(QObject):
             return
         try:
             v_str = self._query("MEAS:VOLT?")
+            time.sleep(0.05)   # allow E3634A to flush TX before next query (avoids ERR -410)
             c_str = self._query("MEAS:CURR?")
             if not v_str or not c_str:
                 return

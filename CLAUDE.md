@@ -126,7 +126,9 @@ PC ──serial──► Arduino (shared oven)                 [optional]
 
 **PSU-0 auto-reconnect:** `PSUWorker0._try_reconnect()` detects VISA errors (which can occur when Vivado claims the USB bus during JTAG programming) and automatically reopens the resource after a 2 s delay. PSU-1 (E3634A via RS-232) does not have this logic.
 
-**VCCINT closed-loop voltage control:** The FPGA XADC reports actual VCCINT (internal supply voltage) inside the 9-byte DUT packet (`dut_volt` field). `TestSequencer.log_data_tick()` runs a P-only trim every tick:
+**DUT packet (App_2Nexys, 15 bytes, Little Endian):** `[TEMP×3][SLACK×2][VCCINT×3][FAIL×1][WRONG×2][CORRECT×2][ERR_CNT×2]`. The adder-canary fields (`wrong`, `correct`, `error_count`) are logged to CSV but not shown in the UI. App_Nexys (single-DUT) still uses the legacy 9-byte packet.
+
+**VCCINT closed-loop voltage control:** The FPGA XADC reports actual VCCINT (internal supply voltage) inside the DUT packet (`dut_volt` field). `TestSequencer.log_data_tick()` runs a P-only trim every tick:
 ```
 psu_cmd += VOLTAGE_KP * (vccint_setpoint - measured_vccint)
 psu_cmd  = clamp(psu_cmd, PSU_MIN_V, PSU_MAX_V)
