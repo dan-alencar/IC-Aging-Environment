@@ -8,6 +8,14 @@
 //   reset_p  — active-high (raw button); fed to modules that use posedge-reset
 //              (DisplayController) or FDCE CLR (modern_sensible).
 //
+// Clock domains:
+//   clk_sys : 0°  100 MHz — main system clock
+//   psclk   : 0°, dynamically phase-shiftable — FF1 in modern_sensible
+//   clk_en  : 100° fixed offset 100 MHz — FF3 (alarm latch) in modern_sensible
+//
+// alarm_sig originates in the clk_en domain (FF3 Q-output).
+// alarm_sync is a 2-FF synchronised version for all clk_sys-domain consumers.
+//
 // Display layout (8 digits):
 //   AN[7:4] / in4..in7 — phase step count  (left  4 digits)
 //   AN[3:0] / in0..in3 — error count       (right 4 digits)
@@ -129,31 +137,13 @@ module nexys4_aging_top (
     );
 
     // -----------------------------------------------------------------------
-    // Adder canary — aging-sensitive 16-bit LUT ripple-carry adder
-    // -----------------------------------------------------------------------
-    logic        crit_bit, ref_bit, alarm_sig;
-    logic [15:0] wrong, correct, error_count;
-    logic        error_any_sig;
-
-    adder_canary u_adder (
-        .clk         (clk_sys),
-        .reset       (reset_n),
-        .alarm       (alarm_sig),
-        .crit_bit    (crit_bit),
-        .ref_bit     (ref_bit),
-        .wrong       (wrong),
-        .correct     (correct),
-        .error_count (error_count),
-        .error_any   (error_any_sig)
-    );
-
-    // -----------------------------------------------------------------------
     // Metastability sensor — 3-FF XOR comparator across phase-shifted domains
     //   FF1: psclk (phase-shifted)   → samples crit_bit
     //   FF2: clk_sys (reference)     → samples crit_bit
-    //   FF3: clk_en  (100° offset)   → latches XOR(FF1, FF2) = alarm
+    //   FF3: clk_en  (100° offset)   → latches XOR(FF1, FF2) = alarm_sig
     // -----------------------------------------------------------------------
-    logic sensor_ff1_out;   // FF2 output of modern_sensible (sclk domain)
+    logic        alarm_sig;           // clk_en domain: FF3 Q-output
+    logic        sensor_ff1_out;      // FF2 output of modern_sensible (clk_sys domain)
 
     modern_sensible u_sensor (
         .sclk      (clk_sys),
@@ -166,6 +156,41 @@ module nexys4_aging_top (
     );
 
     // -----------------------------------------------------------------------
+    // 2-FF synchronizer: alarm_sig (clk_en domain) → alarm_sync (clk_sys).
+    // Prevents CDC violations in adder_canary and controller_controller.
+    // alarm_sig is kept directly for the alarm_led (no timing path needed).
+    // -----------------------------------------------------------------------
+    logic alarm_meta, alarm_sync;
+    always_ff @(posedge clk_sys or posedge reset_p) begin
+        if (reset_p) begin
+            alarm_meta <= 1'b0;
+            alarm_sync <= 1'b0;
+        end else begin
+            alarm_meta <= alarm_sig;
+            alarm_sync <= alarm_meta;
+        end
+    end
+
+    // -----------------------------------------------------------------------
+    // Adder canary — aging-sensitive 16-bit LUT ripple-carry adder
+    // -----------------------------------------------------------------------
+    logic        crit_bit, ref_bit;
+    logic [15:0] wrong, correct, error_count;
+    logic        error_any_sig;
+
+    adder_canary u_adder (
+        .clk         (clk_sys),
+        .reset       (reset_n),
+        .alarm       (alarm_sync),   // synchronised to clk_sys
+        .crit_bit    (crit_bit),
+        .ref_bit     (ref_bit),
+        .wrong       (wrong),
+        .correct     (correct),
+        .error_count (error_count),
+        .error_any   (error_any_sig)
+    );
+
+    // -----------------------------------------------------------------------
     // Phase controller — FSM sweeping MMCM phase until alarm detected
     // -----------------------------------------------------------------------
     logic [15:0] display_value;
@@ -175,7 +200,7 @@ module nexys4_aging_top (
     controller_controller u_ctrl (
         .clk          (clk_sys),
         .reset        (reset_n),
-        .alarm        (alarm_sig),
+        .alarm        (alarm_sync),  // synchronised to clk_sys
         .psdone       (psdone),
         .display_value(display_value),
         .change       (change_unused),
@@ -186,11 +211,13 @@ module nexys4_aging_top (
 
     // -----------------------------------------------------------------------
     // Functional failure latch
-    //   Triggers on posedge of sensor_ff1_out; latches if ref_bit != sensor
+    //   Triggers on rising edge of sensor_ff1_out (canary MSB captured on
+    //   clk_sys) when ref_bit disagrees — indicates a functional mismatch.
     // -----------------------------------------------------------------------
     logic held;
 
     failure_holder u_failure (
+        .clk   (clk_sys),
         .ff1   (ref_bit),
         .ff2   (sensor_ff1_out),
         .reset (reset_n),
@@ -303,7 +330,7 @@ module nexys4_aging_top (
     // -----------------------------------------------------------------------
     // LEDs and debug pins
     // -----------------------------------------------------------------------
-    assign alarm_led       = alarm_sig;
+    assign alarm_led       = alarm_sig;    // raw clk_en signal — LED only, no timing path
     assign error_any_led   = error_any_sig;
     assign direction       = psincdec_ctrl;
     assign shift           = psen_ctrl;
