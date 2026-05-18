@@ -4,11 +4,11 @@
 // from mapping carry chains to CARRY4, keeping the path LUT-delay-based
 // and aging-sensitive.
 module lut_full_adder (
-    input  a,
-    input  b,
-    input  cin,
-    output sum,
-    output cout
+    input  logic a,
+    input  logic b,
+    input  logic cin,
+    output logic sum,
+    output logic cout
 );
     // XOR3: sum = a ^ b ^ cin  →  LUT3 INIT = 8'h96
     (* DONT_TOUCH = "yes" *)
