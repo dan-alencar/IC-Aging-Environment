@@ -7,14 +7,19 @@ vivado_bin="${VIVADO_BIN:-vivado}"
 
 usage() {
   cat <<'USAGE'
-Usage: scripts/build_bitstream.sh [--jobs N]
+Usage: scripts/build_bitstream.sh [--jobs N] [--refresh-ref]
 
 Options:
   -j, --jobs N         Parallel jobs. Default: 8
   --project-name NAME  Vivado project name. Default: aging_study_nexys4ddr
   --part PART          FPGA part. Default: xc7a100tcsg324-1
-  --top MODULE         Top module. Default: design_1_wrapper
+  --top MODULE         Top module. Default: nexys4_aging_top
   --build-dir DIR      Build directory. Default: ./build
+  --refresh-ref        After a successful build, write the routed checkpoint
+                       to references/fixed_pnr.dcp and regenerate
+                       src/constraints/fixed_pnr_constraints.xdc with
+                       auto-tightened PBLOCK coordinates.  Commit both
+                       files after verifying timing is clean.
   -h, --help           Show this help.
 
 Environment overrides:
@@ -24,6 +29,7 @@ Environment overrides:
   VIVADO_PART          Same as --part
   VIVADO_TOP           Same as --top
   VIVADO_BUILD_DIR     Same as --build-dir
+  VIVADO_REFRESH_REF   Set to 1 to enable --refresh-ref behaviour
 USAGE
 }
 
@@ -48,6 +54,10 @@ while [[ $# -gt 0 ]]; do
     --build-dir)
       export VIVADO_BUILD_DIR="${2:?missing value for $1}"
       shift 2
+      ;;
+    --refresh-ref)
+      export VIVADO_REFRESH_REF=1
+      shift
       ;;
     -h|--help)
       usage

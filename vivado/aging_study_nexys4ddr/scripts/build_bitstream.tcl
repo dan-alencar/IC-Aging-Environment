@@ -68,3 +68,44 @@ puts "============================================================"
 puts "Bitstream copied to: $artifact_bitstream"
 puts "Reports copied to:   $artifacts_dir"
 puts "============================================================"
+
+# -----------------------------------------------------------------------
+# Optional: refresh references/fixed_pnr.dcp and regenerate constraints.
+#
+# Triggered by:  VIVADO_REFRESH_REF=1  (set by build_bitstream.sh --refresh-ref)
+#
+# Steps:
+#   1. Write the post-route checkpoint to references/fixed_pnr.dcp
+#   2. Source extract_fixed_pnr_constraints.tcl with the design still open
+#      (skip_open_checkpoint=1 avoids a redundant open_checkpoint call)
+#   3. Print a reminder to commit both files
+# -----------------------------------------------------------------------
+if {[info exists ::env(VIVADO_REFRESH_REF)] && \
+        $::env(VIVADO_REFRESH_REF) ne "" && \
+        $::env(VIVADO_REFRESH_REF) ne "0"} {
+
+    set ref_dcp [file normalize [file join $project_root "references" "fixed_pnr.dcp"]]
+
+    puts ""
+    puts "============================================================"
+    puts "VIVADO_REFRESH_REF: writing reference checkpoint"
+    puts "  $ref_dcp"
+    puts "============================================================"
+
+    file mkdir [file dirname $ref_dcp]
+    write_checkpoint -force $ref_dcp
+
+    # Tell the extract script that the design is already open
+    set ::skip_open_checkpoint 1
+    set ::env(FIXED_PNR_DCP) $ref_dcp
+
+    source [file join $script_dir "extract_fixed_pnr_constraints.tcl"]
+
+    puts ""
+    puts "============================================================"
+    puts "Reference DCP and constraints updated."
+    puts "Commit these two files:"
+    puts "  references/fixed_pnr.dcp"
+    puts "  src/constraints/fixed_pnr_constraints.xdc"
+    puts "============================================================"
+}

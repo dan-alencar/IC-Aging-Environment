@@ -12,7 +12,7 @@ Usage: scripts/create_project.sh [--gui] [options] [-- extra-vivado-args]
 Options:
   --project-name NAME  Vivado project name. Default: aging_study_nexys4ddr
   --part PART          FPGA part. Default: xc7a100tcsg324-1
-  --top MODULE         Top module. Default: design_1_wrapper
+  --top MODULE         Top module. Default: nexys4_aging_top
   --build-dir DIR      Build directory. Default: ./build
   -h, --help           Show this help.
 
