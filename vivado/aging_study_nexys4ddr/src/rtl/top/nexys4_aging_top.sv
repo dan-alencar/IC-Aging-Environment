@@ -19,6 +19,7 @@
 // Display layout (8 digits):
 //   AN[7:4] / in4..in7 — phase step count  (left  4 digits)
 //   AN[3:0] / in0..in3 — error count       (right 4 digits)
+
 module nexys4_aging_top (
     input  logic        CLK100MHZ,
     input  logic        reset,        // BTNU N17  — active-high, resets all
@@ -45,8 +46,8 @@ module nexys4_aging_top (
     // Reset polarity bridge
     // -----------------------------------------------------------------------
     logic reset_n, reset_p;
-    assign reset_n = ~reset;
-    assign reset_p =  reset;
+    assign reset_p = reset | ~locked;
+    assign reset_n = ~reset_p;
 
     // -----------------------------------------------------------------------
     // Clocking — clk_wiz_0 (MMCM, 100 MHz in → 3 × 100 MHz out)

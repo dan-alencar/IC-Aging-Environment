@@ -63,6 +63,8 @@ set active_rtl [list \
     [file join $project_root "src/rtl/display/DisplayController.sv"] \
     [file join $project_root "src/rtl/uart/sensor_stream.sv"] \
     [file join $project_root "src/rtl/uart/uart_tx.sv"] \
+    [file join $project_root "src/ip/clk_wiz_0/clk_wiz_0.v"] \
+    [file join $project_root "src/ip/clk_wiz_0/clk_wiz_0_clk_wiz.v"] \
 ]
 
 set constraints [list \
@@ -70,11 +72,9 @@ set constraints [list \
     [file join $project_root "src/constraints/fixed_pnr_constraints.xdc"] \
 ]
 
-set ip_cores [list \
-    [file join $project_root "src/ip/clk_wiz_0/clk_wiz_0.xci"] \
-]
+set ip_cores [list]
 
-set all_inputs [concat $active_rtl $constraints $ip_cores]
+set all_inputs [concat $active_rtl $constraints]
 foreach input_file $all_inputs {
     if {![file exists $input_file]} {
         error "Missing required project input: $input_file"
@@ -88,7 +88,9 @@ foreach sv_file [get_files -quiet "*.sv"] {
 }
 
 puts "Adding IP cores..."
-add_files -norecurse -fileset sources_1 $ip_cores
+if {[llength $ip_cores] > 0} {
+    add_files -norecurse -fileset sources_1 $ip_cores
+}
 
 puts "Adding constraints..."
 add_files -norecurse -fileset constrs_1 $constraints

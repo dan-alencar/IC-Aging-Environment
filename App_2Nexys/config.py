@@ -41,7 +41,7 @@ BITSTREAM_DUT0 = os.path.join(
     _REPO_ROOT, "vivado", "aging_study_nexys4ddr",
     "build", "aging_study_nexys4ddr",
     "aging_study_nexys4ddr.runs", "impl_1",
-    "design_1_wrapper.bit",
+    "nexys4_aging_top.bit",
 )
 VIVADO_BIN = "/home/andre/Xilinx/2025.1/Vivado/bin/vivado"
 PSU_STABILISE_DELAY_S = 5   # seconds to wait after PSU turn-on before programming
