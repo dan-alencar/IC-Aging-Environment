@@ -13,7 +13,7 @@
 // UART stream can report what the adder computed vs. what it should have.
 //
 // error_count: increments every cycle where sum_canary != sum_ref,
-//              saturates at 0xFFFF.
+//              wraps at 0xFFFF so you can see errors are still occurring.
 // error_any:   sticky flag set on the first mismatch, cleared only by reset.
 module adder_canary (
     input  logic        clk,
@@ -67,8 +67,8 @@ module adder_canary (
                 correct <= sum_ref[15:0];
             end
 
-            // Running error counter (saturating)
-            if (mismatch && error_count != 16'hFFFF)
+            // Running error counter (wrapping)
+            if (mismatch)
                 error_count <= error_count + 1'b1;
 
             // Sticky error flag

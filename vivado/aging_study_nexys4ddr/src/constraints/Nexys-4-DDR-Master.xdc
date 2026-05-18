@@ -61,7 +61,10 @@ set_property -dict {PACKAGE_PIN H17 IOSTANDARD LVCMOS33} [get_ports alarm_led]
 # error_any_led (LED[1] = K15): sticky functional-failure flag — lights on the
 # first clock cycle where the ripple-carry canary computes a wrong sum, stays lit.
 set_property -dict {PACKAGE_PIN K15 IOSTANDARD LVCMOS33} [get_ports error_any_led]
-#set_property -dict { PACKAGE_PIN J13   IOSTANDARD LVCMOS33 } [get_ports { LED[2] }]; #IO_L17N_T2_A25_15 Sch=led[2]
+
+# held_led (LED[2] = J13): failure_holder sticky latch — lights when the timing
+# sensor path (sensor_ff1_out) rises while the reference disagrees (timing failure).
+set_property -dict {PACKAGE_PIN J13 IOSTANDARD LVCMOS33} [get_ports held_led]
 #set_property -dict { PACKAGE_PIN N14   IOSTANDARD LVCMOS33 } [get_ports { LED[3] }]; #IO_L8P_T1_D11_14 Sch=led[3]
 #set_property -dict { PACKAGE_PIN R18   IOSTANDARD LVCMOS33 } [get_ports { LED[4] }]; #IO_L7P_T1_D09_14 Sch=led[4]
 #set_property -dict { PACKAGE_PIN V17   IOSTANDARD LVCMOS33 } [get_ports { LED[5] }]; #IO_L18N_T2_A11_D27_14 Sch=led[5]

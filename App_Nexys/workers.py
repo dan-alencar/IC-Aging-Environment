@@ -325,7 +325,7 @@ class DUTWorker(QObject):
         super().__init__()
         self.ser = None
         self.is_running = False
-        self._latest_data = (0.0, 0, 0.0, 0, 0, 0)  # temp, slack, voltage, wrong, correct, error_count
+        self._latest_data = (0.0, 0, 0.0, 0, 0, 0, 0)  # temp, slack, voltage, fail, wrong, correct, error_count
         
         self.poll_timer = QTimer(self)
         self.poll_timer.setInterval(config.LOG_INTERVAL_MS) 
@@ -378,7 +378,7 @@ class DUTWorker(QObject):
                 raw_temp    = int.from_bytes(data[0:3],   byteorder='little')
                 raw_slack   = int.from_bytes(data[3:5],   byteorder='little')
                 raw_voltage = int.from_bytes(data[5:8],   byteorder='little')
-                # data[8] = failure byte (1 = functional failure latched)
+                raw_failure = int(data[8])               # 0 or 1 — failure_holder latch
                 raw_wrong   = int.from_bytes(data[9:11],  byteorder='little')
                 raw_correct = int.from_bytes(data[11:13], byteorder='little')
                 raw_errcnt  = int.from_bytes(data[13:15], byteorder='little')
@@ -391,7 +391,7 @@ class DUTWorker(QObject):
                 if temp_c == 0 and slack == 0 and voltage == 0:
                     return
 
-                self._latest_data = (temp_c, slack, voltage, raw_wrong, raw_correct, raw_errcnt)
+                self._latest_data = (temp_c, slack, voltage, raw_failure, raw_wrong, raw_correct, raw_errcnt)
                 self.data_ready.emit(temp_c, slack, voltage)
 
             else:
@@ -402,7 +402,7 @@ class DUTWorker(QObject):
 
         except Exception as e:
             self.log_message.emit(f"ERRO (DUT): {e}")
-            self._latest_data = (0.0, 0, 0.0, 0, 0, 0)
+            self._latest_data = (0.0, 0, 0.0, 0, 0, 0, 0)
 
     def get_latest_data(self):
         return self._latest_data
@@ -623,26 +623,30 @@ class TestSequencer(QObject):
             # 1. Coletar dados
             t_oven, sp_oven, out_oven = self.arduino.get_latest_data()
             v_psu, c_psu = self.psu.get_latest_data()
-            t_dut, s_dut, v_dut = self.dut.get_latest_data()
-            
+            t_dut, s_dut, v_dut, fail_dut, wrong_dut, correct_dut, errcnt_dut = self.dut.get_latest_data()
+
             elapsed_time = time.time() - self.start_time
-            
+
             # 2. Atualizar estatísticas
             self.temp_samples.append(t_oven)
             self.error_samples.append(sp_oven - t_oven)
             self.output_samples.append(out_oven)
-            
+
             # 3. Montar linha de dados
             data_row = {
-                'time_sec': elapsed_time,
-                'oven_temp': t_oven,
-                'oven_setpoint': sp_oven,
-                'oven_output': out_oven,
-                'psu_voltage': v_psu,
-                'psu_current': c_psu,
-                'dut_temp': t_dut,
-                'dut_slack': s_dut,
-                'dut_volt': v_dut
+                'time_sec':       elapsed_time,
+                'oven_temp':      t_oven,
+                'oven_setpoint':  sp_oven,
+                'oven_output':    out_oven,
+                'psu_voltage':    v_psu,
+                'psu_current':    c_psu,
+                'dut_temp':       t_dut,
+                'dut_slack':      s_dut,
+                'dut_volt':       v_dut,
+                'dut_fail':       fail_dut,
+                'dut_wrong':      wrong_dut,
+                'dut_correct':    correct_dut,
+                'dut_error_count': errcnt_dut,
             }
             
             # 4. Log no arquivo

@@ -37,30 +37,43 @@ module nexys4_aging_top (
     output logic        DP,
     output logic [7:0]  AN,
     output logic        alarm_led,    // H17 — metastability alarm
-    output logic        error_any_led,// K15 — sticky functional failure
+    output logic        error_any_led,// K15 — adder canary: any mismatch
+    output logic        held_led,     // J13 — failure_holder: timing failure
     output logic        direction,    // J15 — psincdec debug output
     output logic        shift         // P18 — psen debug output
 );
 
     // -----------------------------------------------------------------------
-    // Reset polarity bridge
-    // -----------------------------------------------------------------------
-    logic reset_n, reset_p;
-    assign reset_p = reset | ~locked;
-    assign reset_n = ~reset_p;
-
-    // -----------------------------------------------------------------------
-    // Clocking — clk_wiz_0 (MMCM, 100 MHz in → 3 × 100 MHz out)
-    //   clk_en  : 100° fixed offset — FF3 (catcher) clock
-    //   psclk   : 0°, dynamically phase-shiftable — FF1 clock
-    //   clk_sys : 0° — system / reference clock
+    // Clocking and reset
+    //
+    // retrigger_latch (CLK100MHZ domain, independent of MMCM outputs):
+    //   SET by ctrl_retrigger (one-cycle clk_sys pulse from controller on alarm)
+    //   CLEARED when MMCM relocks (locked=1)
+    //   Holds MMCM in RST until it fully relocks → clean 0° phase restart.
+    //
+    // display_value in controller_controller uses ~reset (button only) so it
+    // survives the MMCM relock period; display and VIO show the last measurement.
     // -----------------------------------------------------------------------
     logic clk_en, psclk, clk_sys, locked;
     logic psen_ctrl, psincdec_ctrl, psdone;
 
+    logic ctrl_retrigger;
+    logic retrigger_latch;
+
+    always_ff @(posedge CLK100MHZ or posedge reset) begin
+        if (reset)               retrigger_latch <= 1'b0;
+        else if (ctrl_retrigger) retrigger_latch <= 1'b1;
+        else if (locked)         retrigger_latch <= 1'b0;
+    end
+
+    logic mmcm_rst, reset_n, reset_p;
+    assign mmcm_rst = reset | retrigger_latch;
+    assign reset_p  = mmcm_rst | ~locked;
+    assign reset_n  = ~reset_p;
+
     clk_wiz_0 u_clk_wiz (
         .clk_in1  (CLK100MHZ),
-        .reset    (reset),
+        .reset    (mmcm_rst),
         .locked   (locked),
         .clk_en   (clk_en),
         .sensor0  (psclk),
@@ -200,14 +213,16 @@ module nexys4_aging_top (
 
     controller_controller u_ctrl (
         .clk          (clk_sys),
-        .reset        (reset_n),
-        .alarm        (alarm_sync),  // synchronised to clk_sys
+        .reset        (reset_n),   // ~(button | ~locked): resets FSM + counters
+        .hard_reset   (~reset),    // ~button only: resets display_value
+        .alarm        (alarm_sync),
         .psdone       (psdone),
         .display_value(display_value),
         .change       (change_unused),
         .psincdec     (psincdec_ctrl),
         .send         (controller_send),
-        .psen         (psen_ctrl)
+        .psen         (psen_ctrl),
+        .retrigger    (ctrl_retrigger)
     );
 
     // -----------------------------------------------------------------------
@@ -329,10 +344,39 @@ module nexys4_aging_top (
     assign CG = seg6;
 
     // -----------------------------------------------------------------------
+    // VIO debug core — observe UART packet fields and sensor state via
+    // Vivado Hardware Manager without needing the UART/App connection.
+    //   probe_in0 : display_value  [15:0]  phase count at alarm
+    //   probe_in1 : error_count    [15:0]  wrapping error count
+    //   probe_in2 : alarm_sync     [0]     alarm (clk_sys domain)
+    //   probe_in3 : locked         [0]     MMCM lock
+    //   probe_in4 : error_any_sig  [0]     sticky error flag
+    //   probe_in5 : temp_raw       [20:0]  XADC temperature
+    //   probe_in6 : vccint_raw     [20:0]  XADC VCCINT
+    //   probe_in7 : wrong          [15:0]  wrong sum at last alarm
+    //   probe_in8 : correct        [15:0]  correct sum at last alarm
+    //   probe_in9 : psen_ctrl      [0]     phase shift enable (sweep activity)
+    // -----------------------------------------------------------------------
+    vio_0 u_vio (
+        .clk       (clk_sys),
+        .probe_in0 (display_value),
+        .probe_in1 (error_count),
+        .probe_in2 (alarm_sync),
+        .probe_in3 (locked),
+        .probe_in4 (error_any_sig),
+        .probe_in5 (temp_raw),
+        .probe_in6 (vccint_raw),
+        .probe_in7 (wrong),
+        .probe_in8 (correct),
+        .probe_in9 (psen_ctrl)
+    );
+
+    // -----------------------------------------------------------------------
     // LEDs and debug pins
     // -----------------------------------------------------------------------
     assign alarm_led       = alarm_sig;    // raw clk_en signal — LED only, no timing path
     assign error_any_led   = error_any_sig;
+    assign held_led        = held;
     assign direction       = psincdec_ctrl;
     assign shift           = psen_ctrl;
 

@@ -97,6 +97,25 @@ add_files -norecurse -fileset constrs_1 $constraints
 set fixed_pnr_xdc [file join $project_root "src/constraints/fixed_pnr_constraints.xdc"]
 set_property PROCESSING_ORDER LATE [get_files $fixed_pnr_xdc]
 
+puts "Creating VIO debug core..."
+create_ip -name vio -vendor xilinx.com -library ip -module_name vio_0
+set_property -dict [list \
+    CONFIG.C_NUM_PROBE_IN  {10} \
+    CONFIG.C_NUM_PROBE_OUT {0}  \
+    CONFIG.C_PROBE_IN0_WIDTH {16} \
+    CONFIG.C_PROBE_IN1_WIDTH {16} \
+    CONFIG.C_PROBE_IN2_WIDTH {1}  \
+    CONFIG.C_PROBE_IN3_WIDTH {1}  \
+    CONFIG.C_PROBE_IN4_WIDTH {1}  \
+    CONFIG.C_PROBE_IN5_WIDTH {21} \
+    CONFIG.C_PROBE_IN6_WIDTH {21} \
+    CONFIG.C_PROBE_IN7_WIDTH {16} \
+    CONFIG.C_PROBE_IN8_WIDTH {16} \
+    CONFIG.C_PROBE_IN9_WIDTH {1}  \
+] [get_ips vio_0]
+generate_target all [get_ips vio_0]
+export_ip_user_files -of_objects [get_ips vio_0] -no_script -sync -force -quiet
+
 set_property top $top_module [get_filesets sources_1]
 update_compile_order -fileset sources_1
 

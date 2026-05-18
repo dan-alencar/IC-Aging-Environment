@@ -417,7 +417,7 @@ class DUTWorker(QObject):
         self._id = dut_id
         self.ser = None
         self.is_running = False
-        self._latest_data = (0.0, 0, 0.0, 0, 0, 0)  # temp, slack, vccint, wrong, correct, error_count
+        self._latest_data = (0.0, 0, 0.0, 0, 0, 0, 0)  # temp, slack, vccint, fail, wrong, correct, error_count
 
     def _get_port_baud(self):
         raise NotImplementedError
@@ -457,7 +457,7 @@ class DUTWorker(QObject):
                 raw_temp    = int.from_bytes(data[0:3],   byteorder="little")
                 raw_slack   = int.from_bytes(data[3:5],   byteorder="little")
                 raw_voltage = int.from_bytes(data[5:8],   byteorder="little")
-                # data[8] = failure byte (handled by FPGA side; not logged here)
+                raw_failure = int(data[8])               # 0 or 1 — failure_holder latch
                 raw_wrong   = int.from_bytes(data[9:11],  byteorder="little")
                 raw_correct = int.from_bytes(data[11:13], byteorder="little")
                 raw_errcnt  = int.from_bytes(data[13:15], byteorder="little")
@@ -465,13 +465,14 @@ class DUTWorker(QObject):
                 temp_c      = float(raw_temp)    / 1000.0
                 slack       = int(raw_slack)
                 vccint      = float(raw_voltage) / 1000.0
+                failure     = int(raw_failure)
                 wrong       = int(raw_wrong)
                 correct     = int(raw_correct)
                 error_count = int(raw_errcnt)
 
                 if temp_c == 0 and slack == 0 and vccint == 0:
                     return
-                self._latest_data = (temp_c, slack, vccint, wrong, correct, error_count)
+                self._latest_data = (temp_c, slack, vccint, failure, wrong, correct, error_count)
                 self.data_ready.emit(temp_c, slack, vccint)
             else:
                 if len(data) == 0:
@@ -480,7 +481,7 @@ class DUTWorker(QObject):
                     print(f"{self._id}: pacote incompleto ({len(data)}/{self.BYTES_EXPECTED} bytes)")
         except Exception as e:
             self.log_message.emit(f"ERRO ({self._id}): {e}")
-            self._latest_data = (0.0, 0, 0.0, 0, 0, 0)
+            self._latest_data = (0.0, 0, 0.0, 0, 0, 0, 0)
 
     def get_latest_data(self):
         return self._latest_data
