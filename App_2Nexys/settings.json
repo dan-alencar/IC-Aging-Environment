@@ -1,7 +1,7 @@
 {
-    "dut0_port": "/dev/ttyUSB2",
+    "dut0_port": "/dev/ttyUSB4",
     "dut0_baud": 9600,
-    "dut1_port": "/dev/ttyUSB3",
+    "dut1_port": "/dev/ttyUSB2",
     "dut1_baud": 9600,
     "psu0_port": "USB0::65535::25856::800630011777420110::0::INSTR",
     "psu0_baud": 9600,
@@ -12,6 +12,6 @@
     "arduino_port": "/dev/ttyACM0",
     "arduino_baud": 115200,
     "arduino_enabled": true,
-    "vccint_sp0": 1.3,
-    "vccint_sp1": 1.3
+    "vccint_sp0": 1.0,
+    "vccint_sp1": 1.0
 }
