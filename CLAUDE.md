@@ -16,6 +16,8 @@ A Qt launcher dialog lets you choose between single-DUT and dual-DUT mode. It re
 ./run.sh          # from repo root — shows the launcher dialog
 ```
 
+The root launcher only offers App_Nexys and App_2Nexys. App_FPGAging_Slack_Sensor (SBCCI/UltraScale+ target) must be launched standalone.
+
 ### Running apps directly (standalone)
 
 Each app also has its own `run.sh` that sets `LD_LIBRARY_PATH` to resolve Qt lib conflicts with system packages on Linux Mint:
@@ -46,21 +48,32 @@ Vivado must be on `PATH` (or set `VIVADO_BIN`). Generated output goes to `build/
 
 ```bash
 # SBCCI UltraScale+ (xcau15p-ffvb676-1-i, top: fpga_unified_top)
+# Requires Vivado 2025.2+; XCI files were last saved with 2025.2.1
 cd vivado/sbcci_fpga_aging
 scripts/check_layout.sh          # sanity check, no Vivado needed
 scripts/create_project.sh        # generates build/*.xpr
 scripts/build_bitstream.sh --jobs 8
+scripts/clean.sh                 # removes build/ and artifacts/
 
-# Nexys4 DDR Artix-7 (xc7a100tcsg324-1, top: design_1_wrapper)
+# Nexys4 DDR Artix-7 (xc7a100tcsg324-1, top: nexys4_aging_top)
 cd vivado/aging_study_nexys4ddr
 scripts/check_layout.sh
 scripts/create_project.sh
 scripts/build_bitstream.sh --jobs 8
+scripts/clean.sh
 ```
 
 Bitstreams land in `artifacts/`. To open in the GUI, pass `--gui` to `create_project.sh`.
 
 The Nexys4 project uses `src/constraints/fixed_pnr_constraints.xdc` (LOC/BEL + FIXED_ROUTE) to lock the critical path. Do not change placement or routing constraints without understanding the fixed-PnR experiment.
+
+To regenerate `fixed_pnr_constraints.xdc` from the reference checkpoint:
+```bash
+cd vivado/aging_study_nexys4ddr
+scripts/extract_fixed_pnr_constraints.sh
+```
+
+**App_2Nexys dependency:** DUT-0 is reprogrammed automatically at test start. It reads the bitstream from `vivado/aging_study_nexys4ddr/build/aging_study_nexys4ddr/aging_study_nexys4ddr.runs/impl_1/nexys4_aging_top.bit` (path hardcoded in `App_2Nexys/config.py`). The Nexys4 bitstream must be built before running App_2Nexys.
 
 ## STM32 firmware
 
@@ -147,6 +160,17 @@ psu.set_voltage(psu_cmd)
 - Safety limits: oven max 130°C, DUT max 140°C, PSU current max 1.5 A.
 - **DUT outer temperature loop:** `TestSequencer._adjust_oven_outer_loop()` shifts the oven setpoint by ±1°C every ~30 min (1800 ticks at 1 s/tick) to bring the DUT die temperature to its target, with a ±3°C dead-band. In `App_2Nexys`, the average of both DUT temperatures is used.
 
+## FPGA RTL structure (Nexys4 DDR)
+
+The aging sensor design uses three clock domains driven by a single MMCM (clk_wiz_0):
+- `clk_sys` — 100 MHz, 0° — main system clock
+- `psclk` — 100 MHz, 0° + dynamic phase shift — FF1 of the metastability sensor (`modern_sensible`)
+- `clk_en` — 100 MHz, 100° fixed offset — FF3 (alarm latch) of the sensor
+
+The metastability sensor (`modern_sensible`) uses `DONT_TOUCH`/primitive instantiation (`LUT2_L`, `FDCE`) to prevent synthesis optimization. `alarm_sig` originates in the `clk_en` domain and is crossed to `clk_sys` via a 2-FF synchronizer (`alarm_sync`) before reaching `adder_canary` and `controller_controller`. The raw `alarm_sig` drives only the LED (no timing path).
+
+The `adder_canary` module contains the aging-sensitive LUT ripple-carry adder. Its `wrong`/`correct`/`error_count` outputs are part of the 15-byte packet in App_2Nexys but the 9-byte packet in App_Nexys.
+
 ## Arduino sketches
 
 `Arduino-ESP/` contains active sketches; `Arduino-ESP/legacy/` holds superseded versions.
@@ -155,6 +179,7 @@ psu.set_voltage(psu_cmd)
 - `PID_Controller/` — SIMC-tuned PID oven controller. Uses **ArduPID 1.0.1** (installed at `~/Arduino/libraries/ArduPID/`). Key API vs 0.2.1: `setTunings()` replaces `begin()`, `setILimits()` replaces `setWindUpLimits()`, `setDtMs()` replaces `setSampleTime()`, `compute(input)` takes input as argument and returns output (no pointer). `start()`/`stop()` were removed; `testRunning` flag controls execution.
 - `esp32wroom_uart-reader/` — UART router between PC and FPGA/STM32 (SBCCI path).
 - `FOPDT_Step_Test.ino/` — step-test sketch used to identify the FOPDT plant model.
+- `arduino_uart_tp_sniffer/` — passive UART sniffer for debugging serial traffic.
 
 ## Reference documents
 
