@@ -1,9 +1,23 @@
 #####################################################################
 # Extract portable fixed-route constraints from a routed checkpoint.
 #
+# Rewrites fixed_pnr_constraints.xdc with:
+#   1. Static CDC false-path (alarm_sig clk_en -> clk_sys synchroniser)
+#   2. BEL + LOC for u_sensor FFs and XOR1 (extracted from checkpoint)
+#   3. FIXED_ROUTE for nets within u_sensor (extracted from checkpoint)
+#   4. PBLOCK for u_adder/u_canary carry chain (bounding box of actual
+#      placed cells + 1-slice padding, auto-computed from checkpoint)
+#
+# Usage (standalone):
+#   vivado -mode batch -source scripts/extract_fixed_pnr_constraints.tcl
+#
+# Usage (from build_bitstream.tcl with design already open):
+#   set ::skip_open_checkpoint 1
+#   source scripts/extract_fixed_pnr_constraints.tcl
+#
 # Environment:
-#   FIXED_PNR_DCP  Input checkpoint. Default: references/fixed_pnr.dcp
-#   FIXED_PNR_XDC  Output XDC. Default: src/constraints/fixed_pnr_constraints.xdc
+#   FIXED_PNR_DCP  Input checkpoint.  Default: references/fixed_pnr.dcp
+#   FIXED_PNR_XDC  Output XDC.       Default: src/constraints/fixed_pnr_constraints.xdc
 #####################################################################
 
 set script_dir [file dirname [file normalize [info script]]]
@@ -16,73 +30,181 @@ proc env_or_default {name default_value} {
     return $default_value
 }
 
-set checkpoint_file [file normalize [env_or_default FIXED_PNR_DCP [file join $project_root "references/fixed_pnr.dcp"]]]
-set output_file [file normalize [env_or_default FIXED_PNR_XDC [file join $project_root "src/constraints/fixed_pnr_constraints.xdc"]]]
+set checkpoint_file [file normalize \
+    [env_or_default FIXED_PNR_DCP [file join $project_root "references/fixed_pnr.dcp"]]]
+set output_file [file normalize \
+    [env_or_default FIXED_PNR_XDC [file join $project_root "src/constraints/fixed_pnr_constraints.xdc"]]]
 set full_xdc_file [file join $project_root "references/fixed_pnr_full_from_checkpoint.xdc"]
 
-if {![file exists $checkpoint_file]} {
-    error "Checkpoint not found: $checkpoint_file"
-}
-
-puts "Opening fixed PnR checkpoint: $checkpoint_file"
-open_checkpoint $checkpoint_file
-
-# Pure-RTL hierarchy (nexys4_aging_top):
-#   u_sensor  — modern_sensible instance
-#   u_adder   — adder_canary instance (u_adder/u_canary = ripple_adder)
-set patterns [list \
-    "u_sensor/*" \
-    "u_adder/u_canary/*" \
-]
-
-set selected_cells [list]
-foreach pattern $patterns {
-    foreach cell [get_cells -hier -quiet $pattern] {
-        lappend selected_cells $cell
+# -----------------------------------------------------------------------
+# Open checkpoint — skip if design is already open (build_bitstream path)
+# -----------------------------------------------------------------------
+if {[info exists ::skip_open_checkpoint] && $::skip_open_checkpoint} {
+    puts "extract_fixed_pnr_constraints: using already-open design."
+} else {
+    if {![file exists $checkpoint_file]} {
+        error "Checkpoint not found: $checkpoint_file\nRun build_bitstream.sh --refresh-ref first."
     }
+    puts "Opening fixed PnR checkpoint: $checkpoint_file"
+    open_checkpoint $checkpoint_file
 }
-set selected_cells [lsort -unique $selected_cells]
 
-set selected_nets [list]
-foreach cell $selected_cells {
+# -----------------------------------------------------------------------
+# 1. Collect u_sensor cells (BEL/LOC) and their nets (FIXED_ROUTE)
+# -----------------------------------------------------------------------
+set sensor_cells [lsort -unique [get_cells -hier -quiet {u_sensor/*}]]
+
+set sensor_nets [list]
+foreach cell $sensor_cells {
     foreach pin [get_pins -quiet -of_objects $cell] {
         foreach net [get_nets -quiet -of_objects $pin] {
-            lappend selected_nets $net
+            lappend sensor_nets $net
         }
     }
 }
-set selected_nets [lsort -unique $selected_nets]
+set sensor_nets [lsort -unique $sensor_nets]
 
+# -----------------------------------------------------------------------
+# 2. Compute PBLOCK bounding box for u_adder/u_canary carry chain
+#    Query each placed cell's LOC, parse SLICE_XnYm, track min/max.
+# -----------------------------------------------------------------------
+set adder_cells [get_cells -hier -quiet {u_adder/u_canary/*}]
+set min_x 9999; set max_x 0
+set min_y 9999; set max_y 0
+set placed_count 0
+
+foreach cell $adder_cells {
+    set loc [get_property LOC $cell]
+    if {$loc eq ""} { continue }
+    if {[regexp {SLICE_X(\d+)Y(\d+)} $loc -> cx cy]} {
+        if {$cx < $min_x} { set min_x $cx }
+        if {$cx > $max_x} { set max_x $cx }
+        if {$cy < $min_y} { set min_y $cy }
+        if {$cy > $max_y} { set max_y $cy }
+        incr placed_count
+    }
+}
+
+# -----------------------------------------------------------------------
+# 3. Write XDC
+# -----------------------------------------------------------------------
+file mkdir [file dirname $output_file]
 set out [open $output_file w]
-puts $out "# Fixed physical constraints extracted from $checkpoint_file"
+
+puts $out "# Physical constraints for the aging study critical-path sensor."
+puts $out "#"
+puts $out "# Instance names match nexys4_aging_top.sv:"
+puts $out "#   u_sensor         -- modern_sensible instance"
+puts $out "#   u_adder          -- adder_canary instance"
+puts $out "#   u_adder/u_canary -- ripple_adder inside adder_canary"
+puts $out "#"
+puts $out "# AND1 and BUF1 are commented out in modern_sensible.sv and must NOT"
+puts $out "# appear here -- Vivado errors on constraints referencing non-existent cells."
+puts $out "#"
 puts $out "# Generated by scripts/extract_fixed_pnr_constraints.tcl"
+puts $out "# from checkpoint: [file tail $checkpoint_file]"
 puts $out ""
 
-foreach cell $selected_cells {
+# --- Section 1: CDC false-path (static — independent of checkpoint) ---
+puts $out "# --- CDC false-path: alarm_sig (FF3 / clk_en domain) -> alarm_meta_reg (clk_sys) ---"
+puts $out "# The 2-FF synchroniser in nexys4_aging_top.sv intentionally crosses this boundary."
+puts $out "# Without this constraint Vivado may flag a spurious timing violation because the"
+puts $out "# two 100 MHz clocks share the same frequency but have a dynamically varying phase."
+puts $out "# Verify the destination name with: get_cells alarm_meta_reg"
+puts $out "set_false_path \\"
+puts $out "    -from \[get_pins  u_sensor/FF3/Q\] \\"
+puts $out "    -to   \[get_pins  alarm_meta_reg/D\]"
+puts $out ""
+
+# --- Section 2: BEL constraints for u_sensor ---
+puts $out "# --- u_sensor (modern_sensible): lock FF1, FF2, FF3, XOR1 ---"
+set bel_count 0
+foreach cell $sensor_cells {
     set bel [get_property BEL $cell]
     if {$bel ne ""} {
         puts $out [format {set_property BEL %s [get_cells {%s}]} $bel $cell]
+        incr bel_count
     }
+}
+if {$bel_count == 0} {
+    puts $out "# WARNING: no BEL properties found for u_sensor/* — is the checkpoint post-place?"
 }
 puts $out ""
 
-foreach cell $selected_cells {
+# --- Section 3: LOC constraints for u_sensor ---
+set loc_count 0
+foreach cell $sensor_cells {
     set loc [get_property LOC $cell]
     if {$loc ne ""} {
         puts $out [format {set_property LOC %s [get_cells {%s}]} $loc $cell]
+        incr loc_count
     }
+}
+if {$loc_count == 0} {
+    puts $out "# WARNING: no LOC properties found for u_sensor/* — is the checkpoint post-place?"
 }
 puts $out ""
 
-foreach net $selected_nets {
+# --- Section 4: FIXED_ROUTE for u_sensor nets ---
+set fr_count 0
+foreach net $sensor_nets {
     set fixed_route [get_property FIXED_ROUTE $net]
     if {$fixed_route ne ""} {
         puts $out [format {set_property FIXED_ROUTE {%s} [get_nets {%s}]} $fixed_route $net]
+        incr fr_count
     }
 }
+if {$fr_count == 0} {
+    puts $out "# No FIXED_ROUTE properties found for u_sensor nets."
+    puts $out "# This is normal if the checkpoint was not written with write_checkpoint -force"
+    puts $out "# after impl_1 completes (routes are fixed automatically in place-and-route)."
+}
+puts $out ""
+
+# --- Section 5: PBLOCK for u_adder/u_canary carry chain ---
+puts $out "# --- u_adder/u_canary ripple carry chain: PBLOCK ---"
+if {$placed_count > 0} {
+    # Add 1-slice border in each direction for routing headroom
+    set bx [expr {max(0, $min_x - 1)}]
+    set by [expr {max(0, $min_y - 1)}]
+    set ex [expr {$max_x + 1}]
+    set ey [expr {$max_y + 1}]
+    set pblock_range "SLICE_X${bx}Y${by}:SLICE_X${ex}Y${ey}"
+    puts $out "# Auto-tightened from $placed_count placed cells."
+    puts $out "# Actual occupied sites: SLICE_X${min_x}Y${min_y}:SLICE_X${max_x}Y${max_y}"
+    puts $out "# 1-slice border added for routing headroom."
+    puts $out "create_pblock pblock_ripple_adder"
+    puts $out "add_cells_to_pblock \[get_pblock pblock_ripple_adder\] \\"
+    puts $out "    \[get_cells -hierarchical -filter {NAME =~ u_adder/u_canary/FA*}\]"
+    puts $out "resize_pblock \[get_pblock pblock_ripple_adder\] -add {$pblock_range}"
+    puts $out "set_property IS_SOFT FALSE \[get_pblock pblock_ripple_adder\]"
+} else {
+    # No placed cells found — emit broad initial range with a warning
+    set pblock_range "SLICE_X0Y80:SLICE_X5Y95"
+    puts $out "# WARNING: no placed cells found for u_adder/u_canary/* in this checkpoint."
+    puts $out "# Using broad initial range. Run:"
+    puts $out "#   scripts/build_bitstream.sh --refresh-ref"
+    puts $out "# after a successful implementation to auto-tighten this PBLOCK."
+    puts $out "create_pblock pblock_ripple_adder"
+    puts $out "add_cells_to_pblock \[get_pblock pblock_ripple_adder\] \\"
+    puts $out "    \[get_cells -hierarchical -filter {NAME =~ u_adder/u_canary/FA*}\]"
+    puts $out "resize_pblock \[get_pblock pblock_ripple_adder\] -add {$pblock_range}"
+    puts $out "set_property IS_SOFT FALSE \[get_pblock pblock_ripple_adder\]"
+}
+
 close $out
 
+# Write full checkpoint XDC as a debug artifact (may not be supported in all versions)
 catch {write_xdc -force $full_xdc_file}
 
+puts "============================================================"
 puts "Wrote fixed PnR constraints: $output_file"
-puts "Wrote full checkpoint XDC snapshot when supported: $full_xdc_file"
+puts "  u_sensor cells : [llength $sensor_cells] (BEL: $bel_count, LOC: $loc_count)"
+puts "  FIXED_ROUTE    : $fr_count nets"
+if {$placed_count > 0} {
+    puts "  PBLOCK         : $pblock_range (tightened from $placed_count placed adder cells)"
+} else {
+    puts "  PBLOCK         : $pblock_range (WARNING: broad fallback — run --refresh-ref after impl)"
+}
+puts "Wrote full checkpoint XDC: $full_xdc_file"
+puts "============================================================"
