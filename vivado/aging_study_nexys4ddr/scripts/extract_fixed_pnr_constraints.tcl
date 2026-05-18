@@ -27,9 +27,12 @@ if {![file exists $checkpoint_file]} {
 puts "Opening fixed PnR checkpoint: $checkpoint_file"
 open_checkpoint $checkpoint_file
 
+# Pure-RTL hierarchy (nexys4_aging_top):
+#   u_sensor  — modern_sensible instance
+#   u_adder   — adder_canary instance (u_adder/u_canary = ripple_adder)
 set patterns [list \
-    "design_1_i/not_series_0/inst/*" \
-    "design_1_i/modern_sensible_0/inst/*" \
+    "u_sensor/*" \
+    "u_adder/u_canary/*" \
 ]
 
 set selected_cells [list]
@@ -48,7 +51,6 @@ foreach cell $selected_cells {
         }
     }
 }
-lappend selected_nets [get_nets -quiet "design_1_i/not_series_0/inst/critpath"]
 set selected_nets [lsort -unique $selected_nets]
 
 set out [open $output_file w]

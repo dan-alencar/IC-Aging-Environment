@@ -4,37 +4,48 @@ This file lists the reproducible inputs used by `scripts/create_project.tcl`.
 Generated Vivado folders such as `.runs`, `.gen`, `.cache`, `.hw`, `.sim`,
 `ip_user_files`, and all `.dcp` checkpoints are intentionally excluded.
 
-This project is the portable version of the former root-level `aging-study/`
-Vivado snapshot.
+This project uses a **pure RTL flow** — no Vivado Block Design.
+The former BD-based `design_1.bd` was removed; the top module is now
+`nexys4_aging_top.sv`, which instantiates all modules directly in SystemVerilog.
 
 ## Active Build Inputs
 
 | Path | Purpose |
 | --- | --- |
-| `src/bd/design_1/design_1.bd` | Main Vivado Block Design |
-| `src/bd/design_1/ip/**/*.xci` | Block Design IP and module-reference configuration |
-| `src/constraints/Nexys-4-DDR-Master.xdc` | Nexys4 DDR pins, timing, and board constraints |
-| `src/constraints/fixed_pnr_constraints.xdc` | Portable fixed placement and `FIXED_ROUTE` constraints extracted from the historical fixed PnR flow |
-| `src/rtl/aging_sensor/` | Aging sensor, controller, temp catcher, and support RTL |
-| `src/rtl/display/` | Seven-segment display conversion/display RTL |
-| `src/rtl/uart/` | UART packet stream and transmitter RTL |
+| `src/rtl/top/nexys4_aging_top.sv` | SystemVerilog top module — instantiates all RTL modules and the XADC Unisim primitive |
+| `src/ip/clk_wiz_0/clk_wiz_0.xci` | Standalone clock wizard IP (3× 100 MHz outputs: clk\_en 100°, psclk DPS, clk\_sys 0°) |
+| `src/constraints/Nexys-4-DDR-Master.xdc` | Nexys4 DDR pin, timing, and board constraints |
+| `src/constraints/fixed_pnr_constraints.xdc` | Fixed BEL/LOC placement for `u_sensor` FFs/LUT and PBLOCK for `u_adder/u_canary` ripple chain |
+| `src/rtl/aging_sensor/adder_canary.v` | 16-bit LUT ripple-carry adder aging sensor with error counting |
+| `src/rtl/aging_sensor/controller_controller.v` | Phase-sweep FSM — drives MMCM DPS until metastability alarm |
+| `src/rtl/aging_sensor/failure_holder.v` | Sticky latch for functional failures |
+| `src/rtl/aging_sensor/lut_full_adder.v` | Single-bit LUT full adder cell (used by ripple_adder) |
+| `src/rtl/aging_sensor/modern_sensible.v` | Three-FF XOR metastability sensor across phase-shifted clock domains |
+| `src/rtl/aging_sensor/ripple_adder.v` | 16-stage ripple-carry adder instantiating lut_full_adder |
+| `src/rtl/aging_sensor/temp_catcher.v` | XADC DRP polling — reads die temperature and VCCINT |
+| `src/rtl/display/BINtoBCD.v` | Binary-to-BCD converter for the 7-segment display |
+| `src/rtl/display/DisplayController.v` | 8-digit multiplexed 7-segment display driver |
+| `src/rtl/uart/sensor_stream.v` | Sensor packet serialiser |
+| `src/rtl/uart/uart_tx.v` | UART transmitter |
 
 ## Preserved Reference Inputs
 
 | Path | Reason |
 | --- | --- |
-| `references/fixed_pnr.dcp` | Historical routed checkpoint for auditing/regenerating the fixed-route XDC; not used as a Vivado build input |
-| `src/bd/design_2_legacy/` | Unused legacy Block Design copied from the old project for reference |
-| `src/rtl/legacy/` | Older imported DRP/MMCM/LED helper RTL not added to the active build |
-| `src/sim/sim.v` | Original behavioral simulation source |
+| `references/fixed_pnr.dcp` | Routed checkpoint from the original BD-based flow; useful for auditing the fixed-route XDC. **Not used as a Vivado build input.** Note: hierarchy inside this DCP reflects old BD paths — `extract_fixed_pnr_constraints.tcl` should be run against a checkpoint built from the current pure-RTL flow. |
+| `src/rtl/legacy/` | Older DRP/MMCM/LED helper RTL not added to the active build |
+| `src/rtl/aging_sensor/Dff.v` | Unused FF primitive wrapper (legacy) |
+| `src/rtl/aging_sensor/holder_button.v` | Unused button debounce helper (legacy) |
+| `src/rtl/aging_sensor/nand_series.v` | Unused NAND chain (legacy) |
+| `src/rtl/aging_sensor/xadc_raw.v` | Superseded by direct XADC Unisim instantiation in nexys4_aging_top.sv |
+| `src/sim/sim.v` | Original behavioral simulation source (not added to project) |
 
 ## DCP Policy
 
-Do not commit generated `.dcp` files. Old Vivado `.xpr` files often store
-`IncrementalCheckpoint` or imported checkpoint paths, which breaks on another
-computer when that local checkpoint is missing. The scripts here create a fresh
-project and regenerate checkpoints under `build/` on each machine.
+Do not commit generated `.dcp` files. Build checkpoints are regenerated under
+`build/` (gitignored) on each machine.
 
-The exception is `references/fixed_pnr.dcp`, which is source-controlled only as
-a reference artifact for the aging experiment. The build consumes the extracted
-XDC constraints instead of opening that checkpoint.
+The exception is `references/fixed_pnr.dcp`, which is source-controlled as a
+reference artifact for the aging experiment. The active build consumes the
+hand-edited XDC constraints in `src/constraints/fixed_pnr_constraints.xdc`
+directly.
