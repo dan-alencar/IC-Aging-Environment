@@ -68,8 +68,9 @@ module controller_controller (
     end
 
     // --- change toggle (output unused in pure-RTL flow) ---
-    always_ff @(posedge clk) begin
-        if (change_enable) change <= ~change;
+    always_ff @(posedge clk or negedge reset) begin
+        if (!reset)             change <= 1'b0;
+        else if (change_enable) change <= ~change;
     end
 
     // --- Phase-shift counter: synchronous psdone edge detection ---

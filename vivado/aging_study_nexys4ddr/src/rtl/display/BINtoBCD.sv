@@ -1,7 +1,8 @@
 `timescale 1ns / 1ps
 
 // Binary-to-BCD converter using the double-dabble (shift-and-add-3) algorithm.
-// Converts a 21-bit binary input to eight 4-bit BCD digits.
+// Converts a 21-bit binary input to eight 4-bit BCD digits (max representable
+// value 2,097,151 — fits in seven digits; quint is always 0 for valid inputs).
 // The combinational double-dabble result is registered on posedge clk to
 // prevent glitches from propagating to the 7-segment display.
 module BinToBCD (
@@ -23,7 +24,7 @@ module BinToBCD (
         quint_c = '0; quadr_c = '0; tril_c = '0; bil_c = '0;
         mil_c   = '0; cent_c  = '0; dec_c  = '0; un_c  = '0;
 
-        for (int i = 19; i >= 0; i--) begin
+        for (int i = 20; i >= 0; i--) begin
             // Add-3 step: if any digit >= 5, add 3 before shifting
             if (quint_c >= 4'd5) quint_c = quint_c + 4'd3;
             if (quadr_c >= 4'd5) quadr_c = quadr_c + 4'd3;
