@@ -307,22 +307,25 @@ class PSUWorker(QObject):
 class DUTWorker(QObject):
     """
     Comunicação com FPGA para leitura do sensor de slack.
-    
-    Protocolo: Comando 'F' + 9 bytes binários (Little Endian)
-    Formato: [TEMP 3 bytes][SLACK 2 bytes][VOLT 3 bytes][FAIL 1 byte]
-    
+
+    Protocolo: 15 bytes binários (Little Endian), enviados autonomamente pelo FPGA.
+    Formato: [TEMP×3][SLACK×2][VOLT×3][FAIL×1][WRONG×2][CORRECT×2][ERR_CNT×2]
+
+    O byte 'F' enviado antes do read é legado — o FPGA não o decodifica; os
+    pacotes são disparados pelo FSM interno quando o alarme é detectado.
+
     Sinais:
         log_message(str): Mensagem para o log
         data_ready(float, int, float): temp_c, slack, voltage
     """
     log_message = Signal(str)
     data_ready = Signal(float, int, float)
-    
+
     def __init__(self):
         super().__init__()
         self.ser = None
         self.is_running = False
-        self._latest_data = (0.0, 0, 0.0) # temp, slack, voltage
+        self._latest_data = (0.0, 0, 0.0, 0, 0, 0)  # temp, slack, voltage, wrong, correct, error_count
         
         self.poll_timer = QTimer(self)
         self.poll_timer.setInterval(config.LOG_INTERVAL_MS) 
@@ -336,7 +339,7 @@ class DUTWorker(QObject):
             self.ser = serial.Serial(
                 config.DUT_PORT, 
                 config.DUT_BAUD, 
-                timeout=2 # Timeout de 2s é crucial para o read(9) funcionar
+                timeout=2 # Timeout de 2s é crucial para o read(15) funcionar
             )
             self.log_message.emit(f"DUT (FPGA) conectado em {config.DUT_PORT} @ {config.DUT_BAUD}")
             
@@ -354,53 +357,52 @@ class DUTWorker(QObject):
         self.log_message.emit("DUT (FPGA) desconectado.")
         
     def poll_data(self):
-        """Envia 'F' e espera bloqueando até receber 9 bytes."""
+        """Aguarda e decodifica um pacote de 15 bytes do FPGA."""
         if not self.is_running or not self.ser or not self.ser.is_open:
             return
-            
-        try:
-            # 1. Limpa buffer antigo para garantir que lemos a resposta do comando ATUAL
-            #self.ser.reset_input_buffer()
-            
-            # 2. Envia o comando 'F' (Trigger)
-            self.ser.write(b'F')
-            
-            # 3. Lê exatos 9 bytes. 
-            # REMOVIDO time.sleep(0.1): O read já espera os dados chegarem (devido ao timeout=2)
-            BYTES_TO_READ = 9
-            data = self.ser.read(BYTES_TO_READ)
-            
-            if len(data) == BYTES_TO_READ:
-                # 4. Decodifica Binário (Little Endian)
-                raw_temp = int.from_bytes(data[0:3], byteorder='little')
-                raw_slack = int.from_bytes(data[3:5], byteorder='little')
-                raw_voltage = int.from_bytes(data[5:8], byteorder='little')
-                # raw_fail = data[8] # Byte de falha (não usado por enquanto)
 
-                # Conversão para unidades físicas
-                temp_c = float(raw_temp) / 1000.0
-                slack = int(raw_slack)
+        try:
+            # Descarta bytes residuais de pacotes anteriores para manter o alinhamento.
+            self.ser.reset_input_buffer()
+
+            # O byte 'F' é legado — o FPGA não o decodifica, mas mantemos por
+            # compatibilidade com versões antigas do firmware.
+            self.ser.write(b'F')
+
+            # Pacote de 15 bytes (Little Endian):
+            # [TEMP×3][SLACK×2][VOLT×3][FAIL×1][WRONG×2][CORRECT×2][ERR_CNT×2]
+            BYTES_TO_READ = 15
+            data = self.ser.read(BYTES_TO_READ)
+
+            if len(data) == BYTES_TO_READ:
+                raw_temp    = int.from_bytes(data[0:3],   byteorder='little')
+                raw_slack   = int.from_bytes(data[3:5],   byteorder='little')
+                raw_voltage = int.from_bytes(data[5:8],   byteorder='little')
+                # data[8] = failure byte (1 = functional failure latched)
+                raw_wrong   = int.from_bytes(data[9:11],  byteorder='little')
+                raw_correct = int.from_bytes(data[11:13], byteorder='little')
+                raw_errcnt  = int.from_bytes(data[13:15], byteorder='little')
+
+                temp_c  = float(raw_temp)    / 1000.0
+                slack   = int(raw_slack)
                 voltage = float(raw_voltage) / 1000.0
 
                 # Filtra leituras zeradas (comum na inicialização do FPGA)
                 if temp_c == 0 and slack == 0 and voltage == 0:
                     return
 
-                self._latest_data = (temp_c, slack, voltage)
+                self._latest_data = (temp_c, slack, voltage, raw_wrong, raw_correct, raw_errcnt)
                 self.data_ready.emit(temp_c, slack, voltage)
-                
+
             else:
-                # Se cair aqui, ocorreu TIMEOUT (FPGA não respondeu em 2s)
-                # O print b'' e "Nope" que você via indicava que data estava vazio.
-                # Não vamos spammar o log, apenas ignorar ou logar silenciosamente no terminal
                 if len(data) == 0:
                     print(f"DUT: Sem resposta (Timeout). Baud rate {config.DUT_BAUD} correto?")
                 else:
                     print(f"DUT: Pacote incompleto ({len(data)}/{BYTES_TO_READ} bytes)")
-                
+
         except Exception as e:
             self.log_message.emit(f"ERRO (DUT): {e}")
-            self._latest_data = (0.0, 0, 0.0)
+            self._latest_data = (0.0, 0, 0.0, 0, 0, 0)
 
     def get_latest_data(self):
         return self._latest_data
