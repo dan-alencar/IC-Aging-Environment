@@ -4,6 +4,7 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 project_root="$(cd "$script_dir/.." && pwd)"
 
+# Pure-RTL project — no block design.
 required_files=(
   "README.md"
   "docs/SOURCE_MANIFEST.md"
@@ -17,16 +18,17 @@ required_files=(
   "scripts/extract_fixed_pnr_constraints.tcl"
   "references/README.md"
   "references/fixed_pnr.dcp"
-  "src/bd/design_1/design_1.bd"
+  "src/ip/clk_wiz_0/clk_wiz_0.xci"
   "src/constraints/Nexys-4-DDR-Master.xdc"
   "src/constraints/fixed_pnr_constraints.xdc"
+  "src/rtl/top/nexys4_aging_top.sv"
+  "src/rtl/aging_sensor/adder_canary.v"
   "src/rtl/aging_sensor/controller_controller.v"
   "src/rtl/aging_sensor/failure_holder.v"
-  "src/rtl/aging_sensor/holder_button.v"
+  "src/rtl/aging_sensor/lut_full_adder.v"
   "src/rtl/aging_sensor/modern_sensible.v"
-  "src/rtl/aging_sensor/nand_series.v"
+  "src/rtl/aging_sensor/ripple_adder.v"
   "src/rtl/aging_sensor/temp_catcher.v"
-  "src/rtl/aging_sensor/xadc_raw.v"
   "src/rtl/display/BINtoBCD.v"
   "src/rtl/display/DisplayController.v"
   "src/rtl/uart/sensor_stream.v"
@@ -41,8 +43,8 @@ for path in "${required_files[@]}"; do
   fi
 done
 
-if ! find "$project_root/src/bd/design_1/ip" -name '*.xci' -print -quit | grep -q .; then
-  echo "Missing Block Design XCI files under src/bd/design_1/ip" >&2
+if [[ -d "$project_root/src/bd" ]]; then
+  echo "Unexpected src/bd/ directory found — block design was removed in the pure-RTL revamp." >&2
   missing=1
 fi
 
@@ -56,7 +58,7 @@ done
 
 if find "$project_root" -name '*.dcp' ! -path "$project_root/references/fixed_pnr.dcp" -print -quit | grep -q .; then
   echo "Unexpected .dcp checkpoint found in clean project tree." >&2
-  echo "Only references/fixed_pnr.dcp is allowed, and it must not be added as a Vivado source input." >&2
+  echo "Only references/fixed_pnr.dcp is allowed; build checkpoints live under build/ (gitignored)." >&2
   exit 1
 fi
 
