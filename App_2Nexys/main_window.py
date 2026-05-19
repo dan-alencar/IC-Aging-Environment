@@ -1,33 +1,25 @@
 """
-App_2Nexys — Main window.
+App_2Nexys — Main window with tabbed layout.
 
-Layout (side-by-side dual-DUT):
-  ┌──────────────────────────────────────────────────────────────────────┐
-  │  Oven controls (setpoint, PID info) | Test control (name, button)   │
-  ├──────────────────────────────────────┬───────────────────────────────┤
-  │ DUT-0 panel                          │ DUT-1 panel                   │
-  │   PSU-0 initial voltage              │   PSU-1 initial voltage       │
-  │   Slack-0 / Temp-0 / VCCINT-0        │   Slack-1 / Temp-1 / VCCINT-1│
-  ├──────────────────────────────────────┴───────────────────────────────┤
-  │ Shared temperature plot (Forno + DUT-0 + DUT-1)                      │
-  ├──────────────────────────────────────┬───────────────────────────────┤
-  │ Aux plot PSU-0 / VCCINT-0            │ Aux plot PSU-1 / VCCINT-1    │
-  ├──────────────────────────────────────┴───────────────────────────────┤
-  │ Log display (full width)                                              │
-  └──────────────────────────────────────────────────────────────────────┘
+Top bar (always visible):
+  [Forno (setpoint, PID info, DUT target)]  [Controle do Teste]
+
+Tabs:
+  Sensor      — DUT-0 and DUT-1 side-by-side (slack, failure, canary, PSU inputs)
+  Temperatura — shared temperature plot
+  Tensão      — PSU-0 and PSU-1 voltage/current aux plots side-by-side
+  Log         — event log
 
 Workers live in QThreads; signals cross thread boundaries safely.
-The TestSequencer emits plot_data_update(dict) every LOG_INTERVAL_MS.
-main_window.py remaps dict keys so each AuxPlotWidget gets generic names.
 """
 import time
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QGroupBox, QFormLayout, QLineEdit, QTextEdit,
-    QLabel, QDoubleSpinBox
+    QLabel, QDoubleSpinBox, QTabWidget, QFrame
 )
 from PySide6.QtGui import QFont
-from PySide6.QtCore import QThread, Signal, Slot, Qt
+from PySide6.QtCore import QThread, Signal, Slot
 import config
 from workers import (
     ArduinoWorker, PSUWorker0, PSUWorker1,
@@ -36,20 +28,28 @@ from workers import (
 from plot_widget import PlotWidget
 from aux_plot_widget import AuxPlotWidget
 
-_SLACK_STYLE_OK = """
+
+_STYLE_GREEN = """
 QLabel {
     color: #00ff00; background-color: #1a1a1a;
     border: 2px solid #333333; border-radius: 6px; padding: 8px;
 }"""
-_SLACK_STYLE_WARN = """
+_STYLE_RED = """
 QLabel {
     color: #ff4444; background-color: #1a1a1a;
     border: 2px solid #ff0000; border-radius: 6px; padding: 8px;
 }"""
+_INFO_STYLE = (
+    "QLabel { color: #dddddd; background-color: #222222; "
+    "border: 1px solid #444; border-radius: 4px; padding: 6px; }"
+)
+_CANARY_STYLE = (
+    "QLabel { color: #aaaaaa; background-color: #222222; "
+    "border: 1px solid #444; border-radius: 4px; padding: 6px; }"
+)
 
 
 class MainWindow(QMainWindow):
-    # Worker control signals
     start_arduino_signal = Signal()
     stop_arduino_signal = Signal()
     start_psu0_signal = Signal()
@@ -61,13 +61,10 @@ class MainWindow(QMainWindow):
     start_dut1_signal = Signal()
     stop_dut1_signal = Signal()
 
-    # Test lifecycle
     start_test_signal = Signal(dict)
     stop_test_signal = Signal()
 
-    # Real-time oven setpoint (forwarded to ArduinoWorker)
     update_oven_setpoint_signal = Signal(float)
-
     psu0_beeper_signal = Signal(bool)
     psu1_beeper_signal = Signal(bool)
 
@@ -79,7 +76,8 @@ class MainWindow(QMainWindow):
         self.threads = {}
         self.workers = {}
 
-        self._create_widgets()
+        self._create_top_bar_widgets()
+        self._create_tab_widgets()
         self._create_layout()
         self._apply_device_state()
         self._start_device_workers()
@@ -90,8 +88,28 @@ class MainWindow(QMainWindow):
     #   Widget creation
     # =========================================================================
 
-    def _create_widgets(self):
-        # --- Test control ---
+    def _create_top_bar_widgets(self):
+        self.oven_group = QGroupBox("Forno (compartilhado)")
+        self.oven_setpoint_input = QDoubleSpinBox()
+        self.oven_setpoint_input.setRange(25.0, 150.0)
+        self.oven_setpoint_input.setValue(100.0)
+        self.oven_setpoint_input.setSuffix(" °C")
+        self.dut_target_input = QDoubleSpinBox()
+        self.dut_target_input.setRange(0.0, 140.0)
+        self.dut_target_input.setValue(0.0)
+        self.dut_target_input.setSuffix(" °C")
+        self.dut_target_input.setToolTip(
+            "Temperatura alvo dos DUTs (média). 0 = desabilitado. "
+            "Ajuste ±1°C/30 min até ±3°C do alvo."
+        )
+        self.pid_info_label = QLabel(
+            f"<b>PID (Fixo):</b> Kp={config.PID_KP:.4f}  "
+            f"Ki={config.PID_KI:.6f}  Kd={config.PID_KD:.4f}"
+        )
+        self.pid_info_label.setStyleSheet(
+            "background-color: #2d2d2d; padding: 6px; border-radius: 4px;"
+        )
+
         self.test_control_group = QGroupBox("Controle do Teste")
         self.test_name_input = QLineEdit("Teste_2DUT_001")
         self.toggle_test_button = QPushButton("INICIAR TESTE")
@@ -101,93 +119,123 @@ class MainWindow(QMainWindow):
             "padding: 10px; font-size: 14px;"
         )
 
-        # --- Oven ---
-        self.oven_group = QGroupBox("Forno (compartilhado)")
-        self.oven_setpoint_input = QDoubleSpinBox()
-        self.oven_setpoint_input.setRange(25.0, 150.0)
-        self.oven_setpoint_input.setValue(100.0)
-        self.oven_setpoint_input.setSuffix(" °C")
-        self.pid_info_label = QLabel(
-            f"<b>PID Forno (Fixo):</b><br>"
-            f"Kp={config.PID_KP:.4f}  Ki={config.PID_KI:.6f}  Kd={config.PID_KD:.4f}"
-        )
-        self.pid_info_label.setStyleSheet(
-            "background-color: #2d2d2d; padding: 6px; border-radius: 4px;"
-        )
-        self.dut_target_input = QDoubleSpinBox()
-        self.dut_target_input.setRange(0.0, 140.0)
-        self.dut_target_input.setValue(0.0)
-        self.dut_target_input.setSuffix(" °C")
-        self.dut_target_input.setToolTip(
-            "Temperatura alvo dos DUTs (média de DUT-0 e DUT-1). "
-            "0 = desabilitado — usa setpoint do forno diretamente. "
-            "Ajuste de ±1°C/30 min até ±3°C do alvo."
-        )
+    def _make_big_label(self, text: str, style: str) -> QLabel:
+        lbl = QLabel(text)
+        f = QFont()
+        f.setPointSize(18)
+        f.setBold(True)
+        lbl.setFont(f)
+        lbl.setStyleSheet(style)
+        lbl.setMinimumHeight(50)
+        return lbl
 
-        # --- DUT-0 panel ---
-        self.dut0_group = QGroupBox("DUT-0  (IT6502D)")
+    def _create_tab_widgets(self):
+        # DUT-0 sensor widgets
+        self.slack0_label    = self._make_big_label("Slack: -- Inc.", _STYLE_GREEN)
+        self.failure0_label  = self._make_big_label("FALHA: ---",     _STYLE_GREEN)
+        self.dut0_temp_label = QLabel("Temp: -- °C")
+        self.dut0_volt_label = QLabel("VCCINT: -- V")
+        for lbl in (self.dut0_temp_label, self.dut0_volt_label):
+            f = QFont(); f.setPointSize(12); lbl.setFont(f)
+            lbl.setStyleSheet(_INFO_STYLE)
+        self.err0_label     = QLabel("Erros: --")
+        self.wrong0_label   = QLabel("Errado: --")
+        self.correct0_label = QLabel("Correto: --")
+        for lbl in (self.err0_label, self.wrong0_label, self.correct0_label):
+            lbl.setStyleSheet(_CANARY_STYLE)
+
         self.psu0_voltage_input = QDoubleSpinBox()
         self.psu0_voltage_input.setRange(0.0, 1.5)
         self.psu0_voltage_input.setValue(config.VCCINT_SETPOINT_0_V)
         self.psu0_voltage_input.setSingleStep(0.05)
         self.psu0_voltage_input.setSuffix(" V")
         self.psu0_voltage_input.setToolTip(
-            "Tensão inicial da PSU-0. O loop VCCINT ajusta automaticamente."
+            "Tensão inicial da PSU-0 (loop VCCINT ajusta automaticamente)"
         )
-        self.slack0_label = self._make_slack_label()
-        self.dut0_info_label = QLabel("Temp: -- °C   VCCINT: -- V")
         self.beeper0_button = QPushButton("Silenciar Buzzer PSU-0")
         self.beeper0_button.setCheckable(True)
-        self.beeper0_button.setToolTip("Desliga/liga o buzzer da PSU-0 via SCPI")
 
-        # --- DUT-1 panel ---
-        self.dut1_group = QGroupBox("DUT-1  (E3634A)")
+        # DUT-1 sensor widgets
+        self.slack1_label    = self._make_big_label("Slack: -- Inc.", _STYLE_GREEN)
+        self.failure1_label  = self._make_big_label("FALHA: ---",     _STYLE_GREEN)
+        self.dut1_temp_label = QLabel("Temp: -- °C")
+        self.dut1_volt_label = QLabel("VCCINT: -- V")
+        for lbl in (self.dut1_temp_label, self.dut1_volt_label):
+            f = QFont(); f.setPointSize(12); lbl.setFont(f)
+            lbl.setStyleSheet(_INFO_STYLE)
+        self.err1_label     = QLabel("Erros: --")
+        self.wrong1_label   = QLabel("Errado: --")
+        self.correct1_label = QLabel("Correto: --")
+        for lbl in (self.err1_label, self.wrong1_label, self.correct1_label):
+            lbl.setStyleSheet(_CANARY_STYLE)
+
         self.psu1_voltage_input = QDoubleSpinBox()
         self.psu1_voltage_input.setRange(0.0, 1.5)
         self.psu1_voltage_input.setValue(config.VCCINT_SETPOINT_1_V)
         self.psu1_voltage_input.setSingleStep(0.05)
         self.psu1_voltage_input.setSuffix(" V")
         self.psu1_voltage_input.setToolTip(
-            "Tensão inicial da PSU-1. O loop VCCINT ajusta automaticamente."
+            "Tensão inicial da PSU-1 (loop VCCINT ajusta automaticamente)"
         )
-        self.slack1_label = self._make_slack_label()
-        self.dut1_info_label = QLabel("Temp: -- °C   VCCINT: -- V")
         self.beeper1_button = QPushButton("Silenciar Buzzer PSU-1")
         self.beeper1_button.setCheckable(True)
-        self.beeper1_button.setToolTip("Desliga/liga o buzzer da PSU-1 via SCPI")
 
-        # --- Plots ---
+        # Other tab widgets
         self.plot_widget = PlotWidget(plot_window_size=300)
         self.aux_plot0 = AuxPlotWidget(title="PSU-0 / VCCINT-0", plot_window_size=300)
         self.aux_plot1 = AuxPlotWidget(title="PSU-1 / VCCINT-1", plot_window_size=300)
-
-        # --- Log ---
-        self.log_group = QGroupBox("Log de Eventos")
         self.log_text_edit = QTextEdit()
         self.log_text_edit.setReadOnly(True)
-        self.log_text_edit.setMaximumHeight(160)
         self.log_text_edit.setStyleSheet(
             "font-family: 'Consolas', 'Monaco', monospace; font-size: 10px;"
         )
-
-    def _make_slack_label(self):
-        lbl = QLabel("Slack: -- Inc.")
-        f = QFont()
-        f.setPointSize(14)
-        f.setBold(True)
-        lbl.setFont(f)
-        lbl.setStyleSheet(_SLACK_STYLE_OK)
-        return lbl
 
     # =========================================================================
     #   Layout
     # =========================================================================
 
-    def _create_layout(self):
-        main_layout = QVBoxLayout()
-        main_layout.setSpacing(6)
+    def _build_dut_column(self, id_str,
+                           slack_lbl, failure_lbl,
+                           temp_lbl, volt_lbl,
+                           err_lbl, wrong_lbl, correct_lbl,
+                           psu_spin, beeper_btn) -> QWidget:
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setSpacing(8)
 
-        # --- Top bar: oven + test control ---
+        layout.addWidget(slack_lbl)
+        layout.addWidget(failure_lbl)
+
+        info_row = QHBoxLayout()
+        info_row.addWidget(temp_lbl)
+        info_row.addWidget(volt_lbl)
+        layout.addLayout(info_row)
+
+        canary_group = QGroupBox(f"Canário — {id_str}")
+        canary_row = QHBoxLayout()
+        canary_row.addWidget(err_lbl)
+        canary_row.addWidget(wrong_lbl)
+        canary_row.addWidget(correct_lbl)
+        canary_group.setLayout(canary_row)
+        layout.addWidget(canary_group)
+
+        psu_group = QGroupBox(f"PSU — {id_str}")
+        psu_form = QFormLayout()
+        psu_form.addRow("Tensão inicial:", psu_spin)
+        psu_inner = QVBoxLayout()
+        psu_inner.addLayout(psu_form)
+        psu_inner.addWidget(beeper_btn)
+        psu_group.setLayout(psu_inner)
+        layout.addWidget(psu_group)
+
+        layout.addStretch()
+        return widget
+
+    def _create_layout(self):
+        root = QVBoxLayout()
+        root.setSpacing(6)
+
+        # Top bar
         top_bar = QHBoxLayout()
 
         oven_form = QFormLayout()
@@ -197,7 +245,7 @@ class MainWindow(QMainWindow):
         oven_inner.addLayout(oven_form)
         oven_inner.addWidget(self.pid_info_label)
         self.oven_group.setLayout(oven_inner)
-        top_bar.addWidget(self.oven_group, stretch=1)
+        top_bar.addWidget(self.oven_group, stretch=2)
 
         test_form = QFormLayout()
         test_form.addRow("Nome:", self.test_name_input)
@@ -206,52 +254,59 @@ class MainWindow(QMainWindow):
         self.test_control_group.setLayout(test_form)
         top_bar.addWidget(self.test_control_group, stretch=1)
 
-        main_layout.addLayout(top_bar)
+        root.addLayout(top_bar)
 
-        # --- DUT panels (side-by-side) ---
-        dut_row = QHBoxLayout()
+        # Tab widget
+        tabs = QTabWidget()
 
-        dut0_inner = QVBoxLayout()
-        dut0_form = QFormLayout()
-        dut0_form.addRow("Tensão inicial PSU-0:", self.psu0_voltage_input)
-        dut0_inner.addLayout(dut0_form)
-        dut0_inner.addWidget(self.beeper0_button)
-        dut0_inner.addWidget(QLabel("<b>Sensor de Degradação — DUT-0:</b>"))
-        dut0_inner.addWidget(self.slack0_label)
-        dut0_inner.addWidget(self.dut0_info_label)
-        self.dut0_group.setLayout(dut0_inner)
-        dut_row.addWidget(self.dut0_group, stretch=1)
+        # Tab 1: Sensor — two DUT columns side-by-side
+        sensor_widget = QWidget()
+        sensor_layout = QHBoxLayout(sensor_widget)
+        sensor_layout.setSpacing(12)
 
-        dut1_inner = QVBoxLayout()
-        dut1_form = QFormLayout()
-        dut1_form.addRow("Tensão inicial PSU-1:", self.psu1_voltage_input)
-        dut1_inner.addLayout(dut1_form)
-        dut1_inner.addWidget(self.beeper1_button)
-        dut1_inner.addWidget(QLabel("<b>Sensor de Degradação — DUT-1:</b>"))
-        dut1_inner.addWidget(self.slack1_label)
-        dut1_inner.addWidget(self.dut1_info_label)
-        self.dut1_group.setLayout(dut1_inner)
-        dut_row.addWidget(self.dut1_group, stretch=1)
+        col0 = self._build_dut_column(
+            "DUT-0",
+            self.slack0_label, self.failure0_label,
+            self.dut0_temp_label, self.dut0_volt_label,
+            self.err0_label, self.wrong0_label, self.correct0_label,
+            self.psu0_voltage_input, self.beeper0_button,
+        )
+        div = QFrame()
+        div.setFrameShape(QFrame.VLine)
+        div.setFrameShadow(QFrame.Sunken)
+        col1 = self._build_dut_column(
+            "DUT-1",
+            self.slack1_label, self.failure1_label,
+            self.dut1_temp_label, self.dut1_volt_label,
+            self.err1_label, self.wrong1_label, self.correct1_label,
+            self.psu1_voltage_input, self.beeper1_button,
+        )
+        sensor_layout.addWidget(col0)
+        sensor_layout.addWidget(div)
+        sensor_layout.addWidget(col1)
 
-        main_layout.addLayout(dut_row)
+        tabs.addTab(sensor_widget, "Sensor")
 
-        # --- Shared temperature plot ---
-        main_layout.addWidget(self.plot_widget, stretch=2)
+        # Tab 2: Temperatura
+        tabs.addTab(self.plot_widget, "Temperatura")
 
-        # --- Aux plots ---
-        aux_row = QHBoxLayout()
-        aux_row.addWidget(self.aux_plot0, stretch=1)
-        aux_row.addWidget(self.aux_plot1, stretch=1)
-        main_layout.addLayout(aux_row, stretch=1)
+        # Tab 3: Tensão — aux plots side-by-side
+        volt_widget = QWidget()
+        volt_layout = QHBoxLayout(volt_widget)
+        volt_layout.addWidget(self.aux_plot0)
+        volt_layout.addWidget(self.aux_plot1)
+        tabs.addTab(volt_widget, "Tensão")
 
-        # --- Log ---
-        log_inner = QVBoxLayout()
-        log_inner.addWidget(self.log_text_edit)
-        self.log_group.setLayout(log_inner)
-        main_layout.addWidget(self.log_group)
+        # Tab 4: Log
+        log_widget = QWidget()
+        log_layout = QVBoxLayout(log_widget)
+        log_layout.addWidget(self.log_text_edit)
+        tabs.addTab(log_widget, "Log")
+
+        root.addWidget(tabs, stretch=1)
 
         central = QWidget()
-        central.setLayout(main_layout)
+        central.setLayout(root)
         self.setCentralWidget(central)
 
     # =========================================================================
@@ -324,7 +379,7 @@ class MainWindow(QMainWindow):
         seq.plot_data_update.connect(self.plot_widget.update_plot_data)
         seq.plot_data_update.connect(self._forward_to_aux0)
         seq.plot_data_update.connect(self._forward_to_aux1)
-        seq.plot_data_update.connect(self._update_dut_displays)
+        seq.plot_data_update.connect(self._update_sensor_display)
         seq.test_finished.connect(self.on_test_finished)
 
     # =========================================================================
@@ -333,23 +388,21 @@ class MainWindow(QMainWindow):
 
     @Slot(dict)
     def _forward_to_aux0(self, d: dict):
-        """Remap psu0_* keys to generic names expected by AuxPlotWidget."""
         self.aux_plot0.update_plot_data({
-            "time_sec":   d.get("time_sec", 0),
+            "time_sec":    d.get("time_sec", 0),
             "psu_voltage": d.get("psu0_voltage", 0),
-            "psu_cmd_v":  d.get("psu0_cmd_v", 0),
-            "dut_volt":   d.get("dut0_volt", 0),
+            "psu_cmd_v":   d.get("psu0_cmd_v", 0),
+            "dut_volt":    d.get("dut0_volt", 0),
             "psu_current": d.get("psu0_current", 0),
         })
 
     @Slot(dict)
     def _forward_to_aux1(self, d: dict):
-        """Remap psu1_* keys to generic names expected by AuxPlotWidget."""
         self.aux_plot1.update_plot_data({
-            "time_sec":   d.get("time_sec", 0),
+            "time_sec":    d.get("time_sec", 0),
             "psu_voltage": d.get("psu1_voltage", 0),
-            "psu_cmd_v":  d.get("psu1_cmd_v", 0),
-            "dut_volt":   d.get("dut1_volt", 0),
+            "psu_cmd_v":   d.get("psu1_cmd_v", 0),
+            "dut_volt":    d.get("dut1_volt", 0),
             "psu_current": d.get("psu1_current", 0),
         })
 
@@ -373,22 +426,41 @@ class MainWindow(QMainWindow):
         self.log_text_edit.append(f"[{ts}] {message}")
 
     @Slot(dict)
-    def _update_dut_displays(self, d: dict):
-        """Update slack labels and info text for both DUTs."""
+    def _update_sensor_display(self, d: dict):
         s0 = d.get("dut0_slack", 0)
         s1 = d.get("dut1_slack", 0)
+        f0 = d.get("dut0_fail", 0)
+        f1 = d.get("dut1_fail", 0)
         t0 = d.get("dut0_temp", 0.0)
         t1 = d.get("dut1_temp", 0.0)
         v0 = d.get("dut0_volt", 0.0)
         v1 = d.get("dut1_volt", 0.0)
+        e0 = d.get("dut0_error_count", 0)
+        e1 = d.get("dut1_error_count", 0)
+        w0 = d.get("dut0_wrong", 0)
+        w1 = d.get("dut1_wrong", 0)
+        c0 = d.get("dut0_correct", 0)
+        c1 = d.get("dut1_correct", 0)
 
         self.slack0_label.setText(f"Slack: {s0} Inc.")
-        self.slack0_label.setStyleSheet(_SLACK_STYLE_WARN if 0 < s0 < 20 else _SLACK_STYLE_OK)
-        self.dut0_info_label.setText(f"Temp: {t0:.1f} °C   VCCINT: {v0:.3f} V")
+        self.slack0_label.setStyleSheet(_STYLE_RED if 0 < s0 < 20 else _STYLE_GREEN)
+        self.failure0_label.setText("FALHA: SIM" if f0 else "FALHA: NÃO")
+        self.failure0_label.setStyleSheet(_STYLE_RED if f0 else _STYLE_GREEN)
+        self.dut0_temp_label.setText(f"Temp: {t0:.1f} °C")
+        self.dut0_volt_label.setText(f"VCCINT: {v0:.3f} V")
+        self.err0_label.setText(f"Erros: {e0}")
+        self.wrong0_label.setText(f"Errado: {w0}")
+        self.correct0_label.setText(f"Correto: {c0}")
 
         self.slack1_label.setText(f"Slack: {s1} Inc.")
-        self.slack1_label.setStyleSheet(_SLACK_STYLE_WARN if 0 < s1 < 20 else _SLACK_STYLE_OK)
-        self.dut1_info_label.setText(f"Temp: {t1:.1f} °C   VCCINT: {v1:.3f} V")
+        self.slack1_label.setStyleSheet(_STYLE_RED if 0 < s1 < 20 else _STYLE_GREEN)
+        self.failure1_label.setText("FALHA: SIM" if f1 else "FALHA: NÃO")
+        self.failure1_label.setStyleSheet(_STYLE_RED if f1 else _STYLE_GREEN)
+        self.dut1_temp_label.setText(f"Temp: {t1:.1f} °C")
+        self.dut1_volt_label.setText(f"VCCINT: {v1:.3f} V")
+        self.err1_label.setText(f"Erros: {e1}")
+        self.wrong1_label.setText(f"Errado: {w1}")
+        self.correct1_label.setText(f"Correto: {c1}")
 
     @Slot(bool)
     def on_toggle_test(self, checked: bool):

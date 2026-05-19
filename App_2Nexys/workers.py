@@ -697,9 +697,9 @@ exit
 
             t_oven, sp_oven, out_oven = self.arduino.get_latest_data()
             v0, c0 = self.psu0.get_latest_data()
-            t0, s0, vcc0, wrong0, correct0, errcnt0 = self.dut0.get_latest_data()
+            t0, s0, vcc0, fail0, wrong0, correct0, errcnt0 = self.dut0.get_latest_data()
             v1, c1 = self.psu1.get_latest_data()
-            t1, s1, vcc1, wrong1, correct1, errcnt1 = self.dut1.get_latest_data()
+            t1, s1, vcc1, fail1, wrong1, correct1, errcnt1 = self.dut1.get_latest_data()
 
             # --- VCCINT closed-loop (P-only) ---
             self._update_vccint_loop(vcc0, vcc1)
@@ -713,10 +713,10 @@ exit
                 "time_sec": elapsed,
                 "oven_temp": t_oven, "oven_setpoint": sp_oven, "oven_output": out_oven,
                 "psu0_voltage": v0, "psu0_current": c0,
-                "dut0_temp": t0, "dut0_slack": s0, "dut0_volt": vcc0,
+                "dut0_temp": t0, "dut0_slack": s0, "dut0_volt": vcc0, "dut0_fail": fail0,
                 "dut0_wrong": wrong0, "dut0_correct": correct0, "dut0_error_count": errcnt0,
                 "psu1_voltage": v1, "psu1_current": c1,
-                "dut1_temp": t1, "dut1_slack": s1, "dut1_volt": vcc1,
+                "dut1_temp": t1, "dut1_slack": s1, "dut1_volt": vcc1, "dut1_fail": fail1,
                 "dut1_wrong": wrong1, "dut1_correct": correct1, "dut1_error_count": errcnt1,
                 "psu0_cmd_v": self._psu0_cmd_v,
                 "psu1_cmd_v": self._psu1_cmd_v,

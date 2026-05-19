@@ -95,7 +95,9 @@ if {[llength $ip_cores] > 0} {
 puts "Adding constraints..."
 add_files -norecurse -fileset constrs_1 $constraints
 set fixed_pnr_xdc [file join $project_root "src/constraints/fixed_pnr_constraints.xdc"]
-set_property PROCESSING_ORDER LATE [get_files $fixed_pnr_xdc]
+set_property PROCESSING_ORDER    LATE  [get_files $fixed_pnr_xdc]
+set_property USED_IN_SYNTHESIS   false [get_files $fixed_pnr_xdc]
+set_property USED_IN_IMPLEMENTATION true [get_files $fixed_pnr_xdc]
 
 puts "Creating VIO debug core..."
 create_ip -name vio -vendor xilinx.com -library ip -module_name vio_0

@@ -1,77 +1,80 @@
 """
-=============================================================================
-TCC - Janela Principal da HMI (VERSÃO FINAL)
-=============================================================================
-Interface gráfica principal para supervisão do teste de envelhecimento.
+App_Nexys — Main window with tabbed layout.
 
-Características:
-  - Controle centralizado de início/parada de teste
-  - Visualização em tempo real (temperatura, tensão, corrente, slack)
-  - Log de eventos
-  - Parâmetros PID fixos (não alteráveis em tempo de execução)
+Top bar (always visible):
+  [Forno + PID info]  [PSU]  [Controle do Teste]
 
-Autor: [Seu Nome]
-Data: Janeiro/2026
-=============================================================================
+Tabs:
+  Sensor      — slack, failure indicator, canary metrics, DUT readings
+  Temperatura — temperature plot
+  Tensão      — voltage/current aux plot
+  Log         — event log
 """
-import sys
 import time
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QGroupBox, QFormLayout, QLineEdit, QTextEdit,
-    QLabel, QDoubleSpinBox
+    QLabel, QDoubleSpinBox, QTabWidget
 )
 from PySide6.QtGui import QFont
 from PySide6.QtCore import QThread, Signal, Slot
 
 import config
 from workers import ArduinoWorker, PSUWorker, DUTWorker, TestSequencer
-from plot_widget import PlotWidget 
-from aux_plot_widget import AuxPlotWidget 
+from plot_widget import PlotWidget
+from aux_plot_widget import AuxPlotWidget
+
+
+_STYLE_GREEN = """
+QLabel {
+    color: #00ff00; background-color: #1a1a1a;
+    border: 2px solid #333333; border-radius: 6px; padding: 10px;
+}"""
+_STYLE_RED = """
+QLabel {
+    color: #ff4444; background-color: #1a1a1a;
+    border: 2px solid #ff0000; border-radius: 6px; padding: 10px;
+}"""
 
 
 class MainWindow(QMainWindow):
-    """Janela principal da aplicação supervisória."""
-    
-    # Sinais para controle de workers
     start_arduino_signal = Signal()
     stop_arduino_signal = Signal()
     start_psu_signal = Signal()
     stop_psu_signal = Signal()
     start_dut_signal = Signal()
     stop_dut_signal = Signal()
-    
-    # Sinais para o sequenciador
+
     start_test_signal = Signal(dict)
     stop_test_signal = Signal()
-    
-    # Sinais de controle em tempo real (apenas setpoints, não PID)
+
     update_psu_voltage_signal = Signal(float)
     update_oven_setpoint_signal = Signal(float)
     psu_beeper_signal = Signal(bool)
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("TCC - Supervisor de Teste de Envelhecimento")
+        self.setWindowTitle("App Nexys — Supervisor de Envelhecimento")
         self.setGeometry(100, 100, 1400, 900)
-        
+
         self.threads = {}
         self.workers = {}
-        
-        self._create_widgets()
+
+        self._create_top_bar_widgets()
+        self._create_tab_widgets()
         self._create_layout()
         self._apply_device_state()
         self._start_device_workers()
         self._start_test_sequencer()
         self._connect_signals()
 
-    def _create_widgets(self):
-        """Cria todos os widgets da UI."""
-        
-        # --- Grupo 1: Controle do Teste ---
+    # =========================================================================
+    #   Widget creation
+    # =========================================================================
+
+    def _create_top_bar_widgets(self):
         self.test_control_group = QGroupBox("Controle do Teste")
         self.test_name_input = QLineEdit("Teste_001")
-        
         self.toggle_test_button = QPushButton("INICIAR TESTE")
         self.toggle_test_button.setCheckable(True)
         self.toggle_test_button.setStyleSheet(
@@ -79,178 +82,201 @@ class MainWindow(QMainWindow):
             "padding: 10px; font-size: 14px;"
         )
 
-        # --- Grupo 2: Parâmetros do Forno ---
         self.oven_control_group = QGroupBox("Parâmetros do Forno")
-        
         self.oven_setpoint_input = QDoubleSpinBox()
         self.oven_setpoint_input.setRange(25.0, 150.0)
         self.oven_setpoint_input.setValue(100.0)
         self.oven_setpoint_input.setSuffix(" °C")
-        self.oven_setpoint_input.setToolTip("Setpoint de temperatura do forno")
-
         self.dut_target_input = QDoubleSpinBox()
         self.dut_target_input.setRange(0.0, 140.0)
         self.dut_target_input.setValue(0.0)
         self.dut_target_input.setSuffix(" °C")
         self.dut_target_input.setToolTip(
-            "Temperatura alvo do DUT. 0 = desabilitado — usa setpoint do forno. "
-            "Ajuste de ±1°C/30 min até ±3°C do alvo."
+            "Temperatura alvo do DUT. 0 = desabilitado. Ajuste ±1°C/30 min até ±3°C do alvo."
         )
-        
-        # Labels de parâmetros PID (somente leitura)
-        self.pid_info_label = QLabel()
-        self.pid_info_label.setText(
-            f"<b>Parâmetros PID (Fixos):</b><br>"
-            f"Kp = {config.PID_KP:.4f}<br>"
-            f"Ki = {config.PID_KI:.6f}<br>"
-            f"Kd = {config.PID_KD:.4f}"
+        self.pid_info_label = QLabel(
+            f"<b>PID (Fixo):</b> Kp={config.PID_KP:.4f}  "
+            f"Ki={config.PID_KI:.6f}  Kd={config.PID_KD:.4f}"
         )
         self.pid_info_label.setStyleSheet(
-            "background-color: #2d2d2d; padding: 8px; border-radius: 4px;"
+            "background-color: #2d2d2d; padding: 6px; border-radius: 4px;"
         )
-        
-        # --- Grupo 3: Parâmetros da Fonte e DUT ---
-        self.psu_control_group = QGroupBox("Fonte PSU e DUT")
-        
+
+        self.psu_control_group = QGroupBox("Fonte PSU")
         self.psu_setpoint_input = QDoubleSpinBox()
         self.psu_setpoint_input.setRange(0.0, 1.5)
         self.psu_setpoint_input.setValue(1.0)
         self.psu_setpoint_input.setSingleStep(0.01)
         self.psu_setpoint_input.setSuffix(" V")
-        self.psu_setpoint_input.setToolTip("Tensão de saída da fonte")
-
         self.beeper_button = QPushButton("Silenciar Buzzer PSU")
         self.beeper_button.setCheckable(True)
-        self.beeper_button.setToolTip("Desliga/liga o buzzer da PSU via SCPI")
 
-        # Widget de Slack
+    def _create_tab_widgets(self):
+        # --- Sensor tab ---
         self.slack_label = QLabel("Slack: -- Inc.")
-        slack_font = self.slack_label.font()
-        slack_font.setPointSize(16)
-        slack_font.setBold(True)
-        self.slack_label.setFont(slack_font)
-        self.slack_label.setStyleSheet("""
-            QLabel {
-                color: #00ff00;
-                background-color: #1a1a1a;
-                border: 2px solid #333333;
-                border-radius: 6px;
-                padding: 10px;
-            }
-        """)
+        f = QFont()
+        f.setPointSize(22)
+        f.setBold(True)
+        self.slack_label.setFont(f)
+        self.slack_label.setStyleSheet(_STYLE_GREEN)
+        self.slack_label.setMinimumHeight(60)
 
-        # --- Grupo 4: Gráficos ---
+        self.failure_label = QLabel("FALHA: ---")
+        f2 = QFont()
+        f2.setPointSize(18)
+        f2.setBold(True)
+        self.failure_label.setFont(f2)
+        self.failure_label.setStyleSheet(_STYLE_GREEN)
+        self.failure_label.setMinimumHeight(50)
+
+        _info_style = (
+            "QLabel { color: #dddddd; background-color: #222222; "
+            "border: 1px solid #444; border-radius: 4px; padding: 8px; }"
+        )
+        self.dut_temp_label = QLabel("Temp DUT:  -- °C")
+        self.dut_volt_label = QLabel("VCCINT:  -- V")
+        for lbl in (self.dut_temp_label, self.dut_volt_label):
+            f3 = QFont()
+            f3.setPointSize(13)
+            lbl.setFont(f3)
+            lbl.setStyleSheet(_info_style)
+
+        _canary_style = (
+            "QLabel { color: #aaaaaa; background-color: #222222; "
+            "border: 1px solid #444; border-radius: 4px; padding: 6px; }"
+        )
+        self.error_count_label = QLabel("Erros: --")
+        self.wrong_label       = QLabel("Errado: --")
+        self.correct_label     = QLabel("Correto: --")
+        for lbl in (self.error_count_label, self.wrong_label, self.correct_label):
+            lbl.setStyleSheet(_canary_style)
+
+        # --- Other tabs ---
         self.plot_widget = PlotWidget(plot_window_size=300)
         self.aux_plot_widget = AuxPlotWidget(plot_window_size=300)
-
-        # --- Grupo 5: Log de Eventos ---
-        self.log_group = QGroupBox("Log de Eventos")
         self.log_text_edit = QTextEdit()
         self.log_text_edit.setReadOnly(True)
         self.log_text_edit.setStyleSheet(
             "font-family: 'Consolas', 'Monaco', monospace; font-size: 11px;"
         )
 
+    # =========================================================================
+    #   Layout
+    # =========================================================================
+
     def _create_layout(self):
-        """Organiza os widgets na janela."""
-        
-        main_layout = QVBoxLayout()
-        controls_layout = QHBoxLayout()
-        
-        # Coluna 1: Controle do Teste
-        test_layout = QFormLayout()
-        test_layout.addRow("Nome do Teste:", self.test_name_input)
-        test_layout.addRow(self.toggle_test_button)
-        
-        self.log_folder_label = QLabel(f"<small>Logs: {config.LOG_FOLDER}</small>")
-        test_layout.addRow(self.log_folder_label)
-        
-        self.test_control_group.setLayout(test_layout)
-        controls_layout.addWidget(self.test_control_group)
-        
-        # Coluna 2: Parâmetros do Forno
-        oven_layout = QVBoxLayout()
+        root = QVBoxLayout()
+        root.setSpacing(6)
+
+        # Top bar
+        top_bar = QHBoxLayout()
+
         oven_form = QFormLayout()
         oven_form.addRow("Setpoint:", self.oven_setpoint_input)
         oven_form.addRow("Alvo DUT (0=off):", self.dut_target_input)
-        oven_layout.addLayout(oven_form)
-        oven_layout.addWidget(self.pid_info_label)
-        oven_layout.addStretch()
-        
-        self.oven_control_group.setLayout(oven_layout)
-        controls_layout.addWidget(self.oven_control_group)
+        oven_inner = QVBoxLayout()
+        oven_inner.addLayout(oven_form)
+        oven_inner.addWidget(self.pid_info_label)
+        self.oven_control_group.setLayout(oven_inner)
+        top_bar.addWidget(self.oven_control_group, stretch=2)
 
-        # Coluna 3: PSU e DUT
-        psu_layout = QVBoxLayout()
         psu_form = QFormLayout()
         psu_form.addRow("Tensão PSU:", self.psu_setpoint_input)
-        psu_layout.addLayout(psu_form)
-        psu_layout.addWidget(self.beeper_button)
-        psu_layout.addWidget(QLabel("<b>Sensor de Degradação:</b>"))
-        psu_layout.addWidget(self.slack_label)
-        psu_layout.addStretch()
+        psu_inner = QVBoxLayout()
+        psu_inner.addLayout(psu_form)
+        psu_inner.addWidget(self.beeper_button)
+        psu_inner.addStretch()
+        self.psu_control_group.setLayout(psu_inner)
+        top_bar.addWidget(self.psu_control_group, stretch=1)
 
-        self.psu_control_group.setLayout(psu_layout)
-        controls_layout.addWidget(self.psu_control_group)
-        
-        # Layout dos gráficos
-        plots_layout = QHBoxLayout()
-        plots_layout.addWidget(self.plot_widget, stretch=1)
-        plots_layout.addWidget(self.aux_plot_widget, stretch=1)
+        test_form = QFormLayout()
+        test_form.addRow("Nome:", self.test_name_input)
+        test_form.addRow(self.toggle_test_button)
+        test_form.addRow(QLabel(f"<small>Logs: {config.LOG_FOLDER}</small>"))
+        self.test_control_group.setLayout(test_form)
+        top_bar.addWidget(self.test_control_group, stretch=1)
 
-        main_layout.addLayout(controls_layout)
-        main_layout.addLayout(plots_layout, stretch=1)
-        
-        # Log
-        log_layout = QVBoxLayout()
+        root.addLayout(top_bar)
+
+        # Tab widget
+        tabs = QTabWidget()
+
+        # Tab 1: Sensor
+        sensor_widget = QWidget()
+        sensor_layout = QVBoxLayout(sensor_widget)
+        sensor_layout.setSpacing(10)
+
+        readings_row = QHBoxLayout()
+        readings_row.addWidget(self.slack_label, stretch=2)
+        readings_row.addWidget(self.failure_label, stretch=1)
+        sensor_layout.addLayout(readings_row)
+
+        dut_row = QHBoxLayout()
+        dut_row.addWidget(self.dut_temp_label)
+        dut_row.addWidget(self.dut_volt_label)
+        sensor_layout.addLayout(dut_row)
+
+        canary_group = QGroupBox("Canário de Envelhecimento (Adder Canary)")
+        canary_row = QHBoxLayout()
+        canary_row.addWidget(self.error_count_label)
+        canary_row.addWidget(self.wrong_label)
+        canary_row.addWidget(self.correct_label)
+        canary_group.setLayout(canary_row)
+        sensor_layout.addWidget(canary_group)
+        sensor_layout.addStretch()
+
+        tabs.addTab(sensor_widget, "Sensor")
+
+        # Tab 2: Temperatura
+        tabs.addTab(self.plot_widget, "Temperatura")
+
+        # Tab 3: Tensão
+        tabs.addTab(self.aux_plot_widget, "Tensão")
+
+        # Tab 4: Log
+        log_widget = QWidget()
+        log_layout = QVBoxLayout(log_widget)
         log_layout.addWidget(self.log_text_edit)
-        self.log_group.setLayout(log_layout)
-        main_layout.addWidget(self.log_group)
+        tabs.addTab(log_widget, "Log")
 
-        # Widget central
-        central_widget = QWidget()
-        central_widget.setLayout(main_layout)
-        self.setCentralWidget(central_widget)
+        root.addWidget(tabs, stretch=1)
+
+        central = QWidget()
+        central.setLayout(root)
+        self.setCentralWidget(central)
+
+    # =========================================================================
+    #   Device state / workers
+    # =========================================================================
 
     def _apply_device_state(self):
-        """Desabilita controles de dispositivos que não estão habilitados."""
         if not config.ARDUINO_ENABLED:
             self.oven_control_group.setEnabled(False)
             self.oven_control_group.setToolTip("Arduino não habilitado — configure no Setup")
         if not config.PSU_ENABLED:
             self.psu_setpoint_input.setEnabled(False)
-            self.psu_setpoint_input.setToolTip("PSU não habilitada — configure no Setup")
             self.beeper_button.setEnabled(False)
 
     def _start_worker(self, name, worker_class_or_instance):
-        """Inicia um worker em sua própria thread."""
         thread = QThread()
-        
         if isinstance(worker_class_or_instance, type):
             worker = worker_class_or_instance()
         else:
             worker = worker_class_or_instance
-            
         worker.moveToThread(thread)
         worker.log_message.connect(self.log_message)
-        
         self.threads[name] = thread
         self.workers[name] = worker
         thread.start()
-        
         return worker
 
     def _start_device_workers(self):
-        """Inicia workers de hardware."""
-
-        # Arduino Worker (always created; start() guards internally)
         arduino_worker = self._start_worker("arduino", ArduinoWorker)
         self.start_arduino_signal.connect(arduino_worker.start)
         self.stop_arduino_signal.connect(arduino_worker.stop)
         self.update_oven_setpoint_signal.connect(arduino_worker.set_target_setpoint)
         self.start_arduino_signal.emit()
 
-        # PSU Worker (always created; start() guards internally)
         psu_worker = self._start_worker("psu", PSUWorker)
         self.start_psu_signal.connect(psu_worker.start)
         self.stop_psu_signal.connect(psu_worker.stop)
@@ -258,130 +284,103 @@ class MainWindow(QMainWindow):
         self.psu_beeper_signal.connect(psu_worker.set_beeper)
         self.start_psu_signal.emit()
 
-        # DUT Worker (always required)
         dut_worker = self._start_worker("dut", DUTWorker)
         self.start_dut_signal.connect(dut_worker.start)
         self.stop_dut_signal.connect(dut_worker.stop)
         self.start_dut_signal.emit()
 
     def _start_test_sequencer(self):
-        """Inicia o worker orquestrador do teste."""
-        
         sequencer_worker = TestSequencer(
-            self.workers["arduino"], 
-            self.workers["psu"], 
+            self.workers["arduino"],
+            self.workers["psu"],
             self.workers["dut"]
         )
         self._start_worker("sequencer", sequencer_worker)
-        
         self.start_test_signal.connect(sequencer_worker.start_test)
         self.stop_test_signal.connect(sequencer_worker.stop_test)
-        
-        # Conecta sinais de dados aos gráficos
         sequencer_worker.plot_data_update.connect(self.plot_widget.update_plot_data)
         sequencer_worker.plot_data_update.connect(self.aux_plot_widget.update_plot_data)
-        sequencer_worker.plot_data_update.connect(self.update_slack_label)
-        
+        sequencer_worker.plot_data_update.connect(self._update_sensor_display)
         sequencer_worker.test_finished.connect(self.on_test_finished)
 
     def _connect_signals(self):
-        """Conecta sinais da UI aos slots."""
         self.toggle_test_button.clicked.connect(self.on_toggle_test)
         self.psu_setpoint_input.editingFinished.connect(self.on_update_psu_voltage)
         self.oven_setpoint_input.editingFinished.connect(self.on_update_oven_setpoint)
         self.beeper_button.clicked.connect(self._on_beeper_toggled)
 
     # =========================================================================
-    #   SLOTS
+    #   Slots
     # =========================================================================
-    
+
     @Slot(str)
     def log_message(self, message):
-        """Adiciona mensagem ao log."""
-        timestamp = time.strftime('%H:%M:%S')
-        self.log_text_edit.append(f"[{timestamp}] {message}")
+        ts = time.strftime('%H:%M:%S')
+        self.log_text_edit.append(f"[{ts}] {message}")
 
     @Slot(dict)
-    def update_slack_label(self, data_row):
-        """Atualiza display do slack."""
-        slack_value = data_row.get('dut_slack', 0)
-        self.slack_label.setText(f"Slack: {slack_value} Inc.")
-        
-        # Alerta visual se slack baixo
-        if slack_value < 20 and slack_value > 0:
-            self.slack_label.setStyleSheet("""
-                QLabel {
-                    color: #ff4444;
-                    background-color: #1a1a1a;
-                    border: 2px solid #ff0000;
-                    border-radius: 6px;
-                    padding: 10px;
-                }
-            """)
+    def _update_sensor_display(self, d: dict):
+        slack       = d.get("dut_slack", 0)
+        failure     = d.get("dut_fail", 0)
+        temp        = d.get("dut_temp", 0.0)
+        volt        = d.get("dut_volt", 0.0)
+        error_count = d.get("dut_error_count", 0)
+        wrong       = d.get("dut_wrong", 0)
+        correct     = d.get("dut_correct", 0)
+
+        self.slack_label.setText(f"Slack: {slack} Inc.")
+        self.slack_label.setStyleSheet(_STYLE_RED if 0 < slack < 20 else _STYLE_GREEN)
+
+        if failure:
+            self.failure_label.setText("FALHA: SIM")
+            self.failure_label.setStyleSheet(_STYLE_RED)
         else:
-            self.slack_label.setStyleSheet("""
-                QLabel {
-                    color: #00ff00;
-                    background-color: #1a1a1a;
-                    border: 2px solid #333333;
-                    border-radius: 6px;
-                    padding: 10px;
-                }
-            """)
+            self.failure_label.setText("FALHA: NÃO")
+            self.failure_label.setStyleSheet(_STYLE_GREEN)
+
+        self.dut_temp_label.setText(f"Temp DUT:  {temp:.1f} °C")
+        self.dut_volt_label.setText(f"VCCINT:  {volt:.3f} V")
+        self.error_count_label.setText(f"Erros: {error_count}")
+        self.wrong_label.setText(f"Errado: {wrong}")
+        self.correct_label.setText(f"Correto: {correct}")
 
     @Slot(bool)
     def on_toggle_test(self, checked):
-        """Handler do botão de toggle."""
-        
         if checked:
-            # INICIAR teste
             self.log_message("Preparando teste...")
-            
             settings = {
                 'test_name':       self.test_name_input.text(),
                 'oven_setpoint':   self.oven_setpoint_input.value(),
                 'psu_voltage':     self.psu_setpoint_input.value(),
                 'dut_target_temp': self.dut_target_input.value(),
             }
-            
-            # Limpa gráficos
             self.plot_widget.clear_plot()
             self.aux_plot_widget.clear_plot()
-            self.update_slack_label({'dut_slack': 0})
-            
             self.start_test_signal.emit(settings)
-            
-            # Atualiza UI
             self.toggle_test_button.setText("PARAR TESTE")
             self.toggle_test_button.setStyleSheet(
                 "background-color: #dc3545; color: white; font-weight: bold; "
                 "padding: 10px; font-size: 14px;"
             )
             self.test_name_input.setEnabled(False)
-            
         else:
-            # PARAR teste
             self.stop_test_signal.emit()
             self.on_test_finished()
 
     @Slot()
     def on_update_psu_voltage(self):
-        """Atualiza tensão da PSU em tempo real."""
         voltage = self.psu_setpoint_input.value()
         self.log_message(f"Atualizando tensão PSU: {voltage:.3f}V")
         self.update_psu_voltage_signal.emit(voltage)
-    
+
     @Slot()
     def on_update_oven_setpoint(self):
-        """Atualiza setpoint do forno em tempo real."""
         setpoint = self.oven_setpoint_input.value()
         self.log_message(f"Atualizando setpoint forno: {setpoint:.1f}°C")
         self.update_oven_setpoint_signal.emit(setpoint)
 
     @Slot()
     def on_test_finished(self):
-        """Handler de fim de teste."""
-        
         self.toggle_test_button.setText("INICIAR TESTE")
         self.toggle_test_button.setStyleSheet(
             "background-color: #28a745; color: white; font-weight: bold; "
@@ -389,7 +388,7 @@ class MainWindow(QMainWindow):
         )
         self.toggle_test_button.setChecked(False)
         self.test_name_input.setEnabled(True)
-        
+
     @Slot(bool)
     def _on_beeper_toggled(self, checked: bool):
         self.psu_beeper_signal.emit(not checked)
@@ -401,17 +400,13 @@ class MainWindow(QMainWindow):
             self.beeper_button.setStyleSheet("")
 
     def closeEvent(self, event):
-        """Encerra todos os threads ao fechar."""
         self.log_message("Encerrando aplicação...")
-        
         self.stop_test_signal.emit()
         self.stop_arduino_signal.emit()
         self.stop_psu_signal.emit()
         self.stop_dut_signal.emit()
-        
-        for name, thread in self.threads.items():
+        for thread in self.threads.values():
             if thread.isRunning():
                 thread.quit()
                 thread.wait(1000)
-                
         event.accept()

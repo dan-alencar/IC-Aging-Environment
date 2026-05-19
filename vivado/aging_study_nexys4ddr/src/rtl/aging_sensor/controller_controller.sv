@@ -1,54 +1,54 @@
 `timescale 1ns / 1ps
 
 // Phase-sweep FSM for the metastability/aging sensor.
+// Ported from sbcci_fpga_aging/controller_controller.v — same states,
+// same back-off logic, clean synchronous SystemVerilog.
 //
-// On each alarm the measured phase count is captured and a one-cycle
-// retrigger pulse is raised.  The top module latches this on CLK100MHZ
-// and holds the MMCM in reset until it relocks, giving a clean restart
-// from 0° phase for every new measurement.
+// One measurement per reset pulse:
+//   CHECK_ALARM  — sweep if clear, capture immediately if alarm already high
+//   INIT_SHIFT   — assert psen=1 / psincdec=0 for one cycle (decrement phase)
+//   WAIT_SHIFT   — wait for psdone; inc_count++; back to CHECK_ALARM
+//   DONE         — latch display_value=inc_count; fire send; start back-off
+//   RESET_PHASE  — if reset_count >= inc_count → IDLE; else psen=1/psincdec=1
+//   WAIT_RESET   — wait for psdone; reset_count++; back to RESET_PHASE
+//   IDLE         — hold display_value; wait for next reset pulse from top
 //
-// Two reset domains:
-//   reset      — active-low, ~(button | ~locked): resets FSM + counters
-//   hard_reset — active-low, ~button only:        resets display_value
-//                (display_value survives the MMCM relock period so the
-//                 7-segment display and VIO show the last measurement)
-//
-// States:
-//   IDLE  — step phase each cycle; jump to ALARM if alarm detected
-//   SHIFT — assert psen for one clock (psincdec=0, decrement)
-//   WAIT  — wait for MMCM psdone; increment inc_count on each ack
-//   ALARM — capture display_value; generate send + retrigger pulses; → IDLE
+// display_value is updated exactly once per sweep (in DONE) and held in IDLE.
+// As the device ages and the critical path degrades, the alarm fires after
+// fewer phase steps → display_value decreases over time.
 module controller_controller (
-    input  logic             clk,
-    input  logic             reset,       // active-low: ~(button | ~locked)
-    input  logic             hard_reset,  // active-low: ~button only
-    input  logic             alarm,
-    input  logic             psdone,
-    output logic [15:0]      display_value,
-    output logic             change,
-    output logic             psincdec,
-    output logic             send,
-    output logic             psen,
-    output logic             retrigger    // one-cycle pulse → triggers MMCM reset
+    input  logic         clk,
+    input  logic         reset,     // active-low; pulsed periodically by top
+    input  logic         alarm,
+    input  logic         psdone,
+    output logic [15:0]  display_value,
+    output logic         change,    // sweep-activity toggle (indicator only)
+    output logic         psincdec,
+    output logic         send,
+    output logic         psen
 );
 
-    typedef enum logic [1:0] {
-        IDLE  = 2'b00,
-        SHIFT = 2'b01,
-        WAIT  = 2'b10,
-        ALARM = 2'b11
+    typedef enum logic [2:0] {
+        CHECK_ALARM = 3'b000,
+        INIT_SHIFT  = 3'b001,
+        WAIT_SHIFT  = 3'b010,
+        DONE        = 3'b011,
+        RESET_PHASE = 3'b100,
+        WAIT_RESET  = 3'b101,
+        IDLE        = 3'b110
     } state_t;
 
     state_t      state;
     logic [15:0] inc_count;
+    logic [15:0] reset_count;
     logic        signal, sig_ant;
     logic        psdone_prev;
 
-    // FSM, counters, and change toggle — reset by the full reset (includes ~locked)
     always_ff @(posedge clk or negedge reset) begin
         if (!reset) begin
-            state       <= IDLE;
+            state       <= CHECK_ALARM;
             inc_count   <= '0;
+            reset_count <= '0;
             psdone_prev <= 1'b0;
             sig_ant     <= 1'b0;
             change      <= 1'b0;
@@ -57,42 +57,67 @@ module controller_controller (
             psdone_prev <= psdone;
 
             case (state)
-                IDLE: begin
-                    if (alarm) state <= ALARM;
-                    else begin
-                        change <= ~change;
-                        state  <= SHIFT;
-                    end
+                CHECK_ALARM: begin
+                    change <= ~change;
+                    state  <= alarm ? DONE : INIT_SHIFT;
                 end
-                SHIFT: state <= WAIT;
-                WAIT: begin
+
+                INIT_SHIFT: state <= WAIT_SHIFT;
+
+                WAIT_SHIFT: begin
                     if (psdone && !psdone_prev) begin
                         inc_count <= inc_count + 1'b1;
-                        state     <= IDLE;
+                        state     <= CHECK_ALARM;
                     end
                 end
-                ALARM: state <= IDLE;  // one cycle; MMCM reset via retrigger
-                default: state <= IDLE;
+
+                DONE: state <= RESET_PHASE;
+
+                RESET_PHASE: begin
+                    if (reset_count >= inc_count)
+                        state <= IDLE;
+                    else
+                        state <= WAIT_RESET;
+                end
+
+                WAIT_RESET: begin
+                    if (psdone && !psdone_prev) begin
+                        reset_count <= reset_count + 1'b1;
+                        state       <= RESET_PHASE;
+                    end
+                end
+
+                IDLE: ;  // wait for reset pulse
+
+                default: state <= CHECK_ALARM;
             endcase
         end
     end
 
-    // display_value — only reset on button press so it survives MMCM relock
-    always_ff @(posedge clk or negedge hard_reset) begin
-        if (!hard_reset)             display_value <= '0;
-        else if (state == IDLE && alarm) display_value <= inc_count;
+    // display_value latched in DONE, held through back-off and IDLE
+    always_ff @(posedge clk or negedge reset) begin
+        if (!reset)
+            display_value <= '0;
+        else if (state == DONE)
+            display_value <= inc_count;
     end
 
-    // Combinational outputs
     always_comb begin
         signal   = 1'b0;
         psen     = 1'b0;
         psincdec = 1'b0;
-        if (state == SHIFT) begin psen = 1'b1; psincdec = 1'b0; end
-        if (state == ALARM) signal = 1'b1;
+        case (state)
+            DONE:       signal = 1'b1;
+            INIT_SHIFT: psen   = 1'b1;                // psincdec=0: decrement (forward)
+            RESET_PHASE: begin
+                psincdec = 1'b1;
+                if (reset_count < inc_count) psen = 1'b1; // increment (back-off)
+            end
+            WAIT_RESET: psincdec = 1'b1;
+            default: ;
+        endcase
     end
 
-    assign retrigger = (state == ALARM);  // high for one clk cycle on alarm
     assign send = signal && !sig_ant;
 
 endmodule
