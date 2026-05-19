@@ -33,6 +33,7 @@ required_files=(
   "src/rtl/display/DisplayController.sv"
   "src/rtl/uart/sensor_stream.sv"
   "src/rtl/uart/uart_tx.sv"
+  "src/rtl/uart/uart_rx.sv"
 )
 
 missing=0
@@ -56,9 +57,13 @@ for shell_script in "$project_root"/scripts/*.sh; do
   bash -n "$shell_script"
 done
 
-if find "$project_root" -name '*.dcp' ! -path "$project_root/references/fixed_pnr.dcp" -print -quit | grep -q .; then
-  echo "Unexpected .dcp checkpoint found in clean project tree." >&2
-  echo "Only references/fixed_pnr.dcp is allowed; build checkpoints live under build/ (gitignored)." >&2
+if find "$project_root" -name '*.dcp' \
+    ! -path "$project_root/references/fixed_pnr.dcp" \
+    ! -path "$project_root/src/ip/*" \
+    ! -path "$project_root/build/*" \
+    -print -quit | grep -q .; then
+  echo "Unexpected .dcp checkpoint found outside build/ and src/ip/." >&2
+  echo "Only references/fixed_pnr.dcp and src/ip/**/*.dcp are allowed." >&2
   exit 1
 fi
 

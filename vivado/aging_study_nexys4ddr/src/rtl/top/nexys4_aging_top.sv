@@ -189,15 +189,29 @@ module nexys4_aging_top (
     );
 
     // -----------------------------------------------------------------------
-    // Sweep trigger — periodic 1 Hz timer that re-arms the controller.
+    // UART RX — receive trigger byte 'T' (0x54) from the PC.
+    // Provides an explicit Python-controlled sweep trigger so each measurement
+    // is requested after the previous packet has been parsed, instead of
+    // waiting for the 1 Hz fallback timer.
+    // -----------------------------------------------------------------------
+    logic       uart_rx_valid;
+    logic [7:0] uart_rx_data;
+
+    uart_rx u_uart_rx (
+        .clk   (clk_sys),
+        .reset (reset_n),
+        .rx    (rx),
+        .valid (uart_rx_valid),
+        .data  (uart_rx_data)
+    );
+
+    // -----------------------------------------------------------------------
+    // Sweep trigger — re-arms the controller in two ways:
+    //   1. Periodic 1 Hz timer (fallback — keeps sweeps running autonomously)
+    //   2. UART 'T' byte (0x54) sent by the Python app after parsing a packet
     //
-    // ctrl_rst_n is asserted (low) in two cases:
-    //   1. Hardware: reset_n=0 (button pressed or MMCM not locked)
-    //   2. Timer:    every SWEEP_PERIOD cycles, a 100-cycle low pulse fires
-    //
+    // Both sources produce the same 100-cycle low pulse on ctrl_rst_n.
     // The first sweep starts immediately when the MMCM locks (reset_n rises).
-    // After the sweep completes (controller reaches IDLE), the timer triggers
-    // the next one automatically, keeping display_value stable for ~1 second.
     // -----------------------------------------------------------------------
     localparam logic [27:0] SWEEP_PERIOD   = 28'd100_000_000; // 1 s at 100 MHz
     localparam logic [7:0]  RST_PULSE_LEN  = 8'd100;          // 100-cycle pulse
@@ -205,8 +219,13 @@ module nexys4_aging_top (
     logic [27:0] sweep_timer;
     logic [7:0]  rst_pulse_cnt;
     logic        timer_pulse;
+    logic        uart_trigger_pulse;
+    logic        combined_pulse;
     logic        timer_rst_n;
     logic        ctrl_rst_n;
+
+    assign uart_trigger_pulse = uart_rx_valid && (uart_rx_data == 8'h54);
+    assign combined_pulse     = timer_pulse | uart_trigger_pulse;
 
     always_ff @(posedge clk_sys or negedge reset_n) begin
         if (!reset_n) begin
@@ -228,7 +247,7 @@ module nexys4_aging_top (
             rst_pulse_cnt <= '0;
             timer_rst_n   <= 1'b1;
         end else begin
-            if (timer_pulse) begin
+            if (combined_pulse) begin
                 rst_pulse_cnt <= RST_PULSE_LEN - 1;
                 timer_rst_n   <= 1'b0;
             end else if (rst_pulse_cnt != '0) begin

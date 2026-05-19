@@ -15,8 +15,8 @@ The former BD-based `design_1.bd` was removed; the top module is now
 | `src/rtl/top/nexys4_aging_top.sv` | SystemVerilog top module — instantiates all RTL modules and the XADC Unisim primitive |
 | `src/ip/clk_wiz_0/clk_wiz_0.xci` | Standalone clock wizard IP (3× 100 MHz outputs: clk\_en 100°, psclk DPS, clk\_sys 0°) |
 | `src/constraints/Nexys-4-DDR-Master.xdc` | Nexys4 DDR pin, timing, and board constraints |
-| `src/constraints/fixed_pnr_constraints.xdc` | Fixed BEL/LOC placement for `u_sensor` FFs/LUT and PBLOCK for `u_adder/u_canary` ripple chain |
-| `src/rtl/aging_sensor/adder_canary.sv` | 16-bit LUT ripple-carry adder aging sensor with error counting |
+| `src/constraints/fixed_pnr_constraints.xdc` | Fixed BEL/LOC placement for `u_sensor` FFs/LUT and PBLOCK co-locating `u_adder/u_canary` and `u_adder/u_sensor` ripple chains |
+| `src/rtl/aging_sensor/adder_canary.sv` | Dual-adder aging sensor: sensor adder (toggle-driven, feeds crit_bit) + canary adder (free-running counter, produces error metrics) |
 | `src/rtl/aging_sensor/controller_controller.sv` | Phase-sweep FSM — drives MMCM DPS until metastability alarm |
 | `src/rtl/aging_sensor/failure_holder.sv` | Sticky latch for functional failures |
 | `src/rtl/aging_sensor/lut_full_adder.sv` | Single-bit LUT full adder cell (used by ripple_adder) |
@@ -27,6 +27,7 @@ The former BD-based `design_1.bd` was removed; the top module is now
 | `src/rtl/display/DisplayController.sv` | 8-digit multiplexed 7-segment display driver |
 | `src/rtl/uart/sensor_stream.sv` | Sensor packet serialiser |
 | `src/rtl/uart/uart_tx.sv` | UART transmitter |
+| `src/rtl/uart/uart_rx.sv` | UART receiver — decodes 'T' (0x54) trigger byte from Python app |
 
 ## Preserved Reference Inputs
 

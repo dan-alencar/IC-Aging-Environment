@@ -365,9 +365,9 @@ class DUTWorker(QObject):
             # Descarta bytes residuais de pacotes anteriores para manter o alinhamento.
             self.ser.reset_input_buffer()
 
-            # O byte 'F' é legado — o FPGA não o decodifica, mas mantemos por
-            # compatibilidade com versões antigas do firmware.
-            self.ser.write(b'F')
+            # 'T' (0x54) triggers the next phase sweep on the FPGA.
+            # Falls back to the 1 Hz timer if this byte arrives during a sweep.
+            self.ser.write(b'\x54')
 
             # Pacote de 15 bytes (Little Endian):
             # [TEMP×3][SLACK×2][VOLT×3][FAIL×1][WRONG×2][CORRECT×2][ERR_CNT×2]
