@@ -3,8 +3,8 @@
 # SW Build 6140274 on Wed May 21 22:58:25 MDT 2025
 # IP Build 6138677 on Thu May 22 03:10:11 MDT 2025
 # SharedData Build 6139179 on Tue May 20 17:58:58 MDT 2025
-# Start of session at: Mon May 18 17:56:53 2026
-# Process ID         : 431091
+# Start of session at: Tue May 19 14:22:03 2026
+# Process ID         : 839867
 # Current directory  : /home/andre/Documentos/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr
 # Command line       : vivado -mode batch -source /home/andre/Documentos/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/scripts/create_project.tcl -notrace
 # Log file           : /home/andre/Documentos/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/vivado.log
@@ -13,13 +13,13 @@
 # Platform           : Linuxmint
 # Operating System   : Linux Mint 22.3
 # Processor Detail   : Intel(R) Core(TM) i7-10700 CPU @ 2.90GHz
-# CPU Frequency      : 4602.132 MHz
+# CPU Frequency      : 4599.772 MHz
 # CPU Physical cores : 8
 # CPU Logical cores  : 16
 # Host memory        : 16585 MB
 # Swap memory        : 2147 MB
 # Total Virtual      : 18733 MB
-# Available Virtual  : 9352 MB
+# Available Virtual  : 7927 MB
 #-----------------------------------------------------------
 source /home/andre/Documentos/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/scripts/create_project.tcl -notrace
 ============================================================
@@ -42,4 +42,4 @@ INFO: [IP_Flow 19-1686] Generating 'Simulation' target for IP 'vio_0'...
 INFO: [IP_Flow 19-1686] Generating 'Change Log' target for IP 'vio_0'...
 Generating IP targets...
 Project created at: /home/andre/Documentos/GitHub/IC-Aging-Environment/vivado/aging_study_nexys4ddr/build/aging_study_nexys4ddr/aging_study_nexys4ddr.xpr
-INFO: [Common 17-206] Exiting Vivado at Mon May 18 17:56:58 2026...
+INFO: [Common 17-206] Exiting Vivado at Tue May 19 14:22:08 2026...

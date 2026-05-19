@@ -45,35 +45,19 @@ module nexys4_aging_top (
 
     // -----------------------------------------------------------------------
     // Clocking and reset
-    //
-    // retrigger_latch (CLK100MHZ domain, independent of MMCM outputs):
-    //   SET by ctrl_retrigger (one-cycle clk_sys pulse from controller on alarm)
-    //   CLEARED when MMCM relocks (locked=1)
-    //   Holds MMCM in RST until it fully relocks → clean 0° phase restart.
-    //
-    // display_value in controller_controller uses ~reset (button only) so it
-    // survives the MMCM relock period; display and VIO show the last measurement.
+    //   MMCM is only reset by the button (reset).  Lock-loss asserts reset_p,
+    //   which holds all RTL in reset until the MMCM relocks.
     // -----------------------------------------------------------------------
     logic clk_en, psclk, clk_sys, locked;
     logic psen_ctrl, psincdec_ctrl, psdone;
 
-    logic ctrl_retrigger;
-    logic retrigger_latch;
-
-    always_ff @(posedge CLK100MHZ or posedge reset) begin
-        if (reset)               retrigger_latch <= 1'b0;
-        else if (ctrl_retrigger) retrigger_latch <= 1'b1;
-        else if (locked)         retrigger_latch <= 1'b0;
-    end
-
-    logic mmcm_rst, reset_n, reset_p;
-    assign mmcm_rst = reset | retrigger_latch;
-    assign reset_p  = mmcm_rst | ~locked;
-    assign reset_n  = ~reset_p;
+    logic reset_n, reset_p;
+    assign reset_p = reset | ~locked;
+    assign reset_n = ~reset_p;
 
     clk_wiz_0 u_clk_wiz (
         .clk_in1  (CLK100MHZ),
-        .reset    (mmcm_rst),
+        .reset    (reset),
         .locked   (locked),
         .clk_en   (clk_en),
         .sensor0  (psclk),
@@ -205,6 +189,60 @@ module nexys4_aging_top (
     );
 
     // -----------------------------------------------------------------------
+    // Sweep trigger — periodic 1 Hz timer that re-arms the controller.
+    //
+    // ctrl_rst_n is asserted (low) in two cases:
+    //   1. Hardware: reset_n=0 (button pressed or MMCM not locked)
+    //   2. Timer:    every SWEEP_PERIOD cycles, a 100-cycle low pulse fires
+    //
+    // The first sweep starts immediately when the MMCM locks (reset_n rises).
+    // After the sweep completes (controller reaches IDLE), the timer triggers
+    // the next one automatically, keeping display_value stable for ~1 second.
+    // -----------------------------------------------------------------------
+    localparam logic [27:0] SWEEP_PERIOD   = 28'd100_000_000; // 1 s at 100 MHz
+    localparam logic [7:0]  RST_PULSE_LEN  = 8'd100;          // 100-cycle pulse
+
+    logic [27:0] sweep_timer;
+    logic [7:0]  rst_pulse_cnt;
+    logic        timer_pulse;
+    logic        timer_rst_n;
+    logic        ctrl_rst_n;
+
+    always_ff @(posedge clk_sys or negedge reset_n) begin
+        if (!reset_n) begin
+            sweep_timer <= '0;
+            timer_pulse <= 1'b0;
+        end else begin
+            if (sweep_timer == SWEEP_PERIOD - 1) begin
+                sweep_timer <= '0;
+                timer_pulse <= 1'b1;
+            end else begin
+                sweep_timer <= sweep_timer + 1'b1;
+                timer_pulse <= 1'b0;
+            end
+        end
+    end
+
+    always_ff @(posedge clk_sys or negedge reset_n) begin
+        if (!reset_n) begin
+            rst_pulse_cnt <= '0;
+            timer_rst_n   <= 1'b1;
+        end else begin
+            if (timer_pulse) begin
+                rst_pulse_cnt <= RST_PULSE_LEN - 1;
+                timer_rst_n   <= 1'b0;
+            end else if (rst_pulse_cnt != '0) begin
+                rst_pulse_cnt <= rst_pulse_cnt - 1'b1;
+                timer_rst_n   <= 1'b0;
+            end else begin
+                timer_rst_n <= 1'b1;
+            end
+        end
+    end
+
+    assign ctrl_rst_n = reset_n & timer_rst_n;
+
+    // -----------------------------------------------------------------------
     // Phase controller — FSM sweeping MMCM phase until alarm detected
     // -----------------------------------------------------------------------
     logic [15:0] display_value;
@@ -213,16 +251,14 @@ module nexys4_aging_top (
 
     controller_controller u_ctrl (
         .clk          (clk_sys),
-        .reset        (reset_n),   // ~(button | ~locked): resets FSM + counters
-        .hard_reset   (~reset),    // ~button only: resets display_value
+        .reset        (ctrl_rst_n),
         .alarm        (alarm_sync),
         .psdone       (psdone),
         .display_value(display_value),
         .change       (change_unused),
         .psincdec     (psincdec_ctrl),
         .send         (controller_send),
-        .psen         (psen_ctrl),
-        .retrigger    (ctrl_retrigger)
+        .psen         (psen_ctrl)
     );
 
     // -----------------------------------------------------------------------
