@@ -171,6 +171,16 @@ The metastability sensor (`modern_sensible`) uses `DONT_TOUCH`/primitive instant
 
 The `adder_canary` module contains the aging-sensitive LUT ripple-carry adder. Its `wrong`/`correct`/`error_count` outputs are part of the 15-byte packet in App_2Nexys but the 9-byte packet in App_Nexys.
 
+### Known issue: stochastic `display_value` (~9 000 steps)
+
+**Current state (unfixed):** `adder_canary.sv` assigns `crit_bit = sum_canary[15]` — the MSB of the free-running canary counter. This bit transitions only ~twice per 65 536 clock cycles (at `a = 0x5555` and `a = 0xD555`), far less than the ~14-cycle window the phase sweep spends per step. The alarm fires by statistical coincidence, producing `display_value` readings of ~9 000 ± hundreds rather than the expected ~800 ± 2.
+
+**Planned fix (dual-adder architecture):** Add a `toggle` FF that inverts every `clk_sys` cycle, derive `a_sensor` from it (`0x5555` / `0x5556`), instantiate a second `(* DONT_TOUCH *) ripple_adder #(.N(16)) u_sensor` driven by `a_sensor`, and reassign `crit_bit = sum_sensor[15]`. With `B = 0xAAAA`, `sum_sensor[15]` toggles on every clock cycle (full 16-stage carry propagation guaranteed each time), restoring deterministic ±2-step jitter. The canary adder (`u_canary`) retains the free-running counter and continues to feed `wrong`/`correct`/`error_count` unchanged. Both instances must be co-located in the same Pblock so they age at the same rate.
+
+Files to change: `src/rtl/aging_sensor/adder_canary.sv` (add `toggle`, `a_sensor`, `u_sensor`; reassign `crit_bit`) and `src/constraints/` (add Pblock grouping both adder instances). No changes to any other RTL or Python code are needed.
+
+Full rationale and phased implementation checklist: `vivado/aging_study_nexys4ddr/SENSOR_ARCHITECTURE.md` and `IMPLEMENTATION_ROADMAP.md`.
+
 ## Arduino sketches
 
 `Arduino-ESP/` contains active sketches; `Arduino-ESP/legacy/` holds superseded versions.
@@ -185,3 +195,5 @@ The `adder_canary` module contains the aging-sensitive LUT ripple-carry adder. I
 
 - `PROTOCOL.md` — serial protocol reference for DUT (Nexys4), Arduino, and PSU.
 - `ARCHITECTURE.md` — design intent behind each subsystem and why decisions were made.
+- `vivado/aging_study_nexys4ddr/SENSOR_ARCHITECTURE.md` — scientific rationale and design for the dual-adder sensor fix (why `display_value` reaches ~9 000 and how the fix works).
+- `vivado/aging_study_nexys4ddr/IMPLEMENTATION_ROADMAP.md` — phased checklist from baseline capture through data collection for the paper.

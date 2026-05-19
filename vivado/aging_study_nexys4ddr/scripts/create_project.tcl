@@ -63,6 +63,7 @@ set active_rtl [list \
     [file join $project_root "src/rtl/display/DisplayController.sv"] \
     [file join $project_root "src/rtl/uart/sensor_stream.sv"] \
     [file join $project_root "src/rtl/uart/uart_tx.sv"] \
+    [file join $project_root "src/rtl/uart/uart_rx.sv"] \
     [file join $project_root "src/ip/clk_wiz_0/clk_wiz_0.v"] \
     [file join $project_root "src/ip/clk_wiz_0/clk_wiz_0_clk_wiz.v"] \
 ]

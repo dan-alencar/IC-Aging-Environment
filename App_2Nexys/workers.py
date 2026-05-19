@@ -451,7 +451,7 @@ class DUTWorker(QObject):
         if not self.is_running or not self.ser or not self.ser.is_open:
             return
         try:
-            self.ser.write(b"F")
+            self.ser.write(b"\x54")  # 'T': trigger next phase sweep
             data = self.ser.read(self.BYTES_EXPECTED)
             if len(data) == self.BYTES_EXPECTED:
                 raw_temp    = int.from_bytes(data[0:3],   byteorder="little")
