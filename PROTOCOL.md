@@ -6,42 +6,67 @@ This document describes every serial protocol used in this project. Read it befo
 
 ## 1. DUT Protocol — Nexys4 DDR FPGA → PC
 
-Used by `App_Nexys/workers.py:DUTWorker` and `App_2Nexys/workers.py:DUTWorker`.
-
 **Physical layer:** UART, 9600 baud (configurable in setup dialog), 8N1.  
 **Port:** The **higher-numbered** `ttyUSB*` of each board pair (lower is JTAG).
 
-### Request (PC → FPGA)
+### App_2Nexys (dual-DUT, current bitstream) — 15-byte packet
 
-Send exactly 1 byte: `0x46` (`'F'`).
+Used by `App_2Nexys/workers.py:DUTWorker`.
 
-### Response (FPGA → PC)
+**Request (PC → FPGA):** Send exactly 1 byte: `0x54` (`'T'`).  
+Before sending, the Python worker **flushes the input buffer** (`reset_input_buffer()`) to discard any packets queued by the FPGA's autonomous 1 Hz fallback timer, ensuring the response corresponds to this request and not a stale measurement.
 
-The FPGA replies with **9 binary bytes, Little Endian**, within 2 seconds:
+**Response (FPGA → PC):** 15 binary bytes, Little Endian, within 2 seconds:
+
+```
+Byte index:   0    1    2    3    4    5    6    7    8    9   10   11   12   13   14
+              TL   TM   TH   SL   SH   VL   VM   VH   FL   WL   WH   CL   CH   EL   EH
+              ↑─────────↑   ↑─────↑   ↑─────────↑   ↑    ↑─────↑   ↑─────↑   ↑─────↑
+              raw_temp(24)  raw_slack  raw_vcc(24)  fail  wrong(16)  correct   err_cnt
+```
+
+**Conversions:**
+
+```python
+raw_temp    = int.from_bytes(data[0:3],   'little')   # millidegrees °C
+raw_slack   = int.from_bytes(data[3:5],   'little')   # phase-step count
+raw_voltage = int.from_bytes(data[5:8],   'little')   # millivolts
+raw_failure = data[8]                                  # 0 or 1
+raw_wrong   = int.from_bytes(data[9:11],  'little')
+raw_correct = int.from_bytes(data[11:13], 'little')
+raw_errcnt  = int.from_bytes(data[13:15], 'little')
+
+temp_c  = raw_temp    / 1000.0   # °C
+slack   = raw_slack               # integer
+vccint  = raw_voltage / 1000.0   # V (XADC VCCINT)
+```
+
+Packets with `(temp, slack, vccint) == (0, 0, 0)` or `temp > 200 °C` or `vccint > 2.5 V` are discarded as boot transients.
+
+### App_Nexys (single-DUT, legacy) — 9-byte packet
+
+Used by `App_Nexys/workers.py:DUTWorker`.
+
+**Request (PC → FPGA):** Send exactly 1 byte: `0x46` (`'F'`).
+
+**Response (FPGA → PC):** 9 binary bytes, Little Endian:
 
 ```
 Byte index:  0    1    2    3    4    5    6    7    8
              TL   TH   00   SL   SH   VL   VH   00   AL
-             ↑─────↑        ↑─────↑   ↑─────↑        ↑
-             raw_temp(16)   raw_slack  raw_vcc(16)    alarm
 ```
 
 - Bytes [2] and [7] are always `0x00` (padding).
-- Byte [8] `AL`: alarm flag (`0x01` = timing violation, `0x00` = OK).
-
-### Conversions (firmware scales, divide by 1000)
 
 ```python
-raw_temp  = int.from_bytes(data[0:3], 'little')  # 3-byte field but only lower 2 used
+raw_temp  = int.from_bytes(data[0:3], 'little')
 raw_slack = int.from_bytes(data[3:5], 'little')
 raw_vcc   = int.from_bytes(data[5:8], 'little')
 
-temp_c  = raw_temp  / 1000.0   # °C
-slack   = raw_slack             # increment counter (integer)
-vccint  = raw_vcc   / 1000.0   # V (XADC VCCINT)
+temp_c  = raw_temp  / 1000.0
+slack   = raw_slack
+vccint  = raw_vcc   / 1000.0
 ```
-
-Readings of (0, 0, 0) during FPGA initialization are filtered silently.
 
 ### Notes for App_FPGAging_Slack_Sensor (UltraScale+ / CROC)
 
