@@ -161,7 +161,6 @@ class PSUWorker0(QObject):
             idn = self.inst.query("*IDN?").strip()
             self.log_message.emit(f"PSU-0 (IT6502D) conectada: {idn}")
             self.inst.write(f"CURR {config.MAX_PSU_CURRENT_A}")
-            self.inst.write(f"VOLT {config.PSU_MAX_V}")
             self.is_running = True
             self.poll_timer.start()
         except Exception as e:
@@ -418,6 +417,7 @@ class DUTWorker(QObject):
         self.ser = None
         self.is_running = False
         self._latest_data = (0.0, 0, 0.0, 0, 0, 0, 0)  # temp, slack, vccint, fail, wrong, correct, error_count
+        self._boot_reject_count = 0
 
     def _get_port_baud(self):
         raise NotImplementedError
@@ -451,7 +451,8 @@ class DUTWorker(QObject):
         if not self.is_running or not self.ser or not self.ser.is_open:
             return
         try:
-            self.ser.write(b"\x54")  # 'T': trigger next phase sweep
+            self.ser.reset_input_buffer()  # discard any buffered packets (FPGA 1 Hz timer accumulates them)
+            self.ser.write(b"\x54")        # 'T': trigger a fresh phase sweep
             data = self.ser.read(self.BYTES_EXPECTED)
             if len(data) == self.BYTES_EXPECTED:
                 raw_temp    = int.from_bytes(data[0:3],   byteorder="little")
@@ -472,6 +473,15 @@ class DUTWorker(QObject):
 
                 if temp_c == 0 and slack == 0 and vccint == 0:
                     return
+                if temp_c > 200.0 or vccint > 2.5:
+                    self._boot_reject_count += 1
+                    if self._boot_reject_count == 1:
+                        print(f"{self._id}: aguardando FPGA inicializar (pacotes inválidos serão descartados)...")
+                    self.ser.reset_input_buffer()
+                    return
+                if self._boot_reject_count > 0:
+                    print(f"{self._id}: FPGA inicializado após {self._boot_reject_count} pacote(s) descartado(s).")
+                    self._boot_reject_count = 0
                 self._latest_data = (temp_c, slack, vccint, failure, wrong, correct, error_count)
                 self.data_ready.emit(temp_c, slack, vccint)
             else:
@@ -485,6 +495,16 @@ class DUTWorker(QObject):
 
     def get_latest_data(self):
         return self._latest_data
+
+    def reset_data(self):
+        """Clear stale data and flush serial buffer after FPGA reprogramming."""
+        self._latest_data = (0.0, 0, 0.0, 0, 0, 0, 0)
+        self._boot_reject_count = 0
+        if self.ser and self.ser.is_open:
+            try:
+                self.ser.reset_input_buffer()
+            except Exception:
+                pass
 
 
 class DUTWorker0(DUTWorker):
@@ -540,49 +560,68 @@ class TestSequencer(QObject):
         self.log_timer.setInterval(config.LOG_INTERVAL_MS)
         self.log_timer.timeout.connect(self.log_data_tick)
 
-    def _program_dut0(self) -> bool:
-        """Program DUT-0 via Vivado batch mode (SRAM only — flash is broken)."""
-        if not os.path.isfile(config.BITSTREAM_DUT0):
-            self.log_message.emit(f"ERRO: Bitstream não encontrado: {config.BITSTREAM_DUT0}")
+    def _program_both_duts(self) -> bool:
+        """Program DUT-0 and DUT-1 in a single Vivado session (avoids hw_server re-enumeration race)."""
+        if not os.path.isfile(config.BITSTREAM_PATH):
+            self.log_message.emit(f"ERRO: Bitstream não encontrado: {config.BITSTREAM_PATH}")
             return False
 
+        probes_line = (
+            f"set_property PROBES.FILE {{{config.BITSTREAM_LTX}}} [current_hw_device]"
+            if os.path.isfile(config.BITSTREAM_LTX) else ""
+        )
         tcl = f"""\
 open_hw_manager
 connect_hw_server
-set tgts [get_hw_targets *{config.DUT0_DIGILENT_SERIAL}*]
-if {{[llength $tgts] == 0}} {{
+
+set tgts0 [get_hw_targets *{config.DUT0_DIGILENT_SERIAL}*]
+if {{[llength $tgts0] == 0}} {{
     error "DUT-0 não encontrado (serial {config.DUT0_DIGILENT_SERIAL})"
 }}
-open_hw_target [lindex $tgts 0]
+open_hw_target [lindex $tgts0 0]
 current_hw_device [lindex [get_hw_devices] 0]
 refresh_hw_device -update_hw_probes false [current_hw_device]
-set_property PROGRAM.FILE {{{config.BITSTREAM_DUT0}}} [current_hw_device]
+set_property PROGRAM.FILE {{{config.BITSTREAM_PATH}}} [current_hw_device]
+{probes_line}
 program_hw_devices [current_hw_device]
 close_hw_target
+
+set tgts1 [get_hw_targets *{config.DUT1_DIGILENT_SERIAL}*]
+if {{[llength $tgts1] == 0}} {{
+    error "DUT-1 não encontrado (serial {config.DUT1_DIGILENT_SERIAL})"
+}}
+open_hw_target [lindex $tgts1 0]
+current_hw_device [lindex [get_hw_devices] 0]
+refresh_hw_device -update_hw_probes false [current_hw_device]
+set_property PROGRAM.FILE {{{config.BITSTREAM_PATH}}} [current_hw_device]
+{probes_line}
+program_hw_devices [current_hw_device]
+close_hw_target
+
 disconnect_hw_server
 close_hw_manager
 exit
 """
-        tcl_fd, tcl_path = tempfile.mkstemp(suffix=".tcl", prefix="prog_dut0_")
+        tcl_fd, tcl_path = tempfile.mkstemp(suffix=".tcl", prefix="prog_duts_")
         try:
             with os.fdopen(tcl_fd, "w") as f:
                 f.write(tcl)
             result = subprocess.run(
                 [config.VIVADO_BIN, "-mode", "batch", "-nojournal", "-nolog",
                  "-source", tcl_path],
-                capture_output=True, text=True, timeout=180,
+                capture_output=True, text=True, timeout=300,
             )
             if result.returncode != 0:
-                tail = (result.stdout + result.stderr)[-600:].strip()
-                self.log_message.emit(f"ERRO ao programar DUT-0:\n{tail}")
+                tail = (result.stdout + result.stderr)[-800:].strip()
+                self.log_message.emit(f"ERRO ao programar DUTs:\n{tail}")
                 return False
-            self.log_message.emit("DUT-0 programado com sucesso.")
+            self.log_message.emit("DUT-0 e DUT-1 programados com sucesso.")
             return True
         except subprocess.TimeoutExpired:
-            self.log_message.emit("ERRO: Timeout ao programar DUT-0 (>180 s)")
+            self.log_message.emit("ERRO: Timeout ao programar DUTs (>300 s)")
             return False
         except Exception as e:
-            self.log_message.emit(f"ERRO ao programar DUT-0: {e}")
+            self.log_message.emit(f"ERRO ao programar DUTs: {e}")
             return False
         finally:
             try:
@@ -633,10 +672,10 @@ exit
             )
             time.sleep(config.PSU_STABILISE_DELAY_S)
 
-            # DUT-0 must be programmed on every power-on (flash broken, SRAM only)
-            self.log_message.emit("Programando bitstream em DUT-0 via Vivado...")
-            if not self._program_dut0():
-                self.log_message.emit("ERRO CRÍTICO: Falha ao programar DUT-0. Abortando.")
+            # Both DUTs must be programmed on every power-on (SRAM only)
+            self.log_message.emit("Programando DUT-0 e DUT-1 via Vivado...")
+            if not self._program_both_duts():
+                self.log_message.emit("ERRO CRÍTICO: Falha ao programar DUTs. Abortando.")
                 if config.PSU_0_ENABLED:
                     self.psu0.turn_off()
                 if config.PSU_1_ENABLED:
@@ -647,12 +686,19 @@ exit
                 self.test_finished.emit()
                 return
 
+            # Flush any UART bytes the FPGAs may have emitted during reset/configuration.
+            # The Vivado batch job itself takes 30-60 s, so the FPGAs are already running
+            # by the time we reach here.  The boot-rejection logic in poll_data() handles
+            # the brief transient before XADC values settle.
+            self.dut0.reset_data()
+            self.dut1.reset_data()
+
             self.is_running = True
             self.start_time = time.time()
             self.log_timer.start()
 
             self.log_message.emit("=" * 50)
-            self.log_message.emit(">>> TESTE INICIADO (2 DUTs) <<<")
+            self.log_message.emit(">>> TESTE INICIADO (2 DUTs — ambos programados) <<<")
             self.log_message.emit(
                 f"Setpoint forno: {settings['oven_setpoint']}°C | "
                 f"PSU0: {settings['psu0_voltage']}V | PSU1: {settings['psu1_voltage']}V"

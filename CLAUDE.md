@@ -73,7 +73,7 @@ cd vivado/aging_study_nexys4ddr
 scripts/extract_fixed_pnr_constraints.sh
 ```
 
-**App_2Nexys dependency:** DUT-0 is reprogrammed automatically at test start. It reads the bitstream from `vivado/aging_study_nexys4ddr/build/aging_study_nexys4ddr/aging_study_nexys4ddr.runs/impl_1/nexys4_aging_top.bit` (path hardcoded in `App_2Nexys/config.py`). The Nexys4 bitstream must be built before running App_2Nexys.
+**App_2Nexys dependency:** Both DUTs are programmed automatically at test start from `vivado/aging_study_nexys4ddr/bitstreams/nexys4_aging_top_dual-sensor.bit` (path hardcoded in `App_2Nexys/config.py` as `BITSTREAM_PATH`). A matching `.ltx` probes file (`BITSTREAM_LTX`) enables ILA debug if present. These pre-built files are version-controlled; rebuild and copy to `bitstreams/` when the RTL changes.
 
 ## STM32 firmware
 
@@ -97,7 +97,7 @@ PC ──VISA───► PSU (SCPI)          [optional: programmable supply]
 Workers run in QThread via QObject + QTimer polling:
 - `ArduinoWorker` — sends `GET_DATA\n`, receives `DATA,<temp>,<sp>,<out>` ASCII
 - `PSUWorker` — PyVISA SCPI (`MEAS:VOLT?`, `MEAS:CURR?`, `OUTP ON/OFF`)
-- `DUTWorker` — sends byte `'F'`, reads 9 binary bytes Little Endian: `[TEMP×3][SLACK×2][VOLT×3][FAIL×1]`, converts temp/voltage by dividing raw by 1000. **DUT baud rate is 9600, not 115200.**
+- `DUTWorker` — sends byte `'F'`, reads 9 binary bytes Little Endian: `[TEMP×3][SLACK×2][VOLT×3][FAIL×1]`, converts temp/voltage by dividing raw by 1000. **DUT baud rate is 9600, not 115200.** (App_Nexys only — App_2Nexys uses `'T'` / `\x54` and the 15-byte packet.)
 - `TestSequencer` — orchestrates all workers, runs safety limit checks, writes CSV rows
 
 ### App_FPGAging_Slack_Sensor (SBCCI UltraScale+ target)
@@ -135,11 +135,11 @@ PC ──serial──► Arduino (shared oven)                 [optional]
 
 **USB device ID auto-resolution:** `config.resolve_hw_ports()` resolves DUT-0, DUT-1, and PSU-1 ports by following `/dev/serial/by-id/` symlinks using fixed USB serial IDs (`USB_ID_DUT0`, `USB_ID_DUT1`, `USB_ID_PSU1` in `App_2Nexys/config.py`). Update these if boards are swapped.
 
-**DUT-0 auto-programming at test start:** DUT-0's onboard flash is broken — only SRAM works. `TestSequencer.start_test()` always programs the bitstream via `vivado -mode batch` after the PSUs stabilise (`PSU_STABILISE_DELAY_S = 5 s`). The bitstream path and Digilent serial number are hardcoded in `App_2Nexys/config.py` (`BITSTREAM_DUT0`, `DUT0_DIGILENT_SERIAL`). `VIVADO_BIN` is also hardcoded to an absolute path (`/home/andre/Xilinx/...`) — update this when running on a different machine.
+**Both DUTs auto-programmed at test start:** Both boards' onboard flash is broken — only SRAM works. `TestSequencer._program_both_duts()` programs DUT-0 and DUT-1 in a single Vivado batch session after the PSUs stabilise (`PSU_STABILISE_DELAY_S = 5 s`). After programming, `reset_data()` flushes the serial buffers and the log timer starts immediately — the Vivado batch job itself takes 30–60 s so the FPGAs are already running by then. `DUTWorker.poll_data()` boot-rejects any remaining transient packets (temp > 200 °C or vccint > 2.5 V). The bitstream (`BITSTREAM_PATH`), optional probes file (`BITSTREAM_LTX`), and Digilent serial numbers (`DUT0_DIGILENT_SERIAL`, `DUT1_DIGILENT_SERIAL`) are hardcoded in `App_2Nexys/config.py`. Pre-built bitstreams live in `vivado/aging_study_nexys4ddr/bitstreams/` (currently `nexys4_aging_top_dual-sensor.bit`). `VIVADO_BIN` is also hardcoded to an absolute path (`/home/andre/Xilinx/...`) — update this when running on a different machine.
 
 **PSU-0 auto-reconnect:** `PSUWorker0._try_reconnect()` detects VISA errors (which can occur when Vivado claims the USB bus during JTAG programming) and automatically reopens the resource after a 2 s delay. PSU-1 (E3634A via RS-232) does not have this logic.
 
-**DUT packet (App_2Nexys, 15 bytes, Little Endian):** `[TEMP×3][SLACK×2][VCCINT×3][FAIL×1][WRONG×2][CORRECT×2][ERR_CNT×2]`. The adder-canary fields (`wrong`, `correct`, `error_count`) are logged to CSV but not shown in the UI. App_Nexys (single-DUT) still uses the legacy 9-byte packet.
+**DUT packet (App_2Nexys, 15 bytes, Little Endian):** `DUTWorker.poll_data()` sends byte `'T'` (`\x54`) and reads 15 bytes: `[TEMP×3][SLACK×2][VCCINT×3][FAIL×1][WRONG×2][CORRECT×2][ERR_CNT×2]`. The adder-canary fields (`wrong`, `correct`, `error_count`) are logged to CSV but not shown in the UI. App_Nexys (single-DUT) sends `'F'` and uses the legacy 9-byte packet.
 
 **VCCINT closed-loop voltage control:** The FPGA XADC reports actual VCCINT (internal supply voltage) inside the DUT packet (`dut_volt` field). `TestSequencer.log_data_tick()` runs a P-only trim every tick:
 ```
