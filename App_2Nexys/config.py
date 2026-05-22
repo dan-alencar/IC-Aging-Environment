@@ -40,11 +40,13 @@ DUT0_DIGILENT_SERIAL = "210292A6E9A7"   # Vivado hw_target wildcard match
 DUT1_DIGILENT_SERIAL = "210292745007"
 BITSTREAM_PATH = os.path.join(
     _REPO_ROOT, "vivado", "aging_study_nexys4ddr",
-    "bitstreams", "nexys4_aging_top_dual-sensor.bit",
+    "build", "aging_study_nexys4ddr", "aging_study_nexys4ddr.runs",
+    "impl_1", "nexys4_aging_top.bit",
 )
 BITSTREAM_LTX = os.path.join(
     _REPO_ROOT, "vivado", "aging_study_nexys4ddr",
-    "bitstreams", "nexys4_aging_top_dual-sensor.ltx",
+    "build", "aging_study_nexys4ddr", "aging_study_nexys4ddr.runs",
+    "impl_1", "nexys4_aging_top.ltx",
 )
 VIVADO_BIN = "/home/andre/Xilinx/2025.1/Vivado/bin/vivado"
 PSU_STABILISE_DELAY_S = 5   # seconds to wait after PSU turn-on before programming

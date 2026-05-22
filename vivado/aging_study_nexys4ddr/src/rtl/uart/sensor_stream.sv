@@ -2,6 +2,11 @@
 
 // UART serialiser — 15-byte packet (9600 baud, 100 MHz clock).
 //
+// All inputs are LATCHED at the rising edge of sendin so that every byte of
+// the packet comes from the same consistent snapshot.  Previously the live
+// inputs were sampled per-byte, which caused garbage temp/voltage values
+// whenever the XADC updated or a new sweep completed mid-packet.
+//
 // Packet layout (Little Endian):
 //   Byte  0-2 : temp[23:0]         (XADC temperature, millidegrees C)
 //   Byte  3-4 : sensor[15:0]       (phase step count from controller)
@@ -28,6 +33,11 @@ module sensor_stream (
     localparam int CLK_FREQ  = 100_000_000;
     localparam int COUNT     = (CLK_FREQ / BAUDRATE) * 10;
 
+    // --- Latched snapshot captured at the rising edge of sendin ---
+    logic [23:0] lat_temp, lat_vccint;
+    logic [15:0] lat_sensor, lat_wrong, lat_correct, lat_error_count;
+    logic        lat_failure;
+
     logic [16:0] counter;
     logic [3:0]  sel;
     logic        sendant;
@@ -40,6 +50,27 @@ module sensor_stream (
     end
 
     assign send_tx = !sendant && sendin;
+
+    // Latch all measurement inputs on the rising edge that starts a new packet.
+    always_ff @(posedge clk or negedge reset) begin
+        if (!reset) begin
+            lat_temp        <= '0;
+            lat_vccint      <= '0;
+            lat_sensor      <= '0;
+            lat_failure     <= 1'b0;
+            lat_wrong       <= '0;
+            lat_correct     <= '0;
+            lat_error_count <= '0;
+        end else if (send_tx) begin
+            lat_temp        <= temp;
+            lat_vccint      <= vccint;
+            lat_sensor      <= sensor;
+            lat_failure     <= failure;
+            lat_wrong       <= wrong;
+            lat_correct     <= correct;
+            lat_error_count <= error_count;
+        end
+    end
 
     always_ff @(posedge clk or negedge reset) begin
         if (!reset) begin
@@ -55,21 +86,21 @@ module sensor_stream (
                 sel     <= (sel > 4'd14) ? 4'd0 : sel + 1'b1;
                 counter <= '0;
                 case (sel)
-                    4'd0:  begin data <= temp[7:0];             send <= 1'b1; end
-                    4'd1:  begin data <= temp[15:8];            send <= 1'b1; end
-                    4'd2:  begin data <= temp[23:16];           send <= 1'b1; end
-                    4'd3:  begin data <= sensor[7:0];           send <= 1'b1; end
-                    4'd4:  begin data <= sensor[15:8];          send <= 1'b1; end
-                    4'd5:  begin data <= vccint[7:0];           send <= 1'b1; end
-                    4'd6:  begin data <= vccint[15:8];          send <= 1'b1; end
-                    4'd7:  begin data <= vccint[23:16];         send <= 1'b1; end
-                    4'd8:  begin data <= {7'b0, failure};       send <= 1'b1; end
-                    4'd9:  begin data <= wrong[7:0];            send <= 1'b1; end
-                    4'd10: begin data <= wrong[15:8];           send <= 1'b1; end
-                    4'd11: begin data <= correct[7:0];          send <= 1'b1; end
-                    4'd12: begin data <= correct[15:8];         send <= 1'b1; end
-                    4'd13: begin data <= error_count[7:0];      send <= 1'b1; end
-                    4'd14: begin data <= error_count[15:8];     send <= 1'b1; end
+                    4'd0:  begin data <= lat_temp[7:0];             send <= 1'b1; end
+                    4'd1:  begin data <= lat_temp[15:8];            send <= 1'b1; end
+                    4'd2:  begin data <= lat_temp[23:16];           send <= 1'b1; end
+                    4'd3:  begin data <= lat_sensor[7:0];           send <= 1'b1; end
+                    4'd4:  begin data <= lat_sensor[15:8];          send <= 1'b1; end
+                    4'd5:  begin data <= lat_vccint[7:0];           send <= 1'b1; end
+                    4'd6:  begin data <= lat_vccint[15:8];          send <= 1'b1; end
+                    4'd7:  begin data <= lat_vccint[23:16];         send <= 1'b1; end
+                    4'd8:  begin data <= {7'b0, lat_failure};       send <= 1'b1; end
+                    4'd9:  begin data <= lat_wrong[7:0];            send <= 1'b1; end
+                    4'd10: begin data <= lat_wrong[15:8];           send <= 1'b1; end
+                    4'd11: begin data <= lat_correct[7:0];          send <= 1'b1; end
+                    4'd12: begin data <= lat_correct[15:8];         send <= 1'b1; end
+                    4'd13: begin data <= lat_error_count[7:0];      send <= 1'b1; end
+                    4'd14: begin data <= lat_error_count[15:8];     send <= 1'b1; end
                     default: begin data <= 8'h00; enable <= 1'b0; end
                 endcase
             end else begin
