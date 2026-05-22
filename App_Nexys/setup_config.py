@@ -2,17 +2,11 @@ import platform
 import serial.tools.list_ports
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QGridLayout, QComboBox,
-    QPushButton, QLabel, QGroupBox, QFrame
+    QPushButton, QLabel, QGroupBox, QFrame, QDoubleSpinBox
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 import config
-
-try:
-    import pyvisa as visa
-    _VISA_AVAILABLE = True
-except ImportError:
-    _VISA_AVAILABLE = False
 
 
 class SetupDialog(QDialog):
@@ -24,23 +18,11 @@ class SetupDialog(QDialog):
 
         all_ports = sorted([p.device for p in serial.tools.list_ports.comports()])
         self.serial_ports = all_ports
+        self.usb_ports = [p for p in all_ports if "ttyUSB" in p or "COM" in p]
         self.acm_ports = [p for p in all_ports if "ttyACM" in p]
-        self.visa_resources = self._list_visa_resources()
 
         self._build_ui()
         self._load_current_config()
-
-    def _list_visa_resources(self):
-        if not _VISA_AVAILABLE:
-            return []
-        try:
-            rm = visa.ResourceManager('@py')
-            resources = [r for r in rm.list_resources() if r.startswith("USB")]
-            rm.close()
-            return resources
-        except Exception as e:
-            print(f"AVISO: Falha ao listar VISA: {e}")
-            return []
 
     def _build_ui(self):
         layout = QVBoxLayout(self)
@@ -69,7 +51,7 @@ class SetupDialog(QDialog):
         self.cmb_dut = _port_combo(self.serial_ports)
         grid_dut.addWidget(self.cmb_dut, 0, 1)
         grid_dut.addWidget(QLabel("Baud Rate:"), 1, 0)
-        self.cmb_dut_baud = _baud_combo()
+        self.cmb_dut_baud = _baud_combo(default="9600")
         grid_dut.addWidget(self.cmb_dut_baud, 1, 1)
         grp_dut.setLayout(grid_dut)
         layout.addWidget(grp_dut)
@@ -84,24 +66,26 @@ class SetupDialog(QDialog):
         self.cmb_ard = _port_combo(self.acm_ports)
         grid_ard.addWidget(self.cmb_ard, 0, 1)
         grid_ard.addWidget(QLabel("Baud Rate:"), 1, 0)
-        self.cmb_ard_baud = _baud_combo()
+        self.cmb_ard_baud = _baud_combo(default="115200")
         grid_ard.addWidget(self.cmb_ard_baud, 1, 1)
         self.grp_ard.setLayout(grid_ard)
         layout.addWidget(self.grp_ard)
 
-        # PSU (optional)
-        psu_ports = self.visa_resources + self.serial_ports
-        self.grp_psu = QGroupBox("Fonte PSU  (opcional)")
+        # PSU (optional) — Agilent E3634A via RS-232 (ttyUSB)
+        self.grp_psu = QGroupBox("PSU — Agilent E3634A  (opcional, RS-232)")
         self.grp_psu.setCheckable(True)
         self.grp_psu.setChecked(config.PSU_ENABLED)
         grid_psu = QGridLayout()
         grid_psu.setColumnStretch(1, 1)
-        grid_psu.addWidget(QLabel("Porta / VISA:"), 0, 0)
-        self.cmb_psu = _port_combo(psu_ports)
+        grid_psu.addWidget(QLabel("Porta Serial:"), 0, 0)
+        self.cmb_psu = _port_combo(self.usb_ports)
         grid_psu.addWidget(self.cmb_psu, 0, 1)
         grid_psu.addWidget(QLabel("Baud Rate:"), 1, 0)
-        self.cmb_psu_baud = _baud_combo()
+        self.cmb_psu_baud = _baud_combo(default="9600")
         grid_psu.addWidget(self.cmb_psu_baud, 1, 1)
+        grid_psu.addWidget(QLabel("VCCINT Setpoint (V):"), 2, 0)
+        self.spn_vccint = _vccint_spinner()
+        grid_psu.addWidget(self.spn_vccint, 2, 1)
         self.grp_psu.setLayout(grid_psu)
         layout.addWidget(self.grp_psu)
 
@@ -126,6 +110,7 @@ class SetupDialog(QDialog):
 
         _select(self.cmb_psu, config.PSU_PORT)
         self.cmb_psu_baud.setCurrentText(str(config.PSU_BAUD))
+        self.spn_vccint.setValue(config.VCCINT_SETPOINT_V)
 
     def _save(self):
         ard_on = self.grp_ard.isChecked()
@@ -140,6 +125,7 @@ class SetupDialog(QDialog):
             psu_p=self.cmb_psu.currentText() if psu_on else "",
             psu_b=self.cmb_psu_baud.currentText(),
             psu_enabled=psu_on,
+            vccint_setpoint=self.spn_vccint.value(),
         )
         self.accept()
 
@@ -155,13 +141,23 @@ def _port_combo(ports):
     return cb
 
 
-def _baud_combo():
+def _baud_combo(default="115200"):
     cb = QComboBox()
     cb.setEditable(True)
     for r in [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]:
         cb.addItem(str(r))
-    cb.setCurrentText("115200")
+    cb.setCurrentText(default)
     return cb
+
+
+def _vccint_spinner():
+    sp = QDoubleSpinBox()
+    sp.setRange(0.0, 1.5)
+    sp.setSingleStep(0.05)
+    sp.setDecimals(3)
+    sp.setValue(1.0)
+    sp.setSuffix(" V")
+    return sp
 
 
 def _select(combo, value):

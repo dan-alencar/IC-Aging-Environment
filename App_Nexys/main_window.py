@@ -102,12 +102,17 @@ class MainWindow(QMainWindow):
             "background-color: #2d2d2d; padding: 6px; border-radius: 4px;"
         )
 
-        self.psu_control_group = QGroupBox("Fonte PSU")
+        self.psu_control_group = QGroupBox("Fonte PSU (E3634A)")
         self.psu_setpoint_input = QDoubleSpinBox()
         self.psu_setpoint_input.setRange(0.0, 1.5)
-        self.psu_setpoint_input.setValue(1.0)
-        self.psu_setpoint_input.setSingleStep(0.01)
+        self.psu_setpoint_input.setValue(config.VCCINT_SETPOINT_V)
+        self.psu_setpoint_input.setSingleStep(0.05)
+        self.psu_setpoint_input.setDecimals(3)
         self.psu_setpoint_input.setSuffix(" V")
+        self.psu_setpoint_input.setToolTip(
+            "Alvo VCCINT. O loop P-only ajusta a saída da PSU a cada tick "
+            f"com Kp={config.VOLTAGE_KP} V/V."
+        )
         self.beeper_button = QPushButton("Silenciar Buzzer PSU")
         self.beeper_button.setCheckable(True)
 
@@ -181,7 +186,7 @@ class MainWindow(QMainWindow):
         top_bar.addWidget(self.oven_control_group, stretch=2)
 
         psu_form = QFormLayout()
-        psu_form.addRow("Tensão PSU:", self.psu_setpoint_input)
+        psu_form.addRow("VCCINT Alvo:", self.psu_setpoint_input)
         psu_inner = QVBoxLayout()
         psu_inner.addLayout(psu_form)
         psu_inner.addWidget(self.beeper_button)
@@ -370,7 +375,8 @@ class MainWindow(QMainWindow):
     @Slot()
     def on_update_psu_voltage(self):
         voltage = self.psu_setpoint_input.value()
-        self.log_message(f"Atualizando tensão PSU: {voltage:.3f}V")
+        config.VCCINT_SETPOINT_V = voltage
+        self.log_message(f"VCCINT alvo atualizado: {voltage:.3f}V")
         self.update_psu_voltage_signal.emit(voltage)
 
     @Slot()
