@@ -44,6 +44,23 @@ module controller_controller (
     logic        signal, sig_ant;
     logic        psdone_prev;
 
+    // Sticky alarm latch: crit_bit toggles every clock cycle, so alarm_sync
+    // fires as a brief 1-2 cycle pulse at the boundary rather than holding
+    // high.  CHECK_ALARM samples alarm for exactly one cycle and would
+    // frequently miss the pulse, adding random extra steps.  This latch
+    // captures the first pulse of each sweep and holds it until IDLE clears
+    // it, so CHECK_ALARM never misses the alarm regardless of pulse timing.
+    logic alarm_latched;
+
+    always_ff @(posedge clk or negedge reset) begin
+        if (!reset)
+            alarm_latched <= 1'b0;
+        else if (state == IDLE)
+            alarm_latched <= 1'b0;
+        else if (alarm)
+            alarm_latched <= 1'b1;
+    end
+
     always_ff @(posedge clk or negedge reset) begin
         if (!reset) begin
             state       <= CHECK_ALARM;
@@ -59,7 +76,7 @@ module controller_controller (
             case (state)
                 CHECK_ALARM: begin
                     change <= ~change;
-                    state  <= alarm ? DONE : INIT_SHIFT;
+                    state  <= alarm_latched ? DONE : INIT_SHIFT;
                 end
 
                 INIT_SHIFT: state <= WAIT_SHIFT;
