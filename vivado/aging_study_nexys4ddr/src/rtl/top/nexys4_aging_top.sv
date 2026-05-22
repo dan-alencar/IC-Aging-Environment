@@ -81,7 +81,7 @@ module nexys4_aging_top (
         .INIT_40 (16'h9000),   // 16x averaging, calibration enabled
         .INIT_41 (16'h2EF0),   // continuous sequencer mode
         .INIT_42 (16'h0400),   // DCLK divider = 4 → 25 MHz ADC clock
-        .INIT_48 (16'h00C1),   // sequencer: temperature (bit 7) + VCCINT (bit 6) + calibration (bit 0)
+        .INIT_48 (16'h0300),   // sequencer: temperature (bit 8) + VCCINT (bit 9) — matches XADC Wizard reference
         .INIT_49 (16'h0000),
         .INIT_4A (16'h0000),
         .INIT_4B (16'h0000),

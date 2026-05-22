@@ -35,7 +35,7 @@ module temp_catcher (
         if (!reset) begin
             state         <= ASK_TEMP;
             daddr         <= 7'h0;
-            den           <= 1'b1;
+            den           <= 1'b0;   // keep DEN low during reset; ASK_TEMP asserts it cleanly
             placeholder_t <= '0;
             placeholder_v <= '0;
             timeout       <= '0;
