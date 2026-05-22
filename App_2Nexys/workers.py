@@ -454,6 +454,7 @@ class DUTWorker(QObject):
             self.ser.reset_input_buffer()  # discard any buffered packets (FPGA 1 Hz timer accumulates them)
             self.ser.write(b"\x54")        # 'T': trigger a fresh phase sweep
             data = self.ser.read(self.BYTES_EXPECTED)
+            print(f"{self._id} raw ({len(data)}B): {data.hex(' ')}")
             if len(data) == self.BYTES_EXPECTED:
                 raw_temp    = int.from_bytes(data[0:3],   byteorder="little")
                 raw_slack   = int.from_bytes(data[3:5],   byteorder="little")
@@ -473,7 +474,7 @@ class DUTWorker(QObject):
 
                 if temp_c == 0 and slack == 0 and vccint == 0:
                     return
-                if temp_c > 200.0 or vccint > 2.5:
+                if temp_c > 120.0 or vccint > 1.5:
                     self._boot_reject_count += 1
                     if self._boot_reject_count == 1:
                         print(f"{self._id}: aguardando FPGA inicializar (pacotes inválidos serão descartados)...")

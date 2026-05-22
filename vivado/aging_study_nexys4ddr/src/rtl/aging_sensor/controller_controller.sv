@@ -4,14 +4,14 @@
 // Ported from sbcci_fpga_aging/controller_controller.v — same states,
 // same back-off logic, clean synchronous SystemVerilog.
 //
-// One measurement per reset pulse:
+// Continuous autonomous measurement — no external trigger required:
 //   CHECK_ALARM  — sweep if clear, capture immediately if alarm already high
 //   INIT_SHIFT   — assert psen=1 / psincdec=0 for one cycle (decrement phase)
 //   WAIT_SHIFT   — wait for psdone; inc_count++; back to CHECK_ALARM
-//   DONE         — latch display_value=inc_count; fire send; start back-off
+//   DONE         — latch display_value=inc_count; start back-off
 //   RESET_PHASE  — if reset_count >= inc_count → IDLE; else psen=1/psincdec=1
 //   WAIT_RESET   — wait for psdone; reset_count++; back to RESET_PHASE
-//   IDLE         — hold display_value; wait for next reset pulse from top
+//   IDLE         — reset inc_count/reset_count; immediately → CHECK_ALARM
 //
 // display_value is updated exactly once per sweep (in DONE) and held in IDLE.
 // As the device ages and the critical path degrades, the alarm fires after
@@ -87,7 +87,13 @@ module controller_controller (
                     end
                 end
 
-                IDLE: ;  // wait for reset pulse
+                IDLE: begin
+                    // Auto-restart: reset sweep counters and begin next measurement
+                    // immediately without waiting for an external trigger.
+                    inc_count   <= '0;
+                    reset_count <= '0;
+                    state       <= CHECK_ALARM;
+                end
 
                 default: state <= CHECK_ALARM;
             endcase

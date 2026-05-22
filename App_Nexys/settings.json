@@ -1,5 +1,5 @@
 {
-    "dut_port": "/dev/ttyUSB0",
+    "dut_port": "/dev/ttyUSB2",
     "dut_baud": "9600",
     "arduino_port": "/dev/ttyACM0",
     "arduino_baud": "115200",

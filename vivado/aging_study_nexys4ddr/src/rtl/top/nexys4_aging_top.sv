@@ -71,8 +71,7 @@ module nexys4_aging_top (
     // -----------------------------------------------------------------------
     // XADC — on-chip temperature and VCCINT via DRP polling (temp_catcher)
     // -----------------------------------------------------------------------
-    logic [6:0]  xadc_daddr;
-    logic        xadc_den;
+    logic [4:0]  xadc_channel;
     logic [15:0] xadc_do;
     logic        xadc_drdy;
 
@@ -81,7 +80,7 @@ module nexys4_aging_top (
         .INIT_40 (16'h9000),   // 16x averaging, calibration enabled
         .INIT_41 (16'h2EF0),   // continuous sequencer mode
         .INIT_42 (16'h0400),   // DCLK divider = 4 → 25 MHz ADC clock
-        .INIT_48 (16'h0101),   // sequencer: temp + VAUXP[4] (on-chip sensors)
+        .INIT_48 (16'h00C1),   // sequencer: temperature (bit 7) + VCCINT (bit 6) + calibration (bit 0)
         .INIT_49 (16'h0000),
         .INIT_4A (16'h0000),
         .INIT_4B (16'h0000),
@@ -103,16 +102,16 @@ module nexys4_aging_top (
         .CONVST    (1'b0),
         .RESET     (reset),
         .DCLK      (clk_sys),
-        .DEN       (xadc_den),
+        .DEN       (1'b0),         // no DRP reads — DRDY used only for conversion events
         .DWE       (1'b0),
-        .DADDR     (xadc_daddr),
+        .DADDR     (7'h0),
         .DI        (16'h0000),
         .DO        (xadc_do),
         .DRDY      (xadc_drdy),
         .EOC       (),
         .EOS       (),
         .BUSY      (),
-        .CHANNEL   (),
+        .CHANNEL   (xadc_channel),
         .ALM       (),
         .OT        (),
         .VAUXN     (16'b0),
@@ -127,9 +126,8 @@ module nexys4_aging_top (
         .clk     (clk_sys),
         .reset   (reset_n),
         .drdy    (xadc_drdy),
+        .channel (xadc_channel),
         .do_data (xadc_do),
-        .daddr   (xadc_daddr),
-        .den     (xadc_den),
         .temp    (temp_raw),
         .vccint  (vccint_raw)
     );
@@ -206,67 +204,26 @@ module nexys4_aging_top (
     );
 
     // -----------------------------------------------------------------------
-    // Sweep trigger — re-arms the controller in two ways:
-    //   1. Periodic 1 Hz timer (fallback — keeps sweeps running autonomously)
-    //   2. UART 'T' byte (0x54) sent by the Python app after parsing a packet
-    //
-    // Both sources produce the same 100-cycle low pulse on ctrl_rst_n.
-    // The first sweep starts immediately when the MMCM locks (reset_n rises).
+    // UART 'T' (0x54) receive — snapshot trigger for the Python app.
+    // Receiving 'T' latches the current measurement into sensor_stream and
+    // transmits one 15-byte packet.  The controller is NOT reset here; it
+    // runs autonomously and keeps display_value up-to-date at all times.
     // -----------------------------------------------------------------------
-    localparam logic [27:0] SWEEP_PERIOD   = 28'd100_000_000; // 1 s at 100 MHz
-    localparam logic [7:0]  RST_PULSE_LEN  = 8'd100;          // 100-cycle pulse
-
-    logic [27:0] sweep_timer;
-    logic [7:0]  rst_pulse_cnt;
-    logic        timer_pulse;
-    logic        uart_trigger_pulse;
-    logic        combined_pulse;
-    logic        timer_rst_n;
-    logic        ctrl_rst_n;
-
+    logic uart_trigger_pulse;
     assign uart_trigger_pulse = uart_rx_valid && (uart_rx_data == 8'h54);
-    assign combined_pulse     = timer_pulse | uart_trigger_pulse;
-
-    always_ff @(posedge clk_sys or negedge reset_n) begin
-        if (!reset_n) begin
-            sweep_timer <= '0;
-            timer_pulse <= 1'b0;
-        end else begin
-            if (sweep_timer == SWEEP_PERIOD - 1) begin
-                sweep_timer <= '0;
-                timer_pulse <= 1'b1;
-            end else begin
-                sweep_timer <= sweep_timer + 1'b1;
-                timer_pulse <= 1'b0;
-            end
-        end
-    end
-
-    always_ff @(posedge clk_sys or negedge reset_n) begin
-        if (!reset_n) begin
-            rst_pulse_cnt <= '0;
-            timer_rst_n   <= 1'b1;
-        end else begin
-            if (combined_pulse) begin
-                rst_pulse_cnt <= RST_PULSE_LEN - 1;
-                timer_rst_n   <= 1'b0;
-            end else if (rst_pulse_cnt != '0) begin
-                rst_pulse_cnt <= rst_pulse_cnt - 1'b1;
-                timer_rst_n   <= 1'b0;
-            end else begin
-                timer_rst_n <= 1'b1;
-            end
-        end
-    end
-
-    assign ctrl_rst_n = reset_n & timer_rst_n;
 
     // -----------------------------------------------------------------------
-    // Phase controller — FSM sweeping MMCM phase until alarm detected
+    // Phase controller — sweeps MMCM phase autonomously.
+    // ctrl_rst_n is only the power-on / button reset; the controller
+    // auto-restarts in IDLE (see controller_controller.sv) without needing
+    // any external periodic trigger.
     // -----------------------------------------------------------------------
+    logic        ctrl_rst_n;
     logic [15:0] display_value;
-    logic        controller_send;
     logic        change_unused;
+    logic        send_unused;
+
+    assign ctrl_rst_n = reset_n;
 
     controller_controller u_ctrl (
         .clk          (clk_sys),
@@ -276,7 +233,7 @@ module nexys4_aging_top (
         .display_value(display_value),
         .change       (change_unused),
         .psincdec     (psincdec_ctrl),
-        .send         (controller_send),
+        .send         (send_unused),
         .psen         (psen_ctrl)
     );
 
@@ -297,9 +254,11 @@ module nexys4_aging_top (
 
     // -----------------------------------------------------------------------
     // UART — packet serialiser → transmitter
+    // Triggered by: 'T' from Python (snapshot request), or manual buttons.
+    // sensor_stream latches all inputs at trigger time → consistent packet.
     // -----------------------------------------------------------------------
     logic uart_send_trigger;
-    assign uart_send_trigger = controller_send | button | UARTsend;
+    assign uart_send_trigger = uart_trigger_pulse | button | UARTsend;
 
     logic stream_send;
     logic [7:0] stream_data;
