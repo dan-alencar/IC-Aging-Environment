@@ -169,17 +169,22 @@ The aging sensor design uses three clock domains driven by a single MMCM (clk_wi
 
 The metastability sensor (`modern_sensible`) uses `DONT_TOUCH`/primitive instantiation (`LUT2_L`, `FDCE`) to prevent synthesis optimization. `alarm_sig` originates in the `clk_en` domain and is crossed to `clk_sys` via a 2-FF synchronizer (`alarm_sync`) before reaching `adder_canary` and `controller_controller`. The raw `alarm_sig` drives only the LED (no timing path).
 
-The `adder_canary` module contains the aging-sensitive LUT ripple-carry adder. Its `wrong`/`correct`/`error_count` outputs are part of the 15-byte packet in App_2Nexys but the 9-byte packet in App_Nexys.
+The `adder_canary` module implements a **dual-adder** design: `u_sensor` (toggle-driven) provides `crit_bit` for timing measurement; `u_canary` (counter-driven) provides `wrong`/`correct`/`error_count` for functional error detection. Both are structurally identical `ripple_adder` instances with `DONT_TOUCH` so they age at the same rate.
 
-### Known issue: stochastic `display_value` (~9 000 steps)
+The FPGA also includes `uart_rx` (receives `'T'`/0x54 trigger byte from PC) and `sensor_stream` (latches all inputs at trigger time, serialises the 15-byte packet). The trigger is: UART `'T'`, or either manual button (BTNC/BTNL).
 
-**Current state (unfixed):** `adder_canary.sv` assigns `crit_bit = sum_canary[15]` — the MSB of the free-running canary counter. This bit transitions only ~twice per 65 536 clock cycles (at `a = 0x5555` and `a = 0xD555`), far less than the ~14-cycle window the phase sweep spends per step. The alarm fires by statistical coincidence, producing `display_value` readings of ~9 000 ± hundreds rather than the expected ~800 ± 2.
+**Current RTL only supports the 15-byte packet triggered by `'T'`.** App_Nexys (which sends `'F'` and reads 9 bytes) is incompatible with a freshly built bitstream — use App_2Nexys with the pre-built `nexys4_aging_top_dual-sensor.bit` for the current RTL.
 
-**Planned fix (dual-adder architecture):** Add a `toggle` FF that inverts every `clk_sys` cycle, derive `a_sensor` from it (`0x5555` / `0x5556`), instantiate a second `(* DONT_TOUCH *) ripple_adder #(.N(16)) u_sensor` driven by `a_sensor`, and reassign `crit_bit = sum_sensor[15]`. With `B = 0xAAAA`, `sum_sensor[15]` toggles on every clock cycle (full 16-stage carry propagation guaranteed each time), restoring deterministic ±2-step jitter. The canary adder (`u_canary`) retains the free-running counter and continues to feed `wrong`/`correct`/`error_count` unchanged. Both instances must be co-located in the same Pblock so they age at the same rate.
+### Dual-adder sensor (implemented)
 
-Files to change: `src/rtl/aging_sensor/adder_canary.sv` (add `toggle`, `a_sensor`, `u_sensor`; reassign `crit_bit`) and `src/constraints/` (add Pblock grouping both adder instances). No changes to any other RTL or Python code are needed.
+`adder_canary.sv` has a `toggle` FF that inverts every `clk_sys` cycle, driving `a_sensor` between `0x5555` and `0x5556`. With `B = 0xAAAA`, `sum_sensor[15]` toggles on every clock cycle (full 16-stage carry propagation each time), giving deterministic ±2-step `display_value` jitter. This replaces the original design where `crit_bit = sum_canary[15]` fired stochastically (~9 000-step scatter).
 
-Full rationale and phased implementation checklist: `vivado/aging_study_nexys4ddr/SENSOR_ARCHITECTURE.md` and `IMPLEMENTATION_ROADMAP.md`.
+```
+toggle → a_sensor (0x5555/0x5556) → u_sensor (DONT_TOUCH) → crit_bit → modern_sensible
+a (counter)                        → u_canary (DONT_TOUCH) → wrong/correct/error_count
+```
+
+Full scientific rationale: `vivado/aging_study_nexys4ddr/SENSOR_ARCHITECTURE.md`. Validation checklist (Phases 3–7 still pending): `IMPLEMENTATION_ROADMAP.md`.
 
 ## Arduino sketches
 
@@ -195,5 +200,6 @@ Full rationale and phased implementation checklist: `vivado/aging_study_nexys4dd
 
 - `PROTOCOL.md` — serial protocol reference for DUT (Nexys4), Arduino, and PSU.
 - `ARCHITECTURE.md` — design intent behind each subsystem and why decisions were made.
-- `vivado/aging_study_nexys4ddr/SENSOR_ARCHITECTURE.md` — scientific rationale and design for the dual-adder sensor fix (why `display_value` reaches ~9 000 and how the fix works).
-- `vivado/aging_study_nexys4ddr/IMPLEMENTATION_ROADMAP.md` — phased checklist from baseline capture through data collection for the paper.
+- `vivado/aging_study_nexys4ddr/SENSOR_ARCHITECTURE.md` — scientific rationale for the dual-adder sensor design.
+- `vivado/aging_study_nexys4ddr/IMPLEMENTATION_ROADMAP.md` — phased checklist; RTL phases 1–2 are done, phases 3–7 (build, validation, data collection) are pending.
+- `vivado/aging_study_nexys4ddr/CLAUDE.md` — sub-project CLAUDE.md with full RTL module hierarchy, clock domains, XADC formulas, and constraint strategy.

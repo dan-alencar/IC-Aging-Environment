@@ -20,7 +20,6 @@ import serial
 import time
 from datetime import datetime
 import config
-import pyvisa as visa
 from logger import DataLogger
 import threading
 
@@ -177,128 +176,122 @@ class ArduinoWorker(QObject):
 
 
 # =============================================================================
-#   WORKER 2: Controlador da Fonte (PSU) - PyVISA
+#   WORKER 2: Controlador da Fonte (PSU) - Agilent E3634A via RS-232
 # =============================================================================
 class PSUWorker(QObject):
-    """
-    Controla a fonte de alimentação programável via PyVISA (SCPI).
-    
-    Sinais:
-        log_message(str): Mensagem para o log
-        data_ready(float, float): voltage_v, current_a
-    """
+    """Agilent E3634A — RS-232 via USB-Serial adapter (ttyUSB)."""
     log_message = Signal(str)
-    data_ready = Signal(float, float)
-    
+    data_ready = Signal(float, float)  # voltage_v, current_a
+
     def __init__(self):
         super().__init__()
-        self.rm = None
-        self.inst = None
+        self._id = "PSU (E3634A)"
+        self.ser = None
         self.is_running = False
         self._latest_data = (0.0, 0.0)
-        
-        self.poll_timer = QTimer(self)
-        self.poll_timer.setInterval(config.LOG_INTERVAL_MS)
-        self.poll_timer.timeout.connect(self.poll_data)
+        self._lock = threading.Lock()
+
+    def _query(self, cmd: str) -> str:
+        with self._lock:
+            self.ser.reset_input_buffer()
+            self.ser.write(f"{cmd}\r\n".encode())
+            return self.ser.readline().decode(errors="replace").strip()
+
+    def _write(self, cmd: str):
+        with self._lock:
+            self.ser.write(f"{cmd}\r\n".encode())
 
     @Slot()
     def start(self):
-        """Inicializa conexão com PSU via VISA."""
         if not config.PSU_ENABLED or not config.PSU_PORT:
             self.log_message.emit("PSU desabilitada — fonte de alimentação inativa.")
             return
         try:
-            self.rm = visa.ResourceManager('@py')
-            self.inst = self.rm.open_resource(config.PSU_PORT)
-            self.inst.timeout = 5000
-            self.inst.read_termination = '\n'
-            self.inst.write_termination = '\n'
-            
-            idn = self.inst.query("*IDN?").strip()
-            self.log_message.emit(f"PSU conectada: {idn}")
-            
-            # Configura limites de segurança
-            self.inst.write(f"CURR {config.MAX_PSU_CURRENT_A}")
-            self.inst.write(f"VOLT {config.MAX_PSU_VOLTAGE_V}")
-            
+            self.ser = serial.Serial(
+                config.PSU_PORT, config.PSU_BAUD,
+                stopbits=serial.STOPBITS_TWO, timeout=3,
+            )
+            time.sleep(0.1)                   # let E3634A finish any pending TX
+            self.ser.reset_input_buffer()     # discard stale bytes from previous session
+            self._write("*CLS")              # clear error queue + STB/ESR
+            time.sleep(0.1)
+            idn = self._query("*IDN?")
+            self.log_message.emit(f"{self._id} conectado: {idn}")
+            self._write(f"CURR {config.MAX_PSU_CURRENT_A}")
+            self._write("SYSTEM:BEEPER:STATE OFF")
             self.is_running = True
+            self.poll_timer = QTimer(self)
+            self.poll_timer.setInterval(config.LOG_INTERVAL_MS)
+            self.poll_timer.timeout.connect(self.poll_data)
             self.poll_timer.start()
-            
         except Exception as e:
-            self.log_message.emit(f"ERRO (PSU): {e}")
+            self.log_message.emit(f"ERRO ({self._id}): {e}")
 
     @Slot()
     def stop(self):
-        """Encerra conexão com PSU."""
         self.is_running = False
-        self.poll_timer.stop()
-        
+        if hasattr(self, "poll_timer"):
+            self.poll_timer.stop()
         try:
-            if self.inst:
-                self.inst.write("OUTP OFF")
-                self.inst.close()
-            if self.rm:
-                self.rm.close()
-        except: 
+            if self.ser and self.ser.is_open:
+                self._write("OUTP OFF")
+                self.ser.close()
+        except Exception:
             pass
-        self.log_message.emit("PSU desconectada.")
+        self.log_message.emit(f"{self._id} desconectado.")
 
     def poll_data(self):
-        """Leitura periódica de tensão e corrente."""
-        if not self.is_running or not self.inst:
+        if not self.is_running or not self.ser:
             return
-            
         try:
-            voltage = float(self.inst.query("MEAS:VOLT?").strip())
-            current = float(self.inst.query("MEAS:CURR?").strip())
-            
-            self._latest_data = (voltage, current)
-            self.data_ready.emit(voltage, current)
-            
+            v_str = self._query("MEAS:VOLT?")
+            time.sleep(0.05)   # allow E3634A to flush TX before next query (avoids ERR -410)
+            c_str = self._query("MEAS:CURR?")
+            if not v_str or not c_str:
+                return
+            self._latest_data = (float(v_str), float(c_str))
+            self.data_ready.emit(*self._latest_data)
+        except ValueError:
+            pass  # transient garbled response — skip tick silently
         except Exception as e:
-            self.log_message.emit(f"Erro Leitura PSU: {e}")
+            self.log_message.emit(f"Erro leitura {self._id}: {e}")
 
     def get_latest_data(self):
         return self._latest_data
 
     @Slot(float)
-    def set_voltage(self, voltage):
-        """Define tensão de saída."""
-        if self.inst:
+    def set_voltage(self, voltage_v: float):
+        if self.ser and self.ser.is_open:
             try:
-                self.inst.write(f"VOLT {voltage:.3f}")
-                self.log_message.emit(f"PSU: Tensão definida para {voltage:.3f}V")
+                self._write(f"VOLT {voltage_v:.4f}")
             except Exception as e:
-                self.log_message.emit(f"Erro ao definir tensão: {e}")
+                self.log_message.emit(f"ERRO tensão {self._id}: {e}")
 
     @Slot()
     def turn_on(self):
-        """Liga saída da PSU."""
-        if self.inst:
+        if self.ser and self.ser.is_open:
             try:
-                self.inst.write("OUTP ON")
-                self.log_message.emit("PSU: Saída LIGADA")
+                self._write("OUTP ON")
+                self.log_message.emit(f"{self._id}: saída LIGADA")
             except Exception as e:
-                self.log_message.emit(f"Erro ao ligar PSU: {e}")
+                self.log_message.emit(f"ERRO ligar {self._id}: {e}")
 
     @Slot()
     def turn_off(self):
-        """Desliga saída da PSU."""
-        if self.inst:
+        if self.ser and self.ser.is_open:
             try:
-                self.inst.write("OUTP OFF")
-                self.log_message.emit("PSU: Saída DESLIGADA")
+                self._write("OUTP OFF")
+                self.log_message.emit(f"{self._id}: saída DESLIGADA")
             except Exception as e:
-                self.log_message.emit(f"Erro ao desligar PSU: {e}")
+                self.log_message.emit(f"ERRO desligar {self._id}: {e}")
 
     @Slot(bool)
     def set_beeper(self, enabled: bool):
-        if self.inst:
+        if self.ser and self.ser.is_open:
             try:
-                self.inst.write(f"SYSTEM:BEEPER:STATE {'ON' if enabled else 'OFF'}")
-                self.log_message.emit(f"PSU: buzzer {'LIGADO' if enabled else 'DESLIGADO'}")
+                self._write(f"SYSTEM:BEEPER:STATE {'ON' if enabled else 'OFF'}")
             except Exception as e:
-                self.log_message.emit(f"ERRO buzzer PSU: {e}")
+                self.log_message.emit(f"ERRO buzzer {self._id}: {e}")
 
 
 # =============================================================================
@@ -449,6 +442,9 @@ class TestSequencer(QObject):
         self._dut_target_temp = 0.0
         self._outer_tick = 0
 
+        # VCCINT closed-loop (E3634A)
+        self._psu_cmd_v = 0.0
+
         self.log_timer = QTimer(self)
         self.log_timer.setInterval(config.LOG_INTERVAL_MS)
         self.log_timer.timeout.connect(self.log_data_tick)
@@ -493,7 +489,9 @@ class TestSequencer(QObject):
 
             # 3. Configurar PSU (se habilitada)
             if config.PSU_ENABLED and self.psu.is_running:
-                self.psu.set_voltage(settings['psu_voltage'])
+                self._psu_cmd_v = float(settings.get('psu_voltage', config.VCCINT_SETPOINT_V))
+                config.VCCINT_SETPOINT_V = self._psu_cmd_v
+                self.psu.set_voltage(self._psu_cmd_v)
                 time.sleep(0.3)
                 self.log_message.emit("Ligando saída PSU...")
                 self.psu.turn_on()
@@ -632,12 +630,22 @@ class TestSequencer(QObject):
             self.error_samples.append(sp_oven - t_oven)
             self.output_samples.append(out_oven)
 
-            # 3. Montar linha de dados
+            # 3. VCCINT closed-loop trim (E3634A)
+            if config.PSU_ENABLED and self.psu.is_running and v_dut > 0:
+                err = config.VCCINT_SETPOINT_V - v_dut
+                self._psu_cmd_v = max(
+                    config.PSU_MIN_V,
+                    min(config.PSU_MAX_V, self._psu_cmd_v + config.VOLTAGE_KP * err)
+                )
+                self.psu.set_voltage(self._psu_cmd_v)
+
+            # 4. Montar linha de dados
             data_row = {
                 'time_sec':       elapsed_time,
                 'oven_temp':      t_oven,
                 'oven_setpoint':  sp_oven,
                 'oven_output':    out_oven,
+                'psu_cmd_v':      self._psu_cmd_v,
                 'psu_voltage':    v_psu,
                 'psu_current':    c_psu,
                 'dut_temp':       t_dut,
@@ -648,23 +656,23 @@ class TestSequencer(QObject):
                 'dut_correct':    correct_dut,
                 'dut_error_count': errcnt_dut,
             }
-            
-            # 4. Log no arquivo
+
+            # 5. Log no arquivo
             if self.logger:
                 self.logger.write_data_row(data_row)
-            
-            # 5. Log periódico no terminal (a cada 30s)
+
+            # 6. Log periódico no terminal (a cada 30s)
             if int(elapsed_time) % 30 == 0 and int(elapsed_time) > 0:
                 error = sp_oven - t_oven
                 self._log_periodic_status(elapsed_time, t_oven, sp_oven, out_oven, error)
-                
-            # 6. Emitir para gráfico
+
+            # 7. Emitir para gráfico
             self.plot_data_update.emit(data_row)
 
-            # 7. DUT temperature outer loop
+            # 8. DUT temperature outer loop
             self._adjust_oven_outer_loop(t_dut, sp_oven)
 
-            # 8. Verificar limites de segurança
+            # 9. Verificar limites de segurança
             self._check_safety_limits(t_dut, c_psu, t_oven)
 
         except Exception as e:

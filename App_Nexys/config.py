@@ -63,12 +63,21 @@ DEFAULT_RAMP_RATE_C_PER_SEC = 1.0
 DEFAULT_OVEN_SAMPLE_TIME_MS = 5000
 
 # =============================================================================
+#   VCCINT CLOSED-LOOP VOLTAGE CONTROL (E3634A)
+# =============================================================================
+# TestSequencer trims PSU output each log tick: psu_cmd += VOLTAGE_KP * (setpoint - vccint).
+# VOLTAGE_KP is conservative to avoid oscillation.
+VCCINT_SETPOINT_V = 1.0   # Target VCCINT (V) — set from setup dialog
+VOLTAGE_KP = 0.1           # Proportional gain (V/V)
+PSU_MIN_V = 0.0
+PSU_MAX_V = 1.5
+
+# =============================================================================
 #   LIMITES DE SEGURANÇA
 # =============================================================================
 MAX_OVEN_TEMP_C = 130.0      # Temperatura máxima do forno
 MAX_DUT_TEMP_C = 140.0       # Temperatura máxima do DUT
 MAX_PSU_CURRENT_A = 1.5      # Corrente máxima da fonte
-MAX_PSU_VOLTAGE_V = 1.5      # Tensão máxima da fonte
 
 # =============================================================================
 #   FUNÇÕES DE CONFIGURAÇÃO
@@ -89,6 +98,7 @@ def load_config():
     global ARDUINO_PORT, PSU_PORT, DUT_PORT
     global ARDUINO_BAUD, PSU_BAUD, DUT_BAUD
     global ARDUINO_ENABLED, PSU_ENABLED
+    global VCCINT_SETPOINT_V
 
     defaults = get_default_ports()
 
@@ -107,6 +117,7 @@ def load_config():
 
                 ARDUINO_ENABLED = data.get("arduino_enabled", False)
                 PSU_ENABLED = data.get("psu_enabled", False)
+                VCCINT_SETPOINT_V = float(data.get("vccint_setpoint", 1.0))
 
         except Exception as e:
             print(f"Erro ao ler config: {e}. Usando padrões.")
@@ -120,6 +131,7 @@ def _apply_defaults(defaults):
     global ARDUINO_PORT, PSU_PORT, DUT_PORT
     global ARDUINO_BAUD, PSU_BAUD, DUT_BAUD
     global ARDUINO_ENABLED, PSU_ENABLED
+    global VCCINT_SETPOINT_V
 
     ARDUINO_PORT = defaults["arduino"]
     PSU_PORT = defaults["psu"]
@@ -129,15 +141,18 @@ def _apply_defaults(defaults):
     DUT_BAUD = 9600
     ARDUINO_ENABLED = False
     PSU_ENABLED = False
+    VCCINT_SETPOINT_V = 1.0
 
 
 def save_config(dut_p, dut_b,
                 arduino_p="", arduino_b=115200, arduino_enabled=False,
-                psu_p="", psu_b=9600, psu_enabled=False):
+                psu_p="", psu_b=9600, psu_enabled=False,
+                vccint_setpoint=1.0):
     """Salva Portas, Bauds e flags de habilitação no arquivo JSON."""
     global ARDUINO_PORT, PSU_PORT, DUT_PORT
     global ARDUINO_BAUD, PSU_BAUD, DUT_BAUD
     global ARDUINO_ENABLED, PSU_ENABLED
+    global VCCINT_SETPOINT_V
 
     data = {
         "dut_port": dut_p,
@@ -148,6 +163,7 @@ def save_config(dut_p, dut_b,
         "psu_port": psu_p,
         "psu_baud": psu_b,
         "psu_enabled": psu_enabled,
+        "vccint_setpoint": vccint_setpoint,
     }
 
     try:
@@ -162,6 +178,7 @@ def save_config(dut_p, dut_b,
         PSU_PORT = psu_p
         PSU_BAUD = int(psu_b)
         PSU_ENABLED = psu_enabled
+        VCCINT_SETPOINT_V = float(vccint_setpoint)
         return True
 
     except Exception as e:
