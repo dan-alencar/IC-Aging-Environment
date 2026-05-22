@@ -71,7 +71,8 @@ module nexys4_aging_top (
     // -----------------------------------------------------------------------
     // XADC — on-chip temperature and VCCINT via DRP polling (temp_catcher)
     // -----------------------------------------------------------------------
-    logic [4:0]  xadc_channel;
+    logic [6:0]  xadc_daddr;
+    logic        xadc_den;
     logic [15:0] xadc_do;
     logic        xadc_drdy;
 
@@ -102,16 +103,16 @@ module nexys4_aging_top (
         .CONVST    (1'b0),
         .RESET     (reset),
         .DCLK      (clk_sys),
-        .DEN       (1'b0),         // no DRP reads — DRDY used only for conversion events
+        .DEN       (xadc_den),
         .DWE       (1'b0),
-        .DADDR     (7'h0),
+        .DADDR     (xadc_daddr),
         .DI        (16'h0000),
         .DO        (xadc_do),
         .DRDY      (xadc_drdy),
         .EOC       (),
         .EOS       (),
         .BUSY      (),
-        .CHANNEL   (xadc_channel),
+        .CHANNEL   (),
         .ALM       (),
         .OT        (),
         .VAUXN     (16'b0),
@@ -126,8 +127,9 @@ module nexys4_aging_top (
         .clk     (clk_sys),
         .reset   (reset_n),
         .drdy    (xadc_drdy),
-        .channel (xadc_channel),
         .do_data (xadc_do),
+        .daddr   (xadc_daddr),
+        .den     (xadc_den),
         .temp    (temp_raw),
         .vccint  (vccint_raw)
     );
