@@ -1,0 +1,10 @@
+{
+    "dut_port": "/dev/ttyACM1",
+    "dut_baud": 9600,
+    "arduino_port": "",
+    "arduino_baud": 115200,
+    "arduino_enabled": false,
+    "psu_port": "/dev/ttyUSB0",
+    "psu_baud": 9600,
+    "psu_enabled": true
+}
