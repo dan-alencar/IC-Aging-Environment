@@ -5,7 +5,7 @@ Top bar (always visible):
   [Forno + PID info]  [PSU]  [Controle do Teste]
 
 Tabs:
-  Sensor      — slack, failure indicator, canary metrics, DUT readings
+  Sensor      — slack, failure indicator, DUT + oven + PSU live readouts, canary metrics
   Temperatura — temperature plot
   Tensão      — voltage/current aux plot
   Log         — event log
@@ -14,10 +14,10 @@ import time
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QGroupBox, QFormLayout, QLineEdit, QTextEdit,
-    QLabel, QDoubleSpinBox, QTabWidget
+    QLabel, QDoubleSpinBox, QTabWidget, QStatusBar, QSplitter
 )
 from PySide6.QtGui import QFont
-from PySide6.QtCore import QThread, Signal, Slot
+from PySide6.QtCore import QThread, Signal, Slot, Qt
 
 import config
 from workers import ArduinoWorker, PSUWorker, DUTWorker, TestSequencer
@@ -25,16 +25,160 @@ from plot_widget import PlotWidget
 from aux_plot_widget import AuxPlotWidget
 
 
-_STYLE_GREEN = """
-QLabel {
-    color: #00ff00; background-color: #1a1a1a;
-    border: 2px solid #333333; border-radius: 6px; padding: 10px;
-}"""
-_STYLE_RED = """
-QLabel {
-    color: #ff4444; background-color: #1a1a1a;
-    border: 2px solid #ff0000; border-radius: 6px; padding: 10px;
-}"""
+# ---------------------------------------------------------------------------
+# Colour palette (Catppuccin Mocha)
+# ---------------------------------------------------------------------------
+_BG       = '#1e1e2e'
+_SURFACE  = '#313244'
+_OVERLAY  = '#45475a'
+_MUTED    = '#6c7086'
+_TEXT     = '#cdd6f4'
+_SUBTEXT  = '#a6adc8'
+_GREEN    = '#a6e3a1'
+_RED      = '#f38ba8'
+_YELLOW   = '#f9e2af'
+_BLUE     = '#89b4fa'
+_PURPLE   = '#cba6f7'
+_ORANGE   = '#fab387'
+_TEAL     = '#89dceb'
+
+_DARK_STYLE = f"""
+QMainWindow, QDialog {{
+    background-color: {_BG};
+}}
+QWidget {{
+    background-color: {_BG};
+    color: {_TEXT};
+    font-size: 12px;
+}}
+QGroupBox {{
+    color: {_PURPLE};
+    border: 1px solid {_OVERLAY};
+    border-radius: 6px;
+    margin-top: 10px;
+    padding-top: 6px;
+    font-weight: bold;
+    font-size: 12px;
+}}
+QGroupBox::title {{
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6px;
+    left: 10px;
+}}
+QGroupBox:disabled {{
+    color: {_MUTED};
+    border-color: {_SURFACE};
+}}
+QTabWidget::pane {{
+    border: 1px solid {_OVERLAY};
+    border-radius: 4px;
+    background-color: {_BG};
+    top: -1px;
+}}
+QTabBar::tab {{
+    background-color: {_SURFACE};
+    color: {_SUBTEXT};
+    border: 1px solid {_OVERLAY};
+    border-bottom: none;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 6px 20px;
+    min-width: 80px;
+}}
+QTabBar::tab:selected {{
+    background-color: {_OVERLAY};
+    color: {_TEXT};
+    font-weight: bold;
+}}
+QTabBar::tab:hover:!selected {{
+    background-color: #3a3a52;
+}}
+QLineEdit, QDoubleSpinBox, QComboBox, QSpinBox {{
+    background-color: {_SURFACE};
+    color: {_TEXT};
+    border: 1px solid {_OVERLAY};
+    border-radius: 4px;
+    padding: 3px 6px;
+    selection-background-color: {_OVERLAY};
+}}
+QLineEdit:focus, QDoubleSpinBox:focus {{
+    border: 1px solid {_PURPLE};
+}}
+QLineEdit:disabled, QDoubleSpinBox:disabled {{
+    color: {_MUTED};
+    background-color: #262637;
+}}
+QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {{
+    background-color: {_OVERLAY};
+    border: none;
+    width: 16px;
+    border-radius: 2px;
+}}
+QDoubleSpinBox::up-button:hover, QDoubleSpinBox::down-button:hover {{
+    background-color: #585b70;
+}}
+QTextEdit {{
+    background-color: #181825;
+    color: {_GREEN};
+    border: 1px solid {_OVERLAY};
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 11px;
+}}
+QPushButton {{
+    background-color: {_OVERLAY};
+    color: {_TEXT};
+    border: none;
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-size: 12px;
+}}
+QPushButton:hover {{
+    background-color: #585b70;
+}}
+QPushButton:pressed {{
+    background-color: {_SURFACE};
+}}
+QPushButton:disabled {{
+    color: {_MUTED};
+    background-color: {_SURFACE};
+}}
+QStatusBar {{
+    background-color: #181825;
+    border-top: 1px solid {_OVERLAY};
+}}
+QStatusBar QLabel {{
+    background-color: transparent;
+    color: {_MUTED};
+    padding: 0 8px;
+    font-size: 11px;
+}}
+"""
+
+# Sensor tab status labels
+_STYLE_OK = f"""
+QLabel {{
+    color: {_GREEN}; background-color: #1a2e1a;
+    border: 2px solid #40a060; border-radius: 8px; padding: 12px;
+}}"""
+_STYLE_WARN = f"""
+QLabel {{
+    color: {_RED}; background-color: #2e1a1a;
+    border: 2px solid #c04060; border-radius: 8px; padding: 12px;
+}}"""
+_INFO_STYLE = (
+    f"QLabel {{ color: {_TEAL}; background-color: #1e2535; "
+    f"border: 1px solid {_OVERLAY}; border-radius: 6px; padding: 10px; }}"
+)
+_CANARY_STYLE = (
+    f"QLabel {{ color: {_PURPLE}; background-color: #251e35; "
+    f"border: 1px solid {_OVERLAY}; border-radius: 6px; padding: 8px; }}"
+)
+_PSU_STYLE = (
+    f"QLabel {{ color: {_YELLOW}; background-color: #2e2a1e; "
+    f"border: 1px solid {_OVERLAY}; border-radius: 6px; padding: 10px; }}"
+)
 
 
 class MainWindow(QMainWindow):
@@ -56,6 +200,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("App Nexys — Supervisor de Envelhecimento")
         self.setGeometry(100, 100, 1400, 900)
+        self.setStyleSheet(_DARK_STYLE)
 
         self.threads = {}
         self.workers = {}
@@ -63,6 +208,7 @@ class MainWindow(QMainWindow):
         self._create_top_bar_widgets()
         self._create_tab_widgets()
         self._create_layout()
+        self._setup_status_bar()
         self._apply_device_state()
         self._start_device_workers()
         self._start_test_sequencer()
@@ -78,8 +224,8 @@ class MainWindow(QMainWindow):
         self.toggle_test_button = QPushButton("INICIAR TESTE")
         self.toggle_test_button.setCheckable(True)
         self.toggle_test_button.setStyleSheet(
-            "background-color: #28a745; color: white; font-weight: bold; "
-            "padding: 10px; font-size: 14px;"
+            f"background-color: #1e4d2b; color: {_GREEN}; font-weight: bold; "
+            "padding: 10px; font-size: 14px; border: 1px solid #40a060; border-radius: 4px;"
         )
 
         self.oven_control_group = QGroupBox("Parâmetros do Forno")
@@ -95,11 +241,12 @@ class MainWindow(QMainWindow):
             "Temperatura alvo do DUT. 0 = desabilitado. Ajuste ±1°C/30 min até ±3°C do alvo."
         )
         self.pid_info_label = QLabel(
-            f"<b>PID (Fixo):</b> Kp={config.PID_KP:.4f}  "
-            f"Ki={config.PID_KI:.6f}  Kd={config.PID_KD:.4f}"
+            f"<b>PID (Fixo):</b> Kp={config.PID_KP:.4f} &nbsp;"
+            f"Ki={config.PID_KI:.6f} &nbsp;Kd={config.PID_KD:.4f}"
         )
         self.pid_info_label.setStyleSheet(
-            "background-color: #2d2d2d; padding: 6px; border-radius: 4px;"
+            f"color: {_SUBTEXT}; background-color: {_SURFACE}; "
+            "padding: 5px 8px; border-radius: 4px; font-size: 11px;"
         )
 
         self.psu_control_group = QGroupBox("Fonte PSU (E3634A)")
@@ -123,47 +270,54 @@ class MainWindow(QMainWindow):
         f.setPointSize(22)
         f.setBold(True)
         self.slack_label.setFont(f)
-        self.slack_label.setStyleSheet(_STYLE_GREEN)
+        self.slack_label.setStyleSheet(_STYLE_OK)
         self.slack_label.setMinimumHeight(60)
+        self.slack_label.setAlignment(Qt.AlignCenter)
 
         self.failure_label = QLabel("FALHA: ---")
         f2 = QFont()
         f2.setPointSize(18)
         f2.setBold(True)
         self.failure_label.setFont(f2)
-        self.failure_label.setStyleSheet(_STYLE_GREEN)
+        self.failure_label.setStyleSheet(_STYLE_OK)
         self.failure_label.setMinimumHeight(50)
+        self.failure_label.setAlignment(Qt.AlignCenter)
 
-        _info_style = (
-            "QLabel { color: #dddddd; background-color: #222222; "
-            "border: 1px solid #444; border-radius: 4px; padding: 8px; }"
-        )
-        self.dut_temp_label = QLabel("Temp DUT:  -- °C")
-        self.dut_volt_label = QLabel("VCCINT:  -- V")
-        for lbl in (self.dut_temp_label, self.dut_volt_label):
-            f3 = QFont()
-            f3.setPointSize(13)
-            lbl.setFont(f3)
-            lbl.setStyleSheet(_info_style)
+        # DUT + oven info row
+        self.dut_temp_label  = QLabel("Temp DUT:  -- °C")
+        self.dut_volt_label  = QLabel("VCCINT:  -- V")
+        self.oven_temp_label = QLabel("Forno:  -- °C")
+        _font_med = QFont()
+        _font_med.setPointSize(13)
+        for lbl in (self.dut_temp_label, self.dut_volt_label, self.oven_temp_label):
+            lbl.setFont(_font_med)
+            lbl.setStyleSheet(_INFO_STYLE)
+            lbl.setAlignment(Qt.AlignCenter)
 
-        _canary_style = (
-            "QLabel { color: #aaaaaa; background-color: #222222; "
-            "border: 1px solid #444; border-radius: 4px; padding: 6px; }"
-        )
+        # PSU live readout row
+        self.psu_cmd_label  = QLabel("PSU Cmd:  -- V")
+        self.psu_meas_label = QLabel("PSU Med:  -- V")
+        self.psu_curr_label = QLabel("Corrente:  -- A")
+        _font_sm = QFont()
+        _font_sm.setPointSize(12)
+        for lbl in (self.psu_cmd_label, self.psu_meas_label, self.psu_curr_label):
+            lbl.setFont(_font_sm)
+            lbl.setStyleSheet(_PSU_STYLE)
+            lbl.setAlignment(Qt.AlignCenter)
+
+        # Canary metrics
         self.error_count_label = QLabel("Erros: --")
         self.wrong_label       = QLabel("Errado: --")
         self.correct_label     = QLabel("Correto: --")
         for lbl in (self.error_count_label, self.wrong_label, self.correct_label):
-            lbl.setStyleSheet(_canary_style)
+            lbl.setStyleSheet(_CANARY_STYLE)
+            lbl.setAlignment(Qt.AlignCenter)
 
         # --- Other tabs ---
         self.plot_widget = PlotWidget(plot_window_size=300)
         self.aux_plot_widget = AuxPlotWidget(plot_window_size=300)
         self.log_text_edit = QTextEdit()
         self.log_text_edit.setReadOnly(True)
-        self.log_text_edit.setStyleSheet(
-            "font-family: 'Consolas', 'Monaco', monospace; font-size: 11px;"
-        )
 
     # =========================================================================
     #   Layout
@@ -172,12 +326,15 @@ class MainWindow(QMainWindow):
     def _create_layout(self):
         root = QVBoxLayout()
         root.setSpacing(6)
+        root.setContentsMargins(8, 8, 8, 4)
 
-        # Top bar
+        # ---- Top bar ----
         top_bar = QHBoxLayout()
+        top_bar.setSpacing(8)
 
         oven_form = QFormLayout()
-        oven_form.addRow("Setpoint:", self.oven_setpoint_input)
+        oven_form.setSpacing(6)
+        oven_form.addRow("Setpoint Forno:", self.oven_setpoint_input)
         oven_form.addRow("Alvo DUT (0=off):", self.dut_target_input)
         oven_inner = QVBoxLayout()
         oven_inner.addLayout(oven_form)
@@ -186,6 +343,7 @@ class MainWindow(QMainWindow):
         top_bar.addWidget(self.oven_control_group, stretch=2)
 
         psu_form = QFormLayout()
+        psu_form.setSpacing(6)
         psu_form.addRow("VCCINT Alvo:", self.psu_setpoint_input)
         psu_inner = QVBoxLayout()
         psu_inner.addLayout(psu_form)
@@ -195,34 +353,51 @@ class MainWindow(QMainWindow):
         top_bar.addWidget(self.psu_control_group, stretch=1)
 
         test_form = QFormLayout()
+        test_form.setSpacing(6)
         test_form.addRow("Nome:", self.test_name_input)
         test_form.addRow(self.toggle_test_button)
-        test_form.addRow(QLabel(f"<small>Logs: {config.LOG_FOLDER}</small>"))
+        test_form.addRow(QLabel(f"<small style='color:{_MUTED}'>Logs: {config.LOG_FOLDER}</small>"))
         self.test_control_group.setLayout(test_form)
         top_bar.addWidget(self.test_control_group, stretch=1)
 
         root.addLayout(top_bar)
 
-        # Tab widget
+        # ---- Tab widget ----
         tabs = QTabWidget()
 
         # Tab 1: Sensor
         sensor_widget = QWidget()
         sensor_layout = QVBoxLayout(sensor_widget)
-        sensor_layout.setSpacing(10)
+        sensor_layout.setSpacing(8)
+        sensor_layout.setContentsMargins(8, 8, 8, 8)
 
-        readings_row = QHBoxLayout()
-        readings_row.addWidget(self.slack_label, stretch=2)
-        readings_row.addWidget(self.failure_label, stretch=1)
-        sensor_layout.addLayout(readings_row)
+        # Row 1: slack + failure
+        row1 = QHBoxLayout()
+        row1.setSpacing(8)
+        row1.addWidget(self.slack_label, stretch=2)
+        row1.addWidget(self.failure_label, stretch=1)
+        sensor_layout.addLayout(row1)
 
-        dut_row = QHBoxLayout()
-        dut_row.addWidget(self.dut_temp_label)
-        dut_row.addWidget(self.dut_volt_label)
-        sensor_layout.addLayout(dut_row)
+        # Row 2: DUT temp / VCCINT / oven temp
+        row2 = QHBoxLayout()
+        row2.setSpacing(8)
+        row2.addWidget(self.dut_temp_label)
+        row2.addWidget(self.dut_volt_label)
+        row2.addWidget(self.oven_temp_label)
+        sensor_layout.addLayout(row2)
 
-        canary_group = QGroupBox("Canário de Envelhecimento (Adder Canary)")
+        # Row 3: PSU cmd / measured / current
+        row3 = QHBoxLayout()
+        row3.setSpacing(8)
+        row3.addWidget(self.psu_cmd_label)
+        row3.addWidget(self.psu_meas_label)
+        row3.addWidget(self.psu_curr_label)
+        sensor_layout.addLayout(row3)
+
+        # Row 4: canary
+        canary_group = QGroupBox("Adder Canary")
         canary_row = QHBoxLayout()
+        canary_row.setSpacing(8)
         canary_row.addWidget(self.error_count_label)
         canary_row.addWidget(self.wrong_label)
         canary_row.addWidget(self.correct_label)
@@ -230,25 +405,64 @@ class MainWindow(QMainWindow):
         sensor_layout.addWidget(canary_group)
         sensor_layout.addStretch()
 
-        tabs.addTab(sensor_widget, "Sensor")
-
-        # Tab 2: Temperatura
-        tabs.addTab(self.plot_widget, "Temperatura")
-
-        # Tab 3: Tensão
+        tabs.addTab(sensor_widget,        "Sensor")
+        tabs.addTab(self.plot_widget,     "Temperatura")
         tabs.addTab(self.aux_plot_widget, "Tensão")
 
-        # Tab 4: Log
-        log_widget = QWidget()
-        log_layout = QVBoxLayout(log_widget)
-        log_layout.addWidget(self.log_text_edit)
-        tabs.addTab(log_widget, "Log")
+        # Log panel — always visible in bottom half, resizable
+        log_group = QGroupBox("Log de Eventos")
+        log_inner = QVBoxLayout()
+        log_inner.setContentsMargins(4, 4, 4, 4)
+        log_inner.addWidget(self.log_text_edit)
+        log_group.setLayout(log_inner)
 
-        root.addWidget(tabs, stretch=1)
+        splitter = QSplitter(Qt.Vertical)
+        splitter.addWidget(tabs)
+        splitter.addWidget(log_group)
+        splitter.setStretchFactor(0, 7)
+        splitter.setStretchFactor(1, 3)
+        splitter.setChildrenCollapsible(False)
+
+        root.addWidget(splitter, stretch=1)
 
         central = QWidget()
         central.setLayout(root)
         self.setCentralWidget(central)
+
+    # =========================================================================
+    #   Status bar
+    # =========================================================================
+
+    def _setup_status_bar(self):
+        sb = QStatusBar()
+        self.setStatusBar(sb)
+        self._sb_arduino = QLabel()
+        self._sb_psu     = QLabel()
+        self._sb_dut     = QLabel()
+        self._sb_test    = QLabel("Aguardando início do teste")
+        sb.addWidget(self._sb_test, 1)
+        sb.addPermanentWidget(self._sb_dut)
+        sb.addPermanentWidget(self._sb_psu)
+        sb.addPermanentWidget(self._sb_arduino)
+        self._refresh_status_bar()
+
+    def _refresh_status_bar(self, test_running: bool = False):
+        def _pill(label, ok):
+            dot   = "●" if ok else "○"
+            color = _GREEN if ok else _MUTED
+            return f'<span style="color:{color}; font-size:11px;">{dot} {label}</span>'
+
+        self._sb_dut.setText(_pill("DUT", True))
+        self._sb_psu.setText(_pill("PSU", config.PSU_ENABLED))
+        self._sb_arduino.setText(_pill("Arduino", config.ARDUINO_ENABLED))
+        if test_running:
+            self._sb_test.setText(
+                f'<span style="color:{_GREEN}; font-weight:bold;">▶ Teste em execução</span>'
+            )
+        else:
+            self._sb_test.setText(
+                f'<span style="color:{_MUTED};">■ Aguardando início do teste</span>'
+            )
 
     # =========================================================================
     #   Device state / workers
@@ -329,22 +543,32 @@ class MainWindow(QMainWindow):
         failure     = d.get("dut_fail", 0)
         temp        = d.get("dut_temp", 0.0)
         volt        = d.get("dut_volt", 0.0)
+        oven_temp   = d.get("oven_temp", 0.0)
         error_count = d.get("dut_error_count", 0)
         wrong       = d.get("dut_wrong", 0)
         correct     = d.get("dut_correct", 0)
+        psu_cmd     = d.get("psu_cmd_v", 0.0)
+        psu_meas    = d.get("psu_voltage", 0.0)
+        psu_curr    = d.get("psu_current", 0.0)
 
         self.slack_label.setText(f"Slack: {slack} Inc.")
-        self.slack_label.setStyleSheet(_STYLE_RED if 0 < slack < 20 else _STYLE_GREEN)
+        self.slack_label.setStyleSheet(_STYLE_WARN if 0 < slack < 20 else _STYLE_OK)
 
         if failure:
             self.failure_label.setText("FALHA: SIM")
-            self.failure_label.setStyleSheet(_STYLE_RED)
+            self.failure_label.setStyleSheet(_STYLE_WARN)
         else:
             self.failure_label.setText("FALHA: NÃO")
-            self.failure_label.setStyleSheet(_STYLE_GREEN)
+            self.failure_label.setStyleSheet(_STYLE_OK)
 
         self.dut_temp_label.setText(f"Temp DUT:  {temp:.1f} °C")
         self.dut_volt_label.setText(f"VCCINT:  {volt:.3f} V")
+        self.oven_temp_label.setText(f"Forno:  {oven_temp:.1f} °C")
+
+        self.psu_cmd_label.setText(f"PSU Cmd:  {psu_cmd:.3f} V")
+        self.psu_meas_label.setText(f"PSU Med:  {psu_meas:.3f} V")
+        self.psu_curr_label.setText(f"Corrente:  {psu_curr:.3f} A")
+
         self.error_count_label.setText(f"Erros: {error_count}")
         self.wrong_label.setText(f"Errado: {wrong}")
         self.correct_label.setText(f"Correto: {correct}")
@@ -364,10 +588,11 @@ class MainWindow(QMainWindow):
             self.start_test_signal.emit(settings)
             self.toggle_test_button.setText("PARAR TESTE")
             self.toggle_test_button.setStyleSheet(
-                "background-color: #dc3545; color: white; font-weight: bold; "
-                "padding: 10px; font-size: 14px;"
+                f"background-color: #4d1e2b; color: {_RED}; font-weight: bold; "
+                "padding: 10px; font-size: 14px; border: 1px solid #c04060; border-radius: 4px;"
             )
             self.test_name_input.setEnabled(False)
+            self._refresh_status_bar(test_running=True)
         else:
             self.stop_test_signal.emit()
             self.on_test_finished()
@@ -389,18 +614,22 @@ class MainWindow(QMainWindow):
     def on_test_finished(self):
         self.toggle_test_button.setText("INICIAR TESTE")
         self.toggle_test_button.setStyleSheet(
-            "background-color: #28a745; color: white; font-weight: bold; "
-            "padding: 10px; font-size: 14px;"
+            f"background-color: #1e4d2b; color: {_GREEN}; font-weight: bold; "
+            "padding: 10px; font-size: 14px; border: 1px solid #40a060; border-radius: 4px;"
         )
         self.toggle_test_button.setChecked(False)
         self.test_name_input.setEnabled(True)
+        self._refresh_status_bar(test_running=False)
 
     @Slot(bool)
     def _on_beeper_toggled(self, checked: bool):
         self.psu_beeper_signal.emit(not checked)
         if checked:
-            self.beeper_button.setText("Buzzer PSU: SILENCIADO")
-            self.beeper_button.setStyleSheet("background-color: #856404; color: white;")
+            self.beeper_button.setText("Buzzer: SILENCIADO")
+            self.beeper_button.setStyleSheet(
+                f"background-color: #3a2e10; color: {_YELLOW}; "
+                "border: 1px solid #856404;"
+            )
         else:
             self.beeper_button.setText("Silenciar Buzzer PSU")
             self.beeper_button.setStyleSheet("")
