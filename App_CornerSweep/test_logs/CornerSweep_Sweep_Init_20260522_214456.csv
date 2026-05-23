@@ -1,0 +1,15 @@
+# Corner Sweep Test
+# Test:            Sweep_Init
+# Date:            2026-05-22T21:44:56.625993
+# Target DUT Temp: 42.0 °C
+# Corner voltages: [1.1, 1.0, 0.9] V
+# Sweep step:      0.01 V
+# Protocol:        'T'/0x54 trigger, 15-byte LE packet
+#
+timestamp,elapsed_s,phase,corner_v_cmd,dut_temp_c,oven_temp_c,dut_volt_v,psu_volt_v,psu_curr_a,dut_slack,dut_fail,dut_wrong,dut_correct,dut_error_count,notes
+
+#
+# === SUMMARY ===
+# Corner_V_cmd, VCCINT_mean_V, Slack_mean, Slack_min, Slack_max, Fail, Wrong_total, ErrCnt_total
+# No failure detected within sweep range
+# Closed: 2026-05-22T21:45:34.081304
