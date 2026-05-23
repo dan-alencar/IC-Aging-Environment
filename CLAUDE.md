@@ -94,11 +94,13 @@ PC ──serial──► Arduino             [optional: oven PID + SSR]
 PC ──VISA───► PSU (SCPI)          [optional: programmable supply]
 ```
 
+The UI uses a Catppuccin Mocha dark theme (`_DARK_STYLE` in `main_window.py`). Layout: top bar (oven/PSU/test controls), tabbed area (Sensor | Temperatura | Tensão), and a `QSplitter`-pinned log panel always visible below the tabs (not a separate tab). A status bar shows per-device connection state.
+
 Workers run in QThread via QObject + QTimer polling:
 - `ArduinoWorker` — sends `GET_DATA\n`, receives `DATA,<temp>,<sp>,<out>` ASCII
 - `PSUWorker` — PyVISA SCPI (`MEAS:VOLT?`, `MEAS:CURR?`, `OUTP ON/OFF`)
-- `DUTWorker` — sends byte `'F'`, reads 9 binary bytes Little Endian: `[TEMP×3][SLACK×2][VOLT×3][FAIL×1]`, converts temp/voltage by dividing raw by 1000. **DUT baud rate is 9600, not 115200.** (App_Nexys only — App_2Nexys uses `'T'` / `\x54` and the 15-byte packet.)
-- `TestSequencer` — orchestrates all workers, runs safety limit checks, writes CSV rows
+- `DUTWorker` — sends byte `'T'` (`\x54`), reads 15 binary bytes Little Endian: `[TEMP×3][SLACK×2][VCCINT×3][FAIL×1][WRONG×2][CORRECT×2][ERR_CNT×2]`, converts temp/voltage by dividing raw by 1000. **DUT baud rate is 9600, not 115200.** Adder-canary fields (`wrong`, `correct`, `error_count`) are logged to CSV but not shown in the UI.
+- `TestSequencer` — orchestrates all workers, runs safety limit checks, writes CSV rows. Runs the same VCCINT P-only closed-loop trim as App_2Nexys (`VOLTAGE_KP = 0.1` V/V in `config.py`); logs both `psu_cmd_v` and `psu_voltage`.
 
 ### App_FPGAging_Slack_Sensor (SBCCI UltraScale+ target)
 
@@ -141,7 +143,7 @@ PC ──serial──► Arduino (shared oven)                 [optional]
 
 **DUT packet (App_2Nexys, 15 bytes, Little Endian):** `DUTWorker.poll_data()` sends byte `'T'` (`\x54`) and reads 15 bytes: `[TEMP×3][SLACK×2][VCCINT×3][FAIL×1][WRONG×2][CORRECT×2][ERR_CNT×2]`. The adder-canary fields (`wrong`, `correct`, `error_count`) are logged to CSV but not shown in the UI. App_Nexys (single-DUT) sends `'F'` and uses the legacy 9-byte packet.
 
-**VCCINT closed-loop voltage control:** The FPGA XADC reports actual VCCINT (internal supply voltage) inside the DUT packet (`dut_volt` field). `TestSequencer.log_data_tick()` runs a P-only trim every tick:
+**VCCINT closed-loop voltage control (both App_Nexys and App_2Nexys):** The FPGA XADC reports actual VCCINT (internal supply voltage) inside the DUT packet (`dut_volt` field). `TestSequencer.log_data_tick()` runs a P-only trim every tick:
 ```
 psu_cmd += VOLTAGE_KP * (vccint_setpoint - measured_vccint)
 psu_cmd  = clamp(psu_cmd, PSU_MIN_V, PSU_MAX_V)
@@ -173,7 +175,7 @@ The `adder_canary` module implements a **dual-adder** design: `u_sensor` (toggle
 
 The FPGA also includes `uart_rx` (receives `'T'`/0x54 trigger byte from PC) and `sensor_stream` (latches all inputs at trigger time, serialises the 15-byte packet). The trigger is: UART `'T'`, or either manual button (BTNC/BTNL).
 
-**Current RTL only supports the 15-byte packet triggered by `'T'`.** App_Nexys (which sends `'F'` and reads 9 bytes) is incompatible with a freshly built bitstream — use App_2Nexys with the pre-built `nexys4_aging_top_dual-sensor.bit` for the current RTL.
+**Current RTL only supports the 15-byte packet triggered by `'T'`.** Both App_Nexys and App_2Nexys now use the `'T'`/15-byte protocol and are compatible with the current bitstream.
 
 ### Dual-adder sensor (implemented)
 
