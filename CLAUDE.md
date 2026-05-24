@@ -91,14 +91,16 @@ Custom drivers live in `STM_FW_Aging/Drivers/`:
 ```
 PC ──serial──► DUT (FPGA Nexys)    [always required]
 PC ──serial──► Arduino             [optional: oven PID + SSR]
-PC ──VISA───► PSU (SCPI)          [optional: programmable supply]
+PC ──USB-TMC─► PSU IT6502D (VISA) [optional: programmable supply]
 ```
 
 The UI uses a Catppuccin Mocha dark theme (`_DARK_STYLE` in `main_window.py`). Layout: top bar (oven/PSU/test controls), tabbed area (Sensor | Temperatura | Tensão), and a `QSplitter`-pinned log panel always visible below the tabs (not a separate tab). A status bar shows per-device connection state.
 
+**PSU — ITECH IT6502D:** Connects via USB-TMC using PyVISA with the `@py` backend (`pyvisa-py`). `config.PSU_PORT` must be a USB VISA resource string such as `USB0::0x1AB1::0x0E11::IT6502D300004::INSTR`. To find it, run: `python3 -c "import pyvisa; rm=pyvisa.ResourceManager('@py'); print(rm.list_resources())"`. The setup dialog (`setup_config.py`) lists detected USB resources automatically. Only `USB::...` strings are accepted — legacy serial paths and `ASRL::...` strings are rejected at load time in `config.load_config()` to prevent the "Could not configure port" error that occurs when pyvisa-py tries to open a serial resource.
+
 Workers run in QThread via QObject + QTimer polling:
 - `ArduinoWorker` — sends `GET_DATA\n`, receives `DATA,<temp>,<sp>,<out>` ASCII
-- `PSUWorker` — PyVISA SCPI (`MEAS:VOLT?`, `MEAS:CURR?`, `OUTP ON/OFF`)
+- `PSUWorker` — ITECH IT6502D via PyVISA (`@py` backend), SCPI: `MEAS:VOLT?`, `MEAS:CURR?`, `OUTP ON/OFF`. No baud rate — USB-TMC only.
 - `DUTWorker` — sends byte `'T'` (`\x54`), reads 15 binary bytes Little Endian: `[TEMP×3][SLACK×2][VCCINT×3][FAIL×1][WRONG×2][CORRECT×2][ERR_CNT×2]`, converts temp/voltage by dividing raw by 1000. **DUT baud rate is 9600, not 115200.** Adder-canary fields (`wrong`, `correct`, `error_count`) are logged to CSV but not shown in the UI.
 - `TestSequencer` — orchestrates all workers, runs safety limit checks, writes CSV rows. Runs the same VCCINT P-only closed-loop trim as App_2Nexys (`VOLTAGE_KP = 0.1` V/V in `config.py`); logs both `psu_cmd_v` and `psu_voltage`.
 
