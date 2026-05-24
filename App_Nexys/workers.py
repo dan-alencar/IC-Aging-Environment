@@ -7,7 +7,7 @@ sem travar a interface gráfica.
 
 Workers:
   - ArduinoWorker: Controle do forno (PID, SSR, NTC)
-  - PSUWorker: Controle da fonte de alimentação (VISA/SCPI)
+  - PSUWorker: Controle da fonte de alimentação (IT6502D USB-TMC/PyVISA)
   - DUTWorker: Comunicação com FPGA (sensor de slack)
   - TestSequencer: Orquestrador do teste
 
@@ -176,30 +176,23 @@ class ArduinoWorker(QObject):
 
 
 # =============================================================================
-#   WORKER 2: Controlador da Fonte (PSU) - Agilent E3634A via RS-232
+#   WORKER 2: Controlador da Fonte (PSU) - ITECH IT6502D via USB-TMC (PyVISA)
 # =============================================================================
 class PSUWorker(QObject):
-    """Agilent E3634A — RS-232 via USB-Serial adapter (ttyUSB)."""
+    """ITECH IT6502D — USB-TMC via PyVISA (@py backend).
+    config.PSU_PORT must be a USB VISA resource string, e.g.
+    'USB0::0x1AB1::0x0E11::IT6502D300004::INSTR'.
+    """
     log_message = Signal(str)
     data_ready = Signal(float, float)  # voltage_v, current_a
 
     def __init__(self):
         super().__init__()
-        self._id = "PSU (E3634A)"
-        self.ser = None
+        self.rm   = None
+        self.inst = None
         self.is_running = False
         self._latest_data = (0.0, 0.0)
         self._lock = threading.Lock()
-
-    def _query(self, cmd: str) -> str:
-        with self._lock:
-            self.ser.reset_input_buffer()
-            self.ser.write(f"{cmd}\r\n".encode())
-            return self.ser.readline().decode(errors="replace").strip()
-
-    def _write(self, cmd: str):
-        with self._lock:
-            self.ser.write(f"{cmd}\r\n".encode())
 
     @Slot()
     def start(self):
@@ -207,91 +200,101 @@ class PSUWorker(QObject):
             self.log_message.emit("PSU desabilitada — fonte de alimentação inativa.")
             return
         try:
-            self.ser = serial.Serial(
-                config.PSU_PORT, config.PSU_BAUD,
-                stopbits=serial.STOPBITS_TWO, timeout=3,
-            )
-            time.sleep(0.1)                   # let E3634A finish any pending TX
-            self.ser.reset_input_buffer()     # discard stale bytes from previous session
-            self._write("*CLS")              # clear error queue + STB/ESR
-            time.sleep(0.1)
-            idn = self._query("*IDN?")
-            self.log_message.emit(f"{self._id} conectado: {idn}")
-            self._write(f"CURR {config.MAX_PSU_CURRENT_A}")
-            self._write("SYSTEM:BEEPER:STATE OFF")
+            import pyvisa as visa
+            self.rm   = visa.ResourceManager("@py")
+            self.inst = self.rm.open_resource(config.PSU_PORT)
+            self.inst.timeout           = 5000
+            self.inst.read_termination  = "\n"
+            self.inst.write_termination = "\n"
+            idn = self.inst.query("*IDN?").strip()
+            self.log_message.emit(f"PSU (IT6502D) conectada: {idn}")
+            self.inst.write(f"CURR {config.MAX_PSU_CURRENT_A:.3f}")
             self.is_running = True
             self.poll_timer = QTimer(self)
             self.poll_timer.setInterval(config.LOG_INTERVAL_MS)
             self.poll_timer.timeout.connect(self.poll_data)
             self.poll_timer.start()
         except Exception as e:
-            self.log_message.emit(f"ERRO ({self._id}): {e}")
+            self.log_message.emit(f"ERRO (PSU): {e}")
 
     @Slot()
     def stop(self):
         self.is_running = False
         if hasattr(self, "poll_timer"):
             self.poll_timer.stop()
-        try:
-            if self.ser and self.ser.is_open:
-                self._write("OUTP OFF")
-                self.ser.close()
-        except Exception:
-            pass
-        self.log_message.emit(f"{self._id} desconectado.")
+        with self._lock:
+            try:
+                if self.inst:
+                    self.inst.write("OUTP OFF")
+                    self.inst.close()
+                if self.rm:
+                    self.rm.close()
+            except Exception:
+                pass
+            self.inst = None
+            self.rm   = None
+        self.log_message.emit("PSU (IT6502D) desconectada.")
 
     def poll_data(self):
-        if not self.is_running or not self.ser:
+        if not self.is_running or not self.inst:
             return
         try:
-            v_str = self._query("MEAS:VOLT?")
-            time.sleep(0.05)   # allow E3634A to flush TX before next query (avoids ERR -410)
-            c_str = self._query("MEAS:CURR?")
-            if not v_str or not c_str:
-                return
-            self._latest_data = (float(v_str), float(c_str))
-            self.data_ready.emit(*self._latest_data)
-        except ValueError:
-            pass  # transient garbled response — skip tick silently
+            with self._lock:
+                if not self.inst:
+                    return
+                v = float(self.inst.query("MEAS:VOLT?").strip())
+                c = float(self.inst.query("MEAS:CURR?").strip())
+            self._latest_data = (v, c)
+            self.data_ready.emit(v, c)
         except Exception as e:
-            self.log_message.emit(f"Erro leitura {self._id}: {e}")
+            self.log_message.emit(f"Erro leitura PSU: {e}")
 
     def get_latest_data(self):
         return self._latest_data
 
     @Slot(float)
     def set_voltage(self, voltage_v: float):
-        if self.ser and self.ser.is_open:
+        with self._lock:
+            if not self.inst:
+                return
             try:
-                self._write(f"VOLT {voltage_v:.4f}")
+                self.inst.write(f"VOLT {voltage_v:.4f}")
             except Exception as e:
-                self.log_message.emit(f"ERRO tensão {self._id}: {e}")
+                self.log_message.emit(f"ERRO tensão PSU: {e}")
 
     @Slot()
     def turn_on(self):
-        if self.ser and self.ser.is_open:
+        with self._lock:
+            if not self.inst:
+                return
             try:
-                self._write("OUTP ON")
-                self.log_message.emit(f"{self._id}: saída LIGADA")
+                self.inst.write("OUTP ON")
             except Exception as e:
-                self.log_message.emit(f"ERRO ligar {self._id}: {e}")
+                self.log_message.emit(f"ERRO ligar PSU: {e}")
+                return
+        self.log_message.emit("PSU (IT6502D): saída LIGADA")
 
     @Slot()
     def turn_off(self):
-        if self.ser and self.ser.is_open:
+        with self._lock:
+            if not self.inst:
+                return
             try:
-                self._write("OUTP OFF")
-                self.log_message.emit(f"{self._id}: saída DESLIGADA")
+                self.inst.write("OUTP OFF")
             except Exception as e:
-                self.log_message.emit(f"ERRO desligar {self._id}: {e}")
+                self.log_message.emit(f"ERRO desligar PSU: {e}")
+                return
+        self.log_message.emit("PSU (IT6502D): saída DESLIGADA")
 
     @Slot(bool)
     def set_beeper(self, enabled: bool):
-        if self.ser and self.ser.is_open:
+        with self._lock:
+            if not self.inst:
+                return
             try:
-                self._write(f"SYSTEM:BEEPER:STATE {'ON' if enabled else 'OFF'}")
+                self.inst.write(f"SYSTEM:BEEPER:STATE {'ON' if enabled else 'OFF'}")
             except Exception as e:
-                self.log_message.emit(f"ERRO buzzer {self._id}: {e}")
+                self.log_message.emit(f"ERRO buzzer PSU: {e}")
 
 
 # =============================================================================
@@ -442,7 +445,7 @@ class TestSequencer(QObject):
         self._dut_target_temp = 0.0
         self._outer_tick = 0
 
-        # VCCINT closed-loop (E3634A)
+        # VCCINT closed-loop (IT6502D)
         self._psu_cmd_v = 0.0
 
         self.log_timer = QTimer(self)

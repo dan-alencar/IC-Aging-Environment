@@ -1,4 +1,3 @@
-import platform
 import serial.tools.list_ports
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QGridLayout, QComboBox,
@@ -18,7 +17,6 @@ class SetupDialog(QDialog):
 
         all_ports = sorted([p.device for p in serial.tools.list_ports.comports()])
         self.serial_ports = all_ports
-        self.usb_ports = [p for p in all_ports if "ttyUSB" in p or "COM" in p]
         self.acm_ports = [p for p in all_ports if "ttyACM" in p]
 
         self._build_ui()
@@ -71,21 +69,18 @@ class SetupDialog(QDialog):
         self.grp_ard.setLayout(grid_ard)
         layout.addWidget(self.grp_ard)
 
-        # PSU (optional) — Agilent E3634A via RS-232 (ttyUSB)
-        self.grp_psu = QGroupBox("PSU — Agilent E3634A  (opcional, RS-232)")
+        # PSU (optional) — ITECH IT6502D via USB-TMC (PyVISA)
+        self.grp_psu = QGroupBox("PSU — ITECH IT6502D  (opcional, USB-TMC/VISA)")
         self.grp_psu.setCheckable(True)
         self.grp_psu.setChecked(config.PSU_ENABLED)
         grid_psu = QGridLayout()
         grid_psu.setColumnStretch(1, 1)
-        grid_psu.addWidget(QLabel("Porta Serial:"), 0, 0)
-        self.cmb_psu = _port_combo(self.usb_ports)
+        grid_psu.addWidget(QLabel("Recurso VISA:"), 0, 0)
+        self.cmb_psu = _visa_combo(current=config.PSU_PORT)
         grid_psu.addWidget(self.cmb_psu, 0, 1)
-        grid_psu.addWidget(QLabel("Baud Rate:"), 1, 0)
-        self.cmb_psu_baud = _baud_combo(default="9600")
-        grid_psu.addWidget(self.cmb_psu_baud, 1, 1)
-        grid_psu.addWidget(QLabel("VCCINT Setpoint (V):"), 2, 0)
+        grid_psu.addWidget(QLabel("VCCINT Setpoint (V):"), 1, 0)
         self.spn_vccint = _vccint_spinner()
-        grid_psu.addWidget(self.spn_vccint, 2, 1)
+        grid_psu.addWidget(self.spn_vccint, 1, 1)
         self.grp_psu.setLayout(grid_psu)
         layout.addWidget(self.grp_psu)
 
@@ -109,7 +104,6 @@ class SetupDialog(QDialog):
         self.cmb_ard_baud.setCurrentText(str(config.ARDUINO_BAUD))
 
         _select(self.cmb_psu, config.PSU_PORT)
-        self.cmb_psu_baud.setCurrentText(str(config.PSU_BAUD))
         self.spn_vccint.setValue(config.VCCINT_SETPOINT_V)
 
     def _save(self):
@@ -123,7 +117,6 @@ class SetupDialog(QDialog):
             arduino_b=self.cmb_ard_baud.currentText(),
             arduino_enabled=ard_on,
             psu_p=self.cmb_psu.currentText() if psu_on else "",
-            psu_b=self.cmb_psu_baud.currentText(),
             psu_enabled=psu_on,
             vccint_setpoint=self.spn_vccint.value(),
         )
@@ -138,6 +131,36 @@ def _port_combo(ports):
     cb = QComboBox()
     cb.setEditable(False)
     cb.addItems(ports if ports else ["(nenhuma porta detectada)"])
+    return cb
+
+
+def _visa_combo(current=""):
+    """Combo box listing USB-TMC VISA resources (IT6502D connects as USB::...).
+    Always editable so the user can paste a resource string manually."""
+    try:
+        import pyvisa as visa
+        rm = visa.ResourceManager("@py")
+        resources = [r for r in rm.list_resources() if r.startswith("USB")]
+        rm.close()
+    except Exception:
+        resources = []
+
+    cb = QComboBox()
+    cb.setEditable(True)
+
+    # If we have a saved valid USB resource, make sure it's in the list
+    items = list(resources)
+    if current and current.startswith("USB") and current not in items:
+        items.insert(0, current)
+
+    if items:
+        cb.addItems(items)
+    else:
+        cb.addItem("(nenhum recurso USB-TMC detectado)")
+
+    if current:
+        _select(cb, current)
+
     return cb
 
 

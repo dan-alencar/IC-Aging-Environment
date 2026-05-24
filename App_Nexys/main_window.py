@@ -249,7 +249,7 @@ class MainWindow(QMainWindow):
             "padding: 5px 8px; border-radius: 4px; font-size: 11px;"
         )
 
-        self.psu_control_group = QGroupBox("Fonte PSU (E3634A)")
+        self.psu_control_group = QGroupBox("Fonte PSU (IT6502D)")
         self.psu_setpoint_input = QDoubleSpinBox()
         self.psu_setpoint_input.setRange(0.0, 1.5)
         self.psu_setpoint_input.setValue(config.VCCINT_SETPOINT_V)

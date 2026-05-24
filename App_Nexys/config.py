@@ -26,8 +26,8 @@ PSU_PORT = ""
 DUT_PORT = ""
 
 ARDUINO_BAUD = 115200
-PSU_BAUD = 9600
-DUT_BAUD = 9600
+DUT_BAUD     = 9600
+# PSU uses USB-TMC/VISA — no baud rate
 
 ARDUINO_ENABLED = False
 PSU_ENABLED = False
@@ -63,7 +63,7 @@ DEFAULT_RAMP_RATE_C_PER_SEC = 1.0
 DEFAULT_OVEN_SAMPLE_TIME_MS = 5000
 
 # =============================================================================
-#   VCCINT CLOSED-LOOP VOLTAGE CONTROL (E3634A)
+#   VCCINT CLOSED-LOOP VOLTAGE CONTROL (IT6502D)
 # =============================================================================
 # TestSequencer trims PSU output each log tick: psu_cmd += VOLTAGE_KP * (setpoint - vccint).
 # VOLTAGE_KP is conservative to avoid oscillation.
@@ -76,8 +76,8 @@ PSU_MAX_V = 1.5
 #   LIMITES DE SEGURANÇA
 # =============================================================================
 MAX_OVEN_TEMP_C = 130.0      # Temperatura máxima do forno
-MAX_DUT_TEMP_C = 140.0       # Temperatura máxima do DUT
-MAX_PSU_CURRENT_A = 1.5      # Corrente máxima da fonte
+MAX_DUT_TEMP_C = 160.0       # Temperatura máxima do DUT
+MAX_PSU_CURRENT_A = 3.0      # Corrente máxima da fonte
 
 # =============================================================================
 #   FUNÇÕES DE CONFIGURAÇÃO
@@ -87,16 +87,16 @@ def get_default_ports():
     """Retorna portas padrão baseadas no Sistema Operacional."""
     system = platform.system()
     if system == "Windows":
-        return {"arduino": "COM3", "psu": "COM4", "dut": "COM5"}
+        return {"arduino": "COM3", "psu": "", "dut": "COM5"}
     elif system == "Linux":
-        return {"arduino": "/dev/ttyUSB0", "psu": "/dev/ttyUSB1", "dut": "/dev/ttyACM0"}
+        return {"arduino": "/dev/ttyUSB0", "psu": "", "dut": "/dev/ttyACM0"}
     return {"arduino": "", "psu": "", "dut": ""}
 
 
 def load_config():
     """Carrega as configurações (Portas e Bauds) do arquivo JSON."""
     global ARDUINO_PORT, PSU_PORT, DUT_PORT
-    global ARDUINO_BAUD, PSU_BAUD, DUT_BAUD
+    global ARDUINO_BAUD, DUT_BAUD
     global ARDUINO_ENABLED, PSU_ENABLED
     global VCCINT_SETPOINT_V
 
@@ -108,15 +108,16 @@ def load_config():
                 data = json.load(f)
 
                 ARDUINO_PORT = data.get("arduino_port", defaults["arduino"])
-                PSU_PORT = data.get("psu_port", defaults["psu"])
-                DUT_PORT = data.get("dut_port", defaults["dut"])
+                psu_p        = data.get("psu_port", "")
+                # Reject legacy serial paths and ASRL VISA strings — IT6502D uses USB-TMC
+                PSU_PORT     = psu_p if psu_p.startswith("USB") else ""
+                DUT_PORT     = data.get("dut_port", defaults["dut"])
 
                 ARDUINO_BAUD = int(data.get("arduino_baud", 115200))
-                PSU_BAUD = int(data.get("psu_baud", 9600))
-                DUT_BAUD = int(data.get("dut_baud", 9600))
+                DUT_BAUD     = int(data.get("dut_baud", 9600))
 
-                ARDUINO_ENABLED = data.get("arduino_enabled", False)
-                PSU_ENABLED = data.get("psu_enabled", False)
+                ARDUINO_ENABLED   = data.get("arduino_enabled", False)
+                PSU_ENABLED       = data.get("psu_enabled", False)
                 VCCINT_SETPOINT_V = float(data.get("vccint_setpoint", 1.0))
 
         except Exception as e:
@@ -129,40 +130,38 @@ def load_config():
 def _apply_defaults(defaults):
     """Aplica configurações padrão."""
     global ARDUINO_PORT, PSU_PORT, DUT_PORT
-    global ARDUINO_BAUD, PSU_BAUD, DUT_BAUD
+    global ARDUINO_BAUD, DUT_BAUD
     global ARDUINO_ENABLED, PSU_ENABLED
     global VCCINT_SETPOINT_V
 
     ARDUINO_PORT = defaults["arduino"]
-    PSU_PORT = defaults["psu"]
-    DUT_PORT = defaults["dut"]
+    PSU_PORT     = ""
+    DUT_PORT     = defaults["dut"]
     ARDUINO_BAUD = 115200
-    PSU_BAUD = 9600
-    DUT_BAUD = 9600
-    ARDUINO_ENABLED = False
-    PSU_ENABLED = False
+    DUT_BAUD     = 9600
+    ARDUINO_ENABLED   = False
+    PSU_ENABLED       = False
     VCCINT_SETPOINT_V = 1.0
 
 
 def save_config(dut_p, dut_b,
                 arduino_p="", arduino_b=115200, arduino_enabled=False,
-                psu_p="", psu_b=9600, psu_enabled=False,
+                psu_p="", psu_enabled=False,
                 vccint_setpoint=1.0):
-    """Salva Portas, Bauds e flags de habilitação no arquivo JSON."""
+    """Salva portas/recursos e flags de habilitação no arquivo JSON."""
     global ARDUINO_PORT, PSU_PORT, DUT_PORT
-    global ARDUINO_BAUD, PSU_BAUD, DUT_BAUD
+    global ARDUINO_BAUD, DUT_BAUD
     global ARDUINO_ENABLED, PSU_ENABLED
     global VCCINT_SETPOINT_V
 
     data = {
-        "dut_port": dut_p,
-        "dut_baud": dut_b,
-        "arduino_port": arduino_p,
-        "arduino_baud": arduino_b,
+        "dut_port":        dut_p,
+        "dut_baud":        dut_b,
+        "arduino_port":    arduino_p,
+        "arduino_baud":    arduino_b,
         "arduino_enabled": arduino_enabled,
-        "psu_port": psu_p,
-        "psu_baud": psu_b,
-        "psu_enabled": psu_enabled,
+        "psu_port":        psu_p,   # USB-TMC VISA resource string
+        "psu_enabled":     psu_enabled,
         "vccint_setpoint": vccint_setpoint,
     }
 
@@ -170,14 +169,13 @@ def save_config(dut_p, dut_b,
         with open(SETTINGS_FILE, 'w') as f:
             json.dump(data, f, indent=4)
 
-        DUT_PORT = dut_p
-        DUT_BAUD = int(dut_b)
+        DUT_PORT     = dut_p
+        DUT_BAUD     = int(dut_b)
         ARDUINO_PORT = arduino_p
         ARDUINO_BAUD = int(arduino_b)
-        ARDUINO_ENABLED = arduino_enabled
-        PSU_PORT = psu_p
-        PSU_BAUD = int(psu_b)
-        PSU_ENABLED = psu_enabled
+        ARDUINO_ENABLED   = arduino_enabled
+        PSU_PORT          = psu_p
+        PSU_ENABLED       = psu_enabled
         VCCINT_SETPOINT_V = float(vccint_setpoint)
         return True
 
