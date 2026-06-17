@@ -18,6 +18,7 @@ Data: Janeiro/2026
 from PySide6.QtCore import QObject, Signal, Slot, QTimer
 import serial
 import time
+import csv as csv_mod
 from datetime import datetime
 import config
 from logger import DataLogger
@@ -425,17 +426,18 @@ class TestSequencer(QObject):
     log_message = Signal(str)
     plot_data_update = Signal(dict)
     test_finished = Signal()
-    
+    sweep_step_changed = Signal(int, float, int, str)  # (step_idx_0based, target, total_steps, mode)
+
     def __init__(self, arduino_worker, psu_worker, dut_worker):
         super().__init__()
         self.arduino = arduino_worker
         self.psu = psu_worker
         self.dut = dut_worker
-        
+
         self.logger = None
         self.is_running = False
         self.start_time = time.time()
-        
+
         # Estatísticas em tempo real
         self.temp_samples = []
         self.error_samples = []
@@ -447,6 +449,19 @@ class TestSequencer(QObject):
 
         # VCCINT closed-loop (IT6502D)
         self._psu_cmd_v = 0.0
+
+        # Sweep automático
+        self._sweep_mode = None          # None | 'voltage' | 'temperature'
+        self._sweep_steps = []
+        self._sweep_idx = 0
+        self._sweep_required_stable = 60
+        self._sweep_min_dwell = 60
+        self._sweep_tolerance = 0.02
+        self._sweep_stable_ticks = 0
+        self._sweep_dwell_ticks = 0
+        self._sweep_step_data = []       # (slack, dut_temp, dut_volt, oven_temp, psu_v, psu_i, fail) por tick
+        self._sweep_csv_file   = None    # CSV paralelo do sweep (bruto)
+        self._sweep_csv_writer = None
 
         self.log_timer = QTimer(self)
         self.log_timer.setInterval(config.LOG_INTERVAL_MS)
@@ -500,8 +515,44 @@ class TestSequencer(QObject):
                 self.psu.turn_on()
                 time.sleep(0.3)
 
-            time.sleep(0.5) 
-            
+            # 4. Configurar sweep (se habilitado)
+            sweep_mode = settings.get('sweep_mode')
+            if sweep_mode in ('voltage', 'temperature'):
+                sweep_steps = settings.get('sweep_steps', [])
+                if not sweep_steps:
+                    self.log_message.emit("[Sweep] ERRO: lista de passos vazia.")
+                elif sweep_mode == 'voltage' and (not config.PSU_ENABLED or not self.psu.is_running):
+                    self.log_message.emit("[Sweep] ERRO: PSU necessária para sweep de tensão.")
+                else:
+                    self._sweep_mode = sweep_mode
+                    self._sweep_steps = list(sweep_steps)
+                    self._sweep_required_stable = int(settings.get('sweep_stable_s', 60))
+                    self._sweep_min_dwell = int(settings.get('sweep_min_dwell', 60))
+                    self._sweep_tolerance = float(settings.get('sweep_tolerance', 0.02))
+                    self._sweep_idx = 0
+                    self._sweep_stable_ticks = 0
+                    self._sweep_dwell_ticks = 0
+                    self._sweep_step_data = []
+                    unit = 'V' if sweep_mode == 'voltage' else '°C'
+                    self.log_message.emit(
+                        f"[Sweep] Modo {sweep_mode} | {len(sweep_steps)} passos: "
+                        f"{[f'{v}{unit}' for v in sweep_steps]}"
+                    )
+                    # Abre CSV paralelo do sweep (dados brutos)
+                    sweep_path = self.logger.filepath.replace('.csv', '_sweep.csv')
+                    self._sweep_csv_file = open(
+                        sweep_path, 'w', newline='', encoding='utf-8', buffering=1
+                    )
+                    self._sweep_csv_writer = csv_mod.writer(self._sweep_csv_file)
+                    self._sweep_csv_writer.writerow([
+                        'time_sec', 'sweep_step', 'sweep_target',
+                        'dut_volt_v', 'oven_temp_c', 'dut_temp_c', 'dut_slack',
+                    ])
+                    self.log_message.emit(f"[Sweep] CSV paralelo: {sweep_path}")
+                    self._apply_sweep_step()
+
+            time.sleep(0.5)
+
             # 6. Iniciar timer de log
             self.is_running = True
             self.start_time = time.time()
@@ -546,19 +597,25 @@ class TestSequencer(QObject):
         self.log_message.emit("Parando teste...")
         self.is_running = False
         self.log_timer.stop()
-        
-        # Log estatísticas finais
+
         self._log_final_statistics()
-        
+
+        # Fecha CSV paralelo do sweep
+        if self._sweep_csv_file:
+            self._sweep_csv_file.close()
+            self._sweep_csv_file   = None
+            self._sweep_csv_writer = None
+        self._sweep_mode = None
+
         if config.ARDUINO_ENABLED:
             self.arduino.stop_test_oven()
         if config.PSU_ENABLED:
             self.psu.turn_off()
-        
+
         if self.logger:
             self.logger.close()
             self.logger = None
-            
+
         self.log_message.emit("=" * 50)
         self.log_message.emit(">>> TESTE FINALIZADO <<<")
         self.log_message.emit("=" * 50)
@@ -660,9 +717,23 @@ class TestSequencer(QObject):
                 'dut_error_count': errcnt_dut,
             }
 
-            # 5. Log no arquivo
+            # 5. Log no arquivo principal
             if self.logger:
                 self.logger.write_data_row(data_row)
+
+            # 5b. Log no CSV paralelo do sweep (dados brutos)
+            if self._sweep_csv_writer and self._sweep_mode:
+                target = (self._sweep_steps[self._sweep_idx]
+                          if self._sweep_idx < len(self._sweep_steps) else float('nan'))
+                self._sweep_csv_writer.writerow([
+                    f"{elapsed_time:.3f}",
+                    self._sweep_idx + 1,
+                    target,
+                    f"{v_dut:.4f}",
+                    f"{t_oven:.2f}",
+                    f"{t_dut:.3f}",
+                    s_dut,
+                ])
 
             # 6. Log periódico no terminal (a cada 30s)
             if int(elapsed_time) % 30 == 0 and int(elapsed_time) > 0:
@@ -677,6 +748,10 @@ class TestSequencer(QObject):
 
             # 9. Verificar limites de segurança
             self._check_safety_limits(t_dut, c_psu, t_oven)
+
+            # 10. Avançar passo do sweep (se ativo)
+            if self._sweep_mode:
+                self._do_sweep_tick(v_dut, t_oven, s_dut, t_dut, v_psu, c_psu, fail_dut)
 
         except Exception as e:
             self.log_message.emit(f"ERRO no loop de log: {e}")
@@ -726,3 +801,77 @@ class TestSequencer(QObject):
         if config.ARDUINO_ENABLED and t_oven > config.MAX_OVEN_TEMP_C:
             self.log_message.emit(f"!!! ALERTA: Temp Forno ({t_oven:.1f}°C) > {config.MAX_OVEN_TEMP_C}°C !!!")
             self.stop_test()
+
+    # =========================================================================
+    #   Sweep automático
+    # =========================================================================
+
+    def _apply_sweep_step(self):
+        """Aplica o passo atual do sweep (muda tensão ou setpoint do forno)."""
+        if not self._sweep_steps or self._sweep_idx >= len(self._sweep_steps):
+            return
+        target = self._sweep_steps[self._sweep_idx]
+        total  = len(self._sweep_steps)
+
+        if self._sweep_mode == 'voltage':
+            self._psu_cmd_v = target
+            config.VCCINT_SETPOINT_V = target
+            self.psu.set_voltage(target)
+            self.log_message.emit(
+                f"[Sweep] Passo {self._sweep_idx + 1}/{total}: VCCINT → {target:.2f} V"
+            )
+        else:  # temperature
+            if config.ARDUINO_ENABLED and self.arduino.is_ready:
+                self.arduino.set_target_setpoint(target)
+            self.log_message.emit(
+                f"[Sweep] Passo {self._sweep_idx + 1}/{total}: Forno SP → {target:.0f} °C"
+            )
+
+        if self.logger:
+            unit = 'V' if self._sweep_mode == 'voltage' else '°C'
+            self.logger.write_comment(
+                f"SWEEP PASSO {self._sweep_idx + 1}/{total}: target={target}{unit}"
+            )
+
+        self._sweep_step_data = []
+        self._sweep_dwell_ticks = 0
+        self._sweep_stable_ticks = 0
+        self.sweep_step_changed.emit(self._sweep_idx, target, total, self._sweep_mode)
+
+    def _do_sweep_tick(self, v_dut, t_oven, s_dut, t_dut, v_psu, c_psu, fail_dut):
+        """Verifica critério de estabilidade e avança passo quando atingido."""
+        if not self._sweep_steps or self._sweep_idx >= len(self._sweep_steps):
+            return
+
+        target = self._sweep_steps[self._sweep_idx]
+        self._sweep_dwell_ticks += 1
+        self._sweep_step_data.append((s_dut, t_dut, v_dut, t_oven, v_psu, c_psu, fail_dut))
+
+        if self._sweep_dwell_ticks < self._sweep_min_dwell:
+            return
+
+        measured = v_dut if self._sweep_mode == 'voltage' else t_oven
+        if abs(measured - target) < self._sweep_tolerance:
+            self._sweep_stable_ticks += 1
+        else:
+            self._sweep_stable_ticks = 0
+
+        if self._sweep_stable_ticks < self._sweep_required_stable:
+            return
+
+        # Critério atingido — avança para o próximo passo
+        unit = 'V' if self._sweep_mode == 'voltage' else '°C'
+        self.log_message.emit(
+            f"[Sweep] Passo {self._sweep_idx + 1} concluído: "
+            f"target={target}{unit}, dwell={len(self._sweep_step_data)}s"
+        )
+        self._sweep_idx += 1
+
+        if self._sweep_idx >= len(self._sweep_steps):
+            self.log_message.emit("=" * 50)
+            self.log_message.emit(">>> SWEEP AUTOMÁTICO CONCLUÍDO <<<")
+            self.log_message.emit("=" * 50)
+            self.stop_test()
+        else:
+            self._apply_sweep_step()
+
