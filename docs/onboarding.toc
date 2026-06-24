@@ -1,0 +1,93 @@
+\contentsline {chapter}{\numberline {1}Introduction}{4}{chapter.1}%
+\contentsline {section}{\numberline {1.1}What the project does}{4}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Who this document is for}{4}{section.1.2}%
+\contentsline {section}{\numberline {1.3}Document scope}{4}{section.1.3}%
+\contentsline {chapter}{\numberline {2}Scientific Background}{6}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Why FPGAs age}{6}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Negative Bias Temperature Instability (NBTI)}{6}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Microscopic mechanism: interface trap generation}{6}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Reaction-Diffusion model}{6}{subsection.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.3}Recovery}{7}{subsection.2.2.3}%
+\contentsline {subsection}{\numberline {2.2.4}Temperature acceleration}{7}{subsection.2.2.4}%
+\contentsline {section}{\numberline {2.3}Hot Carrier Injection (HCI)}{7}{section.2.3}%
+\contentsline {section}{\numberline {2.4}How degradation manifests in digital timing}{8}{section.2.4}%
+\contentsline {section}{\numberline {2.5}Why FPGAs are useful for aging experiments}{8}{section.2.5}%
+\contentsline {chapter}{\numberline {3}System Overview}{9}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Architecture block diagram}{9}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Hardware bill of materials}{9}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Experiment overview}{10}{section.3.3}%
+\contentsline {chapter}{\numberline {4}FPGA RTL Architecture}{11}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Target device}{11}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Module hierarchy}{11}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Clock domains}{11}{section.4.3}%
+\contentsline {section}{\numberline {4.4}The aging-sensitive critical path}{12}{section.4.4}%
+\contentsline {subsection}{\numberline {4.4.1}Fixed placement and routing}{12}{subsection.4.4.1}%
+\contentsline {section}{\numberline {4.5}The metastability sensor (\texttt {modern\_sensible})}{13}{section.4.5}%
+\contentsline {section}{\numberline {4.6}Dual-adder design (\texttt {adder\_canary})}{13}{section.4.6}%
+\contentsline {subsection}{\numberline {4.6.1}Sensor adder (\texttt {u\_sensor}): timing measurement}{13}{subsection.4.6.1}%
+\contentsline {subsection}{\numberline {4.6.2}Canary adder (\texttt {u\_canary}): functional failure detection}{14}{subsection.4.6.2}%
+\contentsline {section}{\numberline {4.7}The phase-sweep FSM (\texttt {controller\_controller})}{14}{section.4.7}%
+\contentsline {subsection}{\numberline {4.7.1}Sticky alarm latch}{15}{subsection.4.7.1}%
+\contentsline {section}{\numberline {4.8}XADC interface (\texttt {temp\_catcher})}{15}{section.4.8}%
+\contentsline {subsection}{\numberline {4.8.1}Conversion formulas}{15}{subsection.4.8.1}%
+\contentsline {section}{\numberline {4.9}UART interface}{16}{section.4.9}%
+\contentsline {subsection}{\numberline {4.9.1}Trigger (PC \textrightarrow {} FPGA)}{16}{subsection.4.9.1}%
+\contentsline {subsection}{\numberline {4.9.2}15-byte response packet (FPGA \textrightarrow {} PC)}{16}{subsection.4.9.2}%
+\contentsline {section}{\numberline {4.10}Building the bitstream}{16}{section.4.10}%
+\contentsline {chapter}{\numberline {5}Software Architecture}{17}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Applications overview}{17}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Launching the application}{17}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Worker architecture (QThread pattern)}{17}{section.5.3}%
+\contentsline {section}{\numberline {5.4}DUTWorker: reading FPGA data}{18}{section.5.4}%
+\contentsline {section}{\numberline {5.5}ArduinoWorker}{18}{section.5.5}%
+\contentsline {section}{\numberline {5.6}PSUWorker (IT6502D)}{18}{section.5.6}%
+\contentsline {section}{\numberline {5.7}Configuration system}{19}{section.5.7}%
+\contentsline {section}{\numberline {5.8}Data logger}{19}{section.5.8}%
+\contentsline {section}{\numberline {5.9}GUI layout}{20}{section.5.9}%
+\contentsline {chapter}{\numberline {6}Communication Protocols}{21}{chapter.6}%
+\contentsline {section}{\numberline {6.1}DUT protocol (FPGA)}{21}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Arduino protocol}{21}{section.6.2}%
+\contentsline {section}{\numberline {6.3}PSU protocol (IT6502D)}{21}{section.6.3}%
+\contentsline {chapter}{\numberline {7}Control Loops}{22}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Oven temperature control (PID)}{22}{section.7.1}%
+\contentsline {subsection}{\numberline {7.1.1}Plant identification}{22}{subsection.7.1.1}%
+\contentsline {subsection}{\numberline {7.1.2}SIMC tuning}{22}{subsection.7.1.2}%
+\contentsline {subsection}{\numberline {7.1.3}Implementation}{22}{subsection.7.1.3}%
+\contentsline {section}{\numberline {7.2}VCCINT closed-loop voltage trim}{23}{section.7.2}%
+\contentsline {section}{\numberline {7.3}DUT outer temperature loop}{23}{section.7.3}%
+\contentsline {chapter}{\numberline {8}Setting Up a Fresh Workstation}{24}{chapter.8}%
+\contentsline {section}{\numberline {8.1}System requirements}{24}{section.8.1}%
+\contentsline {section}{\numberline {8.2}Step 1 --- Install system dependencies}{24}{section.8.2}%
+\contentsline {section}{\numberline {8.3}Step 2 --- Clone the repository}{24}{section.8.3}%
+\contentsline {section}{\numberline {8.4}Step 3 --- Install Vivado (if needed)}{24}{section.8.4}%
+\contentsline {section}{\numberline {8.5}Step 4 --- Configure udev rules for serial and JTAG devices}{25}{section.8.5}%
+\contentsline {subsection}{\numberline {8.5.1}Add user to the dialout group}{25}{subsection.8.5.1}%
+\contentsline {subsection}{\numberline {8.5.2}Install Digilent USB cable rules}{25}{subsection.8.5.2}%
+\contentsline {section}{\numberline {8.6}Step 5 --- Identify serial port assignments}{25}{section.8.6}%
+\contentsline {section}{\numberline {8.7}Step 6 --- Identify the PSU VISA resource}{26}{section.8.7}%
+\contentsline {section}{\numberline {8.8}Step 7 --- First run}{26}{section.8.8}%
+\contentsline {chapter}{\numberline {9}Running an Experiment}{27}{chapter.9}%
+\contentsline {section}{\numberline {9.1}Pre-experiment checklist}{27}{section.9.1}%
+\contentsline {section}{\numberline {9.2}Setup Dialog}{27}{section.9.2}%
+\contentsline {section}{\numberline {9.3}Setting experiment parameters}{27}{section.9.3}%
+\contentsline {section}{\numberline {9.4}Starting the test}{28}{section.9.4}%
+\contentsline {section}{\numberline {9.5}Monitoring}{28}{section.9.5}%
+\contentsline {section}{\numberline {9.6}Safety limits}{28}{section.9.6}%
+\contentsline {section}{\numberline {9.7}Stopping the test}{28}{section.9.7}%
+\contentsline {chapter}{\numberline {10}Data Analysis}{29}{chapter.10}%
+\contentsline {section}{\numberline {10.1}CSV file structure}{29}{section.10.1}%
+\contentsline {section}{\numberline {10.2}Loading data in Python (Pandas)}{29}{section.10.2}%
+\contentsline {section}{\numberline {10.3}Typical result signature}{29}{section.10.3}%
+\contentsline {section}{\numberline {10.4}Fitting the degradation model}{30}{section.10.4}%
+\contentsline {chapter}{\numberline {11}Other Applications}{31}{chapter.11}%
+\contentsline {section}{\numberline {11.1}App\_2Nexys (dual DUT)}{31}{section.11.1}%
+\contentsline {section}{\numberline {11.2}App\_FPGAging\_Slack\_Sensor (UltraScale+ / SBCCI target)}{31}{section.11.2}%
+\contentsline {chapter}{\numberline {12}Troubleshooting}{32}{chapter.12}%
+\contentsline {section}{\numberline {12.1}Serial port not accessible}{32}{section.12.1}%
+\contentsline {section}{\numberline {12.2}Wrong ttyUSB port selected (JTAG vs UART)}{32}{section.12.2}%
+\contentsline {section}{\numberline {12.3}App\_2Nexys fails to program FPGAs}{32}{section.12.3}%
+\contentsline {section}{\numberline {12.4}PSU VISA string error}{32}{section.12.4}%
+\contentsline {section}{\numberline {12.5}dut\_slack shows erratic jumps}{33}{section.12.5}%
+\contentsline {section}{\numberline {12.6}Vivado timing reports show negative slack on the sensor path}{33}{section.12.6}%
+\contentsline {chapter}{\numberline {A}FOPDT Step Test Procedure}{34}{appendix.A}%
+\contentsline {chapter}{\numberline {B}Regenerating Fixed PnR Constraints}{35}{appendix.B}%
