@@ -14,7 +14,8 @@ import time
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QGroupBox, QFormLayout, QLineEdit, QTextEdit,
-    QLabel, QDoubleSpinBox, QTabWidget, QStatusBar, QSplitter
+    QLabel, QDoubleSpinBox, QTabWidget, QStatusBar, QSplitter,
+    QDialog, QRadioButton, QDialogButtonBox,
 )
 from PySide6.QtGui import QFont
 from PySide6.QtCore import QThread, Signal, Slot, Qt
@@ -181,6 +182,197 @@ _PSU_STYLE = (
 )
 
 
+class SweepConfigDialog(QDialog):
+    """Diálogo de configuração para sweep automático de tensão ou temperatura."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Sweep Automático")
+        self.setModal(True)
+        self.setMinimumWidth(420)
+
+        layout = QVBoxLayout(self)
+        layout.setSpacing(10)
+
+        # --- Modo ---
+        mode_group = QGroupBox("Modo de Sweep")
+        mode_layout = QVBoxLayout()
+        self.radio_voltage = QRadioButton("Tensão Variável  (temperatura fixa)")
+        self.radio_temp = QRadioButton(
+            "Temperatura Variável  (tensão fixa)  →  40 °C … 130 °C"
+        )
+        self.radio_voltage.setChecked(True)
+        mode_layout.addWidget(self.radio_voltage)
+        mode_layout.addWidget(self.radio_temp)
+        mode_group.setLayout(mode_layout)
+        layout.addWidget(mode_group)
+
+        # --- Parâmetros sweep de tensão ---
+        self.volt_group = QGroupBox("Parâmetros — Sweep de Tensão")
+        vf = QFormLayout()
+        vf.setSpacing(6)
+        self.volt_start = QDoubleSpinBox()
+        self.volt_start.setRange(0.0, 1.4)
+        self.volt_start.setDecimals(3)
+        self.volt_start.setSingleStep(0.05)
+        self.volt_start.setValue(0.8)
+        self.volt_start.setSuffix(" V")
+        self.volt_step = QDoubleSpinBox()
+        self.volt_step.setRange(0.01, 0.5)
+        self.volt_step.setDecimals(3)
+        self.volt_step.setSingleStep(0.01)
+        self.volt_step.setValue(0.05)
+        self.volt_step.setSuffix(" V")
+        self.volt_end = QDoubleSpinBox()
+        self.volt_end.setRange(0.1, 1.5)
+        self.volt_end.setDecimals(3)
+        self.volt_end.setSingleStep(0.05)
+        self.volt_end.setValue(1.3)
+        self.volt_end.setSuffix(" V")
+        self.volt_oven_sp = QDoubleSpinBox()
+        self.volt_oven_sp.setRange(25.0, 130.0)
+        self.volt_oven_sp.setValue(100.0)
+        self.volt_oven_sp.setSuffix(" °C")
+        self.volt_stable_s = QDoubleSpinBox()
+        self.volt_stable_s.setRange(10.0, 600.0)
+        self.volt_stable_s.setValue(60.0)
+        self.volt_stable_s.setSuffix(" s")
+        self.volt_min_dwell = QDoubleSpinBox()
+        self.volt_min_dwell.setRange(10.0, 600.0)
+        self.volt_min_dwell.setValue(60.0)
+        self.volt_min_dwell.setSuffix(" s")
+        self.volt_tolerance = QDoubleSpinBox()
+        self.volt_tolerance.setRange(0.001, 0.2)
+        self.volt_tolerance.setDecimals(3)
+        self.volt_tolerance.setSingleStep(0.005)
+        self.volt_tolerance.setValue(0.02)
+        self.volt_tolerance.setSuffix(" V")
+        vf.addRow("Tensão inicial:", self.volt_start)
+        vf.addRow("Passo:", self.volt_step)
+        vf.addRow("Tensão final:", self.volt_end)
+        vf.addRow("Setpoint forno:", self.volt_oven_sp)
+        vf.addRow("Tempo estável mínimo:", self.volt_stable_s)
+        vf.addRow("Dwell mínimo por passo:", self.volt_min_dwell)
+        vf.addRow("Tolerância VCCINT:", self.volt_tolerance)
+        self.volt_group.setLayout(vf)
+        layout.addWidget(self.volt_group)
+
+        # --- Parâmetros sweep de temperatura ---
+        self.temp_group = QGroupBox("Parâmetros — Sweep de Temperatura")
+        tf = QFormLayout()
+        tf.setSpacing(6)
+        self.temp_start = QDoubleSpinBox()
+        self.temp_start.setRange(25.0, 129.0)
+        self.temp_start.setValue(40.0)
+        self.temp_start.setSuffix(" °C")
+        self.temp_step = QDoubleSpinBox()
+        self.temp_step.setRange(1.0, 50.0)
+        self.temp_step.setValue(20.0)
+        self.temp_step.setSuffix(" °C")
+        self.temp_end = QDoubleSpinBox()
+        self.temp_end.setRange(26.0, 130.0)
+        self.temp_end.setValue(130.0)
+        self.temp_end.setSuffix(" °C")
+        self.temp_volt_sp = QDoubleSpinBox()
+        self.temp_volt_sp.setRange(0.0, 1.5)
+        self.temp_volt_sp.setValue(1.0)
+        self.temp_volt_sp.setDecimals(3)
+        self.temp_volt_sp.setSuffix(" V")
+        self.temp_stable_s = QDoubleSpinBox()
+        self.temp_stable_s.setRange(30.0, 1200.0)
+        self.temp_stable_s.setValue(120.0)
+        self.temp_stable_s.setSuffix(" s")
+        self.temp_min_dwell = QDoubleSpinBox()
+        self.temp_min_dwell.setRange(30.0, 1200.0)
+        self.temp_min_dwell.setValue(120.0)
+        self.temp_min_dwell.setSuffix(" s")
+        self.temp_tolerance = QDoubleSpinBox()
+        self.temp_tolerance.setRange(0.5, 10.0)
+        self.temp_tolerance.setValue(2.0)
+        self.temp_tolerance.setSuffix(" °C")
+        tf.addRow("Temp. inicial:", self.temp_start)
+        tf.addRow("Passo:", self.temp_step)
+        tf.addRow("Temp. final:", self.temp_end)
+        tf.addRow("VCCINT fixo:", self.temp_volt_sp)
+        tf.addRow("Tempo estável mínimo:", self.temp_stable_s)
+        tf.addRow("Dwell mínimo por passo:", self.temp_min_dwell)
+        tf.addRow("Tolerância forno:", self.temp_tolerance)
+        self.temp_group.setLayout(tf)
+        layout.addWidget(self.temp_group)
+        self.temp_group.hide()
+
+        # --- Nome do teste ---
+        nf = QFormLayout()
+        self.test_name_edit = QLineEdit("Sweep_001")
+        nf.addRow("Nome do teste:", self.test_name_edit)
+        layout.addLayout(nf)
+
+        # --- Botões ---
+        self.ok_btn = QPushButton("INICIAR SWEEP")
+        self.ok_btn.setStyleSheet(
+            f"background-color: #1a2e4a; color: {_BLUE}; font-weight: bold; "
+            "padding: 8px; border: 1px solid #3a6a9a; border-radius: 4px;"
+        )
+        cancel_btn = QPushButton("Cancelar")
+        btn_row = QHBoxLayout()
+        btn_row.addWidget(cancel_btn)
+        btn_row.addWidget(self.ok_btn)
+        layout.addLayout(btn_row)
+
+        self.radio_voltage.toggled.connect(self._on_mode_changed)
+        self.ok_btn.clicked.connect(self.accept)
+        cancel_btn.clicked.connect(self.reject)
+
+    def _on_mode_changed(self, voltage_selected: bool):
+        self.volt_group.setVisible(voltage_selected)
+        self.temp_group.setVisible(not voltage_selected)
+
+    def get_settings(self) -> dict:
+        """Retorna dict de configuração para TestSequencer.start_test()."""
+        if self.radio_voltage.isChecked():
+            start = self.volt_start.value()
+            step  = self.volt_step.value()
+            end   = self.volt_end.value()
+            steps, v = [], start
+            while v <= end + 1e-9:
+                steps.append(round(v, 3))
+                v += step
+            if steps and steps[-1] < end - 1e-9:
+                steps.append(round(end, 3))
+            return {
+                'test_name':       self.test_name_edit.text() or "Sweep_001",
+                'oven_setpoint':   self.volt_oven_sp.value(),
+                'psu_voltage':     steps[0] if steps else start,
+                'dut_target_temp': 0.0,
+                'sweep_mode':      'voltage',
+                'sweep_steps':     steps,
+                'sweep_stable_s':  int(self.volt_stable_s.value()),
+                'sweep_min_dwell': int(self.volt_min_dwell.value()),
+                'sweep_tolerance': self.volt_tolerance.value(),
+            }
+        else:
+            start = self.temp_start.value()
+            step  = self.temp_step.value()
+            end   = self.temp_end.value()
+            steps, t = [], start
+            while t <= end + 0.001:
+                steps.append(round(t, 1))
+                t += step
+            if steps and steps[-1] < end - 0.001:
+                steps.append(round(end, 1))
+            return {
+                'test_name':       self.test_name_edit.text() or "Sweep_001",
+                'oven_setpoint':   steps[0] if steps else start,
+                'psu_voltage':     self.temp_volt_sp.value(),
+                'dut_target_temp': 0.0,
+                'sweep_mode':      'temperature',
+                'sweep_steps':     steps,
+                'sweep_stable_s':  int(self.temp_stable_s.value()),
+                'sweep_min_dwell': int(self.temp_min_dwell.value()),
+                'sweep_tolerance': self.temp_tolerance.value(),
+            }
+
+
 class MainWindow(QMainWindow):
     start_arduino_signal = Signal()
     stop_arduino_signal = Signal()
@@ -262,6 +454,19 @@ class MainWindow(QMainWindow):
         )
         self.beeper_button = QPushButton("Silenciar Buzzer PSU")
         self.beeper_button.setCheckable(True)
+
+        # Sweep automático
+        self.sweep_button = QPushButton("SWEEP AUTO")
+        self.sweep_button.setStyleSheet(
+            f"background-color: #1a2e4a; color: {_BLUE}; font-weight: bold; "
+            "padding: 8px; font-size: 12px; border: 1px solid #3a6a9a; border-radius: 4px;"
+        )
+        self._sweep_progress_label = QLabel("")
+        self._sweep_progress_label.setStyleSheet(
+            f"color: {_BLUE}; background-color: #121e30; "
+            f"border: 1px solid #3a6a9a; border-radius: 4px; padding: 4px 6px; font-size: 11px;"
+        )
+        self._sweep_progress_label.hide()
 
     def _create_tab_widgets(self):
         # --- Sensor tab ---
@@ -356,6 +561,8 @@ class MainWindow(QMainWindow):
         test_form.setSpacing(6)
         test_form.addRow("Nome:", self.test_name_input)
         test_form.addRow(self.toggle_test_button)
+        test_form.addRow(self.sweep_button)
+        test_form.addRow(self._sweep_progress_label)
         test_form.addRow(QLabel(f"<small style='color:{_MUTED}'>Logs: {config.LOG_FOLDER}</small>"))
         self.test_control_group.setLayout(test_form)
         top_bar.addWidget(self.test_control_group, stretch=1)
@@ -521,12 +728,14 @@ class MainWindow(QMainWindow):
         sequencer_worker.plot_data_update.connect(self.aux_plot_widget.update_plot_data)
         sequencer_worker.plot_data_update.connect(self._update_sensor_display)
         sequencer_worker.test_finished.connect(self.on_test_finished)
+        sequencer_worker.sweep_step_changed.connect(self._on_sweep_step_changed)  # type: ignore[arg-type]
 
     def _connect_signals(self):
         self.toggle_test_button.clicked.connect(self.on_toggle_test)
         self.psu_setpoint_input.editingFinished.connect(self.on_update_psu_voltage)
         self.oven_setpoint_input.editingFinished.connect(self.on_update_oven_setpoint)
         self.beeper_button.clicked.connect(self._on_beeper_toggled)
+        self.sweep_button.clicked.connect(self.on_start_sweep)
 
     # =========================================================================
     #   Slots
@@ -592,10 +801,43 @@ class MainWindow(QMainWindow):
                 "padding: 10px; font-size: 14px; border: 1px solid #c04060; border-radius: 4px;"
             )
             self.test_name_input.setEnabled(False)
+            self.sweep_button.setEnabled(False)
             self._refresh_status_bar(test_running=True)
         else:
             self.stop_test_signal.emit()
             self.on_test_finished()
+
+    @Slot()
+    def on_start_sweep(self):
+        """Abre diálogo de configuração e inicia sweep automático."""
+        dialog = SweepConfigDialog(self)
+        if dialog.exec() != QDialog.Accepted:
+            return
+        settings = dialog.get_settings()
+        self.plot_widget.clear_plot()
+        self.aux_plot_widget.clear_plot()
+        self.start_test_signal.emit(settings)
+        self.toggle_test_button.setChecked(True)
+        self.toggle_test_button.setText("PARAR SWEEP")
+        self.toggle_test_button.setStyleSheet(
+            f"background-color: #4d1e2b; color: {_RED}; font-weight: bold; "
+            "padding: 10px; font-size: 14px; border: 1px solid #c04060; border-radius: 4px;"
+        )
+        self.test_name_input.setEnabled(False)
+        self.sweep_button.setEnabled(False)
+        self._sweep_progress_label.setText("Sweep: aguardando passo 1…")
+        self._sweep_progress_label.show()
+        self._refresh_status_bar(test_running=True)
+
+    @Slot(int, float, int, str)
+    def _on_sweep_step_changed(self, idx: int, target: float, total: int, mode: str):
+        """Atualiza indicador de progresso do sweep."""
+        unit = "V" if mode == 'voltage' else "°C"
+        text = f"Sweep [{idx + 1}/{total}]: {target}{unit}"
+        self._sweep_progress_label.setText(text)
+        self._sb_test.setText(
+            f'<span style="color:{_BLUE}; font-weight:bold;">◈ {text}</span>'
+        )
 
     @Slot()
     def on_update_psu_voltage(self):
@@ -619,6 +861,9 @@ class MainWindow(QMainWindow):
         )
         self.toggle_test_button.setChecked(False)
         self.test_name_input.setEnabled(True)
+        self.sweep_button.setEnabled(True)
+        self._sweep_progress_label.hide()
+        self._sweep_progress_label.setText("")
         self._refresh_status_bar(test_running=False)
 
     @Slot(bool)
