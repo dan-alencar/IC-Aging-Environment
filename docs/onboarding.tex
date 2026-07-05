@@ -1,0 +1,1558 @@
+% =============================================================================
+%  FPGA Accelerated Aging Environment — Student Onboarding Guide
+%  Laboratory of Electronic Systems and Circuits (LESC)
+%  Federal University of Ceará
+% =============================================================================
+\documentclass[12pt, a4paper]{report}
+
+\usepackage[a4paper, margin=2.5cm, headheight=15pt]{geometry}
+\usepackage{fontenc}
+\usepackage{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{mdframed}
+\usepackage{tcolorbox}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage[T1]{fontenc}
+
+% ---------------------------------------------------------------------------
+% Colours
+% ---------------------------------------------------------------------------
+\definecolor{codeBackground}{RGB}{40, 42, 54}
+\definecolor{codeForeground}{RGB}{248, 248, 242}
+\definecolor{keywordColor}{RGB}{255, 121, 198}
+\definecolor{commentColor}{RGB}{98, 114, 164}
+\definecolor{stringColor}{RGB}{241, 250, 140}
+\definecolor{warningBox}{RGB}{255, 243, 205}
+\definecolor{infoBox}{RGB}{209, 236, 241}
+\definecolor{successBox}{RGB}{212, 237, 218}
+\definecolor{headerGray}{RGB}{68, 71, 90}
+
+% ---------------------------------------------------------------------------
+% Code listings
+% ---------------------------------------------------------------------------
+\lstdefinestyle{shell}{
+  backgroundcolor=\color{codeBackground},
+  basicstyle=\ttfamily\footnotesize\color{codeForeground},
+  keywordstyle=\color{keywordColor}\bfseries,
+  commentstyle=\color{commentColor},
+  stringstyle=\color{stringColor},
+  breaklines=true,
+  breakatwhitespace=true,
+  frame=single,
+  framerule=0.5pt,
+  rulecolor=\color{headerGray},
+  xleftmargin=6pt,
+  xrightmargin=6pt,
+  showstringspaces=false,
+  tabsize=2,
+}
+
+\lstdefinestyle{verilog}{
+  backgroundcolor=\color{codeBackground},
+  basicstyle=\ttfamily\footnotesize\color{codeForeground},
+  keywordstyle=\color{keywordColor}\bfseries,
+  commentstyle=\color{commentColor},
+  stringstyle=\color{stringColor},
+  language=Verilog,
+  breaklines=true,
+  frame=single,
+  framerule=0.5pt,
+  rulecolor=\color{headerGray},
+  xleftmargin=6pt,
+  xrightmargin=6pt,
+  showstringspaces=false,
+  tabsize=2,
+}
+
+\lstdefinestyle{python}{
+  backgroundcolor=\color{codeBackground},
+  basicstyle=\ttfamily\footnotesize\color{codeForeground},
+  keywordstyle=\color{keywordColor}\bfseries,
+  commentstyle=\color{commentColor},
+  stringstyle=\color{stringColor},
+  language=Python,
+  breaklines=true,
+  frame=single,
+  framerule=0.5pt,
+  rulecolor=\color{headerGray},
+  xleftmargin=6pt,
+  xrightmargin=6pt,
+  showstringspaces=false,
+  tabsize=4,
+}
+
+% ---------------------------------------------------------------------------
+% Coloured boxes
+% ---------------------------------------------------------------------------
+\tcbuselibrary{skins, breakable}
+
+\newtcolorbox{warningbox}[1][]{
+  colback=warningBox, colframe=orange!80!black,
+  fonttitle=\bfseries, title=Warning, #1
+}
+
+\newtcolorbox{infobox}[1][]{
+  colback=infoBox, colframe=blue!50!black,
+  fonttitle=\bfseries, title=Note, #1
+}
+
+\newtcolorbox{tipbox}[1][]{
+  colback=successBox, colframe=green!50!black,
+  fonttitle=\bfseries, title=Tip, #1
+}
+
+% ---------------------------------------------------------------------------
+% Page style
+% ---------------------------------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small FPGA Aging Environment — LESC / UFC}
+\fancyhead[R]{\small \leftmark}
+\fancyfoot[C]{\small \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ---------------------------------------------------------------------------
+% Section formatting
+% ---------------------------------------------------------------------------
+\titleformat{\chapter}[block]
+  {\normalfont\Large\bfseries\color{headerGray}}
+  {\thechapter.}{10pt}{}
+\titlespacing*{\chapter}{0pt}{20pt}{12pt}
+
+% ---------------------------------------------------------------------------
+% Hyperref setup
+% ---------------------------------------------------------------------------
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  urlcolor=blue!70!black,
+  citecolor=green!50!black,
+  pdftitle={FPGA Aging Environment — Onboarding Guide},
+  pdfauthor={LESC / UFC},
+}
+
+% =============================================================================
+\begin{document}
+
+% ---------------------------------------------------------------------------
+% Title page
+% ---------------------------------------------------------------------------
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Large\bfseries Federal University of Ceará\\[6pt]
+   Department of Electrical Engineering\\[6pt]
+   Laboratory of Electronic Systems and Circuits (LESC)\\[2cm]}
+  \rule{\linewidth}{1pt}\\[0.5cm]
+  {\Huge\bfseries FPGA Accelerated Aging Environment\\[0.4cm]}
+  {\Large Student Onboarding Guide\\[0.3cm]}
+  \rule{\linewidth}{1pt}\\[2cm]
+  {\large A complete reference for understanding, setting up, and operating\\
+   the hardware-in-the-loop burn-in experiment platform.\\[3cm]}
+  {\normalsize Revision: May 2026\\[1cm]}
+  \vfill
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% =============================================================================
+\chapter{Introduction}
+% =============================================================================
+
+This document describes the \textbf{FPGA Accelerated Aging Environment} developed at
+LESC (Laboratory of Electronic Systems and Circuits, Federal University of Ceará).
+Its purpose is to give a new student or contributor everything needed to understand
+the scientific motivation, operate the equipment, and extend the software or RTL.
+
+\section{What the project does}
+
+Semiconductor transistors degrade over time when subjected to electrical stress.
+The key mechanisms --- Negative Bias Temperature Instability (NBTI) and Hot Carrier
+Injection (HCI) --- cause the threshold voltage $V_{th}$ of MOSFET devices to drift,
+increasing propagation delays in logic gates. If degradation is severe enough, a once-working
+digital circuit will begin to fail timing constraints and produce erroneous outputs.
+
+Studying these phenomena experimentally requires either very long stress times at
+nominal conditions, or \emph{accelerated aging}: raising the temperature and/or supply
+voltage to stress the device much faster. This project implements a complete hardware-in-the-loop
+environment for accelerated aging of commercial FPGAs.
+
+The \emph{device under test} (DUT) is a Digilent Nexys4 DDR board populated with a
+Xilinx Artix-7 FPGA (xc7a100tcsg324-1). It is placed inside a temperature-controlled
+oven, powered by a programmable benchtop supply, and continuously monitored by a
+custom RTL bitstream that measures timing degradation in real time using a metastability-based
+phase sensor. All measurements are streamed over UART to a host PC where a Python
+application logs timestamped CSV files and displays live plots.
+
+\section{Who this document is for}
+
+This guide assumes the reader has:
+\begin{itemize}
+  \item Familiarity with digital design concepts (clock domains, setup/hold time, FPGAs).
+  \item Basic SystemVerilog or Verilog reading ability.
+  \item Experience with Python and comfort at the Linux command line.
+  \item Some exposure to control systems (PID loops, transfer functions).
+\end{itemize}
+
+No prior knowledge of the project is required.
+
+\section{Document scope}
+
+Chapter~\ref{ch:background} covers the device-physics background --- NBTI, HCI, and the
+reaction-diffusion model --- at a graduate level. Chapter~\ref{ch:system} gives a
+system-level overview. Chapters~\ref{ch:rtl} and~\ref{ch:software} describe the FPGA
+RTL and the Python software in depth. Chapter~\ref{ch:protocol} documents all
+communication protocols. Chapter~\ref{ch:control} explains the control loops.
+Chapter~\ref{ch:setup} provides step-by-step workstation setup instructions.
+Chapters~\ref{ch:running} and~\ref{ch:analysis} cover running an experiment and
+analyzing the results.
+
+% =============================================================================
+\chapter{Scientific Background}
+\label{ch:background}
+% =============================================================================
+
+\section{Why FPGAs age}
+
+A modern FPGA is built from hundreds of thousands of CMOS transistors. Each transistor
+consists of a gate electrode separated from the silicon channel by a thin gate oxide.
+The electric field across this oxide, combined with the kinetic energy of charge carriers,
+gradually damages the oxide and the Si/SiO\textsubscript{2} interface. The primary
+mechanisms that affect digital timing are NBTI and HCI.
+
+\section{Negative Bias Temperature Instability (NBTI)}
+
+NBTI is the dominant aging mechanism in modern sub-micron CMOS. It predominantly
+affects \textbf{PMOS} transistors biased in inversion (gate-to-source voltage $V_{GS} < 0$),
+which is precisely the stressed condition during logic `1' propagation through a PMOS pull-up.
+
+\subsection{Microscopic mechanism: interface trap generation}
+
+The Si/SiO\textsubscript{2} interface is chemically passivated by hydrogen. Silicon
+dangling bonds --- known as $P_b$ centres --- are tied up as Si-H bonds at the interface.
+Under a strong negative gate bias and elevated temperature, these bonds dissociate:
+
+\begin{equation}
+  \text{Si} \text{---} \text{H} \;\xrightarrow{\,V_{GS},\,T\,}\; \text{Si}\bullet \;+\; \text{H}
+\end{equation}
+
+The resulting silicon dangling bond becomes a positively charged interface trap that
+captures a hole and shifts the PMOS threshold voltage:
+
+\begin{equation}
+  \Delta V_{th} = \frac{q \, N_{it}}{C_{ox}}
+\end{equation}
+
+where $N_{it}$ is the interface trap density, $q$ is the electron charge, and $C_{ox}$
+is the oxide capacitance per unit area. In addition, some hydrogen and holes are captured
+as \emph{oxide traps} in the bulk SiO\textsubscript{2}, contributing a further positive
+charge that also increases $|V_{th}|$.
+
+An increased $|V_{th}|$ weakens the on-current of the PMOS ($I_{D} \propto V_{GS} - V_{th}$),
+reducing its drive strength and increasing the propagation delay of every gate where
+a PMOS pull-up is on the critical path.
+
+\subsection{Reaction-Diffusion model}
+
+The temporal evolution of $\Delta V_{th}$ is described by the Reaction-Diffusion (R-D) model.
+During the \textbf{stress phase}, interface traps are generated at the interface (reaction)
+and hydrogen diffuses away into the oxide (diffusion), preventing back-passivation. The
+rate-limiting step is the diffusion of atomic or molecular hydrogen. Solving the
+coupled reaction-diffusion equations yields the well-known power-law time dependence:
+
+\begin{equation}
+  \Delta V_{th}(t) = A \left(\frac{V_{GS,stress}}{t_{ox}}\right)^{m} \exp\!\left(\frac{-E_a}{k_B T}\right) \cdot t^{n}
+\end{equation}
+
+where:
+\begin{itemize}
+  \item $n \approx 0.1$--$0.25$ is the time exponent (determined by whether H or H\textsubscript{2} diffuses);
+  \item $E_a \approx 0.1$--$0.2\,\text{eV}$ is the activation energy for the diffusion process;
+  \item $k_B$ is Boltzmann's constant and $T$ is absolute temperature;
+  \item $m$ is the field-acceleration exponent;
+  \item $A$ is a technology-dependent pre-factor.
+\end{itemize}
+
+\subsection{Recovery}
+
+A key (and sometimes inconvenient) feature of NBTI is that degradation is
+\emph{partially reversible}. When the gate bias is removed, residual hydrogen
+at the interface back-passivates some of the dangling bonds:
+$\text{Si}\bullet \;+\; \text{H} \;\rightarrow\; \text{Si-H}$.
+This \textbf{recovery} can mask the true degradation if measurements are taken
+after a rest period. In the long run, however, the degradation is not fully
+recovered --- the component that does not recover (often called the permanent
+component) accumulates monotonically and represents the true aging damage.
+
+In this experiment the DUT is stressed \emph{continuously} (no recovery periods),
+so the measured $\Delta V_{th}$ is representative of the full stress-only trajectory.
+
+\subsection{Temperature acceleration}
+
+The Arrhenius relationship gives the ratio of experiment lifetimes at two temperatures:
+
+\begin{equation}
+  \text{AF} = \frac{\tau_{use}}{\tau_{stress}} =
+  \exp\!\left[\frac{E_a}{k_B}\left(\frac{1}{T_{use}} - \frac{1}{T_{stress}}\right)\right]
+\end{equation}
+
+For $E_a = 0.15\,\text{eV}$, stressing at $125\,^\circ\text{C}$ instead of $25\,^\circ\text{C}$
+gives an acceleration factor of roughly $8\times$. For higher activation energies the
+acceleration is even more pronounced. This is why the experiment uses an oven: a DUT
+at $125\,^\circ\text{C}$ sees months of aging compressed into days.
+
+\section{Hot Carrier Injection (HCI)}
+
+HCI predominantly affects \textbf{NMOS} transistors operating at high drain-to-source
+voltage $V_{DS}$. Near the drain, the lateral electric field $\mathcal{E} \approx V_{DS}/L$
+is highest. Electrons accelerating towards the drain can acquire kinetic energies
+well above the thermal average (``hot'' carriers). Some fraction of these hot carriers
+have sufficient energy to surmount the Si/SiO\textsubscript{2} barrier ($\approx 3.1\,\text{eV}$)
+and be injected into the gate oxide, where they are trapped or generate interface states.
+
+The resulting threshold voltage shift and transconductance degradation slow NMOS
+pull-down paths, directly increasing fall times in logic gates. HCI is worst at
+intermediate $V_{GS}$ values that maximise the substrate current (maximum multiplication
+condition), and it accelerates strongly with supply voltage.
+
+In this experiment, the supply voltage $V_{CCINT}$ is elevated above the nominal
+$1.0\,\text{V}$ to accelerate both NBTI and HCI simultaneously. The trade-off is that
+the acceleration factor must be chosen carefully: too high a voltage can trigger
+catastrophic dielectric breakdown rather than controlled, gradual aging.
+
+\section{How degradation manifests in digital timing}
+
+From a circuit perspective, NBTI and HCI both increase propagation delay $t_{pd}$
+along paths that traverse affected transistors. In a synchronous design, the critical
+constraint is the \emph{setup time} relation:
+
+\begin{equation}
+  t_{pd} \;\leq\; T_{clk} - t_{setup} - t_{skew}
+\end{equation}
+
+The \emph{timing slack} is the margin available:
+
+\begin{equation}
+  \text{slack} = T_{clk} - t_{setup} - t_{skew} - t_{pd}
+\end{equation}
+
+As $t_{pd}$ increases due to aging, slack decreases. When slack reaches zero, the
+flip-flop at the path endpoint can no longer reliably capture the correct data value,
+and functional errors begin to occur.
+
+This project measures timing degradation by directly quantifying this slack using an
+on-chip phase-sensitive sensor, described in detail in Chapter~\ref{ch:rtl}.
+
+\section{Why FPGAs are useful for aging experiments}
+
+Commercial FPGAs offer several advantages as aging test vehicles:
+
+\begin{enumerate}
+  \item \textbf{Fixed routing}: the FPGA's routing fabric is programmed once (fixed PnR), so the
+        same physical transistors are stressed repeatedly. Unlike an ASIC, there is no process-to-process
+        variation between samples.
+  \item \textbf{Reprogrammability}: the bitstream can be changed to instrument different paths or
+        add new sensors without re-fabricating silicon.
+  \item \textbf{Built-in XADC}: Xilinx FPGAs include an on-chip Analogue-to-Digital Converter (XADC)
+        that continuously measures die temperature and supply voltages without external probes.
+  \item \textbf{MMCM phase control}: the Mixed-Mode Clock Manager (MMCM) supports dynamic phase
+        shift via the DRP interface, enabling sub-nanosecond timing manipulation at runtime.
+\end{enumerate}
+
+% =============================================================================
+\chapter{System Overview}
+\label{ch:system}
+% =============================================================================
+
+\section{Architecture block diagram}
+
+The complete system is shown below. Three separate subsystems communicate with the host PC:
+
+\begin{lstlisting}[style=shell, caption={System block diagram (ASCII)}]
+                     +-----------------+
+                     |   Host PC       |
+                     |  (App_Nexys)    |
+                     +---+---+---+-----+
+                         |   |   |
+      Serial 9600 baud   |   |   |  USB-TMC (VISA)
+  .-----------------------'   |   '------------------------.
+  |                           |  Serial 115200 baud        |
+  v                           v                            v
++---------------+    +-------------------+      +--------------------+
+|  Nexys4 DDR   |    |  Arduino UNO/Mega |      |  ITECH IT6502D     |
+|  (FPGA DUT)   |    |  (Oven PID)       |      |  (Programmable PSU)|
+|               |    |                   |      |                    |
+|  Artix-7      |    |  NTC thermistor   |      |  Controls VCCINT   |
+|  xc7a100t     |    |  SSR output       |      |  of the FPGA       |
+|               |    |                   |      |                    |
++--+------------+    +---------+---------+      +---------+----------+
+   |                           |                          |
+   |  Inside oven              |                          |
+   |  (elevated temp)          v                          |
+   |                  +--------+--------+                 |
+   |                  |  Electric Oven  |                 |
+   |                  |  + SSR          |                 |
+   |                  |  + NTC probe    |                 |
+   |                  +-----------------+                 |
+   |                                                      |
+   '---------- FPGA board is inside the oven -------------'
+                (Arduino/PSU outside, only UART cables enter)
+\end{lstlisting}
+
+\begin{infobox}
+The Arduino and PSU are optional. The app can run with only the FPGA connected
+(no temperature control, no programmable supply). However, meaningful aging experiments
+require all three subsystems.
+\end{infobox}
+
+\section{Hardware bill of materials}
+
+\begin{longtable}{@{}lll@{}}
+  \toprule
+  \textbf{Component} & \textbf{Role} & \textbf{Interface} \\
+  \midrule
+  \endhead
+  Digilent Nexys4 DDR & DUT (Artix-7 FPGA) & USB-UART (FTDI) \\
+  Electric oven / incubator & Thermal stress chamber & --- \\
+  Solid-State Relay (SSR) & Oven power switching & Digital GPIO (Arduino) \\
+  NTC thermistor (10~k$\Omega$) & Oven temperature sensing & Analogue input (Arduino) \\
+  Arduino UNO or Mega & PID controller & USB-UART, 115200 baud \\
+  ITECH IT6502D & Programmable DC supply & USB-TMC (VISA) \\
+  Host PC (Linux) & Data acquisition \& control & USB hub \\
+  \bottomrule
+\end{longtable}
+
+\section{Experiment overview}
+
+A typical aging experiment proceeds as follows:
+
+\begin{enumerate}
+  \item The FPGA board is placed inside the oven. USB/UART cables pass through
+        a small opening in the oven door.
+  \item The IT6502D PSU is connected to the FPGA's external power header to supply
+        an elevated $V_{CCINT}$.
+  \item The host PC is powered on; all USB devices enumerate.
+  \item The operator launches the \texttt{App\_Nexys} application and configures the
+        serial ports in the Setup Dialog.
+  \item The operator sets the oven temperature setpoint (e.g., $125\,^\circ\text{C}$)
+        and the target $V_{CCINT}$ (e.g., $1.1\,\text{V}$).
+  \item The operator clicks \textbf{Start Test}. The application enters autonomous mode:
+        \begin{itemize}
+          \item The Arduino PID loop ramps the oven to the setpoint.
+          \item The PSU delivers the commanded voltage; the closed-loop trim adjusts it
+                to match the XADC-measured $V_{CCINT}$.
+          \item Every second, the PC sends a trigger byte (\texttt{0x54}) to the FPGA.
+          \item The FPGA responds with a 15-byte packet: die temperature, slack counter,
+                $V_{CCINT}$, failure flag, and canary metrics.
+          \item All data is appended to a timestamped CSV file.
+        \end{itemize}
+  \item The experiment runs unattended for one to seven days.
+  \item The operator clicks \textbf{Stop Test} and retrieves the CSV for analysis.
+\end{enumerate}
+
+% =============================================================================
+\chapter{FPGA RTL Architecture}
+\label{ch:rtl}
+% =============================================================================
+
+\section{Target device}
+
+\begin{tabular}{ll}
+  Board: & Digilent Nexys4 DDR \\
+  Device: & Xilinx Artix-7 xc7a100tcsg324-1 \\
+  Top module: & \texttt{nexys4\_aging\_top} \\
+  Source language: & SystemVerilog (pure RTL, no block design) \\
+  Toolchain: & Vivado 2025.2+ \\
+\end{tabular}
+
+\section{Module hierarchy}
+
+\begin{lstlisting}[style=shell, caption={RTL module hierarchy}]
+nexys4_aging_top                    (src/rtl/top/)
+  clk_wiz_0                         MMCM -- dynamic phase shift (src/ip/)
+  XADC                              on-chip ADC (primitive)
+  temp_catcher                      XADC DRP monitor (aging_sensor/)
+  modern_sensible                   3-FF metastability sensor (aging_sensor/)
+  [2-FF synchronizer]               alarm CDC from clk_en to clk_sys
+  adder_canary                      dual-adder sensor (aging_sensor/)
+    u_sensor  (ripple_adder)          toggle-driven, timing measurement
+    u_canary  (ripple_adder)          counter-driven, functional canary
+  controller_controller             phase-sweep FSM (aging_sensor/)
+  failure_holder                    sticky failure latch (aging_sensor/)
+  uart_rx                           PC -> FPGA trigger receiver (uart/)
+  sensor_stream                     FPGA -> PC packet serialiser (uart/)
+  uart_tx                           UART transmitter (uart/)
+  BINtoBCD (x2)                     for 7-segment display (display/)
+  DisplayController                 8-digit 7-seg multiplexer (display/)
+  vio_0                             Xilinx VIO debug core
+\end{lstlisting}
+
+\section{Clock domains}
+
+All three clocks are generated from a single MMCM (\texttt{clk\_wiz\_0}) driven by
+the 100~MHz board oscillator. Using one MMCM guarantees that all clocks are
+phase-coherent and that dynamic phase shifts affect only the selected output.
+
+\begin{longtable}{@{}llll@{}}
+  \toprule
+  \textbf{Clock} & \textbf{Freq.} & \textbf{Phase} & \textbf{Drives} \\
+  \midrule
+  \endhead
+  \texttt{clk\_sys} & 100~MHz & 0° (fixed) & All RTL logic; FF2 of sensor \\
+  \texttt{psclk}    & 100~MHz & 0° + dynamic shift & FF1 of sensor (\texttt{modern\_sensible}) \\
+  \texttt{clk\_en}  & 100~MHz & 100° (fixed) & FF3 (alarm latch) of sensor \\
+  \bottomrule
+\end{longtable}
+
+The \texttt{alarm\_sig} output of \texttt{modern\_sensible} is in the
+\texttt{clk\_en} domain. It is passed through a standard 2-FF synchroniser
+(\texttt{alarm\_meta / alarm\_sync}) before being used by any
+\texttt{clk\_sys} logic.
+
+\section{The aging-sensitive critical path}
+
+The path whose degradation we want to measure is a 16-bit ripple-carry adder
+(\texttt{ripple\_adder}) built entirely from LUT primitives:
+
+\begin{lstlisting}[style=verilog, caption={LUT full adder instantiation (lut\_full\_adder.sv)}]
+(* DONT_TOUCH = "yes" *)
+LUT2_L #(.INIT(4'b0110)) XOR_SUM (.LO(s_wire), .I0(a_i), .I1(b_i));
+(* DONT_TOUCH = "yes" *)
+LUT3   #(.INIT(8'hE8))   AND_MAJ (.O(c_o),    .I0(a_i), .I1(b_i), .I2(c_i));
+\end{lstlisting}
+
+The \texttt{DONT\_TOUCH} attribute is \emph{critical}. Without it, Vivado's
+synthesiser replaces the LUT ripple chain with the device's dedicated
+\texttt{CARRY4} primitives, which:
+\begin{enumerate}
+  \item Use a completely different physical path (carry chain routing, not LUT routing).
+  \item Are not constrained by the fixed PnR constraints.
+  \item Age at a different rate from the LUT fabric.
+\end{enumerate}
+
+The result would be that the measured timing degradation does not reflect LUT aging.
+
+\subsection{Fixed placement and routing}
+
+The RTL project uses \emph{fixed placement and routing} (\texttt{fixed\_pnr\_constraints.xdc}).
+This file pins every LUT and flip-flop of the sensor to specific BEL locations and
+locks the routing. The effect is:
+
+\begin{itemize}
+  \item All repeated experiments use exactly the same physical transistors.
+  \item There is no run-to-run variation in timing due to the place-and-route algorithm.
+  \item Measurements from different experimental sessions are directly comparable.
+\end{itemize}
+
+\begin{warningbox}
+Never modify the LOC, BEL, or FIXED\_ROUTE constraints in \texttt{fixed\_pnr\_constraints.xdc}
+without understanding the consequences. Any change invalidates all previously collected data.
+Regenerate from a new checkpoint only after a deliberate PnR run (see Section~\ref{sec:build}).
+\end{warningbox}
+
+\section{The metastability sensor (\texttt{modern\_sensible})}
+
+The sensor detects when the critical path output (\texttt{crit\_bit}) is arriving
+at a flip-flop too close to the clock edge, i.e., when timing slack approaches zero.
+
+\begin{lstlisting}[style=verilog, caption={modern\_sensible.sv (simplified)}]
+// FF1: captures crit_bit on the PHASE-SHIFTED clock (psclk)
+FDCE FF1 (.Q(ff1), .C(psclk), .D(in_sensor), ...);
+
+// FF2: captures crit_bit on the REFERENCE clock (sclk = clk_sys)
+FDCE FF2 (.Q(ff2), .C(sclk),  .D(in_sensor), ...);
+
+// XOR: detects disagreement between the two captures
+LUT2_L #(.INIT(4'b0110)) XOR1 (.LO(xor_out), .I0(ff1), .I1(ff2));
+
+// FF3: latches the XOR result on a third clock (clk_en, 100 deg offset)
+FDCE FF3 (.Q(alarm), .C(clk_en), .D(xor_out), ...);
+\end{lstlisting}
+
+The operating principle is:
+
+\begin{enumerate}
+  \item FF2 always captures \texttt{crit\_bit} reliably on \texttt{clk\_sys}. It represents
+        the ``ground truth'' value.
+  \item FF1 captures \texttt{crit\_bit} on \texttt{psclk}, which is phase-shifted relative to
+        \texttt{clk\_sys} by a controllable amount.
+  \item When \texttt{psclk} is close in phase to \texttt{clk\_sys}, FF1 and FF2 see the same
+        signal edge and capture the same value $\Rightarrow$ XOR = 0 $\Rightarrow$ no alarm.
+  \item As the phase of \texttt{psclk} is shifted (decremented), a point is reached where
+        FF1's setup window straddles the transition of \texttt{crit\_bit}. FF1 captures the
+        \emph{old} value while FF2 captures the \emph{new} value $\Rightarrow$ XOR = 1
+        $\Rightarrow$ alarm fires.
+  \item FF3 latches the alarm on \texttt{clk\_en} (100° offset) to avoid hold-time hazards
+        in the XOR output.
+\end{enumerate}
+
+The number of MMCM phase-shift steps at which the alarm fires is the timing margin measurement.
+This is the \textbf{slack} value (\texttt{display\_value}).
+
+\section{Dual-adder design (\texttt{adder\_canary})}
+
+Two structurally identical ripple-adder instances serve different roles:
+
+\subsection{Sensor adder (\texttt{u\_sensor}): timing measurement}
+
+The sensor adder must exercise the full carry chain on every clock cycle to give a
+consistent, repeatable timing stimulus. A free-running counter would mostly add small
+numbers that do not propagate carry through all 16 stages. Instead, a \texttt{toggle}
+flip-flop alternates \texttt{a\_sensor} between two boundary values:
+
+\begin{align}
+  \texttt{a\_sensor} &= \begin{cases} 16\texttt{h}5555 & \text{if toggle = 0} \\ 16\texttt{h}5556 & \text{if toggle = 1} \end{cases} \\
+  \texttt{b} &= 16\texttt{h}\text{AAAA} \quad(\text{constant})
+\end{align}
+
+With these values, $\texttt{sum\_sensor}[15]$ transitions on \emph{every} clock cycle
+because the boundary values straddle the carry-out threshold of every stage. This
+forces carry propagation through all 16 LUT stages on each cycle, making the timing
+stimulus deterministic and maximally stressful on the critical path.
+
+\subsection{Canary adder (\texttt{u\_canary}): functional failure detection}
+
+The canary adder uses a free-running counter input \texttt{a} and the same constant
+\texttt{b = 0xAAAA}. Its output is compared against a reference computation
+(\texttt{sum\_ref}) implemented in standard synthesis (may use CARRY4). Because
+both adders use identical transistors (same placement), the canary detects when
+aging has progressed far enough to cause \emph{functional errors}:
+
+\begin{itemize}
+  \item \texttt{wrong}: the canary adder output at the moment of the last alarm.
+  \item \texttt{correct}: the reference adder output at the same moment.
+  \item \texttt{error\_count}: running count of cycles where the two outputs differ (saturates at 0xFFFF).
+  \item \texttt{error\_any}: sticky flag, set on the first ever mismatch.
+\end{itemize}
+
+\begin{infobox}
+The canary metrics are logged to CSV but not displayed in the GUI. They are useful
+for post-processing to correlate the onset of timing degradation with eventual
+functional failure.
+\end{infobox}
+
+\section{The phase-sweep FSM (\texttt{controller\_controller})}
+
+The FSM runs autonomously and continuously. It performs a complete measurement sweep
+every few milliseconds without any trigger from the host PC.
+
+\begin{lstlisting}[style=shell, caption={FSM state diagram}]
+CHECK_ALARM --> alarm?  --yes--> DONE
+     ^                  --no --> INIT_SHIFT
+     |                               |
+     |              (decrement psclk phase by one step)
+     |                               v
+     |                          WAIT_SHIFT
+     |                               |
+     '----(inc_count++)--------------'
+
+DONE --> latch display_value = inc_count
+     --> RESET_PHASE
+
+RESET_PHASE --> reset_count >= inc_count? --yes--> IDLE
+                                          --no --> WAIT_RESET
+                                                       |
+              (increment psclk phase, back to 0)       |
+              <--(reset_count++)-----------------------'
+
+IDLE --> clear inc_count, reset_count
+     --> CHECK_ALARM  (immediately restarts next sweep)
+\end{lstlisting}
+
+\textbf{Key insight}: as the device ages, \texttt{crit\_bit} transitions later relative
+to the clock edge (path delay increases). The alarm therefore fires after \emph{fewer}
+phase-shift steps. Thus \texttt{display\_value} decreases monotonically as the device
+degrades. A plot of \texttt{dut\_slack} vs. time showing a downward trend is the
+primary evidence of aging.
+
+\subsection{Sticky alarm latch}
+
+Because \texttt{crit\_bit} toggles every clock cycle, the \texttt{alarm} signal from
+\texttt{modern\_sensible} is a brief 1--2 cycle pulse rather than a steady level.
+\texttt{CHECK\_ALARM} samples \texttt{alarm} for exactly one cycle and would frequently
+miss this pulse. A sticky latch captures the first alarm of each sweep and holds it
+until IDLE clears it, ensuring the FSM never misses the alarm regardless of pulse
+timing.
+
+\section{XADC interface (\texttt{temp\_catcher})}
+
+The Xilinx XADC monitors two internal signals:
+\begin{itemize}
+  \item \textbf{Temperature} (register \texttt{0x00}): die temperature using an on-chip bandgap diode.
+  \item \textbf{VCCINT} (register \texttt{0x01}): internal core supply voltage.
+\end{itemize}
+
+The \texttt{temp\_catcher} module polls these registers via the DRP (Dynamic Reconfiguration
+Port) interface. A FSM asserts \texttt{DEN} (data enable), waits for \texttt{DRDY}
+(data ready), reads \texttt{DO}, then repeats for the next register. A 128-cycle watchdog
+retries if \texttt{DRDY} does not arrive (which can happen if DEN is pulsed incorrectly).
+
+\subsection{Conversion formulas}
+
+The 12-bit ADC code (bits [15:4] of the 16-bit register) is converted to physical
+units by \texttt{temp\_catcher} in fixed-point arithmetic:
+
+\begin{align}
+  T\;[\text{m}^\circ\text{C}] &= \frac{\texttt{ADC\_code}[15:4] \times 503975}{2^{12}} - 273150 \\
+  V_{CCINT}\;[\text{mV}] &= \frac{\texttt{ADC\_code}[15:4] \times 3000}{2^{12}}
+\end{align}
+
+These values are transmitted in the serial packet as 24-bit integers (millidegrees and millivolts).
+The Python application divides by 1000 to recover floating-point Celsius and volts.
+
+\section{UART interface}
+
+\subsection{Trigger (PC \textrightarrow{} FPGA)}
+
+The PC sends the single byte \texttt{0x54} (ASCII `T'). The \texttt{uart\_rx} module
+detects this byte and asserts the \texttt{sendin} signal, which causes \texttt{sensor\_stream}
+to latch all sensor values and begin transmitting the 15-byte response.
+
+\subsection{15-byte response packet (FPGA \textrightarrow{} PC)}
+
+All fields are Little Endian (LSB first). The UART runs at 9600 baud.
+
+\begin{longtable}{@{}clll@{}}
+  \toprule
+  \textbf{Byte(s)} & \textbf{Field} & \textbf{Width} & \textbf{Description} \\
+  \midrule
+  \endhead
+  0--2  & \texttt{temp}        & 24-bit & Die temperature (m$^\circ$C), divide by 1000 for $^\circ$C \\
+  3--4  & \texttt{sensor}      & 16-bit & Phase-sweep step count (slack) \\
+  5--7  & \texttt{vccint}      & 24-bit & VCCINT (mV), divide by 1000 for V \\
+  8     & \texttt{failure}     &  8-bit & Bit 0: functional failure latch \\
+  9--10 & \texttt{wrong}       & 16-bit & Canary: last wrong adder result \\
+  11--12 & \texttt{correct}    & 16-bit & Canary: expected result at alarm time \\
+  13--14 & \texttt{error\_count} & 16-bit & Canary: cumulative mismatch count \\
+  \bottomrule
+\end{longtable}
+
+\begin{warningbox}
+The byte layout above is consumed verbatim by \texttt{DUTWorker.poll\_data()} in the
+Python application. Never reorder fields or change widths in \texttt{sensor\_stream.sv}
+without updating the parser.
+\end{warningbox}
+
+\section{Building the bitstream}
+\label{sec:build}
+
+\begin{lstlisting}[style=shell, caption={Build commands (from repo root)}]
+cd vivado/aging_study_nexys4ddr
+
+# Sanity check (no Vivado needed)
+scripts/check_layout.sh
+
+# Create Vivado project (.xpr)
+scripts/create_project.sh           # batch mode
+scripts/create_project.sh --gui     # open in Vivado GUI
+
+# Build bitstream (creates artifacts/aging_study_nexys4ddr.bit)
+scripts/build_bitstream.sh --jobs 8
+
+# Regenerate fixed PnR constraints from a new checkpoint
+scripts/build_bitstream.sh --jobs 8 --refresh-ref
+
+# Remove build output
+scripts/clean.sh
+\end{lstlisting}
+
+The bitstream and timing reports land in \texttt{artifacts/}.
+The pre-built bitstream used for App\_2Nexys is in
+\texttt{vivado/aging\_study\_nexys4ddr/bitstreams/}.
+
+% =============================================================================
+\chapter{Software Architecture}
+\label{ch:software}
+% =============================================================================
+
+\section{Applications overview}
+
+There are three Python GUI applications. This guide focuses on \textbf{App\_Nexys}
+(single DUT, Artix-7 Nexys4 DDR), which is the primary entry point for new students.
+The other two are briefly described in Chapter~\ref{ch:otherapps}.
+
+All apps share the same software patterns: a Qt main window, QThread-based workers,
+a global configuration module, and a CSV data logger.
+
+\section{Launching the application}
+
+\begin{lstlisting}[style=shell, caption={Running App\_Nexys}]
+# Recommended: root launcher (choose at the dialog)
+./run.sh
+
+# Direct launch
+cd App_Nexys && ./run.sh
+\end{lstlisting}
+
+The \texttt{run.sh} script:
+\begin{enumerate}
+  \item Creates \texttt{.venv/} using the system Python 3 if it does not exist.
+  \item Installs dependencies from \texttt{requirements.txt}.
+  \item Sets \texttt{LD\_LIBRARY\_PATH} to prefer the venv's Qt libraries over
+        system packages (resolves Qt version conflicts on Linux Mint).
+  \item Executes \texttt{python App.py}.
+\end{enumerate}
+
+\section{Worker architecture (QThread pattern)}
+
+The GUI event loop must remain responsive at all times. All hardware communication
+runs in background \texttt{QThread}s. Each worker is a \texttt{QObject} with a
+\texttt{QTimer} driving its polling loop. Signals carry data back to the main thread.
+
+\begin{lstlisting}[style=shell, caption={Thread structure}]
+Main Thread (Qt event loop)
+  |
+  +-- ArduinoWorker (QThread)     -- polls Arduino at ~200 ms intervals
+  |     QTimer --> poll_data()
+  |     Signal: arduino_data_received(dict)
+  |
+  +-- PSUWorker (QThread)         -- polls IT6502D at ~500 ms intervals
+  |     QTimer --> poll_data()
+  |     Signal: psu_data_received(dict)
+  |
+  +-- DUTWorker (QThread)         -- sends 'T', reads 15-byte packet at ~1s
+  |     QTimer --> poll_data()
+  |     Signal: dut_data_received(dict)
+  |
+  +-- TestSequencer (QThread)     -- orchestrates, writes CSV, runs safety checks
+        QTimer --> log_data_tick()  (1 Hz)
+        Receives signals from all three workers
+        Runs VCCINT closed-loop trim
+        Runs DUT outer temperature loop (every 1800 ticks)
+\end{lstlisting}
+
+\section{DUTWorker: reading FPGA data}
+
+On each poll tick, \texttt{DUTWorker}:
+\begin{enumerate}
+  \item Flushes the serial receive buffer.
+  \item Sends the byte \texttt{b'\textbackslash x54'} (0x54 = `T').
+  \item Reads exactly 15 bytes.
+  \item Unpacks them according to the packet layout (Table in Section~\ref{ch:rtl}).
+  \item Converts raw values: \texttt{temp\_raw / 1000.0} $\rightarrow$ \texttt{dut\_temp\_c};
+        \texttt{vccint\_raw / 1000.0} $\rightarrow$ \texttt{dut\_volt}.
+  \item Emits \texttt{dut\_data\_received} with a dictionary containing all fields.
+\end{enumerate}
+
+Boot transients (temp $> 200\,^\circ$C or vccint $> 2.5\,\text{V}$) are
+discarded to avoid spurious data while the XADC is settling after power-on.
+
+\section{ArduinoWorker}
+
+The Arduino communicates via ASCII lines over UART at 115200 baud.
+
+\begin{itemize}
+  \item \textbf{PC $\rightarrow$ Arduino}: \texttt{SET\_SETPOINT,<value>\textbackslash n}
+  \item \textbf{Arduino $\rightarrow$ PC}: \texttt{DATA,<temp>,<sp>,<out>\textbackslash n}
+        where \texttt{out} is the PID output (0--100\%).
+\end{itemize}
+
+\section{PSUWorker (IT6502D)}
+
+The ITECH IT6502D is accessed via PyVISA with the \texttt{@py} (pyvisa-py) backend.
+The VISA resource string must be a USB resource of the form:
+\begin{lstlisting}[style=shell]
+USB0::0x1AB1::0x0E11::IT6502D300004::INSTR
+\end{lstlisting}
+
+To discover the correct string on a given machine:
+\begin{lstlisting}[style=shell]
+python3 -c "import pyvisa; rm=pyvisa.ResourceManager('@py'); print(rm.list_resources())"
+\end{lstlisting}
+
+SCPI commands used:
+\begin{itemize}
+  \item \texttt{MEAS:VOLT?} --- read output voltage.
+  \item \texttt{MEAS:CURR?} --- read output current.
+  \item \texttt{VOLT <value>} --- set output voltage.
+  \item \texttt{OUTP ON} / \texttt{OUTP OFF} --- enable/disable output.
+\end{itemize}
+
+\section{Configuration system}
+
+\texttt{config.py} is a global-mutable-state module. All workers import it directly;
+no dependency injection is used. Settings are persisted to \texttt{settings.json}
+in the app's working directory.
+
+Key configuration values:
+
+\begin{longtable}{@{}lll@{}}
+  \toprule
+  \textbf{Parameter} & \textbf{Default} & \textbf{Meaning} \\
+  \midrule
+  \endhead
+  \texttt{DUT\_BAUD}         & 9600          & FPGA UART baud rate \\
+  \texttt{ARDUINO\_BAUD}     & 115200        & Arduino UART baud rate \\
+  \texttt{PID\_KP}           & 2.78          & Oven PID proportional gain \\
+  \texttt{PID\_KI}           & 0.00106       & Oven PID integral gain \\
+  \texttt{PID\_KD}           & 5.0           & Oven PID derivative gain \\
+  \texttt{VCCINT\_SETPOINT\_V} & 1.0 V       & Target FPGA core voltage \\
+  \texttt{VOLTAGE\_KP}       & 0.1 V/V       & VCCINT P-only trim gain \\
+  \texttt{MAX\_OVEN\_TEMP\_C} & 130~$^\circ$C & Safety: oven hard limit \\
+  \texttt{MAX\_DUT\_TEMP\_C}  & 160~$^\circ$C & Safety: DUT hard limit \\
+  \texttt{MAX\_PSU\_CURRENT\_A} & 3.0~A      & Safety: PSU current limit \\
+  \bottomrule
+\end{longtable}
+
+\section{Data logger}
+
+\texttt{DataLogger} (in \texttt{logger.py}) writes a single CSV file per test run.
+Files are named \texttt{<test\_name>\_<YYYYMMDD\_HHMMSS>.csv} and saved to
+\texttt{App\_Nexys/test\_logs/}.
+
+Each file begins with a comment block recording the PID parameters, FOPDT model
+coefficients, safety limits, and the start timestamp. The data section contains one
+row per second with the following columns:
+
+\begin{longtable}{@{}ll@{}}
+  \toprule
+  \textbf{Column} & \textbf{Description} \\
+  \midrule
+  \endhead
+  \texttt{time\_sec}       & Elapsed seconds since test start \\
+  \texttt{oven\_temp\_c}   & Oven air temperature ($^\circ$C) \\
+  \texttt{oven\_setpoint\_c} & Current oven setpoint ($^\circ$C) \\
+  \texttt{oven\_output\_pct} & PID output to SSR (0--100\%) \\
+  \texttt{psu\_voltage\_v} & PSU output voltage (V), measured by PSU \\
+  \texttt{psu\_current\_a} & PSU output current (A) \\
+  \texttt{dut\_temp\_c}    & FPGA die temperature ($^\circ$C, from XADC) \\
+  \texttt{dut\_slack}      & Phase-sweep step count (timing margin) \\
+  \texttt{dut\_volt}       & FPGA VCCINT (V, from XADC) \\
+  \bottomrule
+\end{longtable}
+
+\section{GUI layout}
+
+The main window uses the Catppuccin Mocha dark theme.
+
+\begin{lstlisting}[style=shell, caption={Window layout}]
++--------------------------------------------------------------+
+|  [Oven Control + PID info]  [PSU]  [Test Controls]          |  <- top bar
++--------------------------------------------------------------+
+|  Tabs:                                                       |
+|  [Sensor]  [Temperature]  [Voltage]  [Log]                  |
++--------------------------------------------------------------+
+|  (QSplitter)                                                 |
+|  Tab content area                                            |
+| - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  |
+|  Event log (always visible, pinned below tabs)               |
++--------------------------------------------------------------+
+|  Status bar: DUT [connected]  Arduino [connected]  PSU [OK]  |
++--------------------------------------------------------------+
+\end{lstlisting}
+
+% =============================================================================
+\chapter{Communication Protocols}
+\label{ch:protocol}
+% =============================================================================
+
+\section{DUT protocol (FPGA)}
+
+\begin{itemize}
+  \item \textbf{Baud rate}: 9600, 8N1.
+  \item \textbf{Trigger}: PC sends single byte \texttt{0x54} (ASCII `T').
+  \item \textbf{Response}: FPGA sends 15 bytes, Little Endian, as described in Section~\ref{ch:rtl}.
+  \item \textbf{Timing}: response begins within one UART character time (about 1~ms at 9600 baud)
+        after the trigger is received.
+\end{itemize}
+
+\section{Arduino protocol}
+
+\begin{itemize}
+  \item \textbf{Baud rate}: 115200, 8N1.
+  \item \textbf{PC $\rightarrow$ Arduino}: \texttt{SET\_SETPOINT,<float>\textbackslash n}
+        (e.g. \texttt{SET\_SETPOINT,125.0\textbackslash n}).
+  \item \textbf{Arduino $\rightarrow$ PC}: \texttt{DATA,<temp>,<setpoint>,<output>\textbackslash n}
+        (e.g. \texttt{DATA,123.45,125.00,47.30\textbackslash n}).
+        Sent autonomously at the PID sample interval (5000~ms by default).
+\end{itemize}
+
+\section{PSU protocol (IT6502D)}
+
+\begin{itemize}
+  \item \textbf{Physical layer}: USB-TMC (USB Test and Measurement Class).
+        No baud rate --- full USB speed.
+  \item \textbf{Library}: PyVISA with \texttt{@py} backend (pyvisa-py + libusb).
+  \item \textbf{Commands}: SCPI (Standard Commands for Programmable Instruments).
+\end{itemize}
+
+\begin{warningbox}
+The PSU VISA resource string \emph{must} start with \texttt{USB::} or \texttt{USB0::}.
+Legacy serial paths (\texttt{/dev/ttyUSB*}) or ASRL strings are rejected at startup by
+\texttt{config.load\_config()} to prevent a ``Could not configure port'' error.
+\end{warningbox}
+
+% =============================================================================
+\chapter{Control Loops}
+\label{ch:control}
+% =============================================================================
+
+\section{Oven temperature control (PID)}
+
+\subsection{Plant identification}
+
+The oven was modelled as a First-Order Plus Dead Time (FOPDT) system using a
+step-test experiment (\texttt{Arduino-ESP/FOPDT\_Step\_Test.ino}):
+
+\begin{equation}
+  G(s) = \frac{1.56\,e^{-150.6s}}{1307.2s + 1}
+  \label{eq:fopdt}
+\end{equation}
+
+Parameters:
+\begin{itemize}
+  \item $K = 1.56\,^\circ\text{C}/\%$ (steady-state gain)
+  \item $\theta = 150.6\,\text{s}$ (dead time)
+  \item $\tau = 1307.2\,\text{s}$ (time constant)
+  \item $\theta/\tau = 0.115$ (process difficulty ratio)
+\end{itemize}
+
+\subsection{SIMC tuning}
+
+PID parameters were computed with the SIMC (Skogestad Internal Model Control)
+method, setting the desired closed-loop time constant $\tau_c = \theta$:
+
+\begin{align}
+  K_p &= \frac{1}{K} \cdot \frac{\tau}{\tau_c + \theta} = 2.78 \\
+  K_i &= \frac{K_p}{\min(\tau,\,4(\tau_c+\theta))} = 0.00106\,\text{s}^{-1} \\
+  K_d &= K_p \cdot \frac{\theta}{2} = 5.0\,\text{s}
+\end{align}
+
+\begin{warningbox}
+Do not change these PID values without conducting a new FOPDT step test.
+The parameters are finely tuned to the specific oven and SSR combination in the lab.
+Wrong values will cause sustained oscillation or sluggish response.
+\end{warningbox}
+
+\subsection{Implementation}
+
+The PID runs on the Arduino at a sample interval of 5000~ms using the ArduPID 1.0.1
+library. Key API calls:
+
+\begin{lstlisting}[style=shell, caption={ArduPID 1.0.1 usage}]
+pid.setTunings(Kp, Ki, Kd);   // replaces begin() from v0.2.1
+pid.setILimits(-100, 100);    // replaces setWindUpLimits()
+pid.setDtMs(5000);             // replaces setSampleTime()
+output = pid.compute(input);   // takes input; returns output
+\end{lstlisting}
+
+The Arduino sends the PID output as a duty cycle percentage to the SSR (Solid-State Relay),
+which switches mains power to the oven heating element.
+
+\section{VCCINT closed-loop voltage trim}
+
+The FPGA's internal supply $V_{CCINT}$ is measured by the XADC and included in every
+15-byte packet (\texttt{dut\_volt}). The TestSequencer applies a P-only correction
+every log tick (1~Hz):
+
+\begin{equation}
+  v_{cmd}(k) = v_{cmd}(k-1) + K_{p,V} \cdot \bigl(V_{set} - V_{meas}(k)\bigr)
+\end{equation}
+
+with $K_{p,V} = 0.1\,\text{V/V}$. The command is clamped to $[0.0\,\text{V},\;1.5\,\text{V}]$.
+This compensates for cable resistance and the PSU's load regulation, ensuring the
+FPGA core actually operates at the commanded voltage.
+
+\section{DUT outer temperature loop}
+
+Because the oven air temperature and the FPGA die temperature differ (the die generates
+heat internally), a slow outer loop adjusts the oven setpoint to drive the die temperature
+to the target. Every 1800 ticks (approximately 30~minutes) the sequencer:
+
+\begin{enumerate}
+  \item Computes $e = T_{die,target} - T_{die,measured}$.
+  \item If $|e| > 3\,^\circ\text{C}$ (dead-band), shifts the oven setpoint by $\pm 1\,^\circ\text{C}$
+        in the direction that reduces the error.
+\end{enumerate}
+
+This ensures that the FPGA transistors experience the intended stress temperature
+regardless of self-heating variations.
+
+% =============================================================================
+\chapter{Setting Up a Fresh Workstation}
+\label{ch:setup}
+% =============================================================================
+
+\section{System requirements}
+
+\begin{itemize}
+  \item OS: Ubuntu 22.04 LTS or Linux Mint 21+ (recommended). Other Debian-based
+        distros should work with minor adjustments.
+  \item Python: 3.10 or later (system package).
+  \item Vivado: 2025.2 or later (required for bitstream builds and App\_2Nexys
+        auto-programming; not needed just to run App\_Nexys with a pre-built bitstream).
+  \item Disk space: \textasciitilde{}70~GB for Vivado; \textasciitilde{}500~MB for the repo + venv.
+\end{itemize}
+
+\section{Step 1 --- Install system dependencies}
+
+\begin{lstlisting}[style=shell, caption={System package installation}]
+sudo apt update
+sudo apt install -y \
+    python3 python3-pip python3-venv \
+    libusb-1.0-0 libusb-dev \
+    git
+\end{lstlisting}
+
+\section{Step 2 --- Clone the repository}
+
+\begin{lstlisting}[style=shell]
+git clone https://github.com/your-org/IC-Aging-Environment.git
+cd IC-Aging-Environment
+\end{lstlisting}
+
+\section{Step 3 --- Install Vivado (if needed)}
+
+Download the Vivado 2025.2 installer from the Xilinx/AMD downloads page.
+Run the installer and select at minimum:
+
+\begin{itemize}
+  \item \textbf{Vivado} (not just Vitis).
+  \item \textbf{Artix-7} device support (under 7 Series).
+  \item \textbf{Cable Drivers} (Digilent JTAG over USB).
+\end{itemize}
+
+Add Vivado to \texttt{PATH} in \texttt{\textasciitilde/.bashrc}:
+
+\begin{lstlisting}[style=shell]
+# Replace the path with your actual Vivado installation directory
+echo 'source /opt/Xilinx/Vivado/2025.2/settings64.sh' >> ~/.bashrc
+source ~/.bashrc
+vivado -version   # should print version info
+\end{lstlisting}
+
+\begin{infobox}
+If you use App\_2Nexys, you must also update \texttt{VIVADO\_BIN} in
+\texttt{App\_2Nexys/config.py} to point to your local Vivado binary. This path
+is currently hardcoded to a specific machine in the lab.
+\end{infobox}
+
+\section{Step 4 --- Configure udev rules for serial and JTAG devices}
+
+By default, non-root users cannot open USB serial ports or JTAG adapters.
+Two steps are needed:
+
+\subsection{Add user to the dialout group}
+
+\begin{lstlisting}[style=shell]
+sudo usermod -aG dialout $USER
+# Log out and back in for the group change to take effect.
+# Verify:
+groups | grep dialout
+\end{lstlisting}
+
+\subsection{Install Digilent USB cable rules}
+
+The Nexys4 DDR uses an FTDI chip programmed with Digilent's VID/PID.
+Vivado ships the required udev rules:
+
+\begin{lstlisting}[style=shell]
+# Path may differ; look for install_drivers in your Vivado installation
+sudo /opt/Xilinx/Vivado/2025.2/data/xicom/cable_drivers/lin64/install_script/\
+  install_drivers/install_drivers
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+\end{lstlisting}
+
+\begin{warningbox}
+Without these rules, Vivado cannot program the FPGA via JTAG, and the serial
+port may not appear correctly. If you see \texttt{Permission denied} when opening
+a serial port, check group membership first.
+\end{warningbox}
+
+\section{Step 5 --- Identify serial port assignments}
+
+Each Nexys4 DDR enumerates \emph{two} \texttt{ttyUSB*} ports via its FTDI chip:
+
+\begin{itemize}
+  \item \textbf{Lower-numbered port} (e.g., \texttt{ttyUSB0}): JTAG channel. Do not open this.
+  \item \textbf{Higher-numbered port} (e.g., \texttt{ttyUSB1}): UART data channel. Use this for the DUT.
+\end{itemize}
+
+To identify which port is which:
+
+\begin{lstlisting}[style=shell]
+# List USB serial devices with their USB IDs
+ls -la /dev/serial/by-id/
+# or use udevadm for details
+udevadm info -a /dev/ttyUSB1 | grep -E "idVendor|idProduct|serial"
+\end{lstlisting}
+
+The Arduino will appear as a separate entry (typically an ACM or CH340 device).
+
+\section{Step 6 --- Identify the PSU VISA resource}
+
+\begin{lstlisting}[style=shell]
+python3 -c "
+import pyvisa
+rm = pyvisa.ResourceManager('@py')
+print(rm.list_resources())
+"
+# Expected output contains something like:
+# ('USB0::0x1AB1::0x0E11::IT6502D300004::INSTR',)
+\end{lstlisting}
+
+Copy the full USB string; you will paste it into the Setup Dialog.
+
+\section{Step 7 --- First run}
+
+\begin{lstlisting}[style=shell]
+# From repo root
+./run.sh
+\end{lstlisting}
+
+On first launch, \texttt{run.sh} creates the Python virtual environment
+(\texttt{App\_Nexys/.venv}) and installs all dependencies from \texttt{requirements.txt}.
+This may take a minute. Subsequent launches are instant.
+
+The application opens. If \texttt{settings.json} does not exist, the Setup Dialog
+appears automatically.
+
+% =============================================================================
+\chapter{Running an Experiment}
+\label{ch:running}
+% =============================================================================
+
+\section{Pre-experiment checklist}
+
+Before starting a test, verify:
+
+\begin{itemize}
+  \item[$\square$] FPGA board is inside the oven with USB cable routed out.
+  \item[$\square$] PSU is connected to the FPGA's power header; output is OFF.
+  \item[$\square$] Arduino is connected via USB; serial cable to SSR is connected.
+  \item[$\square$] SSR wiring to oven is correct (verify polarity and fusing).
+  \item[$\square$] NTC thermistor is positioned inside the oven.
+  \item[$\square$] All USB devices are enumerated on the PC (\texttt{lsusb}).
+\end{itemize}
+
+\section{Setup Dialog}
+
+On first launch (or after clicking \textbf{Setup} in the menu), the Setup Dialog
+appears. Fill in:
+
+\begin{longtable}{@{}ll@{}}
+  \toprule
+  \textbf{Field} & \textbf{Value} \\
+  \midrule
+  \endhead
+  DUT Port & Higher-numbered ttyUSB for the Nexys4 DDR (e.g., \texttt{/dev/ttyUSB1}) \\
+  DUT Baud & 9600 (fixed; do not change) \\
+  Arduino Port & The Arduino's serial port (e.g., \texttt{/dev/ttyUSB2} or \texttt{/dev/ttyACM0}) \\
+  Enable Arduino & Check if the oven is connected \\
+  PSU Resource & The USB VISA string discovered in Step~6 \\
+  Enable PSU & Check if the IT6502D is connected \\
+  VCCINT Setpoint & Target core voltage (V); default 1.0~V; raise to accelerate aging \\
+  \bottomrule
+\end{longtable}
+
+Click \textbf{Save}. The settings are written to \texttt{settings.json}.
+
+\section{Setting experiment parameters}
+
+In the main window top bar:
+
+\begin{enumerate}
+  \item \textbf{Oven setpoint}: type the desired temperature in the oven control group
+        (e.g., 125~$^\circ$C). The PID ramp will bring the oven there at 1~$^\circ$C/s.
+  \item \textbf{Test name}: enter a descriptive name for the experiment. This becomes
+        the CSV filename prefix.
+  \item \textbf{Enable Arduino / Enable PSU}: toggle these to match your hardware.
+\end{enumerate}
+
+\section{Starting the test}
+
+Click \textbf{Start Test}. The sequencer:
+\begin{enumerate}
+  \item Enables PSU output and ramps to \texttt{VCCINT\_SETPOINT\_V}.
+  \item Sends the oven setpoint to the Arduino.
+  \item Begins polling the FPGA at 1~Hz.
+  \item Opens a new CSV file with a timestamped name.
+\end{enumerate}
+
+The \textbf{Sensor} tab shows the live \texttt{dut\_slack} value. The
+\textbf{Temperature} tab shows oven and DUT temperatures.
+
+\section{Monitoring}
+
+Experiments run unattended for days. The app continues logging even if the
+display goes to sleep. Recommended practice:
+
+\begin{itemize}
+  \item Disable screen lock and display power management on the test machine.
+  \item Check in on the CSV daily to verify that new rows are being written.
+  \item Monitor \texttt{dut\_temp\_c} in the log: it should be stable within $\pm 1\,^\circ$C
+        of the target once the PID has settled (approximately 30~min after start).
+\end{itemize}
+
+\section{Safety limits}
+
+The TestSequencer monitors safety limits every tick. If any limit is exceeded,
+the test is automatically stopped and the PSU is disabled:
+
+\begin{itemize}
+  \item Oven temperature $> 130\,^\circ\text{C}$
+  \item DUT die temperature $> 160\,^\circ\text{C}$
+  \item PSU current $> 3.0\,\text{A}$
+\end{itemize}
+
+An event is logged to the on-screen log panel with a timestamp.
+
+\section{Stopping the test}
+
+Click \textbf{Stop Test}. The sequencer:
+\begin{enumerate}
+  \item Closes the CSV file and writes an end-of-test footer.
+  \item Disables PSU output.
+  \item Sends a 0~$^\circ$C setpoint to the Arduino (which effectively stops heating).
+\end{enumerate}
+
+Allow the oven to cool before opening it. Do not disconnect USB cables while the
+oven is hot.
+
+% =============================================================================
+\chapter{Data Analysis}
+\label{ch:analysis}
+% =============================================================================
+
+\section{CSV file structure}
+
+Log files are in \texttt{App\_Nexys/test\_logs/}. Each file begins with comment
+lines (\texttt{\#}) containing metadata, followed by a header row, then data rows
+at 1-second intervals.
+
+\section{Loading data in Python (Pandas)}
+
+\begin{lstlisting}[style=python, caption={Loading and plotting dut\_slack over time}]
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_csv('test_logs/MyTest_20260101_120000.csv', comment='#')
+
+fig, axes = plt.subplots(3, 1, figsize=(12, 8), sharex=True)
+
+axes[0].plot(df['time_sec'] / 3600, df['dut_slack'])
+axes[0].set_ylabel('Slack (phase steps)')
+axes[0].set_title('Timing Margin vs. Time')
+
+axes[1].plot(df['time_sec'] / 3600, df['dut_temp_c'], label='DUT die')
+axes[1].plot(df['time_sec'] / 3600, df['oven_temp_c'], label='Oven air', alpha=0.5)
+axes[1].set_ylabel('Temperature (degC)')
+axes[1].legend()
+
+axes[2].plot(df['time_sec'] / 3600, df['dut_volt'])
+axes[2].set_ylabel('VCCINT (V)')
+axes[2].set_xlabel('Time (hours)')
+
+plt.tight_layout()
+plt.savefig('aging_result.png', dpi=150)
+plt.show()
+\end{lstlisting}
+
+\section{Typical result signature}
+
+A successful aging run shows:
+\begin{itemize}
+  \item \texttt{dut\_slack} decreasing monotonically over the stress period.
+  \item \texttt{dut\_temp\_c} stable within $\pm 1\,^\circ$C of the target after the
+        initial ramp.
+  \item \texttt{dut\_volt} stable within $\pm 5\,\text{mV}$ of the setpoint.
+  \item \texttt{error\_count} (in the raw packet; not in the default CSV) remaining at 0
+        until functional failure begins.
+\end{itemize}
+
+If \texttt{dut\_slack} shows large random jumps, check:
+\begin{enumerate}
+  \item Temperature stability --- thermal gradients affect timing.
+  \item $V_{CCINT}$ stability --- supply noise directly modulates path delay.
+  \item USB cable quality --- occasional packet errors produce spurious readings.
+\end{enumerate}
+
+\section{Fitting the degradation model}
+
+To extract the aging exponent $n$ from the NBTI power-law:
+
+\begin{lstlisting}[style=python, caption={Fitting slack vs. time to a power-law model}]
+import numpy as np
+from scipy.optimize import curve_fit
+
+# Use only data after thermal stabilisation (e.g., skip first 3600 s)
+mask = df['time_sec'] > 3600
+t = df.loc[mask, 'time_sec'].values
+s = df.loc[mask, 'dut_slack'].values
+
+# Model: slack(t) = s0 - A * t^n
+def model(t, s0, A, n):
+    return s0 - A * t**n
+
+p0 = [s.max(), 1.0, 0.15]
+popt, _ = curve_fit(model, t, s, p0=p0, maxfev=10000)
+s0, A, n = popt
+print(f"Initial slack: {s0:.1f}  A: {A:.4f}  n: {n:.4f}")
+\end{lstlisting}
+
+The fitted exponent $n$ can be compared against theoretical NBTI predictions
+($n \approx 0.1$--$0.25$).
+
+% =============================================================================
+\chapter{Other Applications}
+\label{ch:otherapps}
+% =============================================================================
+
+\section{App\_2Nexys (dual DUT)}
+
+App\_2Nexys operates two Nexys4 DDR boards simultaneously with a shared oven,
+two PSUs (IT6502D + Agilent E3634A), and two independent DUT workers. Both
+FPGAs are programmed automatically at test start via a Vivado batch session.
+
+Key differences from App\_Nexys:
+\begin{itemize}
+  \item The DUT outer temperature loop uses the \emph{average} of both DUT temperatures.
+  \item Port pairing is done by fixed USB serial IDs (\texttt{USB\_ID\_DUT0}/\texttt{DUT1}).
+  \item \texttt{VIVADO\_BIN} is hardcoded in \texttt{App\_2Nexys/config.py} --- update
+        this when deploying on a new machine.
+  \item The 15-byte DUT protocol is identical to App\_Nexys.
+\end{itemize}
+
+\section{App\_FPGAging\_Slack\_Sensor (UltraScale+ / SBCCI target)}
+
+This application targets an UltraScale+ FPGA accessed via an ESP32 UART router
+and an STM32 bridge. It supports a different 9-byte packet format from the CROC
+FPGA and uses CRC16-Modbus framing for STM32 communication.
+This is an advanced configuration used for the SBCCI publication target.
+
+% =============================================================================
+\chapter{Troubleshooting}
+\label{ch:troubleshooting}
+% =============================================================================
+
+\section{Serial port not accessible}
+
+\textbf{Symptom}: \texttt{Permission denied: '/dev/ttyUSB1'} or port not found.
+
+\textbf{Fix}:
+\begin{lstlisting}[style=shell]
+# Verify group membership
+groups | grep dialout
+# If dialout is not listed:
+sudo usermod -aG dialout $USER
+# Then log out and log back in.
+\end{lstlisting}
+
+\section{Wrong ttyUSB port selected (JTAG vs UART)}
+
+\textbf{Symptom}: App connects but no data arrives; DUT field stays at zero.
+
+\textbf{Fix}: The lower-numbered port of a Nexys4 DDR is JTAG, not UART.
+Always select the \emph{higher-numbered} of the two ports in the Setup Dialog.
+Use \texttt{ls -la /dev/serial/by-id/} to inspect the symlinks and identify
+port numbers.
+
+\section{App\_2Nexys fails to program FPGAs}
+
+\textbf{Symptom}: Test starts but the FSM logs ``Vivado batch job failed''.
+
+\textbf{Fix}: \texttt{VIVADO\_BIN} in \texttt{App\_2Nexys/config.py} is hardcoded
+to an absolute path from another machine. Update it to the local Vivado installation:
+
+\begin{lstlisting}[style=shell]
+# Find the vivado binary
+which vivado   # if already on PATH
+# or
+find /opt -name vivado -type f 2>/dev/null | head -5
+
+# Then edit App_2Nexys/config.py:
+# VIVADO_BIN = '/opt/Xilinx/Vivado/2025.2/bin/vivado'
+\end{lstlisting}
+
+\section{PSU VISA string error}
+
+\textbf{Symptom}: \texttt{config.load\_config()} silently clears the PSU port;
+the PSU shows as ``not configured'' even though a port was saved.
+
+\textbf{Cause}: The saved port string does not start with \texttt{USB}.
+\texttt{load\_config()} rejects non-USB strings to prevent the IT6502D from
+being opened as a serial device.
+
+\textbf{Fix}: Re-run the resource discovery command and paste the full USB string
+into the Setup Dialog.
+
+\section{dut\_slack shows erratic jumps}
+
+\textbf{Cause}: Most commonly thermal or voltage instability during the initial warm-up.
+
+\textbf{Fix}:
+\begin{enumerate}
+  \item Wait at least 30 minutes after pressing Start before drawing conclusions.
+  \item Verify \texttt{dut\_temp\_c} has stabilised.
+  \item Verify \texttt{dut\_volt} is within 5~mV of the setpoint.
+  \item If the XADC is not yet settled after power-on, readings of $> 200\,^\circ$C
+        will be silently discarded by \texttt{DUTWorker}.
+\end{enumerate}
+
+\section{Vivado timing reports show negative slack on the sensor path}
+
+This is expected and intentional. The sensor path is deliberately placed at its
+timing limit. Vivado's timing analysis uses post-P\&R RC delays that may not
+exactly match the actual operating condition. The MMCM phase measurement
+accounts for the real in-situ timing directly.
+
+% =============================================================================
+\appendix
+\chapter{FOPDT Step Test Procedure}
+% =============================================================================
+
+The FOPDT model of Equation~\ref{eq:fopdt} was identified from a step-test
+experiment. To repeat this experiment (e.g., after changing the oven or SSR):
+
+\begin{enumerate}
+  \item Flash \texttt{Arduino-ESP/FOPDT\_Step\_Test.ino} to the Arduino.
+  \item Open a serial monitor at 115200 baud.
+  \item Wait for the oven to reach thermal steady state at a low output (e.g., 20\%).
+  \item Apply a step change to a higher output (e.g., 40\%).
+  \item Record temperature vs. time until a new steady state is reached.
+  \item Fit the FOPDT model to extract $K$, $\theta$, and $\tau$.
+  \item Apply SIMC tuning rules to compute new PID gains.
+  \item Update \texttt{PID\_KP}, \texttt{PID\_KI}, \texttt{PID\_KD} in
+        \texttt{App\_Nexys/config.py}.
+\end{enumerate}
+
+% =============================================================================
+\chapter{Regenerating Fixed PnR Constraints}
+% =============================================================================
+
+The \texttt{fixed\_pnr\_constraints.xdc} file locks all sensor primitives to specific
+BEL sites. Regenerate it only after a deliberate new place-and-route run:
+
+\begin{lstlisting}[style=shell]
+cd vivado/aging_study_nexys4ddr
+
+# Build a new bitstream AND update the reference checkpoint + constraints
+scripts/build_bitstream.sh --jobs 8 --refresh-ref
+
+# Or, if you already have a fresh checkpoint and just want to regenerate XDC:
+scripts/extract_fixed_pnr_constraints.sh
+\end{lstlisting}
+
+After regeneration, commit both \texttt{fixed\_pnr\_constraints.xdc} and
+\texttt{references/fixed\_pnr.dcp}. All previously collected timing data
+is now incomparable with future data --- document the PnR change in the
+experiment log.
+
+\end{document}
