@@ -11,10 +11,12 @@ import os
 import csv
 from datetime import datetime
 import config
+from protocol import MULTI_NUM_CHANNELS
 
 
 class DataLogger:
-    def __init__(self, log_folder, test_name):
+    def __init__(self, log_folder, test_name, num_channels=MULTI_NUM_CHANNELS):
+        self.num_channels = num_channels
         self.filepath = self._create_log_file(log_folder, test_name)
         self.csv_writer = None
         self.file_handle = None
@@ -63,22 +65,30 @@ class DataLogger:
         w(f"# ==============================================\n")
         w(f"# \n")
 
-        self.csv_writer = csv.writer(self.file_handle)
-        self.csv_writer.writerow([
+        # dut0_slack/dut1_slack (and alarm) each get one column per channel
+        # (dut0_slack_ch0..chN-1) -- there's no functional canary left to
+        # report on this branch, and slack is now per-channel.
+        header = [
             "time_sec",
             "oven_temp_c", "oven_setpoint_c", "oven_output_pct",
-            "psu0_voltage_v", "psu0_current_a",
-            "dut0_temp_c", "dut0_slack", "dut0_volt",
-            "psu1_voltage_v", "psu1_current_a",
-            "dut1_temp_c", "dut1_slack", "dut1_volt",
+            "psu0_voltage_v", "psu0_current_a", "dut0_temp_c", "dut0_volt",
+            "psu1_voltage_v", "psu1_current_a", "dut1_temp_c", "dut1_volt",
             "psu0_cmd_v", "psu1_cmd_v",
-        ])
+        ]
+        for prefix in ("dut0", "dut1"):
+            for i in range(self.num_channels):
+                header.append(f"{prefix}_slack_ch{i}")
+            for i in range(self.num_channels):
+                header.append(f"{prefix}_alarm_ch{i}")
+
+        self.csv_writer = csv.writer(self.file_handle)
+        self.csv_writer.writerow(header)
 
     def write_data_row(self, d: dict):
         if not self.csv_writer:
             return
         try:
-            self.csv_writer.writerow([
+            row = [
                 f"{d.get('time_sec', 0):.3f}",
                 f"{d.get('oven_temp', 0):.2f}",
                 f"{d.get('oven_setpoint', 0):.2f}",
@@ -86,16 +96,20 @@ class DataLogger:
                 f"{d.get('psu0_voltage', 0):.3f}",
                 f"{d.get('psu0_current', 0):.4f}",
                 f"{d.get('dut0_temp', 0):.3f}",
-                d.get("dut0_slack", 0),
                 f"{d.get('dut0_volt', 0):.3f}",
                 f"{d.get('psu1_voltage', 0):.3f}",
                 f"{d.get('psu1_current', 0):.4f}",
                 f"{d.get('dut1_temp', 0):.3f}",
-                d.get("dut1_slack", 0),
                 f"{d.get('dut1_volt', 0):.3f}",
                 f"{d.get('psu0_cmd_v', 0):.3f}",
                 f"{d.get('psu1_cmd_v', 0):.3f}",
-            ])
+            ]
+            for prefix in ("dut0", "dut1"):
+                for i in range(self.num_channels):
+                    row.append(d.get(f"{prefix}_slack_ch{i}", 0))
+                for i in range(self.num_channels):
+                    row.append(d.get(f"{prefix}_alarm_ch{i}", 0))
+            self.csv_writer.writerow(row)
         except Exception as e:
             print(f"CSV write error: {e}")
 

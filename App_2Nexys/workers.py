@@ -23,6 +23,7 @@ from datetime import datetime
 import config
 import pyvisa as visa
 from logger import DataLogger
+from protocol import MULTI_NUM_CHANNELS, MULTI_PKT_LEN, parse_multi_sensor_packet
 import threading
 
 _DUT_OUTER_TICK_INTERVAL = 1800   # ticks between oven-sp adjustments (~30 min at 1 s/tick)
@@ -405,18 +406,24 @@ class PSUWorker1(QObject):
 #     error_count = running count of canary mismatches, saturates at 65535
 # =============================================================================
 class DUTWorker(QObject):
+    """
+    Protocolo (experimental-multi-sensor): pacote autoframed de
+    multi_sensor_stream.sv (sync 0xAA 0x55 + length + checksum) -- ver
+    protocol.py. Substitui o pacote legado de 15 bytes: este branch não
+    tem canário funcional para reportar, e slack/alarm agora são um valor
+    por canal.
+    """
     log_message = Signal(str)
-    data_ready = Signal(float, int, float)  # temp_c, slack, vccint_v (kept for compatibility)
+    data_ready = Signal(float, list, float, list)  # temp_c, slack (por canal), vccint_v, alarm (por canal)
 
-    BYTES_EXPECTED = 15
-
-    def __init__(self, dut_id: str):
+    def __init__(self, dut_id: str, num_channels=MULTI_NUM_CHANNELS):
         """dut_id: 'DUT-0' or 'DUT-1' (for log messages)."""
         super().__init__()
         self._id = dut_id
         self.ser = None
         self.is_running = False
-        self._latest_data = (0.0, 0, 0.0, 0, 0, 0, 0)  # temp, slack, vccint, fail, wrong, correct, error_count
+        self.num_channels = num_channels
+        self._latest_data = (0.0, [0] * num_channels, 0.0, [False] * num_channels)
         self._boot_reject_count = 0
 
     def _get_port_baud(self):
@@ -453,26 +460,20 @@ class DUTWorker(QObject):
         try:
             self.ser.reset_input_buffer()  # discard any buffered packets (FPGA 1 Hz timer accumulates them)
             self.ser.write(b"\x54")        # 'T': trigger a fresh phase sweep
-            data = self.ser.read(self.BYTES_EXPECTED)
+            data = self.ser.read(MULTI_PKT_LEN)
             print(f"{self._id} raw ({len(data)}B): {data.hex(' ')}")
-            if len(data) == self.BYTES_EXPECTED:
-                raw_temp    = int.from_bytes(data[0:3],   byteorder="little")
-                raw_slack   = int.from_bytes(data[3:5],   byteorder="little")
-                raw_voltage = int.from_bytes(data[5:8],   byteorder="little")
-                raw_failure = int(data[8])               # 0 or 1 — failure_holder latch
-                raw_wrong   = int.from_bytes(data[9:11],  byteorder="little")
-                raw_correct = int.from_bytes(data[11:13], byteorder="little")
-                raw_errcnt  = int.from_bytes(data[13:15], byteorder="little")
+            if len(data) == MULTI_PKT_LEN:
+                parsed = parse_multi_sensor_packet(data, self.num_channels)
+                if parsed is None:
+                    print(f"{self._id}: pacote multi-sensor com sync/checksum inválido")
+                    return
 
-                temp_c      = float(raw_temp)    / 1000.0
-                slack       = int(raw_slack)
-                vccint      = float(raw_voltage) / 1000.0
-                failure     = int(raw_failure)
-                wrong       = int(raw_wrong)
-                correct     = int(raw_correct)
-                error_count = int(raw_errcnt)
+                temp_c = parsed['temp_raw']   / 1000.0
+                vccint = parsed['vccint_raw'] / 1000.0
+                slack  = parsed['slack']
+                alarm  = parsed['alarm']
 
-                if temp_c == 0 and slack == 0 and vccint == 0:
+                if temp_c == 0 and vccint == 0 and all(s == 0 for s in slack):
                     return
                 if temp_c > 120.0 or vccint > 1.5:
                     self._boot_reject_count += 1
@@ -483,23 +484,23 @@ class DUTWorker(QObject):
                 if self._boot_reject_count > 0:
                     print(f"{self._id}: FPGA inicializado após {self._boot_reject_count} pacote(s) descartado(s).")
                     self._boot_reject_count = 0
-                self._latest_data = (temp_c, slack, vccint, failure, wrong, correct, error_count)
-                self.data_ready.emit(temp_c, slack, vccint)
+                self._latest_data = (temp_c, slack, vccint, alarm)
+                self.data_ready.emit(temp_c, slack, vccint, alarm)
             else:
                 if len(data) == 0:
                     print(f"{self._id}: sem resposta (timeout).")
                 else:
-                    print(f"{self._id}: pacote incompleto ({len(data)}/{self.BYTES_EXPECTED} bytes)")
+                    print(f"{self._id}: pacote incompleto ({len(data)}/{MULTI_PKT_LEN} bytes)")
         except Exception as e:
             self.log_message.emit(f"ERRO ({self._id}): {e}")
-            self._latest_data = (0.0, 0, 0.0, 0, 0, 0, 0)
+            self._latest_data = (0.0, [0] * self.num_channels, 0.0, [False] * self.num_channels)
 
     def get_latest_data(self):
         return self._latest_data
 
     def reset_data(self):
         """Clear stale data and flush serial buffer after FPGA reprogramming."""
-        self._latest_data = (0.0, 0, 0.0, 0, 0, 0, 0)
+        self._latest_data = (0.0, [0] * self.num_channels, 0.0, [False] * self.num_channels)
         self._boot_reject_count = 0
         if self.ser and self.ser.is_open:
             try:
@@ -532,22 +533,31 @@ class DUTWorker1(DUTWorker):
 class TestSequencer(QObject):
     log_message = Signal(str)
     plot_data_update = Signal(dict)
+    stats_update = Signal(list, list)  # per-channel stats for DUT-0, DUT-1
     test_finished = Signal()
 
     def __init__(self, arduino: ArduinoWorker,
                  psu0: PSUWorker0, psu1: PSUWorker1,
-                 dut0: DUTWorker, dut1: DUTWorker):
+                 dut0: DUTWorker, dut1: DUTWorker,
+                 num_channels=MULTI_NUM_CHANNELS):
         super().__init__()
         self.arduino = arduino
         self.psu0 = psu0
         self.psu1 = psu1
         self.dut0 = dut0
         self.dut1 = dut1
+        self.num_channels = num_channels
 
         self.logger = None
         self.is_running = False
         self.start_time = time.time()
         self._settings = {}
+
+        # Per-channel running stats (min/max/mean/alarm count), one set
+        # per physical DUT -- reset at the start of each test.
+        self._chan_stats0 = None
+        self._chan_stats1 = None
+        self._tick_count = 0
 
         # Tracked PSU command voltages for VCCINT loop
         self._psu0_cmd_v = 0.0
@@ -560,6 +570,57 @@ class TestSequencer(QObject):
         self.log_timer = QTimer(self)
         self.log_timer.setInterval(config.LOG_INTERVAL_MS)
         self.log_timer.timeout.connect(self.log_data_tick)
+
+    def _reset_channel_stats(self):
+        def _blank():
+            return [{'min': None, 'max': None, 'sum': 0.0, 'n': 0, 'alarm_count': 0}
+                    for _ in range(self.num_channels)]
+        self._chan_stats0 = _blank()
+        self._chan_stats1 = _blank()
+        self._tick_count = 0
+
+    @staticmethod
+    def _update_stats(stats, slack, alarm, num_channels):
+        for i in range(num_channels):
+            s = stats[i]
+            v = slack[i] if i < len(slack) else 0
+            s['min'] = v if s['min'] is None else min(s['min'], v)
+            s['max'] = v if s['max'] is None else max(s['max'], v)
+            s['sum'] += v
+            s['n'] += 1
+            if i < len(alarm) and alarm[i]:
+                s['alarm_count'] += 1
+
+    @staticmethod
+    def _summarize_stats(stats):
+        out = []
+        for s in stats:
+            mean = (s['sum'] / s['n']) if s['n'] else 0.0
+            out.append({'min': s['min'] or 0, 'max': s['max'] or 0,
+                        'mean': mean, 'alarm_count': s['alarm_count']})
+        return out
+
+    def get_channel_stats(self):
+        """Returns (stats_dut0, stats_dut1), each a list of per-channel
+        {min, max, mean, alarm_count} dicts, or (None, None) if no test
+        has run yet."""
+        if not self._chan_stats0:
+            return None, None
+        return self._summarize_stats(self._chan_stats0), self._summarize_stats(self._chan_stats1)
+
+    def _check_divergence(self, dut_label, stats, alarm):
+        if self._tick_count == 0 or self._tick_count % 30 != 0:
+            return
+        rates = [s['alarm_count'] / s['n'] if s['n'] else 0.0 for s in stats]
+        if not rates:
+            return
+        mean_rate = sum(rates) / len(rates)
+        for i, r in enumerate(rates):
+            if abs(r - mean_rate) > 0.20:
+                self.log_message.emit(
+                    f"[Divergência {dut_label}] Canal {i}: taxa de alarme {r:.1%} "
+                    f"(média do grupo {mean_rate:.1%})"
+                )
 
     def _program_both_duts(self) -> bool:
         """Program DUT-0 and DUT-1 in a single Vivado session (avoids hw_server re-enumeration race)."""
@@ -644,6 +705,7 @@ exit
             self._settings = settings
             self._dut_target_temp = float(settings.get("dut_target_temp", 0.0))
             self._outer_tick = 0
+            self._reset_channel_stats()
             self.logger = DataLogger(config.LOG_FOLDER, settings["test_name"])
             self.log_message.emit(f"Log criado: {self.logger.filepath}")
 
@@ -744,9 +806,9 @@ exit
 
             t_oven, sp_oven, out_oven = self.arduino.get_latest_data()
             v0, c0 = self.psu0.get_latest_data()
-            t0, s0, vcc0, fail0, wrong0, correct0, errcnt0 = self.dut0.get_latest_data()
+            t0, s0, vcc0, a0 = self.dut0.get_latest_data()
             v1, c1 = self.psu1.get_latest_data()
-            t1, s1, vcc1, fail1, wrong1, correct1, errcnt1 = self.dut1.get_latest_data()
+            t1, s1, vcc1, a1 = self.dut1.get_latest_data()
 
             # --- VCCINT closed-loop (P-only) ---
             self._update_vccint_loop(vcc0, vcc1)
@@ -756,23 +818,35 @@ exit
             avg_dut = sum(valid) / len(valid) if valid else 0.0
             self._adjust_oven_outer_loop(avg_dut, sp_oven)
 
+            # --- Per-channel stats + divergence (per physical DUT) ---
+            self._update_stats(self._chan_stats0, s0, a0, self.num_channels)
+            self._update_stats(self._chan_stats1, s1, a1, self.num_channels)
+            self._tick_count += 1
+            self._check_divergence("DUT-0", self._chan_stats0, a0)
+            self._check_divergence("DUT-1", self._chan_stats1, a1)
+
             row = {
                 "time_sec": elapsed,
                 "oven_temp": t_oven, "oven_setpoint": sp_oven, "oven_output": out_oven,
                 "psu0_voltage": v0, "psu0_current": c0,
-                "dut0_temp": t0, "dut0_slack": s0, "dut0_volt": vcc0, "dut0_fail": fail0,
-                "dut0_wrong": wrong0, "dut0_correct": correct0, "dut0_error_count": errcnt0,
+                "dut0_temp": t0, "dut0_volt": vcc0,
                 "psu1_voltage": v1, "psu1_current": c1,
-                "dut1_temp": t1, "dut1_slack": s1, "dut1_volt": vcc1, "dut1_fail": fail1,
-                "dut1_wrong": wrong1, "dut1_correct": correct1, "dut1_error_count": errcnt1,
+                "dut1_temp": t1, "dut1_volt": vcc1,
                 "psu0_cmd_v": self._psu0_cmd_v,
                 "psu1_cmd_v": self._psu1_cmd_v,
             }
+            for i in range(self.num_channels):
+                row[f"dut0_slack_ch{i}"] = s0[i] if i < len(s0) else 0
+                row[f"dut0_alarm_ch{i}"] = int(a0[i]) if i < len(a0) else 0
+                row[f"dut1_slack_ch{i}"] = s1[i] if i < len(s1) else 0
+                row[f"dut1_alarm_ch{i}"] = int(a1[i]) if i < len(a1) else 0
 
             if self.logger:
                 self.logger.write_data_row(row)
 
             self.plot_data_update.emit(row)
+            stats0, stats1 = self.get_channel_stats()
+            self.stats_update.emit(stats0, stats1)
             self._check_safety(t0, c0, t1, c1, t_oven)
 
         except Exception as e:

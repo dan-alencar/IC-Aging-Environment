@@ -24,6 +24,8 @@ import config
 from workers import ArduinoWorker, PSUWorker, DUTWorker, TestSequencer
 from plot_widget import PlotWidget
 from aux_plot_widget import AuxPlotWidget
+from multi_channel_widget import MultiChannelPanel
+from protocol import MULTI_NUM_CHANNELS
 
 
 # ---------------------------------------------------------------------------
@@ -510,17 +512,20 @@ class MainWindow(QMainWindow):
             lbl.setStyleSheet(_PSU_STYLE)
             lbl.setAlignment(Qt.AlignCenter)
 
-        # Canary metrics
-        self.error_count_label = QLabel("Erros: --")
-        self.wrong_label       = QLabel("Errado: --")
-        self.correct_label     = QLabel("Correto: --")
-        for lbl in (self.error_count_label, self.wrong_label, self.correct_label):
+        # Per-channel slack summary (replaces the removed adder-canary
+        # metrics -- this branch's rca_sensor_channel has no single
+        # wrong/correct/error_count concept across N independent channels)
+        self.channel_labels = []
+        for i in range(MULTI_NUM_CHANNELS):
+            lbl = QLabel(f"Canal {i}: --")
             lbl.setStyleSheet(_CANARY_STYLE)
             lbl.setAlignment(Qt.AlignCenter)
+            self.channel_labels.append(lbl)
 
         # --- Other tabs ---
         self.plot_widget = PlotWidget(plot_window_size=300)
         self.aux_plot_widget = AuxPlotWidget(plot_window_size=300)
+        self.panel_multi = MultiChannelPanel(MULTI_NUM_CHANNELS, plot_window_size=300)
         self.log_text_edit = QTextEdit()
         self.log_text_edit.setReadOnly(True)
 
@@ -601,20 +606,20 @@ class MainWindow(QMainWindow):
         row3.addWidget(self.psu_curr_label)
         sensor_layout.addLayout(row3)
 
-        # Row 4: canary
-        canary_group = QGroupBox("Adder Canary")
-        canary_row = QHBoxLayout()
-        canary_row.setSpacing(8)
-        canary_row.addWidget(self.error_count_label)
-        canary_row.addWidget(self.wrong_label)
-        canary_row.addWidget(self.correct_label)
-        canary_group.setLayout(canary_row)
-        sensor_layout.addWidget(canary_group)
+        # Row 4: per-channel slack summary
+        channels_group = QGroupBox(f"Canais ({MULTI_NUM_CHANNELS})")
+        channels_row = QHBoxLayout()
+        channels_row.setSpacing(8)
+        for lbl in self.channel_labels:
+            channels_row.addWidget(lbl)
+        channels_group.setLayout(channels_row)
+        sensor_layout.addWidget(channels_group)
         sensor_layout.addStretch()
 
         tabs.addTab(sensor_widget,        "Sensor")
         tabs.addTab(self.plot_widget,     "Temperatura")
         tabs.addTab(self.aux_plot_widget, "Tensão")
+        tabs.addTab(self.panel_multi,     f"Multi-Sensor ({MULTI_NUM_CHANNELS} canais)")
 
         # Log panel — always visible in bottom half, resizable
         log_group = QGroupBox("Log de Eventos")
@@ -727,6 +732,8 @@ class MainWindow(QMainWindow):
         sequencer_worker.plot_data_update.connect(self.plot_widget.update_plot_data)
         sequencer_worker.plot_data_update.connect(self.aux_plot_widget.update_plot_data)
         sequencer_worker.plot_data_update.connect(self._update_sensor_display)
+        sequencer_worker.plot_data_update.connect(self.panel_multi.update_plot_data)
+        sequencer_worker.stats_update.connect(self.panel_multi.update_stats)
         sequencer_worker.test_finished.connect(self.on_test_finished)
         sequencer_worker.sweep_step_changed.connect(self._on_sweep_step_changed)  # type: ignore[arg-type]
 
@@ -748,26 +755,25 @@ class MainWindow(QMainWindow):
 
     @Slot(dict)
     def _update_sensor_display(self, d: dict):
-        slack       = d.get("dut_slack", 0)
-        failure     = d.get("dut_fail", 0)
-        temp        = d.get("dut_temp", 0.0)
-        volt        = d.get("dut_volt", 0.0)
-        oven_temp   = d.get("oven_temp", 0.0)
-        error_count = d.get("dut_error_count", 0)
-        wrong       = d.get("dut_wrong", 0)
-        correct     = d.get("dut_correct", 0)
-        psu_cmd     = d.get("psu_cmd_v", 0.0)
-        psu_meas    = d.get("psu_voltage", 0.0)
-        psu_curr    = d.get("psu_current", 0.0)
+        slacks    = [d.get(f"dut_slack_ch{i}", 0) for i in range(MULTI_NUM_CHANNELS)]
+        alarms    = [bool(d.get(f"dut_alarm_ch{i}", 0)) for i in range(MULTI_NUM_CHANNELS)]
+        slack     = min(slacks) if slacks else 0   # worst-case channel
+        any_alarm = any(alarms)
+        temp      = d.get("dut_temp", 0.0)
+        volt      = d.get("dut_volt", 0.0)
+        oven_temp = d.get("oven_temp", 0.0)
+        psu_cmd   = d.get("psu_cmd_v", 0.0)
+        psu_meas  = d.get("psu_voltage", 0.0)
+        psu_curr  = d.get("psu_current", 0.0)
 
-        self.slack_label.setText(f"Slack: {slack} Inc.")
+        self.slack_label.setText(f"Slack (pior canal): {slack} Inc.")
         self.slack_label.setStyleSheet(_STYLE_WARN if 0 < slack < 20 else _STYLE_OK)
 
-        if failure:
-            self.failure_label.setText("FALHA: SIM")
+        if any_alarm:
+            self.failure_label.setText("ALARME: SIM")
             self.failure_label.setStyleSheet(_STYLE_WARN)
         else:
-            self.failure_label.setText("FALHA: NÃO")
+            self.failure_label.setText("ALARME: NÃO")
             self.failure_label.setStyleSheet(_STYLE_OK)
 
         self.dut_temp_label.setText(f"Temp DUT:  {temp:.1f} °C")
@@ -778,9 +784,10 @@ class MainWindow(QMainWindow):
         self.psu_meas_label.setText(f"PSU Med:  {psu_meas:.3f} V")
         self.psu_curr_label.setText(f"Corrente:  {psu_curr:.3f} A")
 
-        self.error_count_label.setText(f"Erros: {error_count}")
-        self.wrong_label.setText(f"Errado: {wrong}")
-        self.correct_label.setText(f"Correto: {correct}")
+        for i, lbl in enumerate(self.channel_labels):
+            marker = " ⚠" if alarms[i] else ""
+            lbl.setText(f"Canal {i}: {slacks[i]}{marker}")
+            lbl.setStyleSheet(_STYLE_WARN if alarms[i] else _CANARY_STYLE)
 
     @Slot(bool)
     def on_toggle_test(self, checked):
@@ -794,6 +801,7 @@ class MainWindow(QMainWindow):
             }
             self.plot_widget.clear_plot()
             self.aux_plot_widget.clear_plot()
+            self.panel_multi.clear_plot()
             self.start_test_signal.emit(settings)
             self.toggle_test_button.setText("PARAR TESTE")
             self.toggle_test_button.setStyleSheet(
@@ -816,6 +824,7 @@ class MainWindow(QMainWindow):
         settings = dialog.get_settings()
         self.plot_widget.clear_plot()
         self.aux_plot_widget.clear_plot()
+        self.panel_multi.clear_plot()
         self.start_test_signal.emit(settings)
         self.toggle_test_button.setChecked(True)
         self.toggle_test_button.setText("PARAR SWEEP")
