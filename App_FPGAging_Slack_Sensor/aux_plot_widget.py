@@ -71,8 +71,13 @@ class AuxPlotWidget(QWidget):
         self.voltage_data.append(data_row.get('psu_voltage', 0.0))
         self.current_data.append(data_row.get('psu_current', 0.0))
 
-        slack = data_row.get('dut_slack', 0)
-        self.slack_text.setText(f"Slack: {slack}")
+        # dut_slack is now per-channel (dut_slack_ch0..chN-1) -- show the
+        # worst-case (minimum) channel here, same convention as the top-bar
+        # label in main_window.py. See panel_multi (Multi-Sensor tab) for
+        # the full per-channel breakdown.
+        slacks = [v for k, v in data_row.items() if k.startswith('dut_slack_ch')]
+        slack = min(slacks) if slacks else 0
+        self.slack_text.setText(f"Slack (pior canal): {slack}")
 
         time_list = list(self.time_data)
         self.dut_voltage_curve.setData(time_list, list(self.dut_voltage_data))

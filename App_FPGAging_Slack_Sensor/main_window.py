@@ -13,6 +13,8 @@ from router import UARTRouter
 from workers import STMWorker, CROCWorker, ArduinoWorker, TestSequencer
 from plot_widget import PlotWidget
 from aux_plot_widget import AuxPlotWidget
+from multi_channel_widget import MultiChannelPanel
+from protocol import MULTI_NUM_CHANNELS
 
 class MainWindow(QMainWindow):
     start_test_signal = Signal(dict)
@@ -47,6 +49,9 @@ class MainWindow(QMainWindow):
         self.tab_monitor = QWidget()
         self._setup_monitor_tab()
         self.tabs.addTab(self.tab_monitor, "Monitoramento & Gráficos")
+
+        self.panel_multi = MultiChannelPanel(MULTI_NUM_CHANNELS, plot_window_size=200)
+        self.tabs.addTab(self.panel_multi, f"Multi-Sensor ({MULTI_NUM_CHANNELS} canais)")
 
         self.tab_config = QWidget()
         self._setup_config_tab()
@@ -327,6 +332,8 @@ class MainWindow(QMainWindow):
         self.seq.plot_data_update.connect(self.plot1.update_plot_data)
         self.seq.plot_data_update.connect(self.plot2.update_plot_data)
         self.seq.plot_data_update.connect(self.update_slack_display)
+        self.seq.plot_data_update.connect(self.panel_multi.update_plot_data)
+        self.seq.stats_update.connect(self.panel_multi.update_stats)
 
         self.seq.test_finished.connect(self.on_finished)
         self.seq.log_message.connect(self.log_message)
@@ -334,8 +341,11 @@ class MainWindow(QMainWindow):
 
     @Slot(dict)
     def update_slack_display(self, d):
-        s = d.get('dut_slack', 0)
-        self.lbl_slack.setText(f"Slack: {s}")
+        # Worst-case (minimum) slack across all channels -- the single
+        # number most worth flagging in the top bar.
+        slacks = [d.get(f'dut_slack_ch{i}', 0) for i in range(MULTI_NUM_CHANNELS)]
+        s = min(slacks) if slacks else 0
+        self.lbl_slack.setText(f"Slack (pior canal): {s}")
         if s < 0:
             bg, fg = "#f38ba8", "#1e1e2e"   # violação
         elif s < 20:
@@ -358,7 +368,7 @@ class MainWindow(QMainWindow):
                 'ki': self.ki_input.value(),
                 'kd': self.kd_input.value()
             }
-            self.plot1.clear_plot(); self.plot2.clear_plot()
+            self.plot1.clear_plot(); self.plot2.clear_plot(); self.panel_multi.clear_plot()
             self.start_test_signal.emit(cfg)
             self.btn_test.setText("PARAR EXPERIMENTO")
             self.btn_test.setStyleSheet("background-color: #C62828; color: white; font-weight: bold; font-size: 11pt;")

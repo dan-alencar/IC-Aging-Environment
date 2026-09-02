@@ -6,7 +6,7 @@ import config
 
 # Imports da Nova IHM
 from commands import build_vcore_command, build_page_command, build_message_command, build_ping_command
-from protocol import decode_ctrl, compute_crc16_modbus, CRC_ENDIAN, ERR_STR
+from protocol import decode_ctrl, compute_crc16_modbus, CRC_ENDIAN, ERR_STR, MULTI_NUM_CHANNELS
 
 # =================================================================
 #   WORKER 1: Controlador do Forno (Arduino)
@@ -182,22 +182,25 @@ class STMWorker(QObject):
 class CROCWorker(QObject):
     log_message = Signal(str)
     
-    def __init__(self, router):
+    def __init__(self, router, num_channels=MULTI_NUM_CHANNELS):
         super().__init__()
         self.router = router
         self.is_running = False
-        
-        # Variáveis de Estado da FPGA
+        self.num_channels = num_channels
+
+        # Variáveis de Estado da FPGA -- temp/volt são compartilhados (um
+        # único XADC por dispositivo); slack/alarm são por canal.
         self._temp = 0.0
-        self._slack = 0
         self._volt = 0.0
-        
+        self._slack = [0] * num_channels
+        self._alarm = [False] * num_channels
+
     @Slot()
     def start(self):
         self.is_running = True
         # Conecta ao novo sinal do Router
         self.router.aging_data_received.connect(self._on_aging_data)
-        self.log_message.emit("CROC Worker iniciado (Monitoramento FPGA).")
+        self.log_message.emit("CROC Worker iniciado (Monitoramento FPGA, %d canais)." % self.num_channels)
 
     @Slot()
     def stop(self):
@@ -209,21 +212,17 @@ class CROCWorker(QObject):
 
     @Slot(dict)
     def _on_aging_data(self, data):
-        """Recebe dados processados do Router (0x1A Packet)."""
+        """Recebe dados processados do Router (pacote multi-sensor)."""
         if not self.is_running: return
-        
+
         self._temp  = data.get('dut_temp', 0.0)
         self._volt  = data.get('dut_volt', 0.0)
-        self._slack = data.get('dut_slack', 0)
-        
-        # Opcional: Logar alarmes críticos
-        if self._slack > 0:
-             # Evita spam de log, logar só mudanças de estado se quiser
-             pass 
+        self._slack = data.get('dut_slack', [0] * self.num_channels)
+        self._alarm = data.get('dut_alarm', [False] * self.num_channels)
 
     def get_latest_data(self):
-        """Retorna (Temp, Slack, Vcc_Internal) para o Logger/Gráfico"""
-        return self._temp, self._slack, self._volt
+        """Retorna (Temp, [Slack por canal], Vcc_Internal, [Alarm por canal])."""
+        return self._temp, self._slack, self._volt, self._alarm
 
     def send_manual_command(self, cmd: str):
         # Envia texto puro + Enter para o terminal do CROC
@@ -238,9 +237,10 @@ from logger import DataLogger
 class TestSequencer(QObject):
     log_message = Signal(str)
     plot_data_update = Signal(dict)
+    stats_update = Signal(list)   # list of per-channel {min,max,mean,alarm_count} dicts
     test_finished = Signal()
     
-    def __init__(self, arduino, stm, croc):
+    def __init__(self, arduino, stm, croc, num_channels=MULTI_NUM_CHANNELS):
         super().__init__()
         self.arduino = arduino
         self.stm = stm
@@ -249,12 +249,67 @@ class TestSequencer(QObject):
         self.running = False
         self.t0 = 0
         self.log_timer = None
+        self.num_channels = num_channels
+
+        # Per-channel running stats (min/max/mean slack, alarm count) --
+        # reset at the start of each test, read by the stats panel widget.
+        self._chan_stats = None
+        self._tick_count = 0
+
+    def _reset_channel_stats(self):
+        self._chan_stats = [
+            {'min': None, 'max': None, 'sum': 0.0, 'n': 0, 'alarm_count': 0}
+            for _ in range(self.num_channels)
+        ]
+        self._tick_count = 0
+
+    def _update_channel_stats(self, slack, alarm):
+        for i in range(self.num_channels):
+            s = self._chan_stats[i]
+            v = slack[i] if i < len(slack) else 0
+            s['min'] = v if s['min'] is None else min(s['min'], v)
+            s['max'] = v if s['max'] is None else max(s['max'], v)
+            s['sum'] += v
+            s['n'] += 1
+            if i < len(alarm) and alarm[i]:
+                s['alarm_count'] += 1
+
+    def get_channel_stats(self):
+        """Returns a list of per-channel {min, max, mean, alarm_count} dicts,
+        or None if no test has run yet. Read by the stats panel widget."""
+        if not self._chan_stats:
+            return None
+        out = []
+        for s in self._chan_stats:
+            mean = (s['sum'] / s['n']) if s['n'] else 0.0
+            out.append({'min': s['min'] or 0, 'max': s['max'] or 0,
+                        'mean': mean, 'alarm_count': s['alarm_count']})
+        return out
+
+    def _check_divergence(self, alarm):
+        """Flags a channel whose alarm rate this test diverges noticeably
+        from the group mean -- useful for catching a uniquely-degrading
+        instance or a wiring/placement fault. Checked every 30 ticks so it
+        doesn't spam the log."""
+        if self._tick_count == 0 or self._tick_count % 30 != 0:
+            return
+        rates = [s['alarm_count'] / s['n'] if s['n'] else 0.0 for s in self._chan_stats]
+        if not rates:
+            return
+        mean_rate = sum(rates) / len(rates)
+        for i, r in enumerate(rates):
+            if abs(r - mean_rate) > 0.20:  # 20 percentage points off the group mean
+                self.log_message.emit(
+                    f"[Divergência] Canal {i}: taxa de alarme {r:.1%} "
+                    f"(média do grupo {mean_rate:.1%})"
+                )
 
     @Slot(dict)
     def start_test(self, settings):
         if self.running: return
         try:
             self.logger = DataLogger(config.LOG_FOLDER, settings['test_name'])
+            self._reset_channel_stats()
 
             if config.ARDUINO_ENABLED and self.arduino.is_running:
                 self.arduino.update_kp(settings['kp'])
@@ -305,24 +360,33 @@ class TestSequencer(QObject):
             # Pega dados dos workers
             t_oven, sp, out = self.arduino.get_latest_data()
             v_stm, _ = self.stm.get_latest_data()
-            
-            # AGORA O CROC RETORNA DADOS REAIS!
-            t_dut, s_dut, v_dut = self.croc.get_latest_data() 
-            
+
+            # CROC agora retorna um valor por canal para slack/alarm
+            t_dut, s_dut, v_dut, a_dut = self.croc.get_latest_data()
+
+            self._update_channel_stats(s_dut, a_dut)
+            self._tick_count += 1
+            self._check_divergence(a_dut)
+
             row = {
                 'time_sec': time.time() - self.t0,
                 'oven_temp': t_oven, 'oven_setpoint': sp, 'oven_output': out,
                 'psu_voltage': v_stm, 'psu_current': 0.0,
-                'dut_temp': t_dut,    # Temperatura interna da FPGA
-                'dut_slack': s_dut,   # Alarme de Timing
-                'dut_volt': v_dut     # VCCINT da FPGA
+                'dut_temp': t_dut,    # Temperatura interna da FPGA (compartilhada)
+                'dut_volt': v_dut,    # VCCINT da FPGA (compartilhada)
             }
-            
+            # Um par de colunas dut_slack_chN / dut_alarm_chN por canal,
+            # mesma convenção que App_2Nexys usa para seus dois DUTs.
+            for i in range(self.num_channels):
+                row[f'dut_slack_ch{i}'] = s_dut[i] if i < len(s_dut) else 0
+                row[f'dut_alarm_ch{i}'] = int(a_dut[i]) if i < len(a_dut) else 0
+
             # Salva no CSV
             if self.logger: self.logger.write_data_row(row)
-            
+
             # Emite para a GUI atualizar gráficos
             self.plot_data_update.emit(row)
-            
+            self.stats_update.emit(self.get_channel_stats())
+
         except Exception as e:
             print(f"Erro no log tick: {e}")
