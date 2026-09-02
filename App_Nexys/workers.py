@@ -22,6 +22,7 @@ import csv as csv_mod
 from datetime import datetime
 import config
 from logger import DataLogger
+from protocol import MULTI_NUM_CHANNELS, MULTI_PKT_LEN, parse_multi_sensor_packet
 import threading
 
 _DUT_OUTER_TICK_INTERVAL = 1800   # ticks between oven-sp adjustments (~30 min at 1 s/tick)
@@ -303,29 +304,31 @@ class PSUWorker(QObject):
 # =============================================================================
 class DUTWorker(QObject):
     """
-    Comunicação com FPGA para leitura do sensor de slack.
+    Comunicação com FPGA para leitura do array de sensores.
 
-    Protocolo: 15 bytes binários (Little Endian), enviados autonomamente pelo FPGA.
-    Formato: [TEMP×3][SLACK×2][VOLT×3][FAIL×1][WRONG×2][CORRECT×2][ERR_CNT×2]
-
-    O byte 'F' enviado antes do read é legado — o FPGA não o decodifica; os
-    pacotes são disparados pelo FSM interno quando o alarme é detectado.
+    Protocolo (experimental-multi-sensor): pacote autoframed de
+    multi_sensor_stream.sv (sync 0xAA 0x55 + length + checksum) -- ver
+    protocol.py. Substitui o pacote legado de 15 bytes: este branch não
+    tem canário funcional para reportar (wrong/correct/error_count/fail
+    não existem mais), e slack/alarm agora são um valor por canal.
 
     Sinais:
         log_message(str): Mensagem para o log
-        data_ready(float, int, float): temp_c, slack, voltage
+        data_ready(float, list, float, list): temp_c, slack (por canal),
+            voltage, alarm (por canal)
     """
     log_message = Signal(str)
-    data_ready = Signal(float, int, float)
+    data_ready = Signal(float, list, float, list)
 
-    def __init__(self):
+    def __init__(self, num_channels=MULTI_NUM_CHANNELS):
         super().__init__()
         self.ser = None
         self.is_running = False
-        self._latest_data = (0.0, 0, 0.0, 0, 0, 0, 0)  # temp, slack, voltage, fail, wrong, correct, error_count
-        
+        self.num_channels = num_channels
+        self._latest_data = (0.0, [0] * num_channels, 0.0, [False] * num_channels)
+
         self.poll_timer = QTimer(self)
-        self.poll_timer.setInterval(config.LOG_INTERVAL_MS) 
+        self.poll_timer.setInterval(config.LOG_INTERVAL_MS)
         self.poll_timer.timeout.connect(self.poll_data)
 
     @Slot()
@@ -334,12 +337,12 @@ class DUTWorker(QObject):
             # Abre a porta serial
             # IMPORTANTE: Verifique se config.DUT_BAUD está correto (ex: 115200)
             self.ser = serial.Serial(
-                config.DUT_PORT, 
-                config.DUT_BAUD, 
-                timeout=2 # Timeout de 2s é crucial para o read(15) funcionar
+                config.DUT_PORT,
+                config.DUT_BAUD,
+                timeout=2 # Timeout de 2s é crucial para o read(MULTI_PKT_LEN) funcionar
             )
             self.log_message.emit(f"DUT (FPGA) conectado em {config.DUT_PORT} @ {config.DUT_BAUD}")
-            
+
             self.is_running = True
             self.poll_timer.start()
         except serial.SerialException as e:
@@ -352,9 +355,9 @@ class DUTWorker(QObject):
         if self.ser and self.ser.is_open:
             self.ser.close()
         self.log_message.emit("DUT (FPGA) desconectado.")
-        
+
     def poll_data(self):
-        """Aguarda e decodifica um pacote de 15 bytes do FPGA."""
+        """Aguarda e decodifica um pacote multi-sensor do FPGA."""
         if not self.is_running or not self.ser or not self.ser.is_open:
             return
 
@@ -366,40 +369,35 @@ class DUTWorker(QObject):
             # Falls back to the 1 Hz timer if this byte arrives during a sweep.
             self.ser.write(b'\x54')
 
-            # Pacote de 15 bytes (Little Endian):
-            # [TEMP×3][SLACK×2][VOLT×3][FAIL×1][WRONG×2][CORRECT×2][ERR_CNT×2]
-            BYTES_TO_READ = 15
-            data = self.ser.read(BYTES_TO_READ)
+            data = self.ser.read(MULTI_PKT_LEN)
 
-            if len(data) == BYTES_TO_READ:
-                raw_temp    = int.from_bytes(data[0:3],   byteorder='little')
-                raw_slack   = int.from_bytes(data[3:5],   byteorder='little')
-                raw_voltage = int.from_bytes(data[5:8],   byteorder='little')
-                raw_failure = int(data[8])               # 0 or 1 — failure_holder latch
-                raw_wrong   = int.from_bytes(data[9:11],  byteorder='little')
-                raw_correct = int.from_bytes(data[11:13], byteorder='little')
-                raw_errcnt  = int.from_bytes(data[13:15], byteorder='little')
-
-                temp_c  = float(raw_temp)    / 1000.0
-                slack   = int(raw_slack)
-                voltage = float(raw_voltage) / 1000.0
-
-                # Filtra leituras zeradas (comum na inicialização do FPGA)
-                if temp_c == 0 and slack == 0 and voltage == 0:
+            if len(data) == MULTI_PKT_LEN:
+                parsed = parse_multi_sensor_packet(data, self.num_channels)
+                if parsed is None:
+                    print("DUT: pacote multi-sensor com sync/checksum inválido")
                     return
 
-                self._latest_data = (temp_c, slack, voltage, raw_failure, raw_wrong, raw_correct, raw_errcnt)
-                self.data_ready.emit(temp_c, slack, voltage)
+                temp_c  = parsed['temp_raw']   / 1000.0
+                voltage = parsed['vccint_raw'] / 1000.0
+                slack   = parsed['slack']
+                alarm   = parsed['alarm']
+
+                # Filtra leituras zeradas (comum na inicialização do FPGA)
+                if temp_c == 0 and voltage == 0 and all(s == 0 for s in slack):
+                    return
+
+                self._latest_data = (temp_c, slack, voltage, alarm)
+                self.data_ready.emit(temp_c, slack, voltage, alarm)
 
             else:
                 if len(data) == 0:
                     print(f"DUT: Sem resposta (Timeout). Baud rate {config.DUT_BAUD} correto?")
                 else:
-                    print(f"DUT: Pacote incompleto ({len(data)}/{BYTES_TO_READ} bytes)")
+                    print(f"DUT: Pacote incompleto ({len(data)}/{MULTI_PKT_LEN} bytes)")
 
         except Exception as e:
             self.log_message.emit(f"ERRO (DUT): {e}")
-            self._latest_data = (0.0, 0, 0.0, 0, 0, 0, 0)
+            self._latest_data = (0.0, [0] * self.num_channels, 0.0, [False] * self.num_channels)
 
     def get_latest_data(self):
         return self._latest_data
@@ -425,14 +423,16 @@ class TestSequencer(QObject):
     """
     log_message = Signal(str)
     plot_data_update = Signal(dict)
+    stats_update = Signal(list)  # list of per-channel {min,max,mean,alarm_count} dicts
     test_finished = Signal()
     sweep_step_changed = Signal(int, float, int, str)  # (step_idx_0based, target, total_steps, mode)
 
-    def __init__(self, arduino_worker, psu_worker, dut_worker):
+    def __init__(self, arduino_worker, psu_worker, dut_worker, num_channels=MULTI_NUM_CHANNELS):
         super().__init__()
         self.arduino = arduino_worker
         self.psu = psu_worker
         self.dut = dut_worker
+        self.num_channels = num_channels
 
         self.logger = None
         self.is_running = False
@@ -442,6 +442,10 @@ class TestSequencer(QObject):
         self.temp_samples = []
         self.error_samples = []
         self.output_samples = []
+
+        # Estatísticas por canal (min/max/média/contagem de alarmes)
+        self._chan_stats = None
+        self._tick_count = 0
 
         # DUT temperature outer loop
         self._dut_target_temp = 0.0
@@ -467,6 +471,52 @@ class TestSequencer(QObject):
         self.log_timer.setInterval(config.LOG_INTERVAL_MS)
         self.log_timer.timeout.connect(self.log_data_tick)
 
+    def _reset_channel_stats(self):
+        self._chan_stats = [
+            {'min': None, 'max': None, 'sum': 0.0, 'n': 0, 'alarm_count': 0}
+            for _ in range(self.num_channels)
+        ]
+        self._tick_count = 0
+
+    def _update_channel_stats(self, slack, alarm):
+        for i in range(self.num_channels):
+            s = self._chan_stats[i]
+            v = slack[i] if i < len(slack) else 0
+            s['min'] = v if s['min'] is None else min(s['min'], v)
+            s['max'] = v if s['max'] is None else max(s['max'], v)
+            s['sum'] += v
+            s['n'] += 1
+            if i < len(alarm) and alarm[i]:
+                s['alarm_count'] += 1
+
+    def get_channel_stats(self):
+        """Returns a list of per-channel {min, max, mean, alarm_count} dicts,
+        or None if no test has run yet."""
+        if not self._chan_stats:
+            return None
+        out = []
+        for s in self._chan_stats:
+            mean = (s['sum'] / s['n']) if s['n'] else 0.0
+            out.append({'min': s['min'] or 0, 'max': s['max'] or 0,
+                        'mean': mean, 'alarm_count': s['alarm_count']})
+        return out
+
+    def _check_divergence(self, alarm):
+        """Flags a channel whose alarm rate this test diverges noticeably
+        from the group mean. Checked every 30 ticks to avoid log spam."""
+        if self._tick_count == 0 or self._tick_count % 30 != 0:
+            return
+        rates = [s['alarm_count'] / s['n'] if s['n'] else 0.0 for s in self._chan_stats]
+        if not rates:
+            return
+        mean_rate = sum(rates) / len(rates)
+        for i, r in enumerate(rates):
+            if abs(r - mean_rate) > 0.20:
+                self.log_message.emit(
+                    f"[Divergência] Canal {i}: taxa de alarme {r:.1%} "
+                    f"(média do grupo {mean_rate:.1%})"
+                )
+
     @Slot(dict)
     def start_test(self, settings):
         """
@@ -483,6 +533,7 @@ class TestSequencer(QObject):
             # 1. Criar o Logger
             self._dut_target_temp = float(settings.get('dut_target_temp', 0.0))
             self._outer_tick = 0
+            self._reset_channel_stats()
             self.logger = DataLogger(config.LOG_FOLDER, settings['test_name'])
             self.log_message.emit(f"Log criado: {self.logger.filepath}")
             
@@ -681,7 +732,7 @@ class TestSequencer(QObject):
             # 1. Coletar dados
             t_oven, sp_oven, out_oven = self.arduino.get_latest_data()
             v_psu, c_psu = self.psu.get_latest_data()
-            t_dut, s_dut, v_dut, fail_dut, wrong_dut, correct_dut, errcnt_dut = self.dut.get_latest_data()
+            t_dut, s_dut, v_dut, a_dut = self.dut.get_latest_data()
 
             elapsed_time = time.time() - self.start_time
 
@@ -689,6 +740,9 @@ class TestSequencer(QObject):
             self.temp_samples.append(t_oven)
             self.error_samples.append(sp_oven - t_oven)
             self.output_samples.append(out_oven)
+            self._update_channel_stats(s_dut, a_dut)
+            self._tick_count += 1
+            self._check_divergence(a_dut)
 
             # 3. VCCINT closed-loop trim (E3634A)
             if config.PSU_ENABLED and self.psu.is_running and v_dut > 0:
@@ -709,19 +763,20 @@ class TestSequencer(QObject):
                 'psu_voltage':    v_psu,
                 'psu_current':    c_psu,
                 'dut_temp':       t_dut,
-                'dut_slack':      s_dut,
                 'dut_volt':       v_dut,
-                'dut_fail':       fail_dut,
-                'dut_wrong':      wrong_dut,
-                'dut_correct':    correct_dut,
-                'dut_error_count': errcnt_dut,
             }
+            for i in range(self.num_channels):
+                data_row[f'dut_slack_ch{i}'] = s_dut[i] if i < len(s_dut) else 0
+                data_row[f'dut_alarm_ch{i}'] = int(a_dut[i]) if i < len(a_dut) else 0
 
             # 5. Log no arquivo principal
             if self.logger:
                 self.logger.write_data_row(data_row)
 
-            # 5b. Log no CSV paralelo do sweep (dados brutos)
+            # 5b. Log no CSV paralelo do sweep (dados brutos). Usa o pior
+            # canal (mínimo slack) como valor único representativo -- a
+            # série completa por canal já está no CSV principal.
+            worst_slack = min(s_dut) if s_dut else 0
             if self._sweep_csv_writer and self._sweep_mode:
                 target = (self._sweep_steps[self._sweep_idx]
                           if self._sweep_idx < len(self._sweep_steps) else float('nan'))
@@ -732,7 +787,7 @@ class TestSequencer(QObject):
                     f"{v_dut:.4f}",
                     f"{t_oven:.2f}",
                     f"{t_dut:.3f}",
-                    s_dut,
+                    worst_slack,
                 ])
 
             # 6. Log periódico no terminal (a cada 30s)
@@ -742,6 +797,7 @@ class TestSequencer(QObject):
 
             # 7. Emitir para gráfico
             self.plot_data_update.emit(data_row)
+            self.stats_update.emit(self.get_channel_stats())
 
             # 8. DUT temperature outer loop
             self._adjust_oven_outer_loop(t_dut, sp_oven)
@@ -751,7 +807,7 @@ class TestSequencer(QObject):
 
             # 10. Avançar passo do sweep (se ativo)
             if self._sweep_mode:
-                self._do_sweep_tick(v_dut, t_oven, s_dut, t_dut, v_psu, c_psu, fail_dut)
+                self._do_sweep_tick(v_dut, t_oven, worst_slack, t_dut, v_psu, c_psu)
 
         except Exception as e:
             self.log_message.emit(f"ERRO no loop de log: {e}")
@@ -838,14 +894,16 @@ class TestSequencer(QObject):
         self._sweep_stable_ticks = 0
         self.sweep_step_changed.emit(self._sweep_idx, target, total, self._sweep_mode)
 
-    def _do_sweep_tick(self, v_dut, t_oven, s_dut, t_dut, v_psu, c_psu, fail_dut):
-        """Verifica critério de estabilidade e avança passo quando atingido."""
+    def _do_sweep_tick(self, v_dut, t_oven, s_dut, t_dut, v_psu, c_psu):
+        """Verifica critério de estabilidade e avança passo quando atingido.
+        s_dut aqui é o pior canal (mínimo slack) -- não há mais um canário
+        funcional único (fail) neste branch."""
         if not self._sweep_steps or self._sweep_idx >= len(self._sweep_steps):
             return
 
         target = self._sweep_steps[self._sweep_idx]
         self._sweep_dwell_ticks += 1
-        self._sweep_step_data.append((s_dut, t_dut, v_dut, t_oven, v_psu, c_psu, fail_dut))
+        self._sweep_step_data.append((s_dut, t_dut, v_dut, t_oven, v_psu, c_psu))
 
         if self._sweep_dwell_ticks < self._sweep_min_dwell:
             return

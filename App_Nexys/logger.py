@@ -18,25 +18,28 @@ import os
 import csv
 from datetime import datetime
 import config
+from protocol import MULTI_NUM_CHANNELS
 
 
 class DataLogger:
     """
     Gerenciador de log de dados para testes de envelhecimento.
-    
+
     Cria um arquivo CSV único por teste contendo:
       - Cabeçalho com metadados e configuração do sistema
       - Dados sincronizados de todos os sensores
     """
-    
-    def __init__(self, log_folder, test_name):
+
+    def __init__(self, log_folder, test_name, num_channels=MULTI_NUM_CHANNELS):
         """
         Inicializa o logger.
-        
+
         Args:
             log_folder: Pasta para salvar os logs
             test_name: Nome base do teste
+            num_channels: Número de canais do sensor multi-RCA
         """
+        self.num_channels = num_channels
         self.filepath = self._create_log_file(log_folder, test_name)
         self.csv_writer = None
         self.file_handle = None
@@ -97,7 +100,9 @@ class DataLogger:
         # Cria writer CSV
         self.csv_writer = csv.writer(self.file_handle)
         
-        # Cabeçalho das colunas
+        # Cabeçalho das colunas. dut_slack/dut_alarm ganham uma coluna por
+        # canal (dut_slack_ch0..chN-1), mesma convenção que App_2Nexys usa
+        # para seus dois DUTs.
         header = [
             'time_sec',           # Tempo desde início (s)
             'oven_temp_c',        # Temperatura do forno (°C)
@@ -106,9 +111,12 @@ class DataLogger:
             'psu_voltage_v',      # Tensão da fonte (V)
             'psu_current_a',      # Corrente da fonte (A)
             'dut_temp_c',         # Temperatura do DUT (°C)
-            'dut_slack',          # Valor do slack (incrementos)
-            'dut_volt'            # Tensão do DUT (V)
+            'dut_volt',           # Tensão do DUT (V)
         ]
+        for i in range(self.num_channels):
+            header.append(f'dut_slack_ch{i}')
+        for i in range(self.num_channels):
+            header.append(f'dut_alarm_ch{i}')
         self.csv_writer.writerow(header)
 
     def write_data_row(self, data_dict):
@@ -128,9 +136,12 @@ class DataLogger:
                     f"{data_dict.get('psu_voltage', 0):.3f}",
                     f"{data_dict.get('psu_current', 0):.4f}",
                     f"{data_dict.get('dut_temp', 0):.3f}",
-                    data_dict.get('dut_slack', 0),
-                    f"{data_dict.get('dut_volt', 0):.3f}"
+                    f"{data_dict.get('dut_volt', 0):.3f}",
                 ]
+                for i in range(self.num_channels):
+                    row.append(data_dict.get(f'dut_slack_ch{i}', 0))
+                for i in range(self.num_channels):
+                    row.append(data_dict.get(f'dut_alarm_ch{i}', 0))
                 self.csv_writer.writerow(row)
             except Exception as e:
                 print(f"Erro ao escrever no CSV: {e}")

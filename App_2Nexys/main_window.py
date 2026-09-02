@@ -5,10 +5,11 @@ Top bar (always visible):
   [Forno (setpoint, PID info, DUT target)]  [Controle do Teste]
 
 Tabs:
-  Sensor      — DUT-0 and DUT-1 side-by-side (slack, failure, canary, PSU inputs)
-  Temperatura — shared temperature plot
-  Tensão      — PSU-0 and PSU-1 voltage/current aux plots side-by-side
-  Log         — event log
+  Sensor       — DUT-0 and DUT-1 side-by-side (worst-case slack, alarm, per-channel summary, PSU inputs)
+  Temperatura  — shared temperature plot
+  Tensão       — PSU-0 and PSU-1 voltage/current aux plots side-by-side
+  Multi-Sensor — stacked per-channel plots + stats, one column per DUT
+  Log          — event log
 
 Workers live in QThreads; signals cross thread boundaries safely.
 """
@@ -27,6 +28,8 @@ from workers import (
 )
 from plot_widget import PlotWidget
 from aux_plot_widget import AuxPlotWidget
+from multi_channel_widget import MultiChannelPanel
+from protocol import MULTI_NUM_CHANNELS
 
 
 _STYLE_GREEN = """
@@ -138,11 +141,14 @@ class MainWindow(QMainWindow):
         for lbl in (self.dut0_temp_label, self.dut0_volt_label):
             f = QFont(); f.setPointSize(12); lbl.setFont(f)
             lbl.setStyleSheet(_INFO_STYLE)
-        self.err0_label     = QLabel("Erros: --")
-        self.wrong0_label   = QLabel("Errado: --")
-        self.correct0_label = QLabel("Correto: --")
-        for lbl in (self.err0_label, self.wrong0_label, self.correct0_label):
+        # Per-channel slack summary (replaces the removed adder-canary
+        # metrics -- this branch's rca_sensor_channel has no single
+        # wrong/correct/error_count concept across N independent channels)
+        self.channel0_labels = []
+        for i in range(MULTI_NUM_CHANNELS):
+            lbl = QLabel(f"Canal {i}: --")
             lbl.setStyleSheet(_CANARY_STYLE)
+            self.channel0_labels.append(lbl)
 
         self.psu0_voltage_input = QDoubleSpinBox()
         self.psu0_voltage_input.setRange(0.0, 1.5)
@@ -163,11 +169,11 @@ class MainWindow(QMainWindow):
         for lbl in (self.dut1_temp_label, self.dut1_volt_label):
             f = QFont(); f.setPointSize(12); lbl.setFont(f)
             lbl.setStyleSheet(_INFO_STYLE)
-        self.err1_label     = QLabel("Erros: --")
-        self.wrong1_label   = QLabel("Errado: --")
-        self.correct1_label = QLabel("Correto: --")
-        for lbl in (self.err1_label, self.wrong1_label, self.correct1_label):
+        self.channel1_labels = []
+        for i in range(MULTI_NUM_CHANNELS):
+            lbl = QLabel(f"Canal {i}: --")
             lbl.setStyleSheet(_CANARY_STYLE)
+            self.channel1_labels.append(lbl)
 
         self.psu1_voltage_input = QDoubleSpinBox()
         self.psu1_voltage_input.setRange(0.0, 1.5)
@@ -184,6 +190,8 @@ class MainWindow(QMainWindow):
         self.plot_widget = PlotWidget(plot_window_size=300)
         self.aux_plot0 = AuxPlotWidget(title="PSU-0 / VCCINT-0", plot_window_size=300)
         self.aux_plot1 = AuxPlotWidget(title="PSU-1 / VCCINT-1", plot_window_size=300)
+        self.panel_multi0 = MultiChannelPanel(MULTI_NUM_CHANNELS, plot_window_size=300, key_prefix='dut0')
+        self.panel_multi1 = MultiChannelPanel(MULTI_NUM_CHANNELS, plot_window_size=300, key_prefix='dut1')
         self.log_text_edit = QTextEdit()
         self.log_text_edit.setReadOnly(True)
         self.log_text_edit.setStyleSheet(
@@ -197,7 +205,7 @@ class MainWindow(QMainWindow):
     def _build_dut_column(self, id_str,
                            slack_lbl, failure_lbl,
                            temp_lbl, volt_lbl,
-                           err_lbl, wrong_lbl, correct_lbl,
+                           channel_lbls,
                            psu_spin, beeper_btn) -> QWidget:
         widget = QWidget()
         layout = QVBoxLayout(widget)
@@ -211,13 +219,12 @@ class MainWindow(QMainWindow):
         info_row.addWidget(volt_lbl)
         layout.addLayout(info_row)
 
-        canary_group = QGroupBox(f"Canário — {id_str}")
-        canary_row = QHBoxLayout()
-        canary_row.addWidget(err_lbl)
-        canary_row.addWidget(wrong_lbl)
-        canary_row.addWidget(correct_lbl)
-        canary_group.setLayout(canary_row)
-        layout.addWidget(canary_group)
+        channels_group = QGroupBox(f"Canais — {id_str}")
+        channels_row = QHBoxLayout()
+        for lbl in channel_lbls:
+            channels_row.addWidget(lbl)
+        channels_group.setLayout(channels_row)
+        layout.addWidget(channels_group)
 
         psu_group = QGroupBox(f"PSU — {id_str}")
         psu_form = QFormLayout()
@@ -268,7 +275,7 @@ class MainWindow(QMainWindow):
             "DUT-0",
             self.slack0_label, self.failure0_label,
             self.dut0_temp_label, self.dut0_volt_label,
-            self.err0_label, self.wrong0_label, self.correct0_label,
+            self.channel0_labels,
             self.psu0_voltage_input, self.beeper0_button,
         )
         div = QFrame()
@@ -278,7 +285,7 @@ class MainWindow(QMainWindow):
             "DUT-1",
             self.slack1_label, self.failure1_label,
             self.dut1_temp_label, self.dut1_volt_label,
-            self.err1_label, self.wrong1_label, self.correct1_label,
+            self.channel1_labels,
             self.psu1_voltage_input, self.beeper1_button,
         )
         sensor_layout.addWidget(col0)
@@ -296,6 +303,13 @@ class MainWindow(QMainWindow):
         volt_layout.addWidget(self.aux_plot0)
         volt_layout.addWidget(self.aux_plot1)
         tabs.addTab(volt_widget, "Tensão")
+
+        # Tab: Multi-Sensor — stacked per-channel plots, one column per DUT
+        multi_widget = QWidget()
+        multi_layout = QHBoxLayout(multi_widget)
+        multi_layout.addWidget(self.panel_multi0)
+        multi_layout.addWidget(self.panel_multi1)
+        tabs.addTab(multi_widget, f"Multi-Sensor ({MULTI_NUM_CHANNELS} canais/DUT)")
 
         # Tab 4: Log
         log_widget = QWidget()
@@ -380,7 +394,15 @@ class MainWindow(QMainWindow):
         seq.plot_data_update.connect(self._forward_to_aux0)
         seq.plot_data_update.connect(self._forward_to_aux1)
         seq.plot_data_update.connect(self._update_sensor_display)
+        seq.plot_data_update.connect(self.panel_multi0.update_plot_data)
+        seq.plot_data_update.connect(self.panel_multi1.update_plot_data)
+        seq.stats_update.connect(self._on_stats_update)
         seq.test_finished.connect(self.on_test_finished)
+
+    @Slot(list, list)
+    def _on_stats_update(self, stats0, stats1):
+        self.panel_multi0.update_stats(stats0)
+        self.panel_multi1.update_stats(stats1)
 
     # =========================================================================
     #   Signal routing helpers
@@ -427,40 +449,40 @@ class MainWindow(QMainWindow):
 
     @Slot(dict)
     def _update_sensor_display(self, d: dict):
-        s0 = d.get("dut0_slack", 0)
-        s1 = d.get("dut1_slack", 0)
-        f0 = d.get("dut0_fail", 0)
-        f1 = d.get("dut1_fail", 0)
+        slacks0 = [d.get(f"dut0_slack_ch{i}", 0) for i in range(MULTI_NUM_CHANNELS)]
+        slacks1 = [d.get(f"dut1_slack_ch{i}", 0) for i in range(MULTI_NUM_CHANNELS)]
+        alarms0 = [bool(d.get(f"dut0_alarm_ch{i}", 0)) for i in range(MULTI_NUM_CHANNELS)]
+        alarms1 = [bool(d.get(f"dut1_alarm_ch{i}", 0)) for i in range(MULTI_NUM_CHANNELS)]
+        s0 = min(slacks0) if slacks0 else 0   # worst-case channel
+        s1 = min(slacks1) if slacks1 else 0
+        f0 = any(alarms0)
+        f1 = any(alarms1)
         t0 = d.get("dut0_temp", 0.0)
         t1 = d.get("dut1_temp", 0.0)
         v0 = d.get("dut0_volt", 0.0)
         v1 = d.get("dut1_volt", 0.0)
-        e0 = d.get("dut0_error_count", 0)
-        e1 = d.get("dut1_error_count", 0)
-        w0 = d.get("dut0_wrong", 0)
-        w1 = d.get("dut1_wrong", 0)
-        c0 = d.get("dut0_correct", 0)
-        c1 = d.get("dut1_correct", 0)
 
-        self.slack0_label.setText(f"Slack: {s0} Inc.")
+        self.slack0_label.setText(f"Slack (pior canal): {s0} Inc.")
         self.slack0_label.setStyleSheet(_STYLE_RED if 0 < s0 < 20 else _STYLE_GREEN)
-        self.failure0_label.setText("FALHA: SIM" if f0 else "FALHA: NÃO")
+        self.failure0_label.setText("ALARME: SIM" if f0 else "ALARME: NÃO")
         self.failure0_label.setStyleSheet(_STYLE_RED if f0 else _STYLE_GREEN)
         self.dut0_temp_label.setText(f"Temp: {t0:.1f} °C")
         self.dut0_volt_label.setText(f"VCCINT: {v0:.3f} V")
-        self.err0_label.setText(f"Erros: {e0}")
-        self.wrong0_label.setText(f"Errado: {w0}")
-        self.correct0_label.setText(f"Correto: {c0}")
+        for i, lbl in enumerate(self.channel0_labels):
+            marker = " ⚠" if alarms0[i] else ""
+            lbl.setText(f"Canal {i}: {slacks0[i]}{marker}")
+            lbl.setStyleSheet(_STYLE_RED if alarms0[i] else _CANARY_STYLE)
 
-        self.slack1_label.setText(f"Slack: {s1} Inc.")
+        self.slack1_label.setText(f"Slack (pior canal): {s1} Inc.")
         self.slack1_label.setStyleSheet(_STYLE_RED if 0 < s1 < 20 else _STYLE_GREEN)
-        self.failure1_label.setText("FALHA: SIM" if f1 else "FALHA: NÃO")
+        self.failure1_label.setText("ALARME: SIM" if f1 else "ALARME: NÃO")
         self.failure1_label.setStyleSheet(_STYLE_RED if f1 else _STYLE_GREEN)
         self.dut1_temp_label.setText(f"Temp: {t1:.1f} °C")
         self.dut1_volt_label.setText(f"VCCINT: {v1:.3f} V")
-        self.err1_label.setText(f"Erros: {e1}")
-        self.wrong1_label.setText(f"Errado: {w1}")
-        self.correct1_label.setText(f"Correto: {c1}")
+        for i, lbl in enumerate(self.channel1_labels):
+            marker = " ⚠" if alarms1[i] else ""
+            lbl.setText(f"Canal {i}: {slacks1[i]}{marker}")
+            lbl.setStyleSheet(_STYLE_RED if alarms1[i] else _CANARY_STYLE)
 
     @Slot(bool)
     def on_toggle_test(self, checked: bool):
@@ -478,6 +500,8 @@ class MainWindow(QMainWindow):
             self.plot_widget.clear_plot()
             self.aux_plot0.clear_plot()
             self.aux_plot1.clear_plot()
+            self.panel_multi0.clear_plot()
+            self.panel_multi1.clear_plot()
             self.start_test_signal.emit(settings)
             self.toggle_test_button.setText("PARAR TESTE")
             self.toggle_test_button.setStyleSheet(
