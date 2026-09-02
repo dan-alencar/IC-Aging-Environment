@@ -52,16 +52,12 @@ set_property ip_cache_permissions {read write} [current_project]
 
 set active_rtl [list \
     [file join $project_root "src/rtl/top/nexys4_aging_top.sv"] \
-    [file join $project_root "src/rtl/aging_sensor/adder_canary.sv"] \
-    [file join $project_root "src/rtl/aging_sensor/controller_controller.sv"] \
-    [file join $project_root "src/rtl/aging_sensor/failure_holder.sv"] \
-    [file join $project_root "src/rtl/aging_sensor/lut_full_adder.sv"] \
-    [file join $project_root "src/rtl/aging_sensor/modern_sensible.sv"] \
-    [file join $project_root "src/rtl/aging_sensor/ripple_adder.sv"] \
+    [file join $project_root "src/rtl/aging_sensor/rca_sensor_channel.sv"] \
+    [file join $project_root "src/rtl/aging_sensor/controller_controller_multi.sv"] \
     [file join $project_root "src/rtl/aging_sensor/temp_catcher.sv"] \
     [file join $project_root "src/rtl/display/BINtoBCD.sv"] \
     [file join $project_root "src/rtl/display/DisplayController.sv"] \
-    [file join $project_root "src/rtl/uart/sensor_stream.sv"] \
+    [file join $project_root "src/rtl/uart/multi_sensor_stream.sv"] \
     [file join $project_root "src/rtl/uart/uart_tx.sv"] \
     [file join $project_root "src/rtl/uart/uart_rx.sv"] \
     [file join $project_root "src/ip/clk_wiz_0/clk_wiz_0.v"] \

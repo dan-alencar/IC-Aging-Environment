@@ -152,52 +152,53 @@ module fpga_unified_top (
     end
 
     // =========================================================================
-    // 5. CRITICAL PATH (256-bit ripple-carry adder, self-checking)
+    // 5, 6 & 7. N-CHANNEL RCA SENSOR ARRAY + SHARED PHASE-SWEEP CONTROLLER
     // =========================================================================
-    wire [255:0] dummy_sum;
-    wire test_bit = 1'b0; // Unused in the RCA variant; kept for VIO probe compatibility
+    // All channels are independent rca_sensor_channel instances (self-
+    // contained: their own adder + metastability sampler). They share the
+    // one MMCM phase sweep via controller_controller_multi, which latches
+    // each channel's own phase-step count independently -- see that
+    // module's header comment for why a mux isn't used.
+    localparam int NUM_SENSORS = 4;
 
-    ripple_carry_adder #(
-        .WIDTH(256)
-    ) stress_adder_inst (
-        .clk(clk_sys),
-        .reset_n(global_rst_n),
-        .error_flag(crit_end),
-        .sum_debug(dummy_sum)
-    );
+    wire [NUM_SENSORS-1:0] chan_alarm;
+    wire [NUM_SENSORS-1:0] chan_ff1;
+    wire [NUM_SENSORS-1:0] chan_ff2;
+    wire [NUM_SENSORS-1:0] chan_raw_alarm;
+    wire [NUM_SENSORS-1:0] chan_error_flag;
 
-    // =========================================================================
-    // 6. AGING SENSOR
-    // =========================================================================
-    wire sensor_alarm;
-    wire sensor_ff1, sensor_ff2, sensor_raw_alarm;
+    genvar gi;
+    generate
+        for (gi = 0; gi < NUM_SENSORS; gi = gi + 1) begin : g_sensors
+            rca_sensor_channel #(
+                .WIDTH(64)
+            ) u_channel (
+                .clk_sys(clk_sys),
+                .clk_phase(clk_phase),
+                .clk_en(clk_en),
+                .rst_n(ctrl_rst_n),
+                .sensor_alarm(chan_alarm[gi]),
+                .sensor_ff1(chan_ff1[gi]),
+                .sensor_ff2(chan_ff2[gi]),
+                .sensor_raw_alarm(chan_raw_alarm[gi]),
+                .adder_error_flag(chan_error_flag[gi])
+            );
+        end
+    endgenerate
 
-    modern_sensible sensor (
-        .sclk(clk_sys),             // System clock for FF2
-        .psclk(clk_phase),          // Phase-shifted clock for FF1
-        .clk_en(clk_en),            // Catcher clock for FF3 (100° offset)
-        .in_sensor(crit_end),       // Critical path output
-        .reset(1'b0),               // Not used
-        .alarm(sensor_alarm),       // Filtered alarm
-        .ff1_out(sensor_ff1),       // Debug: FF1 value
-        .ff2_out(sensor_ff2),       // Debug: FF2 value
-        .raw_alarm(sensor_raw_alarm) // Debug: Unfiltered XOR
-    );
-
-    // =========================================================================
-    // 7. PHASE SHIFT CONTROLLER
-    // =========================================================================
-    wire [15:0] phase_count;
+    wire [15:0] phase_count [NUM_SENSORS-1:0];
     wire send_trigger;
     wire [2:0] ctrl_state;
 
-    controller_controller ctrl (
+    controller_controller_multi #(
+        .NUM_CHANNELS(NUM_SENSORS)
+    ) ctrl (
         .clk(clk_sys),
         .reset(ctrl_rst_n),
-        .alarm(sensor_alarm),
+        .alarm(chan_alarm),
         .psdone(psdone),
         .display_value(phase_count),
-        .change(test_bit),
+        .change(),               // unused: each channel's adder self-stimulates internally
         .psincdec(psincdec),
         .send(send_trigger),
         .psen(psen),
@@ -223,14 +224,15 @@ module fpga_unified_top (
     );
 
     // =========================================================================
-    // 9. DATA STREAMING (sensor_stream + uart_tx)
+    // 9. DATA STREAMING (multi_sensor_stream + uart_tx)
     // =========================================================================
     wire stream_send;
     wire [7:0] stream_data;
     wire mon_tx_line;
     wire mon_tx_busy;
 
-    sensor_stream #(
+    multi_sensor_stream #(
+        .NUM_CHANNELS(NUM_SENSORS),
         .BAUDRATE(9600),
         .CLK_FREQ(100000000)
     ) u_stream (
@@ -238,8 +240,8 @@ module fpga_unified_top (
         .reset(global_rst_n),
         .temp({8'b0, sysmon_temp}),
         .vccint({8'b0, sysmon_vccint}),
-        .sensor(phase_count),
-        .failure(1'b0),
+        .slack(phase_count),
+        .alarm(chan_alarm),
         .sendin(sysmon_done),
         .send(stream_send),
         .data(stream_data)
@@ -296,24 +298,31 @@ module fpga_unified_top (
     // =========================================================================
     // 11. VIO FOR DEBUGGING AND CONTROL
     // =========================================================================
+    // NOTE: vio_0.xci is a pre-built IP core (not regenerated per-project
+    // like Nexys4's), so every probe below is kept at its original width
+    // and just repointed to a representative channel -- this avoids having
+    // to re-customize the IP core, which needs Vivado's IP catalog.
+    // Channel 0 (and channel 1, for probe_in14) stand in for the full
+    // NUM_SENSORS-wide vectors; the real per-channel data goes out over
+    // multi_sensor_stream, this VIO is debug-only.
     vio_0 u_vio (
         .clk(clk_sys),
         // Monitoring
         .probe_in0(sysmon_temp),        // 16-bit
         .probe_in1(sysmon_vccint),      // 16-bit
-        .probe_in2(phase_count),        // 16-bit
+        .probe_in2(phase_count[0]),     // 16-bit - channel 0 slack
         .probe_in3(ctrl_state),         // 3-bit
-        .probe_in4(sensor_alarm),       // 1-bit - filtered alarm
+        .probe_in4(chan_alarm[0]),      // 1-bit - channel 0 filtered alarm
         .probe_in5(locked),             // 1-bit
         .probe_in6(global_rst_n),       // 1-bit
         .probe_in7(fpga_button),        // 1-bit - button state
         .probe_in8(psen),               // 1-bit
         .probe_in9(psdone),             // 1-bit
-        .probe_in10(sensor_ff1),        // 1-bit - FF1 output (psclk domain)
-        .probe_in11(sensor_ff2),        // 1-bit - FF2 output (sclk domain)
-        .probe_in12(sensor_raw_alarm),  // 1-bit - unfiltered XOR
-        .probe_in13(crit_end),          // 1-bit - critical path output
-        .probe_in14(test_bit),          // 1-bit - toggle input to critical path
+        .probe_in10(chan_ff1[0]),       // 1-bit - channel 0 FF1 (psclk domain)
+        .probe_in11(chan_ff2[0]),       // 1-bit - channel 0 FF2 (sclk domain)
+        .probe_in12(chan_raw_alarm[0]), // 1-bit - channel 0 unfiltered XOR
+        .probe_in13(chan_error_flag[0]),// 1-bit - channel 0 functional-error flag
+        .probe_in14(chan_alarm[1]),     // 1-bit - channel 1 filtered alarm (assumes NUM_SENSORS >= 2)
         .probe_in15(send_trigger),      // 1-bit
         // Control outputs
         .probe_out0(vio_manual_trigger),
