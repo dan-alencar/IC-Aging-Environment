@@ -52,7 +52,6 @@ set active_rtl [list \
     [file join $project_root "src/rtl/aging_sensor/controller_controller.v"] \
     [file join $project_root "src/rtl/aging_sensor/modern_sensible.v"] \
     [file join $project_root "src/rtl/aging_sensor/nand_series.v"] \
-    [file join $project_root "src/rtl/carry ripple adder.sv"] \
     [file join $project_root "src/rtl/monitor/sysmon_monitor.sv"] \
     [file join $project_root "src/rtl/uart/sensor_stream.v"] \
     [file join $project_root "src/rtl/uart/uart_arbiter.sv"] \
