@@ -49,12 +49,10 @@ set_property simulator_language Mixed [current_project]
 set_property default_lib xil_defaultlib [current_project]
 
 set active_rtl [list \
-    [file join $project_root "src/rtl/aging_sensor/controller_controller.v"] \
-    [file join $project_root "src/rtl/aging_sensor/modern_sensible.v"] \
-    [file join $project_root "src/rtl/aging_sensor/nand_series.v"] \
-    [file join $project_root "src/rtl/carry ripple adder.sv"] \
+    [file join $project_root "src/rtl/aging_sensor/rca_sensor_channel.sv"] \
+    [file join $project_root "src/rtl/aging_sensor/controller_controller_multi.sv"] \
     [file join $project_root "src/rtl/monitor/sysmon_monitor.sv"] \
-    [file join $project_root "src/rtl/uart/sensor_stream.v"] \
+    [file join $project_root "src/rtl/uart/multi_sensor_stream.sv"] \
     [file join $project_root "src/rtl/uart/uart_arbiter.sv"] \
     [file join $project_root "src/rtl/uart/uart_router.sv"] \
     [file join $project_root "src/rtl/uart/uart_tx.v"] \

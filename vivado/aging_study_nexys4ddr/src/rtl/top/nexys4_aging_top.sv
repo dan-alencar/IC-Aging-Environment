@@ -1,24 +1,27 @@
 `timescale 1ns / 1ps
 
 // Top-level module for the Nexys4 DDR aging study (pure RTL, no block design).
+// experimental-multi-sensor branch: NUM_SENSORS independent rca_sensor_channel
+// instances feed one shared controller_controller_multi phase-sweep engine.
 //
 // Signal conventions:
 //   reset_n  — active-low derived from BTNU (N17); fed to RTL modules that use
-//              negedge-reset (controller, adder, failure, stream, uart, temp).
+//              negedge-reset (controller, channels, stream, uart, temp).
 //   reset_p  — active-high (raw button); fed to modules that use posedge-reset
-//              (DisplayController) or FDCE CLR (modern_sensible).
+//              (DisplayController) or the per-channel alarm synchronizer.
 //
-// Clock domains:
+// Clock domains (shared across all channels -- one MMCM per device):
 //   clk_sys : 0°  100 MHz — main system clock
-//   psclk   : 0°, dynamically phase-shiftable — FF1 in modern_sensible
-//   clk_en  : 100° fixed offset 100 MHz — FF3 (alarm latch) in modern_sensible
+//   psclk   : 0°, dynamically phase-shiftable — FF1 in each channel
+//   clk_en  : 100° fixed offset 100 MHz — FF3 (alarm latch) in each channel
 //
-// alarm_sig originates in the clk_en domain (FF3 Q-output).
-// alarm_sync is a 2-FF synchronised version for all clk_sys-domain consumers.
+// chan_alarm originates in the clk_en domain (each channel's FF3 Q-output).
+// alarm_sync is a 2-FF synchronised version (per channel) for all
+// clk_sys-domain consumers, notably controller_controller_multi.
 //
-// Display layout (8 digits):
-//   AN[7:4] / in4..in7 — phase step count  (left  4 digits)
-//   AN[3:0] / in0..in3 — error count       (right 4 digits)
+// Display layout (8 digits) -- representative only, shows channels 0-1:
+//   AN[7:4] / in4..in7 — channel 0 slack   (left  4 digits)
+//   AN[3:0] / in0..in3 — always 0 (no functional canary display on this branch)
 
 module nexys4_aging_top (
     input  logic        CLK100MHZ,
@@ -38,7 +41,7 @@ module nexys4_aging_top (
     output logic [7:0]  AN,
     output logic        alarm_led,    // H17 — metastability alarm
     output logic        error_any_led,// K15 — adder canary: any mismatch
-    output logic        held_led,     // J13 — failure_holder: timing failure
+    output logic        held_led,     // J13 — tied low on this branch (no cross-channel functional canary)
     output logic        direction,    // J15 — psincdec debug output
     output logic        shift         // P18 — psen debug output
 );
@@ -135,58 +138,53 @@ module nexys4_aging_top (
     );
 
     // -----------------------------------------------------------------------
-    // Metastability sensor — 3-FF XOR comparator across phase-shifted domains
-    //   FF1: psclk (phase-shifted)   → samples crit_bit
-    //   FF2: clk_sys (reference)     → samples crit_bit
-    //   FF3: clk_en  (100° offset)   → latches XOR(FF1, FF2) = alarm_sig
+    // N-channel RCA sensor array + shared phase-sweep controller.
+    // All channels are independent rca_sensor_channel instances (self-
+    // contained: their own adder + metastability sampler). They share the
+    // one MMCM phase sweep via controller_controller_multi, which latches
+    // each channel's own phase-step count independently -- see that
+    // module's header comment for why a mux isn't used.
     // -----------------------------------------------------------------------
-    logic        alarm_sig;           // clk_en domain: FF3 Q-output
-    logic        sensor_ff1_out;      // FF2 output of modern_sensible (clk_sys domain)
+    localparam int NUM_SENSORS = 4;
 
-    modern_sensible u_sensor (
-        .sclk      (clk_sys),
-        .psclk     (psclk),
-        .in_sensor (crit_bit),
-        .reset     (reset_p),   // FDCE CLR is active-high
-        .clk_en    (clk_en),
-        .alarm     (alarm_sig),
-        .ff1_out   (sensor_ff1_out)
-    );
+    logic [NUM_SENSORS-1:0] chan_alarm;
+    logic [NUM_SENSORS-1:0] chan_ff1;
+    logic [NUM_SENSORS-1:0] chan_ff2;
+    logic [NUM_SENSORS-1:0] chan_raw_alarm;
+    logic [NUM_SENSORS-1:0] chan_error_flag;
 
-    // -----------------------------------------------------------------------
-    // 2-FF synchronizer: alarm_sig (clk_en domain) → alarm_sync (clk_sys).
-    // Prevents CDC violations in adder_canary and controller_controller.
-    // alarm_sig is kept directly for the alarm_led (no timing path needed).
-    // -----------------------------------------------------------------------
-    logic alarm_meta, alarm_sync;
+    genvar gi;
+    generate
+        for (gi = 0; gi < NUM_SENSORS; gi = gi + 1) begin : g_sensors
+            rca_sensor_channel #(
+                .WIDTH(64)
+            ) u_channel (
+                .clk_sys(clk_sys),
+                .clk_phase(psclk),
+                .clk_en(clk_en),
+                .rst_n(reset_n),
+                .sensor_alarm(chan_alarm[gi]),
+                .sensor_ff1(chan_ff1[gi]),
+                .sensor_ff2(chan_ff2[gi]),
+                .sensor_raw_alarm(chan_raw_alarm[gi]),
+                .adder_error_flag(chan_error_flag[gi])
+            );
+        end
+    endgenerate
+
+    // Per-channel 2-FF synchronizer: chan_alarm (clk_en domain) -> alarm_sync
+    // (clk_sys). Prevents CDC violations feeding controller_controller_multi.
+    // chan_alarm is kept directly for alarm_led (no timing path needed there).
+    logic [NUM_SENSORS-1:0] alarm_meta, alarm_sync;
     always_ff @(posedge clk_sys or posedge reset_p) begin
         if (reset_p) begin
-            alarm_meta <= 1'b0;
-            alarm_sync <= 1'b0;
+            alarm_meta <= '0;
+            alarm_sync <= '0;
         end else begin
-            alarm_meta <= alarm_sig;
+            alarm_meta <= chan_alarm;
             alarm_sync <= alarm_meta;
         end
     end
-
-    // -----------------------------------------------------------------------
-    // Adder canary — aging-sensitive 16-bit LUT ripple-carry adder
-    // -----------------------------------------------------------------------
-    logic        crit_bit, ref_bit;
-    logic [15:0] wrong, correct, error_count;
-    logic        error_any_sig;
-
-    adder_canary u_adder (
-        .clk         (clk_sys),
-        .reset       (reset_n),
-        .alarm       (alarm_sync),   // synchronised to clk_sys
-        .crit_bit    (crit_bit),
-        .ref_bit     (ref_bit),
-        .wrong       (wrong),
-        .correct     (correct),
-        .error_count (error_count),
-        .error_any   (error_any_sig)
-    );
 
     // -----------------------------------------------------------------------
     // UART RX — receive trigger byte 'T' (0x54) from the PC.
@@ -207,57 +205,54 @@ module nexys4_aging_top (
 
     // -----------------------------------------------------------------------
     // UART 'T' (0x54) receive — snapshot trigger for the Python app.
-    // Receiving 'T' latches the current measurement into sensor_stream and
-    // transmits one 15-byte packet.  The controller is NOT reset here; it
-    // runs autonomously and keeps display_value up-to-date at all times.
+    // Receiving 'T' latches the current measurement into multi_sensor_stream
+    // and transmits one packet. The controller is NOT reset here; it runs
+    // autonomously and keeps display_value up-to-date at all times.
     // -----------------------------------------------------------------------
     logic uart_trigger_pulse;
     assign uart_trigger_pulse = uart_rx_valid && (uart_rx_data == 8'h54);
 
     // -----------------------------------------------------------------------
-    // Phase controller — sweeps MMCM phase autonomously.
+    // Phase controller — sweeps MMCM phase autonomously across all channels.
     // ctrl_rst_n is only the power-on / button reset; the controller
-    // auto-restarts in IDLE (see controller_controller.sv) without needing
-    // any external periodic trigger.
+    // auto-restarts in IDLE (see controller_controller_multi.sv) without
+    // needing any external periodic trigger.
     // -----------------------------------------------------------------------
     logic        ctrl_rst_n;
-    logic [15:0] display_value;
-    logic        change_unused;
+    logic [15:0] display_value [NUM_SENSORS-1:0];
     logic        send_unused;
 
     assign ctrl_rst_n = reset_n;
 
-    controller_controller u_ctrl (
+    controller_controller_multi #(
+        .NUM_CHANNELS(NUM_SENSORS)
+    ) u_ctrl (
         .clk          (clk_sys),
         .reset        (ctrl_rst_n),
         .alarm        (alarm_sync),
         .psdone       (psdone),
         .display_value(display_value),
-        .change       (change_unused),
+        .change       (),           // unused: each channel's adder self-stimulates internally
         .psincdec     (psincdec_ctrl),
         .send         (send_unused),
         .psen         (psen_ctrl)
     );
 
     // -----------------------------------------------------------------------
-    // Functional failure latch
-    //   Triggers on rising edge of sensor_ff1_out (canary MSB captured on
-    //   clk_sys) when ref_bit disagrees — indicates a functional mismatch.
+    // No functional failure latch on this branch -- each rca_sensor_channel
+    // exposes its own adder_error_flag (wired to the VIO for debug), but
+    // there is no single cross-channel "held" concept without a further
+    // protocol/display redesign. held stays tied low; kept as a signal name
+    // so downstream consumers (multi_sensor_stream, held_led) don't need
+    // further changes.
     // -----------------------------------------------------------------------
     logic held;
-
-    failure_holder u_failure (
-        .clk   (clk_sys),
-        .ff1   (ref_bit),
-        .ff2   (sensor_ff1_out),
-        .reset (reset_n),
-        .held  (held)
-    );
+    assign held = 1'b0;
 
     // -----------------------------------------------------------------------
     // UART — packet serialiser → transmitter
     // Triggered by: 'T' from Python (snapshot request), or manual buttons.
-    // sensor_stream latches all inputs at trigger time → consistent packet.
+    // multi_sensor_stream latches all channels at trigger time → consistent packet.
     // -----------------------------------------------------------------------
     logic uart_send_trigger;
     assign uart_send_trigger = uart_trigger_pulse | button | UARTsend;
@@ -265,14 +260,13 @@ module nexys4_aging_top (
     logic stream_send;
     logic [7:0] stream_data;
 
-    sensor_stream u_stream (
+    multi_sensor_stream #(
+        .NUM_CHANNELS(NUM_SENSORS)
+    ) u_stream (
         .temp        ({3'b000, temp_raw}),
         .vccint      ({3'b000, vccint_raw}),
-        .sensor      (display_value),
-        .failure     (held),
-        .wrong       (wrong),
-        .correct     (correct),
-        .error_count (error_count),
+        .slack       (display_value),
+        .alarm       (alarm_sync),
         .reset       (reset_n),
         .clk         (clk_sys),
         .sendin      (uart_send_trigger),
@@ -297,7 +291,7 @@ module nexys4_aging_top (
 
     BinToBCD u_bcd_phase (
         .clk   (clk_sys),
-        .bin   ({5'b0, display_value}),
+        .bin   ({5'b0, display_value[0]}),   // channel 0 slack -- representative only
         .un    (phase_un),
         .dec   (phase_dec),
         .cent  (phase_cent),
@@ -313,7 +307,7 @@ module nexys4_aging_top (
 
     BinToBCD u_bcd_err (
         .clk   (clk_sys),
-        .bin   ({5'b0, error_count}),
+        .bin   (21'b0),   // no functional canary display on this branch -- always 0
         .un    (err_un),
         .dec   (err_dec),
         .cent  (err_cent),
@@ -362,36 +356,41 @@ module nexys4_aging_top (
     // -----------------------------------------------------------------------
     // VIO debug core — observe UART packet fields and sensor state via
     // Vivado Hardware Manager without needing the UART/App connection.
-    //   probe_in0 : display_value  [15:0]  phase count at alarm
-    //   probe_in1 : error_count    [15:0]  wrapping error count
-    //   probe_in2 : alarm_sync     [0]     alarm (clk_sys domain)
-    //   probe_in3 : locked         [0]     MMCM lock
-    //   probe_in4 : error_any_sig  [0]     sticky error flag
-    //   probe_in5 : temp_raw       [20:0]  XADC temperature
-    //   probe_in6 : vccint_raw     [20:0]  XADC VCCINT
-    //   probe_in7 : wrong          [15:0]  wrong sum at last alarm
-    //   probe_in8 : correct        [15:0]  correct sum at last alarm
-    //   probe_in9 : psen_ctrl      [0]     phase shift enable (sweep activity)
+    //   probe_in0 : display_value[0]    [15:0]  channel 0 slack (representative)
+    //   probe_in1 : display_value[1]    [15:0]  channel 1 slack (representative)
+    //   probe_in2 : alarm_sync[0]       [0]     channel 0 alarm (clk_sys domain)
+    //   probe_in3 : locked              [0]     MMCM lock
+    //   probe_in4 : chan_error_flag[0]  [0]     channel 0 functional-error flag
+    //   probe_in5 : temp_raw            [20:0]  XADC temperature
+    //   probe_in6 : vccint_raw          [20:0]  XADC VCCINT
+    //   probe_in7 : display_value[2]    [15:0]  channel 2 slack (representative)
+    //   probe_in8 : display_value[3]    [15:0]  channel 3 slack (representative)
+    //   probe_in9 : psen_ctrl           [0]     phase shift enable (sweep activity)
+    // NOTE: widths unchanged from the single-sensor VIO config so
+    // create_project.tcl's vio_0 customization doesn't need to change --
+    // every probe below is repointed to a representative channel (assumes
+    // NUM_SENSORS >= 4). Real per-channel data goes out over
+    // multi_sensor_stream; this VIO is debug-only.
     // -----------------------------------------------------------------------
     vio_0 u_vio (
         .clk       (clk_sys),
-        .probe_in0 (display_value),
-        .probe_in1 (error_count),
-        .probe_in2 (alarm_sync),
+        .probe_in0 (display_value[0]),
+        .probe_in1 (display_value[1]),
+        .probe_in2 (alarm_sync[0]),
         .probe_in3 (locked),
-        .probe_in4 (error_any_sig),
+        .probe_in4 (chan_error_flag[0]),
         .probe_in5 (temp_raw),
         .probe_in6 (vccint_raw),
-        .probe_in7 (wrong),
-        .probe_in8 (correct),
+        .probe_in7 (display_value[2]),
+        .probe_in8 (display_value[3]),
         .probe_in9 (psen_ctrl)
     );
 
     // -----------------------------------------------------------------------
     // LEDs and debug pins
     // -----------------------------------------------------------------------
-    assign alarm_led       = alarm_sig;    // raw clk_en signal — LED only, no timing path
-    assign error_any_led   = error_any_sig;
+    assign alarm_led       = chan_alarm[0]; // raw clk_en signal — LED only, no timing path
+    assign error_any_led   = chan_error_flag[0];
     assign held_led        = held;
     assign direction       = psincdec_ctrl;
     assign shift           = psen_ctrl;

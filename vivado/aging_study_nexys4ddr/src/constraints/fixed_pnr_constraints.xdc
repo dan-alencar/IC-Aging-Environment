@@ -1,45 +1,34 @@
 # Physical constraints for the aging study critical-path sensor.
 #
-# Instance names match nexys4_aging_top.sv:
-#   u_sensor              — modern_sensible instance (top level)
-#   u_adder               — adder_canary instance
-#     u_adder/u_canary    — ripple_adder (canary: free-running counter)
-#     u_adder/u_sensor    — ripple_adder (sensor: toggle-driven, feeds crit_bit)
+# experimental-multi-sensor branch: there is no longer a single u_sensor /
+# u_adder instance pair to lock down. Each channel is
+# g_sensors[i].u_channel (an rca_sensor_channel instance), with its own
+# internal u_ff1/u_ff2/u_ff3/u_xor cells and its own free-running adder.
 #
-# AND1 and BUF1 are commented out in modern_sensible.sv and must NOT
-# appear here — Vivado errors on constraints referencing non-existent cells.
+# NONE of the single-sensor branches' LOC/BEL/pblock constraints apply
+# here -- they referenced u_sensor and u_adder/u_canary|u_sensor, none of
+# which exist on this branch, and leaving them in would make Vivado error
+# out on empty get_cells results. This file intentionally carries no
+# per-cell placement lock yet: with NUM_SENSORS=4 independent channels,
+# each needs its own pblock (co-located internally so a channel's adder
+# and its own metastability sampler age together, but kept apart from the
+# other channels' pblocks so one channel's placement can't drift into
+# another's LUT budget). That is real synthesis-derived work -- run
+# scripts/create_project.sh, implement once, then write one pblock per
+# g_sensors[i].u_channel using scripts/extract_fixed_pnr_constraints.sh as
+# a starting point, the same way the single-sensor branches' constraints
+# were originally derived.
 
-# --- CDC false-path: alarm_sig (FF3 / clk_en domain) → alarm_meta_reg (clk_sys) ---
-# The 2-FF synchroniser in nexys4_aging_top.sv intentionally crosses this boundary.
-# Without this constraint Vivado may flag a spurious timing violation because the
-# two 100 MHz clocks share the same frequency but have a dynamically varying phase.
-# Verify the destination name with: get_cells alarm_meta_reg
-set_false_path \
-    -from [get_cells u_sensor/FF3] \
-    -to   [get_pins  alarm_meta_reg/D]
-
-# --- u_sensor (modern_sensible): lock FF1, FF2, FF3, XOR1 ---
-set_property BEL CFF   [get_cells u_sensor/FF2]
-set_property BEL C6LUT [get_cells u_sensor/XOR1]
-set_property BEL CFF   [get_cells u_sensor/FF1]
-set_property BEL CFF   [get_cells u_sensor/FF3]
-
-set_property LOC SLICE_X3Y92 [get_cells u_sensor/FF2]
-set_property LOC SLICE_X2Y92 [get_cells u_sensor/XOR1]
-set_property LOC SLICE_X1Y92 [get_cells u_sensor/FF1]
-set_property LOC SLICE_X0Y92 [get_cells u_sensor/FF3]
-
-# --- u_adder/u_canary + u_adder/u_sensor ripple carry chains: PBLOCK ---
-# Both 16-stage LUT adder instances are co-located so they age at the same
-# rate, making the timing metric (crit_bit phase count) and functional metric
-# (error_count) causally comparable.  Region is placed adjacent to u_sensor
-# (modern_sensible at SLICE_X0-X3, Y92) and sized for two 16-bit adders.
-# After the first implementation run, open the Device view, locate
-# u_adder/u_canary/FA[*] and u_adder/u_sensor/FA[*], and tighten the range.
-create_pblock pblock_adders
-add_cells_to_pblock [get_pblock pblock_adders] \
-    [get_cells -hierarchical -filter {NAME =~ u_adder/u_canary/FA*}]
-add_cells_to_pblock [get_pblock pblock_adders] \
-    [get_cells -hierarchical -filter {NAME =~ u_adder/u_sensor/FA*}]
-resize_pblock [get_pblock pblock_adders] -add {SLICE_X0Y74:SLICE_X5Y95}
-set_property IS_SOFT FALSE [get_pblock pblock_adders]
+# --- CDC false-path: chan_alarm (FF3 / clk_en domain) -> alarm_meta (clk_sys) ---
+# The per-channel 2-FF synchronizer in nexys4_aging_top.sv intentionally
+# crosses this boundary for every channel. Without these constraints
+# Vivado may flag spurious timing violations because the two 100 MHz
+# clocks share frequency but have a dynamically varying phase.
+# Verify cell names with: get_cells -hierarchical -filter {NAME =~ g_sensors*u_ff3}
+for {set i 0} {$i < 4} {incr i} {
+    catch {
+        set_false_path \
+            -from [get_cells g_sensors[$i].u_channel/u_ff3] \
+            -to   [get_pins  alarm_meta_reg[$i]/D]
+    }
+}
