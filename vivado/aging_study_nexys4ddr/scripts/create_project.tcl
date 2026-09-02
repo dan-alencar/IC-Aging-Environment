@@ -52,12 +52,9 @@ set_property ip_cache_permissions {read write} [current_project]
 
 set active_rtl [list \
     [file join $project_root "src/rtl/top/nexys4_aging_top.sv"] \
-    [file join $project_root "src/rtl/aging_sensor/adder_canary.sv"] \
     [file join $project_root "src/rtl/aging_sensor/controller_controller.sv"] \
-    [file join $project_root "src/rtl/aging_sensor/failure_holder.sv"] \
-    [file join $project_root "src/rtl/aging_sensor/lut_full_adder.sv"] \
     [file join $project_root "src/rtl/aging_sensor/modern_sensible.sv"] \
-    [file join $project_root "src/rtl/aging_sensor/ripple_adder.sv"] \
+    [file join $project_root "src/rtl/aging_sensor/not_series.sv"] \
     [file join $project_root "src/rtl/aging_sensor/temp_catcher.sv"] \
     [file join $project_root "src/rtl/display/BINtoBCD.sv"] \
     [file join $project_root "src/rtl/display/DisplayController.sv"] \

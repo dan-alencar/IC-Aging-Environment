@@ -152,18 +152,18 @@ module fpga_unified_top (
     end
 
     // =========================================================================
-    // 5. CRITICAL PATH (256-bit ripple-carry adder, self-checking)
+    // 5. CRITICAL PATH (50-stage inverter chain)
     // =========================================================================
-    wire [255:0] dummy_sum;
-    wire test_bit = 1'b0; // Unused in the RCA variant; kept for VIO probe compatibility
+    wire crit_start;
+    wire ctrl_change;
 
-    ripple_carry_adder #(
-        .WIDTH(256)
-    ) stress_adder_inst (
+    not_series #(
+        .size(50)
+    ) delay_line (
         .clk(clk_sys),
-        .reset_n(global_rst_n),
-        .error_flag(crit_end),
-        .sum_debug(dummy_sum)
+        .test_bit(ctrl_change),     // Toggle stimulus from the controller
+        .start(crit_start),         // Debug: registered launch edge
+        .critpath(crit_end)         // Delay-chain output
     );
 
     // =========================================================================
@@ -197,7 +197,7 @@ module fpga_unified_top (
         .alarm(sensor_alarm),
         .psdone(psdone),
         .display_value(phase_count),
-        .change(test_bit),
+        .change(ctrl_change),       // Drives the inverter chain's toggle input
         .psincdec(psincdec),
         .send(send_trigger),
         .psen(psen),
@@ -313,7 +313,7 @@ module fpga_unified_top (
         .probe_in11(sensor_ff2),        // 1-bit - FF2 output (sclk domain)
         .probe_in12(sensor_raw_alarm),  // 1-bit - unfiltered XOR
         .probe_in13(crit_end),          // 1-bit - critical path output
-        .probe_in14(test_bit),          // 1-bit - toggle input to critical path
+        .probe_in14(ctrl_change),       // 1-bit - toggle input to critical path
         .probe_in15(send_trigger),      // 1-bit
         // Control outputs
         .probe_out0(vio_manual_trigger),

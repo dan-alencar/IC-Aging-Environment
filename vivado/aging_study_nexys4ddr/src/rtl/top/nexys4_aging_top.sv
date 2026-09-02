@@ -38,7 +38,7 @@ module nexys4_aging_top (
     output logic [7:0]  AN,
     output logic        alarm_led,    // H17 — metastability alarm
     output logic        error_any_led,// K15 — adder canary: any mismatch
-    output logic        held_led,     // J13 — failure_holder: timing failure
+    output logic        held_led,     // J13 — tied low on this branch (no functional canary)
     output logic        direction,    // J15 — psincdec debug output
     output logic        shift         // P18 — psen debug output
 );
@@ -155,7 +155,7 @@ module nexys4_aging_top (
 
     // -----------------------------------------------------------------------
     // 2-FF synchronizer: alarm_sig (clk_en domain) → alarm_sync (clk_sys).
-    // Prevents CDC violations in adder_canary and controller_controller.
+    // Prevents CDC violations in controller_controller.
     // alarm_sig is kept directly for the alarm_led (no timing path needed).
     // -----------------------------------------------------------------------
     logic alarm_meta, alarm_sync;
@@ -170,22 +170,21 @@ module nexys4_aging_top (
     end
 
     // -----------------------------------------------------------------------
-    // Adder canary — aging-sensitive 16-bit LUT ripple-carry adder
+    // Critical path — 50-stage inverter chain (timing-only, no functional
+    // canary: an inverter chain has no "expected value" to compare against,
+    // unlike adder_canary's dual-adder mismatch check).
     // -----------------------------------------------------------------------
-    logic        crit_bit, ref_bit;
-    logic [15:0] wrong, correct, error_count;
-    logic        error_any_sig;
+    logic crit_bit;
+    logic crit_start;
+    logic ctrl_change;
 
-    adder_canary u_adder (
-        .clk         (clk_sys),
-        .reset       (reset_n),
-        .alarm       (alarm_sync),   // synchronised to clk_sys
-        .crit_bit    (crit_bit),
-        .ref_bit     (ref_bit),
-        .wrong       (wrong),
-        .correct     (correct),
-        .error_count (error_count),
-        .error_any   (error_any_sig)
+    not_series #(
+        .size(50)
+    ) u_delay_line (
+        .clk      (clk_sys),
+        .test_bit (ctrl_change),   // toggle stimulus from the controller
+        .start    (crit_start),    // debug: registered launch edge
+        .critpath (crit_bit)
     );
 
     // -----------------------------------------------------------------------
@@ -222,7 +221,6 @@ module nexys4_aging_top (
     // -----------------------------------------------------------------------
     logic        ctrl_rst_n;
     logic [15:0] display_value;
-    logic        change_unused;
     logic        send_unused;
 
     assign ctrl_rst_n = reset_n;
@@ -233,26 +231,21 @@ module nexys4_aging_top (
         .alarm        (alarm_sync),
         .psdone       (psdone),
         .display_value(display_value),
-        .change       (change_unused),
+        .change       (ctrl_change),   // drives the inverter chain's toggle input
         .psincdec     (psincdec_ctrl),
         .send         (send_unused),
         .psen         (psen_ctrl)
     );
 
     // -----------------------------------------------------------------------
-    // Functional failure latch
-    //   Triggers on rising edge of sensor_ff1_out (canary MSB captured on
-    //   clk_sys) when ref_bit disagrees — indicates a functional mismatch.
+    // No functional failure latch on this branch — failure_holder compared
+    // adder_canary's ref_bit against modern_sensible's captured bit, and
+    // there is no reference/expected value for a pure timing sensor.
+    // held stays tied low; kept as a signal name so downstream consumers
+    // (sensor_stream, held_led) don't need further changes.
     // -----------------------------------------------------------------------
     logic held;
-
-    failure_holder u_failure (
-        .clk   (clk_sys),
-        .ff1   (ref_bit),
-        .ff2   (sensor_ff1_out),
-        .reset (reset_n),
-        .held  (held)
-    );
+    assign held = 1'b0;
 
     // -----------------------------------------------------------------------
     // UART — packet serialiser → transmitter
@@ -270,9 +263,9 @@ module nexys4_aging_top (
         .vccint      ({3'b000, vccint_raw}),
         .sensor      (display_value),
         .failure     (held),
-        .wrong       (wrong),
-        .correct     (correct),
-        .error_count (error_count),
+        .wrong       (16'b0),
+        .correct     (16'b0),
+        .error_count (16'b0),
         .reset       (reset_n),
         .clk         (clk_sys),
         .sendin      (uart_send_trigger),
@@ -313,7 +306,7 @@ module nexys4_aging_top (
 
     BinToBCD u_bcd_err (
         .clk   (clk_sys),
-        .bin   ({5'b0, error_count}),
+        .bin   (21'b0),   // no functional canary on this branch -- always 0
         .un    (err_un),
         .dec   (err_dec),
         .cent  (err_cent),
@@ -363,27 +356,27 @@ module nexys4_aging_top (
     // VIO debug core — observe UART packet fields and sensor state via
     // Vivado Hardware Manager without needing the UART/App connection.
     //   probe_in0 : display_value  [15:0]  phase count at alarm
-    //   probe_in1 : error_count    [15:0]  wrapping error count
+    //   probe_in1 : (tied 0)       [15:0]  no functional canary on this branch
     //   probe_in2 : alarm_sync     [0]     alarm (clk_sys domain)
     //   probe_in3 : locked         [0]     MMCM lock
-    //   probe_in4 : error_any_sig  [0]     sticky error flag
+    //   probe_in4 : (tied 0)       [0]     no functional canary on this branch
     //   probe_in5 : temp_raw       [20:0]  XADC temperature
     //   probe_in6 : vccint_raw     [20:0]  XADC VCCINT
-    //   probe_in7 : wrong          [15:0]  wrong sum at last alarm
-    //   probe_in8 : correct        [15:0]  correct sum at last alarm
+    //   probe_in7 : (tied 0)       [15:0]  no functional canary on this branch
+    //   probe_in8 : (tied 0)       [15:0]  no functional canary on this branch
     //   probe_in9 : psen_ctrl      [0]     phase shift enable (sweep activity)
     // -----------------------------------------------------------------------
     vio_0 u_vio (
         .clk       (clk_sys),
         .probe_in0 (display_value),
-        .probe_in1 (error_count),
+        .probe_in1 (16'b0),
         .probe_in2 (alarm_sync),
         .probe_in3 (locked),
-        .probe_in4 (error_any_sig),
+        .probe_in4 (1'b0),
         .probe_in5 (temp_raw),
         .probe_in6 (vccint_raw),
-        .probe_in7 (wrong),
-        .probe_in8 (correct),
+        .probe_in7 (16'b0),
+        .probe_in8 (16'b0),
         .probe_in9 (psen_ctrl)
     );
 
@@ -391,7 +384,7 @@ module nexys4_aging_top (
     // LEDs and debug pins
     // -----------------------------------------------------------------------
     assign alarm_led       = alarm_sig;    // raw clk_en signal — LED only, no timing path
-    assign error_any_led   = error_any_sig;
+    assign error_any_led   = 1'b0;         // no functional canary on this branch
     assign held_led        = held;
     assign direction       = psincdec_ctrl;
     assign shift           = psen_ctrl;

@@ -1,10 +1,9 @@
 # Physical constraints for the aging study critical-path sensor.
 #
-# Instance names match nexys4_aging_top.sv:
+# inverter-chain-sensor branch: instance names match nexys4_aging_top.sv:
 #   u_sensor              — modern_sensible instance (top level)
-#   u_adder               — adder_canary instance
-#     u_adder/u_canary    — ripple_adder (canary: free-running counter)
-#     u_adder/u_sensor    — ripple_adder (sensor: toggle-driven, feeds crit_bit)
+#   u_delay_line          — not_series instance (50-stage inverter chain)
+#     u_delay_line/lut_chain[*].INV — one LUT1 inverter per chain stage
 #
 # AND1 and BUF1 are commented out in modern_sensible.sv and must NOT
 # appear here — Vivado errors on constraints referencing non-existent cells.
@@ -29,17 +28,17 @@ set_property LOC SLICE_X2Y92 [get_cells u_sensor/XOR1]
 set_property LOC SLICE_X1Y92 [get_cells u_sensor/FF1]
 set_property LOC SLICE_X0Y92 [get_cells u_sensor/FF3]
 
-# --- u_adder/u_canary + u_adder/u_sensor ripple carry chains: PBLOCK ---
-# Both 16-stage LUT adder instances are co-located so they age at the same
-# rate, making the timing metric (crit_bit phase count) and functional metric
-# (error_count) causally comparable.  Region is placed adjacent to u_sensor
-# (modern_sensible at SLICE_X0-X3, Y92) and sized for two 16-bit adders.
-# After the first implementation run, open the Device view, locate
-# u_adder/u_canary/FA[*] and u_adder/u_sensor/FA[*], and tighten the range.
-create_pblock pblock_adders
-add_cells_to_pblock [get_pblock pblock_adders] \
-    [get_cells -hierarchical -filter {NAME =~ u_adder/u_canary/FA*}]
-add_cells_to_pblock [get_pblock pblock_adders] \
-    [get_cells -hierarchical -filter {NAME =~ u_adder/u_sensor/FA*}]
-resize_pblock [get_pblock pblock_adders] -add {SLICE_X0Y74:SLICE_X5Y95}
-set_property IS_SOFT FALSE [get_pblock pblock_adders]
+# --- u_delay_line inverter chain: PBLOCK ---
+# NOTE: this region is a first-cut placeholder, not a derived constraint.
+# The 50-stage inverter chain is a linear/delay-critical structure, very
+# different in shape from the two 16-bit adders this pblock used to cover
+# (a-priori shot in the dark on the width). Placed adjacent to u_sensor
+# (modern_sensible at SLICE_X0-X3, Y92) so both age together. After the
+# first real implementation run, open the Device view, locate
+# u_delay_line/lut_chain[*].INV, and re-derive this region with
+# scripts/extract_fixed_pnr_constraints.sh rather than trusting this range.
+create_pblock pblock_delay_line
+add_cells_to_pblock [get_pblock pblock_delay_line] \
+    [get_cells -hierarchical -filter {NAME =~ u_delay_line/lut_chain*}]
+resize_pblock [get_pblock pblock_delay_line] -add {SLICE_X0Y74:SLICE_X5Y95}
+set_property IS_SOFT FALSE [get_pblock pblock_delay_line]
