@@ -1,4 +1,4 @@
-timescale 1ns / 1ps
+`timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
 // Module Name: fpga_unified_top
 // Description: Top-level for aging sensor system
@@ -151,84 +151,59 @@ module fpga_unified_top (
         end
     end
 
- // =========================================================================
-    // 5 & 6 & 7. MULTIPLES RCA SENSORS CHANNELS WITH SINGLE CONTROLLER & MUX
     // =========================================================================
-    localparam NUM_SENSORS = 3;
-    localparam SEL_WIDTH   = $clog2(NUM_SENSORS);
-    
-    // Signal de sélection du canal (sera connecté au VIO ou à un compteur)
-    wire [SEL_WIDTH-1:0] sensor_sel; 
-    
-    // Bus d'interconnexion pour collecter les données de tous les canaux
-    wire [NUM_SENSORS-1:0] chan_alarm;
-    wire [NUM_SENSORS-1:0] chan_ff1;
-    wire [NUM_SENSORS-1:0] chan_ff2;
-    wire [NUM_SENSORS-1:0] chan_raw_alarm;
-    
-    // Signaux multiplexés (sélectionnés) qui vont alimenter l'unique contrôleur
-    wire mux_alarm;
-    wire mux_ff1;
-    wire mux_ff2;
-    wire mux_raw_alarm;
+    // 5. CRITICAL PATH (256-bit ripple-carry adder, self-checking)
+    // =========================================================================
+    wire [255:0] dummy_sum;
+    wire test_bit = 1'b0; // Unused in the RCA variant; kept for VIO probe compatibility
 
-    // Génération automatique des canaux RCA (sans contrôleur interne)
-    genvar i;
-    generate
-        for (i = 0; i < NUM_SENSORS; i = i + 1) begin : g_sensors
-            rca_sensor_channel #(
-                .WIDTH(256)
-            ) u_rca_channel (
-                .clk_sys(clk_sys),
-                .clk_phase(clk_phase),
-                .clk_en(clk_en),
-                .rst_n(ctrl_rst_n),
-                
-                // Connexion au bus de collectes
-                .sensor_alarm(chan_alarm[i]),
-                .sensor_ff1(chan_ff1[i]),
-                .sensor_ff2(chan_ff2[i]),
-                .sensor_raw_alarm(chan_raw_alarm[i])
-            );
-        end
-    endgenerate
-
-    // Le Multiplexeur qui choisit quel capteur envoyer au contrôleur
-    sensor_mux #(
-        .NUM_CHANNELS(NUM_SENSORS)
-    ) u_sensor_mux (
-        .sel(sensor_sel),
-        .chan_alarm(chan_alarm),
-        .chan_ff1(chan_ff1),
-        .chan_ff2(chan_ff2),
-        .chan_raw_alarm(chan_raw_alarm),
-        
-        // Sorties connectées au contrôleur global
-        .selected_alarm(mux_alarm),
-        .selected_ff1(mux_ff1),
-        .selected_ff2(mux_ff2),
-        .selected_raw_alarm(mux_raw_alarm)
+    ripple_carry_adder #(
+        .WIDTH(256)
+    ) stress_adder_inst (
+        .clk(clk_sys),
+        .reset_n(global_rst_n),
+        .error_flag(crit_end),
+        .sum_debug(dummy_sum)
     );
 
-    // L'unique contrôleur global
+    // =========================================================================
+    // 6. AGING SENSOR
+    // =========================================================================
+    wire sensor_alarm;
+    wire sensor_ff1, sensor_ff2, sensor_raw_alarm;
+
+    modern_sensible sensor (
+        .sclk(clk_sys),             // System clock for FF2
+        .psclk(clk_phase),          // Phase-shifted clock for FF1
+        .clk_en(clk_en),            // Catcher clock for FF3 (100° offset)
+        .in_sensor(crit_end),       // Critical path output
+        .reset(1'b0),               // Not used
+        .alarm(sensor_alarm),       // Filtered alarm
+        .ff1_out(sensor_ff1),       // Debug: FF1 value
+        .ff2_out(sensor_ff2),       // Debug: FF2 value
+        .raw_alarm(sensor_raw_alarm) // Debug: Unfiltered XOR
+    );
+
+    // =========================================================================
+    // 7. PHASE SHIFT CONTROLLER
+    // =========================================================================
     wire [15:0] phase_count;
-    wire [2:0]  ctrl_state;
-    wire        send_trigger;
-    wire        psen, psincdec; // Signaux de commande directs pour le clk_wiz
+    wire send_trigger;
+    wire [2:0] ctrl_state;
 
     controller_controller ctrl (
         .clk(clk_sys),
         .reset(ctrl_rst_n),
-        .alarm(mux_alarm),       // Reçoit l'alarme du canal sélectionné par le MUX
+        .alarm(sensor_alarm),
         .psdone(psdone),
         .display_value(phase_count),
-        .change(1'b0),
+        .change(test_bit),
         .psincdec(psincdec),
         .send(send_trigger),
         .psen(psen),
         .debug_state(ctrl_state)
     );
-    
+
     // =========================================================================
     // 8. SYSTEM MONITOR (XADC)
     // =========================================================================
@@ -258,7 +233,7 @@ module fpga_unified_top (
     sensor_stream #(
         .BAUDRATE(9600),
         .CLK_FREQ(100000000)
-    ) u_stream (and he 
+    ) u_stream (
         .clk(clk_sys),
         .reset(global_rst_n),
         .temp({8'b0, sysmon_temp}),
@@ -360,14 +335,7 @@ module fpga_unified_top (
     
     wire calibrating;
     assign calibrating = (ctrl_state != 3'b011) && ctrl_rst_n;
-    
-    assign status_o = locked ? (calibrating ? heartbeat[22] : heartbeat[25]) : 1'b0;
-    
-      end
-    
-    wire calibrating;
-    assign calibrating = (ctrl_state != 3'b011) && ctrl_rst_n;
-    
+
     assign status_o = locked ? (calibrating ? heartbeat[22] : heartbeat[25]) : 1'b0;
 
 endmodule
