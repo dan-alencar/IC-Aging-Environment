@@ -1,6 +1,9 @@
 from PySide6.QtCore import QObject, Signal, Slot, QMutex
 from serial_config import SerialThread
-from protocol import ProtocolParser, AGING_PKT_LEN, raw_to_temp, raw_to_vcc
+from protocol import (
+    ProtocolParser, raw_to_temp, raw_to_vcc,
+    MULTI_SYNC0, MULTI_SYNC1, MULTI_PKT_LEN, parse_multi_sensor_packet,
+)
 import config
 import time
 
@@ -88,49 +91,46 @@ class UARTRouter(QObject):
     def _on_data_received(self, data):
         # 1. Acumula no buffer
         self._rx_buffer.extend(data)
-        
-        # 2. Processamento de Pacotes de Aging (Sliding Window)
-        # O pacote tem 9 bytes. Estrutura: [TL, TH, 00, SL, SH, VL, VH, 00, AL]
-        while len(self._rx_buffer) >= AGING_PKT_LEN:
-            # Espia os primeiros 9 bytes
-            pkt = self._rx_buffer[:AGING_PKT_LEN]
-            
-            # Validação: Bytes 2 e 7 devem ser 0x00 (Padding)
-            padding_ok = (pkt[2] == 0x00 and pkt[7] == 0x00)
-            
-            if padding_ok:
-                # Decodifica Little Endian (conforme debugger.py)
-                raw_temp  = pkt[0] | (pkt[1] << 8)
-                raw_slack = pkt[3] | (pkt[4] << 8)
-                raw_vcc   = pkt[5] | (pkt[6] << 8)
-                alarm     = pkt[8] & 0x01
 
-                # Validação Extra: Valores razoáveis
-                # Temp != 0xFFFF e Vcc != 0xFFFF (evita falsos positivos com tudo zero)
-                valid_values = (raw_temp != 0xFFFF) and (raw_vcc != 0xFFFF)
+        # 2. Processamento de Pacotes de Aging Multi-Sensor (framed: sync +
+        # length + checksum -- see multi_sensor_stream.sv / protocol.py).
+        # Este branch (experimental-multi-sensor) não emite mais o pacote
+        # legado de 9 bytes -- o RTL não instancia mais sensor_stream.
+        while len(self._rx_buffer) > 0:
+            if (len(self._rx_buffer) >= 2
+                    and self._rx_buffer[0] == MULTI_SYNC0
+                    and self._rx_buffer[1] == MULTI_SYNC1):
+                if len(self._rx_buffer) < MULTI_PKT_LEN:
+                    # Ainda não chegou o pacote inteiro, espera mais bytes
+                    break
 
-                if valid_values:
+                pkt = bytes(self._rx_buffer[:MULTI_PKT_LEN])
+                parsed = parse_multi_sensor_packet(pkt)
+
+                if parsed is not None:
                     phys_data = {
-                        'dut_temp':  round(raw_to_temp(raw_temp), 2),
-                        'dut_volt':  round(raw_to_vcc(raw_vcc), 3),
-                        'dut_slack': raw_slack,
-                        'raw_alarm': alarm
+                        'dut_temp':  round(raw_to_temp(parsed['temp_raw'] & 0xFFFF), 2),
+                        'dut_volt':  round(raw_to_vcc(parsed['vccint_raw'] & 0xFFFF), 3),
+                        'dut_slack': list(parsed['slack']),
+                        'dut_alarm': list(parsed['alarm']),
                     }
                     self.aging_data_received.emit(phys_data)
+                    del self._rx_buffer[:MULTI_PKT_LEN]
+                    continue
+                else:
+                    # Checksum não bateu -- provavelmente 0xAA 0x55 "falso"
+                    # dentro de outro fluxo de bytes. Descarta 1 byte e
+                    # tenta ressincronizar (Sliding Window).
+                    del self._rx_buffer[0]
+                    continue
 
-                # Sempre consome o pacote quando padding está correto,
-                # evita desalinhamento nos pacotes seguintes
-                del self._rx_buffer[:AGING_PKT_LEN]
-                continue
-            
-            # Se não validou (padding errado ou valores inválidos),
-            # verifica se pode ser um cabeçalho STM (0x10 ou 0x20)
+            # Se não validou, verifica se pode ser um cabeçalho STM (0x10 ou 0x20)
             head = self._rx_buffer[0]
             if head in (0x10, 0x20) and len(self._rx_buffer) >= 4:
                 # Parece começo de pacote STM, interrompe a busca por Aging
                 # e deixa o ProtocolParser processar o que está no buffer.
                 break
-                
+
             # Se não é Aging nem STM, é lixo ou desalinhamento:
             # Descarta 1 byte e tenta de novo (Sliding Window)
             del self._rx_buffer[0]

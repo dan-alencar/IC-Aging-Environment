@@ -6,9 +6,11 @@ Cria um arquivo CSV único por teste e escreve os dados nele.
 import os
 import csv
 from datetime import datetime
+from protocol import MULTI_NUM_CHANNELS
 
 class DataLogger:
-    def __init__(self, log_folder, test_name):
+    def __init__(self, log_folder, test_name, num_channels=MULTI_NUM_CHANNELS):
+        self.num_channels = num_channels
         self.filepath = self._create_log_file(log_folder, test_name)
         self.csv_writer = None
         self.file_handle = None
@@ -29,7 +31,9 @@ class DataLogger:
         self.file_handle = open(self.filepath, 'w', newline='', encoding='utf-8', buffering=1)
         self.csv_writer = csv.writer(self.file_handle)
         
-        # Este cabeçalho define a estrutura do seu log
+        # Este cabeçalho define a estrutura do seu log. dut_slack/dut_alarm
+        # ganham uma coluna por canal (dut_slack_ch0..chN-1), mesma
+        # convenção que App_2Nexys usa para seus dois DUTs.
         header = [
             'time_sec',
             'oven_temp_c',
@@ -38,9 +42,12 @@ class DataLogger:
             'psu_voltage_v',
             'psu_current_a',
             'dut_temp_c',
-            'dut_slack',
-            'dut_volt'
+            'dut_volt',
         ]
+        for i in range(self.num_channels):
+            header.append(f'dut_slack_ch{i}')
+        for i in range(self.num_channels):
+            header.append(f'dut_alarm_ch{i}')
         self.csv_writer.writerow(header)
 
     def write_data_row(self, data_dict):
@@ -56,9 +63,12 @@ class DataLogger:
                     data_dict.get('psu_voltage'),
                     data_dict.get('psu_current'),
                     data_dict.get('dut_temp'),
-                    data_dict.get('dut_slack'),
-                    data_dict.get('dut_volt')
+                    data_dict.get('dut_volt'),
                 ]
+                for i in range(self.num_channels):
+                    row.append(data_dict.get(f'dut_slack_ch{i}'))
+                for i in range(self.num_channels):
+                    row.append(data_dict.get(f'dut_alarm_ch{i}'))
                 self.csv_writer.writerow(row)
             except Exception as e:
                 print(f"Erro ao escrever no CSV: {e}")
