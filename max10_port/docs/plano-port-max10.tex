@@ -1,0 +1,1634 @@
+\documentclass[11pt,a4paper]{article}
+
+%========================= FONTES E CODIFICAÇÃO =========================
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{mathptmx}
+\usepackage[scaled=0.88]{helvet}
+\usepackage{courier}
+\usepackage{microtype}
+
+% Sem padrões de hifenização em português nesta instalação:
+% penaliza hifenização para evitar quebras incorretas.
+\hyphenpenalty=9000
+\exhyphenpenalty=9000
+\tolerance=2500
+\emergencystretch=3em
+
+%========================= GEOMETRIA =========================
+\usepackage[a4paper,top=2.6cm,bottom=2.6cm,left=2.7cm,right=2.7cm,headheight=14pt]{geometry}
+
+%========================= PACOTES =========================
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{caption}
+\usepackage{siunitx}
+\usepackage[most]{tcolorbox}
+\usepackage{amsmath,amssymb}
+\usepackage[hidelinks,pdfusetitle]{hyperref}
+
+%========================= CORES =========================
+\definecolor{lescblue}{HTML}{1F3A5F}
+\definecolor{lescaccent}{HTML}{2E6DA4}
+\definecolor{lescgray}{HTML}{4A4A4A}
+\definecolor{lesclight}{HTML}{EEF3F8}
+\definecolor{warncolor}{HTML}{8A3324}
+\definecolor{warnlight}{HTML}{FBEEEA}
+\definecolor{okcolor}{HTML}{2F5D3A}
+\definecolor{oklight}{HTML}{EDF4EE}
+\definecolor{rulegray}{HTML}{B8C4D0}
+
+%========================= SEÇÕES =========================
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{lescblue}}
+  {\thesection}{0.7em}{}[{\vspace{2pt}\color{rulegray}\titlerule[0.8pt]}]
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{lescaccent}}
+  {\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries\color{lescgray}}
+  {\thesubsubsection}{0.5em}{}
+\titlespacing*{\section}{0pt}{18pt}{9pt}
+\titlespacing*{\subsection}{0pt}{13pt}{5pt}
+\titlespacing*{\subsubsection}{0pt}{10pt}{4pt}
+
+%========================= CABEÇALHO =========================
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+\fancyhead[L]{\footnotesize\color{lescgray}Port do sensor de \emph{aging} para Intel MAX 10}
+\fancyhead[R]{\footnotesize\color{lescgray}LESC/UFC}
+\fancyfoot[C]{\footnotesize\color{lescgray}\thepage}
+
+%========================= LISTAS =========================
+\setlist[itemize]{leftmargin=1.3em,itemsep=2pt,topsep=4pt,parsep=0pt}
+\setlist[enumerate]{leftmargin=1.6em,itemsep=3pt,topsep=4pt,parsep=0pt}
+
+%========================= CAIXAS =========================
+\newtcolorbox{keybox}[1][]{
+  enhanced, breakable,
+  colback=lesclight, colframe=lescaccent,
+  boxrule=0.4pt, left=8pt, right=8pt, top=7pt, bottom=7pt,
+  arc=1.5pt,
+  fonttitle=\bfseries\small\color{white},
+  coltitle=white, colbacktitle=lescaccent,
+  attach boxed title to top left={xshift=6pt,yshift=-3pt},
+  boxed title style={arc=1pt,boxrule=0pt},
+  #1}
+
+\newtcolorbox{warnbox}[1][]{
+  enhanced, breakable,
+  colback=warnlight, colframe=warncolor,
+  boxrule=0.4pt, left=8pt, right=8pt, top=7pt, bottom=7pt,
+  arc=1.5pt,
+  fonttitle=\bfseries\small\color{white},
+  coltitle=white, colbacktitle=warncolor,
+  attach boxed title to top left={xshift=6pt,yshift=-3pt},
+  boxed title style={arc=1pt,boxrule=0pt},
+  #1}
+
+\newtcolorbox{okbox}[1][]{
+  enhanced, breakable,
+  colback=oklight, colframe=okcolor,
+  boxrule=0.4pt, left=8pt, right=8pt, top=7pt, bottom=7pt,
+  arc=1.5pt,
+  fonttitle=\bfseries\small\color{white},
+  coltitle=white, colbacktitle=okcolor,
+  attach boxed title to top left={xshift=6pt,yshift=-3pt},
+  boxed title style={arc=1pt,boxrule=0pt},
+  #1}
+
+%========================= AMBIENTE DE FRENTE =========================
+\newcommand{\frenteheader}[3]{%
+  \vspace{6pt}
+  \noindent\begin{tcolorbox}[enhanced,colback=lescblue,colframe=lescblue,
+    boxrule=0pt,left=9pt,right=9pt,top=6pt,bottom=6pt,arc=2pt]
+    {\color{white}\bfseries\large #1}\\[2pt]
+    {\color{white!85!lescblue}\small #2}\\[1pt]
+    {\color{white!75!lescblue}\footnotesize\itshape #3}
+  \end{tcolorbox}
+  \vspace{4pt}}
+
+\newcommand{\campo}[1]{\vspace{6pt}\noindent{\bfseries\color{lescgray}#1}\par\vspace{2pt}}
+
+%========================= TABELAS =========================
+\renewcommand{\arraystretch}{1.25}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\captionsetup[table]{font=small,labelfont={bf,color=lescblue},skip=5pt}
+\captionsetup[figure]{font=small,labelfont={bf,color=lescblue}}
+
+\newcommand{\Tabela}{Tabela}
+\renewcommand{\tablename}{Tabela}
+\renewcommand{\figurename}{Figura}
+\renewcommand{\contentsname}{Sumário}
+
+\begin{document}
+
+%========================= CAPA =========================
+\begin{titlepage}
+\thispagestyle{empty}
+\vspace*{1.2cm}
+
+\noindent{\color{rulegray}\rule{\textwidth}{1.2pt}}
+\vspace{0.9cm}
+
+\noindent{\Huge\bfseries\color{lescblue}Portabilidade do Sensor de \emph{Aging} Auto-Tuning para FPGA Intel MAX 10}
+
+\vspace{0.7cm}
+\noindent{\LARGE\color{lescaccent}Plano de Fase de Estudo e Divisão de Tarefas}
+
+\vspace{0.5cm}
+\noindent{\color{rulegray}\rule{\textwidth}{1.2pt}}
+
+\vspace{1.4cm}
+
+\noindent\begin{tcolorbox}[enhanced,colback=lesclight,colframe=lescaccent,boxrule=0.4pt,
+  left=12pt,right=12pt,top=10pt,bottom=10pt,arc=2pt]
+\small
+\textbf{Contexto.} Migração da plataforma de sensoriamento de envelhecimento por
+\emph{slack}, validada em Artix-7 (XC7A100T, Nexys~4~DDR) e publicada em SBCCI 2025
+e SBCCI 2026, para o dispositivo Intel MAX~10 (10M50DAF484) com fluxo Intel Quartus
+Prime Lite.
+
+\vspace{5pt}
+\textbf{Destinatário.} Equipe de alunos de graduação e pós-graduação sob orientação,
+com alocação prevista de 4 a 6 integrantes ao longo de um semestre letivo.
+
+\vspace{5pt}
+\textbf{Natureza do documento.} Plano de execução. Define a fase de estudo obrigatória,
+a decomposição do trabalho em frentes, os critérios de aceite de cada frente, o
+sequenciamento com portões de decisão e a política de risco.
+\end{tcolorbox}
+
+\vfill
+
+\noindent\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Laboratório} & LESC --- Laboratório de Engenharia de Sistemas de Computação \\
+\textbf{Instituição} & Universidade Federal do Ceará (UFC) \\
+\textbf{Programa} & PPGETI --- Engenharia Elétrica e de Computação \\
+\textbf{Versão} & 1.0 \\
+\textbf{Horizonte} & 16 semanas (um semestre letivo) \\
+\bottomrule
+\end{tabularx}
+
+\vspace{0.8cm}
+\noindent{\color{rulegray}\rule{\textwidth}{0.8pt}}
+\end{titlepage}
+
+%========================= SUMÁRIO =========================
+\pagenumbering{roman}
+\setcounter{page}{1}
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+%=========================================================================
+\section{Enquadramento}
+%=========================================================================
+
+\subsection{Objetivo}
+
+Portar a plataforma de sensoriamento de envelhecimento por \emph{slack} --- hoje
+implementada e validada em FPGA Xilinx Artix-7 (XC7A100T, placa Nexys~4~DDR) ---
+para o dispositivo Intel MAX~10 (10M50DAF484, placa DE10-Lite ou equivalente),
+utilizando o fluxo Intel Quartus Prime Lite.
+
+O objetivo explícito da migração não é reproduzir os resultados numéricos já
+publicados. É produzir uma segunda implementação, em nó tecnológico e fabricante
+distintos, que satisfaça quatro requisitos:
+
+\begin{enumerate}
+  \item medir o \emph{slack} de um caminho crítico sintético por meio de uma
+        referência temporal rastreável e caracterizada;
+  \item preservar operacional o laço de auto-\emph{tuning}, isto é, o rastreamento
+        automático da borda de falha à medida que ela se desloca por temperatura,
+        tensão ou degradação permanente;
+  \item registrar a fidelidade de medição efetivamente atingida, expressa em
+        picossegundos, com incerteza declarada e método de estimação auditável;
+  \item permitir afirmar --- ou refutar, com dados --- que a arquitetura do sensor
+        é independente de fabricante e de nó tecnológico.
+\end{enumerate}
+
+\subsection{O que este projeto não é}
+
+Três delimitações precisam ser comunicadas à equipe na primeira reunião, porque
+cada uma corresponde a um modo de falha recorrente em projetos de migração conduzidos
+por equipes em formação.
+
+\begin{itemize}
+  \item \textbf{Não é uma tarefa de tradução de código.} A porção de HDL que
+        precisa ser reescrita é pequena. O trabalho intelectual está em reconstruir
+        a \emph{referência de tempo} sobre um recurso de \emph{hardware} com
+        propriedades quantitativamente diferentes, e em provar o que se perdeu.
+  \item \textbf{Não é uma replicação.} As duas implementações não produzirão
+        números comparáveis em valor absoluto. Serão comparáveis em metodologia
+        e em métricas normalizadas, e é isso que o plano protege.
+  \item \textbf{Não é um projeto cujo sucesso se mede por ``funcionou''.}
+        Um sensor que compila, roda e emite números sem caracterização de régua
+        temporal não constitui resultado. O objeto científico aqui é a incerteza
+        da medida.
+\end{itemize}
+
+\subsection{Premissas sobre a versão de referência}
+
+Este plano assume que a versão mais recente do projeto, sobre Artix-7 / Nexys~4~DDR,
+é composta pelos subsistemas da Tabela~\ref{tab:subsistemas}. Divergências devem ser
+corrigidas antes da distribuição do documento à equipe, porque a alocação de tarefas
+deriva diretamente desta decomposição.
+
+\begin{table}[htbp]
+\centering
+\caption{Decomposição da versão de referência em Artix-7 e destino de cada subsistema no port.}
+\label{tab:subsistemas}
+\small
+\begin{tabularx}{\textwidth}{@{}L{3.3cm} X L{2.6cm}@{}}
+\toprule
+\textbf{Subsistema} & \textbf{Função na versão de referência} & \textbf{Frente} \\
+\midrule
+Sensor de \emph{slack} (RTL) &
+Caminho crítico sintético amostrado por par de \emph{clocks} com defasagem
+controlada; conversão de evento de falha em medida temporal. & F1 \\
+Régua temporal &
+Deslocamento incremental de fase do MMCM (passo fino $=$ período do VCO $/\,56$),
+travado no cristal da placa. & F1 \\
+Laço de auto-\emph{tuning} &
+Máquina de estados que localiza a borda de falha e a rastreia continuamente,
+com histerese e política de reaquisição. & F1 \\
+Restrição física &
+Preservação de posicionamento e de estrutura lógica contra otimizações da
+ferramenta, garantindo comparabilidade entre compilações. & F2 \\
+Telemetria PVT &
+XADC fornecendo temperatura de junção e $V_\text{CCINT}$ \emph{on-die};
+alimenta o \emph{trim} de tensão em malha fechada. & F3 \\
+Comunicação &
+Fluxo UART do DUT para o \emph{host}, com protocolo de pacote e política
+de \emph{timestamp}. & F4 \\
+Bancada térmica &
+Forno resistivo acionado por SSR, controlador PID sintonizado por
+identificação FOPDT e regras SIMC. & F5 \\
+Bancada elétrica &
+Fonte programável ITECH IT6502D comandada por VISA, com malha de compensação
+de tensão realimentada pelo XADC. & F5 \\
+Aquisição &
+Aplicação Python com registro CSV temporizado, gráficos ao vivo e recuperação
+de falhas de USB em campanhas de vários dias. & F4 \\
+Análise &
+Decomposição de variância PVT do sinal de \emph{slack}, ajuste de leis de
+potência e de Arrhenius, caracterização informacional. & F6 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Critério de sucesso do projeto}
+
+\begin{okbox}[title={Definição de pronto}]
+O projeto é considerado bem-sucedido quando existir, sobre MAX~10, uma medida de
+$\sigma_\text{resid}$ expressa em picossegundos, obtida com metodologia idêntica à
+dos artigos anteriores, acompanhada de (i) caracterização da régua temporal empregada,
+(ii) barra de incerteza, e (iii) declaração explícita do menor degrau de \emph{slack}
+resolvível sob critério $k\sigma$.
+
+Este critério é satisfeito \emph{tanto} pelo desfecho favorável quanto pelo desfavorável.
+Um resultado que estabeleça ``a arquitetura não porta com fidelidade útil para este nó
+tecnológico, pelas razões X e Y, com penalidade quantificada em Z'' encerra o projeto
+com sucesso.
+\end{okbox}
+
+%=========================================================================
+\section{Diagnóstico técnico de portabilidade}
+%=========================================================================
+
+Esta seção existe para que a equipe entre na Fase~0 sabendo onde está a dificuldade.
+É material de leitura obrigatória, não um resumo executivo.
+
+\subsection{A régua temporal é a origem da resolução}
+
+A observação central, e que reordena toda a hierarquia de dificuldades do port, é
+esta: a resolução do sensor na versão Artix-7 \emph{não} vem da malha lógica nem da
+linha de atraso, e sim do passo de deslocamento de fase do MMCM.
+
+No MMCM da família 7, o passo fino de deslocamento corresponde ao período do VCO
+dividido por 56. Na configuração empregada, isso resulta em aproximadamente
+\SI{19.8}{\pico\second} por incremento --- coerente com a relação reportada nos
+artigos, em que \SI{0.90}{contagens} correspondem a cerca de \SI{17.9}{\pico\second}.
+
+Essa escolha arquitetural tem uma consequência que costuma passar despercebida e que
+é, na verdade, o que torna o sensor válido como instrumento de envelhecimento:
+\textbf{a régua está travada no cristal da placa}. O período do VCO é derivado de um
+oscilador de quartzo, cuja deriva com temperatura e tensão é ordens de grandeza menor
+que a do silício sob medição. O caminho medido envelhece; a régua, não. Um sensor
+construído sobre linha de atraso em tecido lógico não tem essa propriedade --- a régua
+envelhece junto com o mensurando, e a separação entre os dois exige calibração adicional
+em cada ponto de operação.
+
+\begin{keybox}[title={Consequência para o desenho da equipe}]
+Qualquer proposta de recuperar resolução no MAX~10 precisa ser avaliada primeiro sob
+o critério de \emph{rastreabilidade}, e só depois sob o critério de finura. Uma régua
+fina que deriva com PVT é, para o propósito deste projeto, pior do que uma régua grossa
+e estável --- a menos que a deriva seja caracterizada e corrigida ponto a ponto,
+o que é um projeto em si.
+\end{keybox}
+
+\subsection{A restrição dominante do MAX 10}
+
+Os PLLs do MAX~10 suportam reconfiguração dinâmica e deslocamento de fase em tempo de
+execução, o que preserva a arquitetura do sensor. A limitação está na granularidade.
+
+Conforme o \emph{MAX~10 Clocking and PLL User Guide}, o menor deslocamento de fase
+corresponde ao período do VCO dividido por oito, e a frequência do VCO deve permanecer
+entre \SI{600}{\mega\hertz} e \SI{1300}{\mega\hertz} para operação correta do PLL. A
+documentação especifica a resolução de fase como incrementos ``de até
+\SI{96}{\pico\second}''. Com o VCO no teto da faixa:
+
+\begin{equation}
+\Delta t_\text{min} = \frac{1}{8}\cdot\frac{1}{\SI{1300}{\mega\hertz}}
+= \frac{\SI{769.2}{\pico\second}}{8} \approx \SI{96.2}{\pico\second}.
+\end{equation}
+
+Este é um piso absoluto: não há configuração de contadores, modo de compensação ou
+opção de ferramenta que o reduza. Qualquer resolução mais fina exige uma arquitetura
+de medição diferente, não uma sintonia diferente.
+
+\subsection{Propagação da perda de resolução}
+
+A penalidade não é uma abstração. Ela se propaga diretamente para a métrica que
+sustenta a aplicabilidade do sensor em gerenciamento de ciclo de vida do silício (SLM).
+Aplicando o mesmo $\sigma_\text{resid}$ em contagens já medido nos dois bancos de
+ensaio, e apenas trocando o passo da régua, obtém-se a Tabela~\ref{tab:degradacao}.
+
+\begin{table}[htbp]
+\centering
+\caption{Propagação do passo da régua para o menor degrau de \emph{slack} resolvível.
+Valores em contagens são os medidos na versão Artix-7; a conversão para tempo usa o
+passo de fase de cada dispositivo.}
+\label{tab:degradacao}
+\small
+\begin{tabularx}{\textwidth}{@{}L{5.0cm} C{3.2cm} C{3.2cm} C{2.0cm}@{}}
+\toprule
+\textbf{Grandeza} & \textbf{Artix-7 (MMCM)} & \textbf{MAX 10 (PLL)} & \textbf{Razão} \\
+\midrule
+Passo de fase & \SI{19.8}{\pico\second} & \SI{96.2}{\pico\second} & $4{,}86\times$ \\
+$\sigma_\text{resid}$, banco PID (\SI{0.726}{cnt}) & \SI{14.4}{\pico\second} & \SI{69.8}{\pico\second} & $4{,}86\times$ \\
+$\sigma_\text{resid}$, banco \emph{bang-bang} (\SI{0.904}{cnt}) & \SI{17.9}{\pico\second} & \SI{86.9}{\pico\second} & $4{,}86\times$ \\
+Degrau detectável $3\sigma$, PID & \SI{43}{\pico\second} & \SI{209}{\pico\second} & $4{,}86\times$ \\
+Degrau detectável $3\sigma$, \emph{bang-bang} & \SI{54}{\pico\second} & \SI{261}{\pico\second} & $4{,}86\times$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Sob o critério $\Delta t_\text{age} \geq k\,\sigma_\text{resid}$ que define
+acionabilidade para SLM, o sensor migrado só é útil para decisões que tolerem
+degraus de \emph{slack} da ordem de \SI{200}{\pico\second}. Se a campanha de estresse
+viável não produzir degradação permanente dessa magnitude, o experimento não terá
+poder de detecção --- e isso precisa ser verificado por cálculo, na Fase~0, antes de
+qualquer investimento em implementação.
+
+\subsection{Correspondência de recursos entre as plataformas}
+
+A Tabela~\ref{tab:correspondencia} consolida o mapeamento de recursos. Ela serve de
+referência rápida durante a Fase~0 e de índice para as frentes de implementação.
+
+\begin{table}[htbp]
+\centering
+\caption{Correspondência de recursos entre a plataforma de referência e a plataforma alvo.}
+\label{tab:correspondencia}
+\small
+\begin{tabularx}{\textwidth}{@{}L{3.0cm} L{3.4cm} X C{1.3cm}@{}}
+\toprule
+\textbf{Recurso} & \textbf{Artix-7 / Vivado} & \textbf{MAX 10 / Quartus Prime} & \textbf{Frente} \\
+\midrule
+Régua de fase &
+MMCM, passo $T_\text{VCO}/56$ &
+PLL, passo $T_\text{VCO}/8$; piso de \SI{96}{\pico\second}. \textbf{Perda de $4{,}86\times$.} & F1 \\
+Protocolo de fase &
+\texttt{PSEN}, \texttt{PSINCDEC}, \texttt{PSDONE} &
+\texttt{phasestep}, \texttt{phaseupdown}, \texttt{phasecounterselect}, \texttt{phasedone}.
+Correspondência praticamente um-para-um. & F1 \\
+Recurso de atraso fino &
+Cadeia \texttt{CARRY4}, \SI{\sim20}{\pico\second} por \emph{tap} &
+Cadeia de \emph{carry} do LE de 4 entradas, dezenas a centena de ps por estágio. & F1 \\
+Preservação lógica &
+\texttt{DONT\_TOUCH}, \texttt{KEEP} &
+Atributos \texttt{preserve}, \texttt{noprune}, \texttt{keep}, \texttt{dont\_merge}. & F2 \\
+Posicionamento &
+Restrições \texttt{LOC} e \texttt{BEL} &
+\texttt{set\_location\_assignment LC\_X..Y..N..} no arquivo \texttt{.qsf}. & F2 \\
+Inspeção de \emph{layout} &
+Device View do Vivado &
+Chip Planner. & F2 \\
+Temperatura \emph{on-die} &
+XADC, canal dedicado &
+ADC SAR de 12~bits em modo diodo térmico (TSD), via IP \emph{Modular ADC Core}.
+Exatidão inferior; exige calibração. & F3 \\
+Tensão de núcleo &
+XADC, monitor interno de $V_\text{CCINT}$ &
+\textbf{Inexistente.} Requer derivação da trilha para pino ANAIN --- modificação de placa. & F3 \\
+Transporte de dados &
+Ponte USB-UART integrada (FT2232) &
+Na DE10-Lite, o FTDI atende apenas JTAG. Alternativas: JTAG UART ou módulo
+USB-serial externo no cabeçalho GPIO. & F4 \\
+Supervisório embarcado &
+MicroBlaze (opcional) &
+Nios~II/e ou Nios~V/m, disponíveis sem licença na edição Lite. & F4 \\
+Memória de configuração &
+SRAM volátil, externa ao \emph{die} &
+\textbf{Flash no mesmo \emph{die}} (CFM/UFM). Retenção é função de $T_j$ --- risco
+específico sob estresse térmico prolongado. & F5 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Riscos específicos do dispositivo alvo}
+
+Três diferenças do MAX~10 não têm análogo na plataforma de referência e precisam de
+tratamento explícito no plano.
+
+\subsubsection{Memória de configuração no mesmo \emph{die}}
+
+O Artix-7 carrega sua configuração em SRAM volátil a partir de memória externa. O
+MAX~10 armazena a configuração em \emph{flash} integrada ao mesmo \emph{die} do tecido
+lógico (blocos CFM e UFM). Consequência: durante uma campanha de burn-in, a memória de
+configuração está sendo submetida ao mesmo estresse térmico do circuito sob teste, e as
+especificações de retenção de dados da \emph{flash} são função da temperatura de junção.
+
+Implicação prática: o envelope de estresse não pode ser definido apenas pelos limites
+do tecido lógico. É necessário consultar a especificação de retenção do dispositivo,
+adotar um setpoint conservador e prever verificação de integridade da configuração ao
+final de cada campanha.
+
+\subsubsection{Ausência de monitor interno de alimentação}
+
+A perda do monitor de $V_\text{CCINT}$ é a mais consequente para a metodologia, porque
+o eixo de tensão participa de duas funções distintas na versão de referência:
+como covariável na decomposição de variância PVT, e como variável manipulada no
+\emph{trim} de tensão em malha fechada.
+
+A primeira função é recuperável com derivação da trilha de núcleo para um pino de
+entrada analógica. A segunda exige interromper o regulador integrado da placa para
+alimentar o núcleo pela fonte programável --- intervenção invasiva, irreversível e de
+risco alto. O plano trata as duas separadamente e adia a segunda.
+
+\subsubsection{Envelhecimento mais lento em nó tecnológico maior}
+
+O MAX~10 é fabricado em \SI{55}{\nano\meter}. Os mecanismos dominantes de degradação
+(NBTI e HCI) produzem, nesse nó, deslocamentos de $V_\text{th}$ menores e mais lentos
+do que em \SI{28}{\nano\meter} planar, para o mesmo envelope de estresse. Combinado com
+o piso de ruído cinco vezes mais alto, isso comprime a janela de detectabilidade pelos
+dois lados simultaneamente.
+
+\begin{warnbox}[title={Verificação de viabilidade obrigatória na semana 4}]
+A trilha de estudo E1 deve responder, com número, à seguinte pergunta antes de qualquer
+trabalho de implementação: \emph{quantas horas de estresse, no envelope térmico
+admissível para este dispositivo, são necessárias para produzir um degrau de
+\emph{slack} permanente de aproximadamente \SI{210}{\pico\second}?}
+
+Se a resposta exceder a duração de campanha viável no laboratório, o projeto precisa
+ser reformulado --- possivelmente como estudo de limite de detectabilidade, ou com
+mudança de eixo de estresse. Esta decisão pertence à semana 4, não à semana 14.
+\end{warnbox}
+
+%=========================================================================
+\section{Fase 0 --- Estudo}
+%=========================================================================
+
+\subsection{Justificativa e método}
+
+A Fase~0 é obrigatória e bloqueante. Nenhum integrante abre o Quartus antes de concluir
+a trilha de estudo correspondente à sua frente. A razão não é pedagógica em sentido
+abstrato: em migrações desse tipo, o custo de descobrir tardiamente uma premissa
+violada é medido em semanas de forno, e a maior parte dessas premissas está no
+material de estudo.
+
+\campo{Formato operacional}
+\begin{itemize}
+  \item Seminário semanal de 90 minutos, com um apresentador por trilha e arguição
+        aberta ao restante da equipe.
+  \item Cada trilha produz um artefato escrito de 2 a 4 páginas, versionado no
+        repositório do projeto. O artefato não é resumo de leitura: é documento
+        de projeto que será consumido pelas frentes de implementação.
+  \item O orientador arguiu cada apresentador contra o critério de aceite declarado
+        na trilha. Trilha não aprovada é reapresentada na semana seguinte.
+  \item As seis trilhas correm em paralelo ao longo de quatro semanas. Um integrante
+        é responsável primário por uma trilha e leitor secundário de outra.
+\end{itemize}
+
+\campo{Duração}
+Quatro semanas, sobrepostas à preparação de bancada, com marco de saída na semana~4.
+
+\subsection{Trilha E1 --- Física do envelhecimento e aceleração}
+
+\campo{Conteúdo}
+\begin{itemize}
+  \item Mecanismos dominantes: NBTI (\emph{Negative Bias Temperature Instability})
+        e HCI (\emph{Hot Carrier Injection}); origem física do deslocamento de
+        tensão de limiar $V_\text{th}$.
+  \item Dependência temporal em lei de potência; dependência térmica de Arrhenius;
+        definição de fator de aceleração (AF) e de energia de ativação $E_a$;
+        sensibilidade do AF à escolha de $E_a$.
+  \item Distinção entre componente reversível (\emph{recovery}, variação PVT) e
+        componente permanente do sinal --- e por que essa distinção é o problema
+        central de medição do projeto.
+  \item Por que o envelhecimento é observado \emph{indiretamente}, como perda gradual
+        de margem temporal em lógica síncrona, em vez de medido diretamente.
+  \item Conversão entre horas de estresse acelerado e horas equivalentes de operação
+        em campo.
+\end{itemize}
+
+\campo{Leitura dirigida}
+\begin{itemize}
+  \item JEDEC JESD22-A108 --- \emph{Temperature, Bias and Operating Life}.
+  \item JEDEC JESD91 --- métodos de extração de fator de aceleração.
+  \item Artigos do grupo em SBCCI 2025 (validação do sensor) e SBCCI 2026
+        (arquitetura de controle térmico e seu efeito sobre o AF entregue).
+  \item Literatura de sensores in-situ de margem temporal: família Razor, canários
+        de atraso, monitores baseados em oscilador em anel.
+  \item Um artigo de revisão sobre SLM, para enquadrar o uso final do sensor
+        (AVS, estimação de vida útil remanescente, manutenção preditiva).
+\end{itemize}
+
+\campo{Entregável}
+Nota técnica derivando $\text{AF}(T,V)$ para os parâmetros da bancada e para o
+dispositivo alvo, contendo obrigatoriamente a resposta numérica à pergunta de
+viabilidade da Seção~2.5.3, com a faixa de $E_a$ considerada e a sensibilidade do
+resultado a essa escolha.
+
+\campo{Critério de aceite}
+O apresentador explica, sem consulta, por que a redução da frequência de \emph{clock}
+não corrige violação de \emph{hold}, e por que essa assimetria importa para o desenho
+do caminho sintético sob teste.
+
+\subsection{Trilha E2 --- Temporização, \emph{slack} e a régua de fase}
+
+\campo{Conteúdo}
+\begin{itemize}
+  \item Fundamentos: tempo de \emph{setup}, tempo de \emph{hold}, atraso
+        \emph{clock}-para-$Q$; caminho crítico e caminho curto; definição de
+        \emph{slack} de \emph{setup}.
+  \item Assimetria estrutural: \emph{setup} depende do período, \emph{hold} não.
+        Correções distintas para cada violação.
+  \item \emph{Skew} de \emph{clock} e seu efeito oposto sobre as duas restrições.
+  \item Metaestabilidade e sincronizadores --- relevante porque o evento medido pelo
+        sensor é, por construção, uma amostragem em região metaestável.
+  \item Mecanismo central do projeto: como o deslocamento incremental de fase entre
+        \emph{clock} de lançamento e \emph{clock} de captura converte um evento
+        binário (falhou / não falhou) em uma medida temporal.
+  \item Curva característica de probabilidade de falha em função da fase; a largura
+        da transição como estimador de ruído; extração de precisão abaixo do passo
+        por promediação.
+  \item Por que uma régua travada em cristal é insensível a PVT e uma linha de atraso
+        em tecido lógico não é.
+\end{itemize}
+
+\campo{Leitura dirigida}
+\begin{itemize}
+  \item \emph{MAX 10 Clocking and PLL User Guide}: capítulos de deslocamento de fase
+        programável, reconfiguração dinâmica e faixa de operação do VCO.
+  \item Documentação do MMCM da família 7 (UG472), para comparação lado a lado.
+  \item Literatura de conversores tempo-digital (TDC): arquiteturas de linha de
+        atraso, Vernier e batimento de frequência.
+\end{itemize}
+
+\campo{Entregável}
+\begin{enumerate}
+  \item Diagrama de tempos anotado do sensor atual, com identificação explícita da
+        grandeza medida e do papel de cada borda.
+  \item Tabela de correspondência de portas entre o protocolo de deslocamento de fase
+        do MMCM e o do PLL do MAX~10, incluindo o \emph{handshake} de conclusão.
+  \item Cálculo do passo de fase resultante para pelo menos três configurações de VCO,
+        demonstrando o efeito da escolha.
+\end{enumerate}
+
+\campo{Critério de aceite}
+O apresentador responde corretamente qual é o passo de fase obtido com VCO a
+\SI{700}{\mega\hertz} versus \SI{1300}{\mega\hertz}, e explica por que a ferramenta
+pode escolher o VCO automaticamente e como forçá-la a não fazê-lo.
+
+\subsection{Trilha E3 --- O laço de auto-\emph{tuning}}
+
+Esta é a trilha com maior densidade de informação não documentada, porque a fonte
+primária é o próprio código.
+
+\campo{Conteúdo}
+\begin{itemize}
+  \item Leitura dirigida do RTL atual, linha a linha, sob supervisão.
+  \item O ciclo de medida: o que a máquina de estados executa entre duas amostras
+        consecutivas de \emph{slack}.
+  \item Inicialização: como a busca de borda é semeada na primeira medida, e o que
+        acontece se a semente estiver fora da faixa útil.
+  \item Rastreamento: como o laço acompanha o deslocamento da borda causado por
+        variação térmica, variação de tensão e degradação permanente --- e como
+        o laço, por construção, não distingue as três.
+  \item Histerese e política de reaquisição em caso de perda de rastreamento.
+  \item Comportamento nas extremidades da faixa de fase (\emph{wrap-around} ou
+        saturação) e suas consequências para a série temporal.
+  \item Parâmetros de sintonia expostos, faixas válidas e acoplamentos entre eles.
+\end{itemize}
+
+\campo{Entregável}
+Diagrama de estados redesenhado \emph{a partir do código}, não a partir do artigo,
+com anotação de todos os parâmetros de sintonia, suas faixas válidas e suas dependências.
+Este documento passa a ser a especificação normativa para a reimplementação na frente F1.
+
+\campo{Critério de aceite}
+O apresentador identifica ao menos duas premissas do laço que dependem de o passo de
+fase ser fino, e propõe reformulação de cada uma para operação com passo grosso.
+Exemplos esperados: dimensionamento da histerese em número de passos, e critério
+de convergência da busca inicial.
+
+\subsection{Trilha E4 --- Instrumentação PVT}
+
+\campo{Conteúdo}
+\begin{itemize}
+  \item O que o XADC entrega na versão de referência: canais, sequenciamento, taxa
+        efetiva, ruído, e como esses dados alimentam a malha de compensação de tensão.
+  \item Bloco ADC do MAX~10: conversor SAR de 12~bits, instanciação pelo IP
+        \emph{Modular ADC Core} no Platform Designer, arquitetura do sequenciador,
+        seleção de referência e faixa de entrada.
+  \item Modo de diodo térmico (TSD): princípio, exatidão nominal, necessidade de
+        calibração, e restrição de multiplexação com os canais analógicos externos.
+  \item Ausência de monitor interno de trilha de alimentação e as consequências
+        metodológicas discutidas na Seção~2.5.2.
+  \item Propagação de incerteza: como o erro de temperatura entra no cálculo de AF.
+\end{itemize}
+
+\campo{Leitura dirigida}
+\emph{MAX 10 Analog to Digital Converter User Guide}; folha de dados do dispositivo,
+seções de características do ADC e do sensor térmico; documentação do XADC (UG480)
+para comparação.
+
+\campo{Entregável}
+\begin{enumerate}
+  \item Especificação da cadeia de medição de tensão de núcleo: ponto de acesso na
+        placa, condicionamento, faixa, e orçamento de erro fechado.
+  \item Procedimento de calibração do TSD contra referência externa, com número de
+        pontos, faixa e método de ajuste.
+  \item Estimativa de incerteza residual de temperatura após calibração, e sua
+        propagação para o AF calculado na trilha E1.
+\end{enumerate}
+
+\campo{Critério de aceite}
+O apresentador declara se a exatidão de temperatura alcançável é suficiente para o
+cálculo de AF pretendido, com justificativa numérica, e não com juízo qualitativo.
+
+\subsection{Trilha E5 --- Bancada de estresse}
+
+\campo{Conteúdo}
+\begin{itemize}
+  \item Modelo FOPDT do forno; identificação por resposta ao degrau; sintonia por
+        regras SIMC.
+  \item Por que o controle \emph{bang-bang} subentrega estresse integrado a
+        setpoint comandado idêntico --- o resultado central do artigo SBCCI 2026.
+  \item Acoplamento térmico-elétrico do DUT: $T_\text{DUT} \rightarrow R_\text{DUT}
+        \rightarrow I_\text{DUT} \rightarrow P_\text{DUT} \rightarrow T_\text{DUT}$,
+        condições de ganho de laço e risco de fuga térmica.
+  \item Por que a variável controlada relevante é a temperatura de junção do
+        dispositivo, e não a temperatura do forno.
+  \item Operação da fonte programável por VISA; limites de corrente; comportamento
+        em transitório.
+  \item Requisitos de JESD22-A108 quanto a monitoramento e auditabilidade das
+        condições de estresse.
+\end{itemize}
+
+\campo{Entregável}
+Plano de adaptação mecânica e térmica da placa alvo ao forno: fixação, roteamento de
+cabos, posicionamento do termopar de referência, e caminho de saída dos sinais de
+telemetria.
+
+\campo{Critério de aceite}
+O apresentador explica por que a sintonia do PID atual não é transferível para o novo
+DUT, e quais grandezas físicas mudaram para justificar a reidentificação.
+
+\subsection{Trilha E6 --- Aquisição e análise}
+
+\campo{Conteúdo}
+\begin{itemize}
+  \item Leitura do software \emph{host} atual: protocolo serial, formato de pacote,
+        política de \emph{timestamp}, sincronização entre fontes de dados
+        heterogêneas, tratamento de reconexão.
+  \item Requisitos de robustez para campanhas de vários dias: detecção de lacunas,
+        integridade do arquivo em caso de queda, retomada.
+  \item Pipeline de análise offline: decomposição de variância PVT do sinal de
+        \emph{slack}, remoção de tendência, estimação de $\sigma_\text{resid}$,
+        ajuste de modelos de degradação.
+  \item Proveniência de dados: como um número de artigo é rastreado até o arquivo
+        bruto que o gerou.
+\end{itemize}
+
+\campo{Entregável}
+Ambiente de análise reproduzido localmente por cada integrante da frente, executando
+sobre um CSV histórico do Artix-7 e reproduzindo os valores publicados dentro do
+arredondamento.
+
+\campo{Critério de aceite}
+Reprodução numérica confirmada, com \emph{diff} apresentado contra os valores dos artigos.
+
+\subsection{Marco de saída --- Reprodução de referência}
+
+\begin{keybox}[title={Marco bloqueante da semana 4}]
+Antes de qualquer trabalho sobre MAX~10, a equipe executa uma campanha curta
+(2 a 4 horas) na Nexys~4~DDR existente, do início ao fim, com as próprias mãos:
+síntese, gravação, montagem no forno, comando da fonte, aquisição, análise e relatório.
+\end{keybox}
+
+Este marco parece redundante e não é. Ele cumpre três funções que não podem ser
+cumpridas de outra forma:
+
+\begin{enumerate}
+  \item \textbf{Produz o \emph{golden reference}.} Toda medida obtida em MAX~10 será
+        comparada contra um conjunto de dados que a própria equipe gerou, com o
+        instrumento em condição conhecida. Sem isso, discrepâncias futuras não têm
+        atribuição possível.
+  \item \textbf{Separa falhas de bancada de falhas de port.} Problemas de forno, de
+        fonte, de cabo e de aquisição aparecem na semana 4, isoladamente. Sem esse
+        marco, aparecem na semana 12, sobrepostos aos problemas de PLL, e o
+        \emph{debug} conjunto custa múltiplas semanas.
+  \item \textbf{Calibra a expectativa da equipe.} O contato físico com o sistema
+        funcionando estabelece o padrão de qualidade contra o qual o port será julgado.
+\end{enumerate}
+
+\subsection{Matriz de cobertura}
+
+A Tabela~\ref{tab:cobertura} relaciona trilhas de estudo e frentes de implementação.
+Ela é usada para verificar que nenhuma frente inicia sem sua base conceitual e para
+alocar leitores secundários.
+
+\begin{table}[htbp]
+\centering
+\caption{Matriz trilha de estudo $\times$ frente de implementação.
+$\bullet$ indica pré-requisito bloqueante; $\circ$ indica leitura recomendada.}
+\label{tab:cobertura}
+\small
+\begin{tabular}{@{}lccccccl@{}}
+\toprule
+\textbf{Trilha} & \textbf{F1} & \textbf{F2} & \textbf{F3} & \textbf{F4} & \textbf{F5} & \textbf{F6} \\
+\midrule
+E1 --- Física do envelhecimento & $\circ$ & & & & $\bullet$ & $\bullet$ \\
+E2 --- Temporização e régua & $\bullet$ & $\bullet$ & & & & $\circ$ \\
+E3 --- Laço de auto-\emph{tuning} & $\bullet$ & $\circ$ & & $\circ$ & & $\circ$ \\
+E4 --- Instrumentação PVT & & & $\bullet$ & $\bullet$ & $\circ$ & $\circ$ \\
+E5 --- Bancada de estresse & & & $\circ$ & & $\bullet$ & $\circ$ \\
+E6 --- Aquisição e análise & & & & $\bullet$ & & $\bullet$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\clearpage
+%=========================================================================
+\section{Frentes de implementação}
+%=========================================================================
+
+\subsection{Princípio de decomposição e alocação}
+
+O trabalho é decomposto em seis frentes, definidas por acoplamento técnico e não por
+conveniência de agenda. A regra de alocação é:
+
+\begin{itemize}
+  \item Dimensionamento nominal: 4 a 6 integrantes, um responsável primário por frente,
+        com frentes de menor carga acumuladas por um mesmo integrante.
+  \item Com equipe reduzida, F2 colapsa em F1 e F6 colapsa em F4.
+  \item \textbf{F1 nunca compartilha responsável com outra frente.} É a frente crítica,
+        determina a viabilidade do projeto e não tolera divisão de atenção.
+  \item Toda frente tem um segundo integrante designado como revisor, que não executa
+        mas responde pela conferência dos entregáveis.
+\end{itemize}
+
+\begin{table}[htbp]
+\centering
+\caption{Visão geral das frentes.}
+\label{tab:frentes}
+\small
+\begin{tabularx}{\textwidth}{@{}L{1.0cm} L{4.3cm} X C{1.9cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Frente} & \textbf{Questão que responde} & \textbf{Criticidade} \\
+\midrule
+F1 & Régua temporal e RTL do sensor & Quão fina e quão estável é a referência de tempo disponível? & Crítica \\
+F2 & Implementação física e fluxo Quartus & O circuito descrito sobrevive à ferramenta e se repete entre compilações? & Alta \\
+F3 & Instrumentação PVT e hardware de placa & As covariáveis de temperatura e tensão estão disponíveis e calibradas? & Alta \\
+F4 & Telemetria e cadeia de aquisição & Os dados chegam íntegros e sincronizados após dias de campanha? & Média \\
+F5 & Bancada térmica e elétrica & O estresse é entregue de forma controlada e sem destruir o dispositivo? & Média \\
+F6 & Caracterização, dados e produção científica & Quanto vale a medida obtida, com que incerteza? & Alta \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+%-------------------------------------------------------------------------
+\subsection{F1 --- Régua temporal e RTL do sensor}
+
+\frenteheader{F1 --- Régua temporal e RTL do sensor}
+{Estabelecer no MAX 10 uma referência de tempo rastreável e tão fina quanto possível, e reimplementar sobre ela o laço de auto-tuning.}
+{Frente crítica. Determina a viabilidade do projeto e o escopo de tudo o que vem depois.}
+
+\campo{Pré-requisitos}
+Trilhas E2 e E3 aprovadas. Acesso ao RTL da versão de referência e ao diagrama de
+estados produzido em E3.
+
+\campo{Tarefas}
+\begin{enumerate}
+  \item \textbf{Instanciação e caracterização do PLL.}
+        Instanciar PLL com reconfiguração dinâmica de fase (ALTPLL com reconfiguração
+        habilitada, ou Altera PLL acompanhado do Altera PLL Reconfig). Forçar o VCO ao
+        teto da faixa admissível, verificando o valor efetivamente escolhido pela
+        ferramenta e não o valor pedido. Medir o passo de fase real, sem confiar na
+        especificação: montar experimento de contagem sobre caminho de atraso conhecido
+        e levantar o passo médio e sua dispersão.
+
+  \item \textbf{Porte da máquina de estados.}
+        Traduzir o protocolo de \emph{handshake} de deslocamento de fase, com atenção
+        particular ao sinal de conclusão --- a semântica de \texttt{phasedone} difere
+        da de \texttt{PSDONE} em detalhes de temporização que precisam ser verificados
+        em simulação antes de irem para \emph{hardware}. Reformular os parâmetros
+        identificados em E3 como dependentes de passo fino.
+
+  \item \textbf{Redesenho do caminho sintético sob teste.}
+        Reescrever o caminho crítico para o tecido lógico de 4 entradas do MAX~10, com
+        atraso alvo dimensionado para a nova granularidade: o caminho precisa ser longo
+        o suficiente para que a borda de falha caia em região de fase bem resolvida, e
+        curto o suficiente para caber na faixa de deslocamento disponível.
+
+  \item \textbf{Investigação de Vernier por batimento entre dois PLLs.}
+        Esta é a tarefa de maior valor e maior risco da frente. O dispositivo dispõe de
+        múltiplos PLLs com possibilidade de cascateamento por GCLK. Dois \emph{clocks}
+        com diferença de frequência pequena fornecem resolução temporal efetiva
+        $1/f_1 - 1/f_2$, arbitrariamente fina, ao custo de tempo de medição por amostra.
+        É a única rota que recupera resolução \emph{mantendo a régua travada em cristal}.
+        \begin{itemize}
+          \item Modelar a resolução efetiva e o tempo de medida em função de $\Delta f$.
+          \item Verificar se as restrições de contadores do dispositivo permitem os
+                pares de frequência necessários.
+          \item Avaliar o impacto do \emph{jitter} relativo entre os dois PLLs sobre a
+                resolução efetivamente utilizável --- este é o fator que pode invalidar
+                a abordagem, e precisa ser medido, não estimado.
+          \item Prototipar e caracterizar.
+        \end{itemize}
+
+  \item \textbf{Rota alternativa: interpolação em tecido lógico.}
+        Executada apenas se a tarefa 4 for declarada inviável no Gate~A. Subdivisão do
+        passo de \SI{96}{\pico\second} por cadeia de atraso em células lógicas, com
+        calibração por densidade de código em cada ponto de temperatura da campanha.
+        Se adotada, a limitação de rastreabilidade deve ser declarada explicitamente
+        em todo relatório e publicação derivados --- a régua passa a variar com PVT
+        e a envelhecer junto com o mensurando.
+
+  \item \textbf{Banco de testes.}
+        Simulação do laço completo com modelo de deslocamento de borda, incluindo os
+        casos de extremidade de faixa e de perda de rastreamento.
+\end{enumerate}
+
+\campo{Entregáveis}
+\begin{itemize}
+  \item RTL parametrizável, com passo de fase e faixa como parâmetros de topo.
+  \item Banco de testes de simulação cobrindo inicialização, rastreamento, extremidade
+        de faixa e reaquisição.
+  \item Relatório de caracterização da régua: passo médio medido, dispersão,
+        não-linearidade diferencial, deriva com temperatura.
+  \item Parecer técnico sobre a viabilidade do Vernier, com dados de suporte.
+\end{itemize}
+
+\campo{Critério de aceite --- Gate A}
+Passo de fase medido, documentado e estável, e laço de auto-\emph{tuning} rastreando
+uma borda deslocada artificialmente por variação controlada de temperatura ambiente,
+em \emph{hardware}.
+
+\campo{Riscos}
+\begin{itemize}
+  \item \emph{Jitter} relativo entre PLLs anula o ganho teórico do Vernier.
+  \item Restrições de contadores impedem os pares de frequência desejados.
+  \item Tempo de medida por amostra do Vernier torna a taxa de amostragem incompatível
+        com a dinâmica térmica que se deseja observar.
+\end{itemize}
+
+\campo{Perfil do integrante}
+Maior maturidade em RTL e, principalmente, em leitura crítica de documentação de
+dispositivo. Alocar o integrante mais forte da equipe. Tarefa adequada a aluno de
+pós-graduação.
+
+%-------------------------------------------------------------------------
+\subsection{F2 --- Implementação física e fluxo Quartus}
+
+\frenteheader{F2 --- Implementação física e fluxo Quartus}
+{Garantir que o circuito descrito em RTL sobreviva às otimizações da ferramenta e que compilações sucessivas produzam o mesmo circuito físico.}
+{Frente habilitadora. Sem reprodutibilidade de implementação, nenhuma medida é comparável.}
+
+\campo{Pré-requisitos}
+F1 com RTL preliminar disponível. Trilha E2 aprovada.
+
+\campo{Tarefas}
+\begin{enumerate}
+  \item \textbf{Tradução do vocabulário de restrições.}
+        Substituir as diretivas de preservação e posicionamento do fluxo Xilinx pelos
+        equivalentes Quartus: atributos \texttt{preserve}, \texttt{noprune},
+        \texttt{keep} e \texttt{dont\_merge} no código; atribuições
+        \texttt{set\_location\_assignment LC\_X..Y..N..} no arquivo \texttt{.qsf} para
+        fixação de células.
+
+  \item \textbf{Desabilitação seletiva de otimizações.}
+        Identificar e desligar explicitamente as transformações do \emph{fitter} que
+        reescrevem o caminho sintético: \emph{retiming} de registradores, duplicação
+        de registradores, compartilhamento de recursos, remoção de lógica redundante.
+        \textbf{Cada atribuição deve ser comentada no \texttt{.qsf} com sua justificativa},
+        porque este arquivo será lido por terceiros ao avaliar o trabalho.
+
+  \item \textbf{Instanciação direta de célula do dispositivo, se necessário.}
+        Caso a inferência não produza a estrutura desejada, instanciar diretamente a
+        célula lógica WYSIWYG da família, com portas de \emph{carry} de entrada e saída.
+        \emph{Confirmar o nome exato da primitiva na biblioteca do dispositivo dentro da
+        versão instalada do Quartus} --- não em documentação de terceiros nem em fórum.
+
+  \item \textbf{Estabelecimento de reprodutibilidade.}
+        Definir e verificar o procedimento que garante posicionamento idêntico entre
+        compilações: controle de \emph{seed}, verificação de \emph{netlist} pós-síntese,
+        conferência visual no Chip Planner, e comparação automatizada de relatórios
+        de posicionamento.
+
+  \item \textbf{Restrições de temporização.}
+        Escrever o arquivo SDC com as exceções corretas para o caminho sob medição ---
+        que é, por construção, um caminho que se pretende violar. Documentar por que
+        cada exceção existe.
+
+  \item \textbf{Análise de recursos e de \emph{floorplan}.}
+        Definir a região do dispositivo ocupada pelo sensor e sua vizinhança lógica,
+        de modo a manter constante o ambiente térmico e de acoplamento entre versões.
+\end{enumerate}
+
+\campo{Entregáveis}
+\begin{itemize}
+  \item Projeto Quartus completo com \texttt{.qsf} integralmente comentado.
+  \item Roteiro escrito de verificação de reprodutibilidade.
+  \item Relatório de posicionamento com capturas do Chip Planner e comparação
+        entre compilações.
+  \item Arquivo SDC documentado.
+\end{itemize}
+
+\campo{Critério de aceite}
+Dez compilações consecutivas, a partir do mesmo código-fonte, produzem posicionamento
+idêntico do bloco sensor, verificado por comparação automatizada.
+
+\campo{Riscos}
+\begin{itemize}
+  \item Otimização não documentada da ferramenta alterando o caminho entre versões
+        do Quartus --- mitigado fixando a versão da ferramenta para todo o projeto.
+  \item Restrições de posicionamento conflitantes tornando o \emph{fit} inviável.
+\end{itemize}
+
+\campo{Perfil do integrante}
+Paciência com ferramenta e disposição para leitura de relatórios de compilação.
+Adequado a aluno de graduação com experiência prévia em FPGA.
+
+%-------------------------------------------------------------------------
+\subsection{F3 --- Instrumentação PVT e hardware de placa}
+
+\frenteheader{F3 --- Instrumentação PVT e hardware de placa}
+{Recuperar os dois eixos de covariável --- temperatura de junção e tensão de núcleo --- que o XADC fornecia nativamente na plataforma de referência.}
+{Frente com intervenção física irreversível. Exige revisão de projeto antes da execução.}
+
+\campo{Pré-requisitos}
+Trilha E4 aprovada, incluindo o orçamento de erro.
+
+\campo{Tarefas}
+\begin{enumerate}
+  \item \textbf{Instanciação e caracterização do ADC.}
+        Configurar o IP \emph{Modular ADC Core} no Platform Designer. Caracterizar taxa
+        efetiva de amostragem, ruído de conversão, comportamento do sequenciador e
+        latência de leitura.
+
+  \item \textbf{Modo de diodo térmico e calibração.}
+        Colocar o modo TSD em operação. Calibrar contra termopar de referência em, no
+        mínimo, cinco pontos distribuídos pela faixa de estresse prevista, com o
+        dispositivo em regime permanente em cada ponto. Levantar a curva de erro
+        residual pós-calibração e sua dependência com a temperatura.
+
+  \item \textbf{Esquema de intercalação TSD / canais externos.}
+        O modo de sensoriamento térmico e a leitura de canais analógicos externos não
+        são simultâneos. Definir e documentar o esquema de alternância temporal adotado,
+        e quantificar o erro de sincronismo que ele introduz entre as séries de
+        temperatura e de tensão.
+
+  \item \textbf{Acesso à tensão de núcleo.}
+        Levantar o ponto de acesso à trilha de núcleo na placa. Projetar a derivação
+        para pino de entrada analógica, incluindo condicionamento e proteção.
+        \begin{itemize}
+          \item Revisão de projeto obrigatória com o orientador antes da execução.
+          \item Documentação fotográfica antes, durante e depois.
+          \item Procedimento de recuperação escrito antes da intervenção.
+        \end{itemize}
+
+  \item \textbf{Integração com a cadeia de telemetria.}
+        Entregar as leituras de temperatura e tensão à frente F4 no mesmo pacote e com
+        o mesmo \emph{timestamp} da medida de \emph{slack}.
+\end{enumerate}
+
+\begin{warnbox}[title={Decisão de escopo: eixo de estresse elétrico}]
+Alimentar o núcleo do dispositivo pela fonte programável exige interromper o regulador
+integrado da placa. É a intervenção de maior risco do projeto inteiro e a de menor
+probabilidade de sucesso na primeira tentativa.
+
+\textbf{Recomendação:} a fase~1 do projeto opera \emph{sem} estresse de tensão, com
+monitoramento passivo de $V_\text{CORE}$ e temperatura como único eixo de estresse. O
+eixo de tensão entra apenas na fase~2, após o Gate~A, e somente se houver segunda placa
+disponível como sacrificial.
+
+Consequência metodológica a ser declarada: a decomposição de variância PVT da fase~1
+terá o eixo de tensão como covariável observada, não como variável manipulada. A
+comparação com os resultados do Artix-7 deve ser restrita aos eixos comuns.
+\end{warnbox}
+
+\campo{Entregáveis}
+\begin{itemize}
+  \item Curva de calibração do TSD com incerteza declarada.
+  \item Documentação esquemática e fotográfica da modificação de placa.
+  \item Procedimento de recuperação e registro de intervenções.
+  \item Especificação do formato de pacote de telemetria PVT.
+\end{itemize}
+
+\campo{Critério de aceite}
+Leitura calibrada e simultânea de temperatura de junção e tensão de núcleo, transmitida
+ao \emph{host} junto com a medida de \emph{slack}, com erro de sincronismo quantificado.
+
+\campo{Perfil do integrante}
+Habilidade de bancada e cuidado com \emph{hardware}. Experiência prévia em soldagem
+fina é requisito, não diferencial.
+
+%-------------------------------------------------------------------------
+\subsection{F4 --- Telemetria e cadeia de aquisição}
+
+\frenteheader{F4 --- Telemetria e cadeia de aquisição}
+{Levar dados sincronizados e íntegros do dispositivo sob teste ao host, continuamente, por campanhas de vários dias.}
+{Frente de infraestrutura. Falha aqui invalida semanas de forno.}
+
+\campo{Pré-requisitos}
+Trilhas E4 e E6 aprovadas.
+
+\campo{Tarefas}
+\begin{enumerate}
+  \item \textbf{Decisão de transporte.}
+        A placa alvo não expõe ponte USB-UART de uso geral: o conversor FTDI integrado
+        atende apenas à programação JTAG. Duas alternativas:
+        \begin{itemize}
+          \item \emph{Módulo USB-serial externo} no cabeçalho GPIO, replicando o
+                protocolo atual sem alteração no \emph{host}. Vantagem: compatibilidade
+                imediata. Desvantagem: mais um componente e mais dois cabos atravessando
+                a parede do forno.
+          \item \emph{JTAG UART} da Intel, com terminal via System Console. Vantagem:
+                telemetria pelo mesmo cabo da programação, sem \emph{hardware} adicional
+                dentro do forno. Desvantagem: exige adaptação da camada de transporte
+                no \emph{host}.
+        \end{itemize}
+        \textbf{Recomendação:} JTAG UART na fase~1, pela redução de \emph{hardware}
+        exposto a temperatura; migração para UART externo apenas se a robustez em
+        campanha longa se mostrar insuficiente.
+
+  \item \textbf{Porte do protocolo de pacote.}
+        Preservar o formato de saída CSV compatível com o \emph{pipeline} de análise
+        existente. Esta compatibilidade é o que torna a comparação Artix-7 $\times$
+        MAX~10 direta, e não deve ser sacrificada por conveniência de implementação.
+
+  \item \textbf{Política de \emph{timestamp}.}
+        Definir a fonte de tempo autoritativa e o mecanismo de correlação entre as
+        séries de \emph{slack}, temperatura, tensão e telemetria da fonte. Quantificar
+        o erro de correlação.
+
+  \item \textbf{Adaptação do software \emph{host}.}
+        Reconexão automática, detecção e marcação de lacunas, gravação incremental
+        resistente a queda, gráficos ao vivo.
+
+  \item \textbf{Ensaio de resistência.}
+        Setenta e duas horas contínuas com injeção deliberada de falhas: desconexão
+        de USB, suspensão do \emph{host}, saturação de disco.
+\end{enumerate}
+
+\campo{Entregáveis}
+\begin{itemize}
+  \item Camada de telemetria no DUT e no \emph{host}.
+  \item Especificação escrita do protocolo e do formato CSV.
+  \item Relatório do ensaio de \SI{72}{\hour} com estatística de perda de amostras e
+        de lacunas detectadas.
+\end{itemize}
+
+\campo{Critério de aceite}
+Setenta e duas horas contínuas com perda de amostras abaixo do limiar acordado e sem
+perda de sincronismo de \emph{timestamp} em nenhuma das falhas injetadas.
+
+\campo{Perfil do integrante}
+Conforto com Python e com linha de comando; disposição para escrever código defensivo.
+
+%-------------------------------------------------------------------------
+\subsection{F5 --- Bancada térmica e elétrica}
+
+\frenteheader{F5 --- Bancada térmica e elétrica}
+{Adaptar a bancada de burn-in existente ao novo dispositivo sob teste, respeitando os limites específicos do MAX 10.}
+{Frente com risco de perda de hardware. O envelope de estresse é decisão de projeto, não parâmetro livre.}
+
+\campo{Pré-requisitos}
+Trilhas E1 e E5 aprovadas. Marco de reprodução de referência concluído.
+
+\campo{Tarefas}
+\begin{enumerate}
+  \item \textbf{Adaptação mecânica.}
+        Fixação da placa no forno, roteamento de cabos de alimentação e telemetria,
+        posicionamento do termopar de referência em contato controlado com o encapsulamento.
+
+  \item \textbf{Reidentificação da planta.}
+        A massa térmica, a área de troca e a impedância térmica mudaram com a troca de
+        placa. Os ganhos do PID atual não são transferíveis. Executar nova identificação
+        FOPDT por resposta ao degrau e nova sintonia por regras SIMC, documentando os
+        parâmetros identificados.
+
+  \item \textbf{Definição do envelope de estresse.}
+        Fixar setpoint de temperatura e duração de campanha respeitando simultaneamente:
+        \begin{itemize}
+          \item o limite de temperatura de junção do dispositivo na versão comercial
+                (\SI{85}{\celsius});
+          \item a especificação de retenção da memória \emph{flash} de configuração
+                integrada ao \emph{die}, que é função de $T_j$ e do tempo acumulado ---
+                restrição \emph{sem análogo} na plataforma de referência;
+          \item o resultado de viabilidade da trilha E1, que estabelece o piso de
+                estresse necessário para produzir sinal detectável.
+        \end{itemize}
+        Se o piso da trilha E1 exceder o teto imposto pelas duas primeiras restrições,
+        essa contradição é o resultado principal da fase e deve ser reportada como tal.
+
+  \item \textbf{Verificação de integridade pós-campanha.}
+        Procedimento de conferência da memória de configuração ao término de cada
+        campanha: releitura, comparação com imagem de referência, registro do resultado.
+
+  \item \textbf{Protocolo operacional de campanha.}
+        Rampa de aquecimento, patamar, leituras periódicas com forno desligado para
+        separação de componente reversível, resfriamento controlado, e registro
+        auditável de todas as condições conforme JESD22-A108.
+\end{enumerate}
+
+\campo{Entregáveis}
+\begin{itemize}
+  \item Modelo FOPDT identificado e controlador PID sintonizado, com dados de validação.
+  \item Documento de envelope de estresse com justificativa de cada limite.
+  \item Procedimento operacional padrão de campanha.
+  \item Registro de verificação de integridade de configuração.
+\end{itemize}
+
+\campo{Critério de aceite}
+Rastreamento de setpoint dentro de orçamento de erro médio equivalente ao do banco PID
+da plataforma de referência, demonstrado em campanha de validação de pelo menos
+\SI{12}{\hour}.
+
+\campo{Perfil do integrante}
+Interesse em controle e instrumentação. Adequado a aluno com disciplina de sistemas de
+controle cursada.
+
+%-------------------------------------------------------------------------
+\subsection{F6 --- Caracterização, dados e produção científica}
+
+\frenteheader{F6 --- Caracterização, dados e produção científica}
+{Transformar a implementação em resultado defensável, com incerteza declarada e método auditável.}
+{Frente que define o valor final do projeto. Inicia cedo, não no fim.}
+
+\campo{Pré-requisitos}
+Trilha E6 aprovada e reprodução de referência concluída.
+
+\campo{Tarefas}
+\begin{enumerate}
+  \item \textbf{Caracterização da régua.}
+        Passo médio, dispersão, não-linearidade diferencial, deriva com temperatura.
+        Esta caracterização é a base de toda conversão de contagens para picossegundos
+        e precisa ser refeita se qualquer parâmetro de PLL mudar.
+
+  \item \textbf{Decomposição de variância PVT.}
+        Aplicar ao sinal de \emph{slack} do MAX~10 a mesma metodologia dos artigos
+        anteriores, com atenção à mudança de status do eixo de tensão (covariável
+        observada, não manipulada, na fase~1).
+
+  \item \textbf{Estimação de $\sigma_\text{resid}$ e do degrau resolvível.}
+        Cálculo em picossegundos, com barra de incerteza e método de estimação
+        documentado. Declaração explícita do menor degrau de \emph{slack} resolvível
+        sob critério $k\sigma$, para $k = 3$ e ao menos um valor alternativo.
+
+  \item \textbf{Comparação sistemática entre plataformas.}
+        Tabela de comparação em eixos comparáveis, com incertezas, e discussão
+        explícita do que \emph{não} é comparável e por quê.
+
+  \item \textbf{Gestão de dados e proveniência.}
+        Versionamento dos conjuntos de dados brutos; \emph{notebook} de análise
+        versionado; rastreabilidade de cada número reportado até o arquivo bruto
+        que o originou.
+
+  \item \textbf{Produção escrita.}
+        Relatório técnico interno; material para submissão a SBCCI ou LATS sobre
+        portabilidade entre fabricantes de sensores de \emph{slack}, incluindo
+        o resultado desfavorável, se for esse o desfecho.
+\end{enumerate}
+
+\campo{Entregáveis}
+\begin{itemize}
+  \item \emph{Notebook} de análise versionado e reprodutível.
+  \item Relatório de caracterização da régua.
+  \item Tabela comparativa entre plataformas com incertezas.
+  \item Rascunho de artigo.
+\end{itemize}
+
+\campo{Critério de aceite}
+$\sigma_\text{resid}$ do MAX~10 reportado em picossegundos, com barra de incerteza e
+método de estimação auditável por terceiro que não participou da medição.
+
+\campo{Perfil do integrante}
+Maturidade em análise de dados e em escrita técnica. Adequado a aluno de pós-graduação,
+possivelmente o mesmo responsável por F1 em equipe reduzida.
+
+\clearpage
+%=========================================================================
+\section{Sequenciamento, portões e cronograma}
+%=========================================================================
+
+\subsection{Cronograma de referência}
+
+O cronograma abaixo assume um semestre letivo de 16 semanas e dedicação parcial dos
+integrantes. É um cronograma de dependências, não de esforço: as datas dos portões são
+firmes; as atividades entre portões absorvem variação.
+
+\begin{table}[htbp]
+\centering
+\caption{Cronograma de referência com portões de decisão.}
+\label{tab:cronograma}
+\small
+\begin{tabularx}{\textwidth}{@{}C{1.6cm} L{5.2cm} X@{}}
+\toprule
+\textbf{Semanas} & \textbf{Atividade principal} & \textbf{Marco / portão} \\
+\midrule
+1--4 & Fase 0: seis trilhas de estudo em paralelo; preparação de bancada em segundo plano &
+Todas as trilhas aprovadas em arguição \\
+4 & Reprodução de referência na Nexys 4 DDR &
+\emph{Golden reference} depositado no repositório \\
+5--8 & F1 e F2 em execução paralela; F3 e F5 em preparação; F4 definindo transporte &
+\textbf{Gate A} (semana 8): régua caracterizada e laço rastreando em \emph{hardware} \\
+9--12 & F3 e F4 em integração; primeira campanha curta de validação &
+\textbf{Gate B} (semana 12): campanha de \SI{24}{\hour} com cadeia completa de dados \\
+13--16 & F5 executa campanha longa; F6 conduz análise e redação &
+Relatório técnico e rascunho de artigo \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Gate A --- Viabilidade da régua (semana 8)}
+
+\begin{keybox}[title={Gate A é o portão real do projeto}]
+Gate~A decide se o projeto continua sendo uma migração ou passa a ser outro projeto.
+A decisão é do orientador, não da equipe, e é tomada na semana~8 com os dados
+disponíveis na semana~8 --- não adiada para quando houver mais dados.
+\end{keybox}
+
+\campo{Evidência exigida}
+\begin{enumerate}
+  \item Passo de fase do PLL medido em \emph{hardware}, com dispersão.
+  \item Laço de auto-\emph{tuning} rastreando borda deslocada por variação térmica.
+  \item Parecer sobre o Vernier de dois PLLs, com dados de \emph{jitter} relativo.
+\end{enumerate}
+
+\campo{Desfechos possíveis}
+\begin{itemize}
+  \item \textbf{Vernier caracterizado e viável.} O projeto segue como migração com
+        recuperação de resolução. Escopo original mantido. F1 conclui a implementação
+        do Vernier nas semanas 9--12.
+  \item \textbf{Vernier inviável, passo nativo funcionando.} O projeto é reposicionado
+        como \emph{estudo de limite de detectabilidade de sensores de slack em nó
+        tecnológico maior}. As metas de F6 mudam: o produto passa a ser a quantificação
+        rigorosa da penalidade, e não a demonstração de equivalência. Continua sendo
+        resultado publicável.
+  \item \textbf{Laço não rastreia de forma estável.} Situação mais grave. Investigar se
+        a causa é de F1 (reformulação de parâmetros) ou de F2 (fitter reescrevendo o
+        caminho). Prorrogação máxima de duas semanas, com Gate~A reavaliado na semana 10
+        e compressão proporcional da fase de campanha.
+\end{itemize}
+
+\subsection{Gate B --- Integridade da cadeia (semana 12)}
+
+Verifica que a cadeia completa --- sensor, PVT, telemetria, \emph{host}, análise ---
+opera em conjunto antes de comprometer semanas de forno.
+
+\campo{Evidência exigida}
+Campanha de \SI{24}{\hour} produzindo arquivo único, sem lacunas não marcadas, com
+séries de \emph{slack}, temperatura e tensão correlacionadas, e análise preliminar
+executada sobre o arquivo pela frente F6.
+
+\campo{Critério de bloqueio}
+Se a análise preliminar não consegue produzir uma estimativa de $\sigma_\text{resid}$
+com o arquivo obtido, a campanha longa não é autorizada. O problema está na cadeia,
+e uma campanha de duas semanas apenas produzirá o mesmo problema em maior volume.
+
+\subsection{Ritual de acompanhamento}
+
+\begin{itemize}
+  \item \textbf{Reunião semanal de 60 minutos} com toda a equipe. Cada frente reporta:
+        o que foi feito, o que está bloqueado, o que vai ser feito. Ata escrita,
+        versionada, com decisões destacadas.
+  \item \textbf{Revisão cruzada obrigatória.} Todo entregável passa pelo revisor
+        designado da frente antes de ir ao orientador.
+  \item \textbf{Repositório único} para código, dados, documentos e atas.
+        Convenção de \emph{commits} adotada e verificada.
+  \item \textbf{Caderno de bancada}, físico ou digital, para toda intervenção em
+        \emph{hardware} e toda campanha. Data, condições, quem executou, o que
+        deu errado.
+\end{itemize}
+
+%=========================================================================
+\section{Gestão de risco}
+%=========================================================================
+
+\begin{table}[htbp]
+\centering
+\caption{Registro de riscos do projeto, ordenado por impacto.}
+\label{tab:riscos}
+\small
+\begin{tabularx}{\textwidth}{@{}L{4.0cm} C{1.3cm} X@{}}
+\toprule
+\textbf{Risco} & \textbf{Frente} & \textbf{Mitigação} \\
+\midrule
+Sinal de envelhecimento em \SI{55}{\nano\meter} permanece abaixo do piso de ruído em qualquer campanha viável &
+F5, F6 &
+Trilha E1 responde por cálculo na semana 4, antes de qualquer investimento em implementação. Se confirmado, o projeto é reformulado imediatamente como estudo de limite de detectabilidade. \\
+Vernier de dois PLLs inviável por \emph{jitter} relativo &
+F1 &
+Caracterização obrigatória até o Gate~A. Rota alternativa (interpolação em tecido) já especificada, com limitação de rastreabilidade declarada. Reposicionamento de escopo previsto. \\
+Degradação da \emph{flash} de configuração por estresse térmico prolongado &
+F5 &
+Envelope de estresse limitado pela especificação de retenção; verificação de integridade da configuração ao fim de cada campanha; placa sacrificial designada. \\
+Modificação de placa para acesso a $V_\text{CORE}$ danifica o \emph{hardware} &
+F3 &
+Revisão de projeto antes da execução; procedimento de recuperação escrito previamente; adiamento do eixo de tensão para a fase 2; segunda placa. \\
+\emph{Fitter} reescrevendo o caminho sintético entre compilações &
+F2 &
+Critério de reprodutibilidade de dez compilações é bloqueante para o Gate~A. Versão do Quartus fixada para todo o projeto. \\
+Perda de dados em campanha longa &
+F4 &
+Ensaio de resistência de \SI{72}{\hour} com injeção de falhas antes do Gate~B; gravação incremental; detecção e marcação de lacunas. \\
+Erro de calibração do TSD propagando para o AF &
+F3, F6 &
+Orçamento de erro fechado na trilha E4; calibração em cinco pontos; propagação de incerteza explicitada em toda conclusão que dependa do AF. \\
+Dispersão da equipe entre frentes, com F1 subatendida &
+--- &
+Regra de alocação exclusiva para F1; revisor designado por frente; reunião semanal com relato de bloqueios. \\
+Perda de comparabilidade com a plataforma de referência por divergência de formato &
+F4 &
+Compatibilidade de formato CSV tratada como requisito, não como preferência. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+%=========================================================================
+\section{Infraestrutura, ferramentas e convenções}
+%=========================================================================
+
+\subsection{Ambiente de ferramenta}
+
+\begin{itemize}
+  \item \textbf{Versão do Quartus Prime fixada} no início do projeto e registrada no
+        repositório. Otimizações de \emph{fitter} mudam entre versões, e uma
+        atualização no meio da campanha invalida a comparabilidade entre medidas.
+  \item Projeto versionado por arquivos-fonte (\texttt{.qsf}, \texttt{.sdc}, HDL, IP
+        em formato textual), nunca por diretório de compilação.
+  \item Ambiente Python do \emph{host} e da análise fixado por arquivo de dependências.
+\end{itemize}
+
+\subsection{Repositório e convenções}
+
+\begin{itemize}
+  \item Repositório único, com separação clara entre \texttt{hdl/}, \texttt{host/},
+        \texttt{analysis/}, \texttt{data/}, \texttt{docs/} e \texttt{minutes/}.
+  \item Convenção de \emph{commits} adotada e verificada em revisão.
+  \item Dados brutos imutáveis: nenhum arquivo de campanha é editado após a gravação.
+        Correções são feitas em camada de processamento, com registro.
+\end{itemize}
+
+\subsection{Proveniência de dados}
+
+Todo número que apareça em relatório ou artigo precisa ser rastreável, por caminho
+documentado, até o arquivo bruto que o originou e até a versão do código de análise
+que o produziu. Esta exigência não é burocrática: em campanhas de vários dias com
+múltiplas fontes de telemetria, a incapacidade de rastrear um número é indistinguível
+de erro.
+
+\subsection{Segurança de bancada}
+
+\begin{itemize}
+  \item Nenhuma campanha noturna sem supervisão remota de temperatura e sem limite
+        de corrente configurado na fonte.
+  \item Procedimento de desligamento de emergência afixado na bancada.
+  \item Intervenções em \emph{hardware} sempre com segunda pessoa presente.
+\end{itemize}
+
+%=========================================================================
+\section{Notas de orientação}
+%=========================================================================
+
+Três pontos merecem ser comunicados à equipe verbalmente, na primeira reunião, antes
+da distribuição deste documento. Correspondem aos modos de falha mais frequentes em
+projetos desta natureza conduzidos por equipes em formação.
+
+\subsection{A régua não é o sensor}
+
+A tentação natural do aluno é reimplementar a lógica, ver números saírem pela serial e
+considerar o trabalho concluído. O objeto científico deste projeto é a \emph{incerteza
+da medida}, e ela nasce inteiramente da referência de tempo. Um sensor que compila e
+produz séries plausíveis, sem caracterização de régua, não constitui resultado ---
+produz números cuja unidade é desconhecida.
+
+Consequência prática para a orientação: cobrar a caracterização da régua \emph{antes}
+de cobrar o funcionamento do laço, mesmo que a ordem pareça invertida.
+
+\subsection{Tecido lógico não é referência}
+
+Se a resolução for recuperada por linha de atraso em células lógicas, a régua passa a
+variar com PVT e a envelhecer junto com o mensurando. Isso não invalida a abordagem,
+mas transforma o problema: exige calibração por ponto de temperatura e introduz um
+termo de erro que precisa ser propagado até a conclusão final.
+
+O erro a evitar não é adotar essa rota --- é adotá-la sem declarar a limitação, ou
+sem perceber que ela existe.
+
+\subsection{Resultado desfavorável bem medido é resultado}
+
+A afirmação ``a arquitetura não porta com fidelidade útil para este nó tecnológico,
+pelas razões X e Y, com penalidade quantificada em Z'' é contribuição legítima e
+publicável. Ela responde uma pergunta que a comunidade tem e que ninguém respondeu
+com dados.
+
+A equipe precisa ouvir isso do orientador \emph{antes} de começar. Equipes que não
+ouvem tendem, no fim do semestre e sob pressão de prazo, a selecionar dados
+favoráveis, estreitar faixas de análise ou apresentar resultados preliminares como
+definitivos. A prevenção é declarar, no dia um, que o desfecho desfavorável tem valor.
+
+%=========================================================================
+\section{Produtos esperados}
+%=========================================================================
+
+\begin{table}[htbp]
+\centering
+\caption{Produtos esperados ao término do horizonte de 16 semanas.}
+\label{tab:produtos}
+\small
+\begin{tabularx}{\textwidth}{@{}L{4.6cm} X@{}}
+\toprule
+\textbf{Produto} & \textbf{Descrição} \\
+\midrule
+Implementação em MAX 10 & Projeto Quartus completo, versionado, reprodutível, com restrições documentadas. \\
+Relatório de caracterização da régua & Passo, dispersão, não-linearidade e deriva térmica da referência temporal adotada. \\
+Conjunto de dados de campanha & Séries de \emph{slack}, temperatura e tensão, com proveniência documentada. \\
+Análise comparativa & $\sigma_\text{resid}$ e degrau resolvível em ambas as plataformas, com incertezas. \\
+Relatório técnico interno & Documento completo do port, incluindo decisões de projeto e desfechos de portão. \\
+Submissão a conferência & Artigo sobre portabilidade entre fabricantes de sensores de \emph{slack} para SLM. \\
+Material de formação & Trilhas de estudo consolidadas, reutilizáveis para as próximas turmas do laboratório. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\clearpage
+%=========================================================================
+\appendix
+\section{Glossário}
+%=========================================================================
+
+\begin{longtable}{@{}L{3.0cm} L{12.1cm}@{}}
+\toprule
+\textbf{Termo} & \textbf{Definição} \\
+\midrule
+\endhead
+AF & Fator de aceleração. Razão entre a taxa de degradação sob condição de estresse e sob condição de uso. \\
+AVS & \emph{Adaptive Voltage Scaling}. Ajuste dinâmico de tensão de alimentação com base em medida de margem. \\
+Auto-\emph{tuning} & Neste projeto, a capacidade do sensor de localizar e rastrear automaticamente a borda de falha do caminho sob teste. \\
+CFM / UFM & Blocos de memória \emph{flash} de configuração e de usuário integrados ao \emph{die} do MAX 10. \\
+DUT & \emph{Device Under Test}. Dispositivo sob ensaio. \\
+$E_a$ & Energia de ativação do mecanismo de degradação, parâmetro da relação de Arrhenius. \\
+FOPDT & \emph{First Order Plus Dead Time}. Modelo de planta de primeira ordem com atraso de transporte. \\
+HCI & \emph{Hot Carrier Injection}. Mecanismo de degradação por portadores energéticos. \\
+JTAG UART & Periférico Intel que transporta dados seriais pela cadeia JTAG, dispensando ponte USB-serial dedicada. \\
+LE & \emph{Logic Element}. Célula lógica básica do MAX 10, com LUT de 4 entradas. \\
+MMCM & \emph{Mixed-Mode Clock Manager}. Gerenciador de \emph{clock} da família Xilinx 7, com deslocamento de fase de passo $T_\text{VCO}/56$. \\
+NBTI & \emph{Negative Bias Temperature Instability}. Mecanismo dominante de degradação em transistores PMOS. \\
+PVT & Processo, tensão e temperatura. Conjunto de fontes de variação reversível. \\
+RUL & \emph{Remaining Useful Life}. Vida útil remanescente estimada. \\
+SIMC & \emph{Simple Internal Model Control}. Conjunto de regras de sintonia de PID. \\
+\emph{Slack} & Margem temporal remanescente em um caminho síncrono; grandeza medida pelo sensor. \\
+SLM & \emph{Silicon Lifecycle Management}. Gerenciamento de ciclo de vida do silício. \\
+SSR & \emph{Solid State Relay}. Relé de estado sólido usado no acionamento do forno. \\
+TDC & \emph{Time-to-Digital Converter}. Conversor tempo-digital. \\
+TSD & \emph{Temperature Sensing Diode}. Diodo térmico integrado, lido pelo ADC do MAX 10. \\
+Vernier & Técnica de medição temporal por diferença entre duas escalas próximas, com resolução efetiva igual à diferença. \\
+WYSIWYG & Primitiva de baixo nível do fluxo Intel que instancia diretamente uma célula do dispositivo. \\
+XADC & Bloco de conversão analógico-digital integrado da família Xilinx 7, com monitores internos de temperatura e alimentação. \\
+\bottomrule
+\end{longtable}
+
+%=========================================================================
+\section{Lista de verificação de aceite por frente}
+%=========================================================================
+
+Esta lista é usada nas reuniões de portão. Cada item é respondido com evidência
+documental, não com relato verbal.
+
+\campo{F1 --- Régua temporal e RTL}
+\begin{itemize}
+  \item[$\square$] Passo de fase medido em \emph{hardware}, com dispersão reportada.
+  \item[$\square$] Configuração de VCO documentada e forçada, não deixada a critério da ferramenta.
+  \item[$\square$] Diagrama de estados do laço portado, conferido contra o documento da trilha E3.
+  \item[$\square$] Banco de testes cobrindo extremidade de faixa e reaquisição.
+  \item[$\square$] Parecer sobre Vernier com dados de \emph{jitter} relativo.
+  \item[$\square$] Laço rastreando borda deslocada por variação térmica, em \emph{hardware}.
+\end{itemize}
+
+\campo{F2 --- Implementação física}
+\begin{itemize}
+  \item[$\square$] \texttt{.qsf} integralmente comentado, com justificativa por atribuição.
+  \item[$\square$] Otimizações de \emph{fitter} desabilitadas e listadas.
+  \item[$\square$] Dez compilações com posicionamento idêntico, verificado automaticamente.
+  \item[$\square$] Capturas do Chip Planner arquivadas.
+  \item[$\square$] Versão do Quartus registrada no repositório.
+\end{itemize}
+
+\campo{F3 --- Instrumentação PVT}
+\begin{itemize}
+  \item[$\square$] Calibração do TSD em cinco pontos, com curva de erro residual.
+  \item[$\square$] Esquema de intercalação TSD / canais externos documentado, com erro de sincronismo quantificado.
+  \item[$\square$] Revisão de projeto da modificação de placa registrada antes da execução.
+  \item[$\square$] Documentação fotográfica completa da intervenção.
+  \item[$\square$] Leitura simultânea de temperatura e tensão chegando ao \emph{host}.
+\end{itemize}
+
+\campo{F4 --- Telemetria e aquisição}
+\begin{itemize}
+  \item[$\square$] Decisão de transporte registrada com justificativa.
+  \item[$\square$] Compatibilidade de formato CSV verificada contra o \emph{pipeline} existente.
+  \item[$\square$] Política de \emph{timestamp} documentada, com erro de correlação quantificado.
+  \item[$\square$] Ensaio de \SI{72}{\hour} concluído, com relatório de perdas.
+\end{itemize}
+
+\campo{F5 --- Bancada}
+\begin{itemize}
+  \item[$\square$] Modelo FOPDT reidentificado para o novo DUT.
+  \item[$\square$] PID ressintonizado e validado em campanha de \SI{12}{\hour}.
+  \item[$\square$] Envelope de estresse documentado com os três limites justificados.
+  \item[$\square$] Procedimento de verificação de integridade da configuração definido e testado.
+  \item[$\square$] Procedimento operacional padrão de campanha escrito.
+\end{itemize}
+
+\campo{F6 --- Caracterização e análise}
+\begin{itemize}
+  \item[$\square$] Reprodução dos números publicados do Artix-7 confirmada.
+  \item[$\square$] $\sigma_\text{resid}$ do MAX 10 reportado em picossegundos com incerteza.
+  \item[$\square$] Degrau resolvível declarado para $k=3$ e ao menos um $k$ alternativo.
+  \item[$\square$] Proveniência de cada número rastreável até o arquivo bruto.
+  \item[$\square$] Tabela comparativa entre plataformas concluída.
+\end{itemize}
+
+%=========================================================================
+\section{Bibliografia de estudo}
+%=========================================================================
+
+Lista de partida para a Fase 0. Não é exaustiva; cada trilha deve ampliá-la e registrar
+as adições no repositório.
+
+\campo{Normas e documentação de dispositivo}
+\begin{itemize}
+  \item JEDEC JESD22-A108 --- \emph{Temperature, Bias and Operating Life}.
+  \item JEDEC JESD91 --- métodos de extração de fator de aceleração.
+  \item Intel, \emph{MAX 10 Clocking and PLL User Guide}.
+  \item Intel, \emph{MAX 10 Analog to Digital Converter User Guide}.
+  \item Intel, \emph{MAX 10 FPGA Device Datasheet} --- características de ADC, sensor
+        térmico, limites térmicos e retenção de memória de configuração.
+  \item Intel, \emph{Quartus Prime Handbook} --- atribuições do \emph{fitter},
+        restrições de posicionamento, Chip Planner.
+  \item Xilinx, UG472 (\emph{7 Series FPGAs Clocking Resources}) e UG480 (\emph{XADC})
+        --- para comparação com a plataforma de referência.
+\end{itemize}
+
+\campo{Trabalho anterior do grupo}
+\begin{itemize}
+  \item Artigo SBCCI 2025 --- validação do sensor de \emph{aging} auto-\emph{tuning}.
+  \item Artigo SBCCI 2026 --- arquiteturas de controle térmico de burn-in e seu efeito
+        sobre o fator de aceleração entregue e sobre a variância PVT do sensor.
+  \item Trabalho final de TIP7266 --- caracterização informacional de envelhecimento e
+        ruído em sensores de \emph{slack} embarcados para SLM.
+  \item Código-fonte do sensor, do software de aquisição e do \emph{pipeline} de análise.
+\end{itemize}
+
+\campo{Literatura de referência}
+\begin{itemize}
+  \item Sensores in-situ de margem temporal: família Razor e derivados; canários de
+        atraso; monitores por oscilador em anel.
+  \item Conversores tempo-digital em FPGA: linha de atraso, Vernier, batimento de
+        frequência.
+  \item Gerenciamento de ciclo de vida do silício: artigos de revisão sobre SLM, AVS
+        e estimação de vida útil remanescente.
+  \item Confiabilidade de FPGAs comerciais sob envelhecimento acelerado.
+\end{itemize}
+
+
+\end{document}
