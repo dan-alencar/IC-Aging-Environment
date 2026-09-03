@@ -16,7 +16,7 @@ A Qt launcher dialog lets you choose between single-DUT and dual-DUT mode. It re
 ./run.sh          # from repo root — shows the launcher dialog
 ```
 
-The root launcher only offers App_Nexys and App_2Nexys. App_FPGAging_Slack_Sensor (SBCCI/UltraScale+ target) must be launched standalone.
+The root launcher offers App_Nexys, App_2Nexys, and App_CornerSweep. App_FPGAging_Slack_Sensor (SBCCI/UltraScale+ target) must be launched standalone — different hardware family, not part of the Nexys4 DUT-count selector.
 
 ### Running apps directly (standalone)
 
@@ -26,6 +26,7 @@ Each app also has its own `run.sh` that sets `LD_LIBRARY_PATH` to resolve Qt lib
 cd App_Nexys && ./run.sh                   # 1 DUT (Artix-7 Nexys4 DDR)
 cd App_2Nexys && ./run.sh                  # 2 DUTs (dual Nexys4 DDR)
 cd App_FPGAging_Slack_Sensor && ./run.sh   # UltraScale+ with STM32 bridge
+cd App_CornerSweep && ./run.sh             # 1 DUT, VCCINT corner/failure-boundary sweep
 ```
 
 If the `.venv` does not exist, `run.sh` creates it and installs from `requirements.txt`. To rebuild, delete `.venv/` and re-run.
@@ -139,7 +140,7 @@ PC ──serial──► Arduino (shared oven)                 [optional]
 
 **USB device ID auto-resolution:** `config.resolve_hw_ports()` resolves DUT-0, DUT-1, and PSU-1 ports by following `/dev/serial/by-id/` symlinks using fixed USB serial IDs (`USB_ID_DUT0`, `USB_ID_DUT1`, `USB_ID_PSU1` in `App_2Nexys/config.py`). Update these if boards are swapped.
 
-**Both DUTs auto-programmed at test start:** Both boards' onboard flash is broken — only SRAM works. `TestSequencer._program_both_duts()` programs DUT-0 and DUT-1 in a single Vivado batch session after the PSUs stabilise (`PSU_STABILISE_DELAY_S = 5 s`). After programming, `reset_data()` flushes the serial buffers and the log timer starts immediately — the Vivado batch job itself takes 30–60 s so the FPGAs are already running by then. `DUTWorker.poll_data()` boot-rejects any remaining transient packets (temp > 200 °C or vccint > 2.5 V). The bitstream (`BITSTREAM_PATH`), optional probes file (`BITSTREAM_LTX`), and Digilent serial numbers (`DUT0_DIGILENT_SERIAL`, `DUT1_DIGILENT_SERIAL`) are hardcoded in `App_2Nexys/config.py`. Pre-built bitstreams live in `vivado/aging_study_nexys4ddr/bitstreams/` (currently `nexys4_aging_top_dual-sensor.bit`). `VIVADO_BIN` is also hardcoded to an absolute path (`/home/andre/Xilinx/...`) — update this when running on a different machine.
+**Both DUTs auto-programmed at test start:** Both boards' onboard flash is broken — only SRAM works. `TestSequencer._program_both_duts()` programs DUT-0 and DUT-1 in a single Vivado batch session after the PSUs stabilise (`PSU_STABILISE_DELAY_S = 5 s`). After programming, `reset_data()` flushes the serial buffers and the log timer starts immediately — the Vivado batch job itself takes 30–60 s so the FPGAs are already running by then. `DUTWorker.poll_data()` boot-rejects any remaining transient packets (temp > 200 °C or vccint > 2.5 V). The bitstream (`BITSTREAM_PATH`), optional probes file (`BITSTREAM_LTX`), and Digilent serial numbers (`DUT0_DIGILENT_SERIAL`, `DUT1_DIGILENT_SERIAL`) are hardcoded in `App_2Nexys/config.py`. Pre-built bitstreams live in `vivado/aging_study_nexys4ddr/bitstreams/` (currently `nexys4_aging_top_dual-sensor.bit`). `VIVADO_BIN` resolves in order: `VIVADO_BIN` env var → `vivado` on `PATH` → a hardcoded lab-machine fallback path in `App_2Nexys/config.py`.
 
 **PSU-0 auto-reconnect:** `PSUWorker0._try_reconnect()` detects VISA errors (which can occur when Vivado claims the USB bus during JTAG programming) and automatically reopens the resource after a 2 s delay. PSU-1 (E3634A via RS-232) does not have this logic.
 
@@ -154,6 +155,22 @@ psu.set_voltage(psu_cmd)
 `VOLTAGE_KP = 0.1` V/V is hardcoded in `App_2Nexys/config.py`. The CSV logs both `psu*_cmd_v` (command sent) and `psu*_voltage_v` (PSU readback).
 
 **Signal routing:** `MainWindow._forward_to_aux0/1()` remaps the `plot_data_update` dict keys before forwarding to each `AuxPlotWidget` so the widget stays generic (uses `psu_voltage`, `dut_volt`, etc.).
+
+### App_CornerSweep (single Nexys4 DDR, voltage/failure-boundary characterization)
+
+Not a burn-in test app — a bench-characterization tool. It steps the DUT's VCCINT down through a fixed set of "corner" voltages and, at each corner, sweeps voltage further downward in fine steps to locate where the sensor's adder canary starts producing errors. Same DUT/PSU/Arduino serial stack as `App_Nexys` (reuses the same 15-byte `'T'`-triggered packet), but driven by its own state machine instead of a continuous burn-in loop.
+
+`corner_sequencer.py`'s `Phase` enum drives the sequence:
+```
+IDLE → WAITING_TEMP → CORNER_SETTLING → CORNER_SAMPLING → SWEEP_SETTLING → SWEEP_SAMPLING → DONE
+                          ↑______________________________________|
+                          (loops back into the next corner in CORNERS_V)
+```
+- `WAITING_TEMP` — waits for the DUT to reach and hold its target temperature (`TEMP_STABLE_TICKS` consecutive ticks within `TEMP_STABLE_TOL_C`) before any corner starts.
+- `CORNER_SETTLING` / `CORNER_SAMPLING` — for each voltage in `CORNERS_V` (default `[1.1, 1.0, 0.9]` V, high-to-low), waits for VCCINT to settle (`VOLT_SETTLE_TOL_V`) then collects `SAMPLES_PER_CORNER` baseline ticks.
+- `SWEEP_SETTLING` / `SWEEP_SAMPLING` — from each corner, steps VCCINT down by `SWEEP_STEP_V` (default 10 mV) at a time, sampling `SWEEP_SAMPLE_TICKS` ticks per step, until an adder-canary error appears or `SWEEP_MIN_V` (safety floor) is reached — this is the failure-boundary search.
+
+Config lives in `App_CornerSweep/config.py` (own `CORNERS_V`/`SWEEP_*`/`SETTLE_*` parameters, separate from the burn-in apps' `VOLTAGE_KP` closed-loop trim — this app commands PSU voltage open-loop, step by step, rather than closed-loop tracking a fixed setpoint). Logs via `CornerSweepLogger` (`logger.py`) to its own `test_logs/`.
 
 ### Shared patterns across all apps
 
@@ -202,8 +219,14 @@ Full scientific rationale: `vivado/aging_study_nexys4ddr/SENSOR_ARCHITECTURE.md`
 
 ## Reference documents
 
+- `README.md` / `README.pt-BR.md` — repo map and quick start, for humans (this file is for Claude Code).
 - `PROTOCOL.md` — serial protocol reference for DUT (Nexys4), Arduino, and PSU.
 - `ARCHITECTURE.md` — design intent behind each subsystem and why decisions were made.
+- `docs/onboarding.tex` (and `docs/IC_Aging_Environment.pdf`) — 35-page onboarding manual: aging physics, RTL, software, protocols, workstation setup, running an experiment, data analysis, troubleshooting.
 - `vivado/aging_study_nexys4ddr/SENSOR_ARCHITECTURE.md` — scientific rationale for the dual-adder sensor design.
 - `vivado/aging_study_nexys4ddr/IMPLEMENTATION_ROADMAP.md` — phased checklist; RTL phases 1–2 are done, phases 3–7 (build, validation, data collection) are pending.
 - `vivado/aging_study_nexys4ddr/CLAUDE.md` — sub-project CLAUDE.md with full RTL module hierarchy, clock domains, XADC formulas, and constraint strategy.
+
+## Related work: MAX10/DE10-Lite port (separate branch)
+
+A second student team is porting this sensor architecture to an Intel MAX10 (10M50DAF484C7G, DE10-Lite) target using Quartus Prime, as a parallel research line — not a replacement for this Vivado/Artix codebase. That work lives on the `max10-de10lite-port` branch, under `max10_port/`, with this repository's current implementation kept there as reference-only guidance material (see `max10_port/README.md` on that branch for the full plan and status).

@@ -1,7 +1,8 @@
 """
-Root launcher — presents a Qt dialog to choose between App_Nexys (1 DUT)
-and App_2Nexys (2 DUTs). The selected app is spawned as a subprocess and
-the launcher exits immediately so no config or workers are shared in memory.
+Root launcher — presents a Qt dialog to choose between App_Nexys (1 DUT),
+App_2Nexys (2 DUTs), and App_CornerSweep (voltage/failure characterization).
+The selected app is spawned as a subprocess and the launcher exits
+immediately so no config or workers are shared in memory.
 """
 import sys
 import os
@@ -83,6 +84,10 @@ class LauncherDialog(QDialog):
         btn_2dut.setToolTip("Two Nexys4 DDR boards with independent PSU voltage control")
         btn_2dut.clicked.connect(lambda: _launch("App_2Nexys/run.sh"))
 
+        btn_corner = QPushButton("App CornerSweep  —  Voltage/Failure Characterization")
+        btn_corner.setToolTip("Single Nexys4 DDR board; sweeps VCCINT corners to characterize the failure boundary")
+        btn_corner.clicked.connect(lambda: _launch("App_CornerSweep/run.sh"))
+
         hint = QLabel("Each app manages its own virtual environment and hardware connections.")
         hint.setObjectName("hint")
         hint.setAlignment(Qt.AlignCenter)
@@ -92,6 +97,7 @@ class LauncherDialog(QDialog):
         layout.addWidget(subtitle)
         layout.addWidget(btn_1dut)
         layout.addWidget(btn_2dut)
+        layout.addWidget(btn_corner)
         layout.addWidget(hint)
 
         self.adjustSize()

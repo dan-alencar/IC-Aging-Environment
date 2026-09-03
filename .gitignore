@@ -4,12 +4,12 @@
 # Ambientes Virtuais (Virtual Environments)
 App/.venv/
 App/venv
-/app_caio/venv
-pcb-serial
 App_Nexys/.venv
 App_2Nexys/.venv/
 App_2Nexys/test_logs/
 App_FPGAging_Slack_Sensor/.venv/
+App_CornerSweep/.venv/
+App_CornerSweep/test_logs/
 
 # Python generated output
 __pycache__/
