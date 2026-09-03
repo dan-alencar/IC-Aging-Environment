@@ -12,6 +12,7 @@ Persisted to settings.json in this directory via load_config()/save_config().
 import json
 import os
 import platform
+import shutil
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 SETTINGS_FILE = os.path.join(_HERE, "settings.json")
@@ -48,7 +49,15 @@ BITSTREAM_LTX = os.path.join(
     "build", "aging_study_nexys4ddr", "aging_study_nexys4ddr.runs",
     "impl_1", "nexys4_aging_top.ltx",
 )
-VIVADO_BIN = "/home/andre/Xilinx/2025.1/Vivado/bin/vivado"
+# Resolution order: VIVADO_BIN env var override -> vivado found on PATH -> the
+# historical hardcoded lab-machine path, kept only as a last-resort fallback
+# so existing setups don't break. Update the fallback (or just set the env
+# var) when running on a different machine.
+VIVADO_BIN = (
+    os.environ.get("VIVADO_BIN")
+    or shutil.which("vivado")
+    or "/home/andre/Xilinx/2025.1/Vivado/bin/vivado"
+)
 PSU_STABILISE_DELAY_S = 5   # seconds to wait after PSU turn-on before programming
 
 # --- DUT serial ports (Nexys4 DDR — pick the higher ttyUSB* of each board pair) ---
