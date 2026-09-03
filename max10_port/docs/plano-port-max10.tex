@@ -177,7 +177,8 @@ sequenciamento com portões de decisão e a política de risco.
 \textbf{Laboratório} & LESC --- Laboratório de Engenharia de Sistemas de Computação \\
 \textbf{Instituição} & Universidade Federal do Ceará (UFC) \\
 \textbf{Programa} & PPGETI --- Engenharia Elétrica e de Computação \\
-\textbf{Versão} & 1.0 \\
+\textbf{Versão} & 1.1 --- acrescenta curso rápido de arquitetura atual, organização
+do repositório/branches, e sequência consolidada de tarefas (Seções~2, 3 e~5.2) \\
 \textbf{Horizonte} & 16 semanas (um semestre letivo) \\
 \bottomrule
 \end{tabularx}
@@ -199,6 +200,7 @@ sequenciamento com portões de decisão e a política de risco.
 %=========================================================================
 
 \subsection{Objetivo}
+\label{sec:objetivo}
 
 Portar a plataforma de sensoriamento de envelhecimento por \emph{slack} --- hoje
 implementada e validada em FPGA Xilinx Artix-7 (XC7A100T, placa Nexys~4~DDR) ---
@@ -306,8 +308,229 @@ tecnológico, pelas razões X e Y, com penalidade quantificada em Z'' encerra o 
 com sucesso.
 \end{okbox}
 
+\begin{keybox}[title={Nota complementar de direcionamento}]
+O documento \texttt{nota-limite-deteccao.pdf}, nesta mesma pasta, propõe declarar o
+estudo de limite de detectabilidade --- hoje tratado neste plano como desfecho
+aceitável de contingência do Gate~A (Seção~\ref{sec:gateA}) --- como o objetivo
+\emph{primário} do projeto desde o início, com a recuperação de resolução por
+Vernier como objetivo secundário que, se bem-sucedido, eleva a contribuição.
+A proposta não altera nenhuma tarefa de engenharia nem o cronograma; afeta apenas
+o enquadramento da Seção~\ref{sec:gateA} e a redação da produção científica da
+frente F6. Leitura recomendada antes da reunião de abertura.
+\end{keybox}
+
+%=========================================================================
+\section{Curso Rápido: A Arquitetura Atual}
+\label{sec:crashcourse}
+%=========================================================================
+
+Esta seção é o material de entrada para quem nunca trabalhou no projeto Artix-7. Ela
+condensa, em poucas páginas, o que está espalhado em \texttt{CLAUDE.md},
+\texttt{ARCHITECTURE.md}, \texttt{PROTOCOL.md} e nas 35 páginas de
+\texttt{docs/onboarding.tex} do repositório principal --- suficiente para acompanhar
+o resto deste plano sem alternar entre documentos, mas não um substituto para a
+leitura completa daqueles arquivos antes de tocar em código ou hardware.
+
+\subsection{Visão geral do experimento}
+
+O sistema de referência acelera o envelhecimento de uma FPGA (o DUT --- \emph{Device
+Under Test}) por meio de um forno resistivo, enquanto um sensor embarcado na própria
+FPGA mede, continuamente, a margem temporal (\emph{slack}) de um caminho crítico
+sintético. Cinco subsistemas cooperam:
+
+\begin{itemize}
+  \item \textbf{Forno + PID.} Um Arduino/ESP32 controla um relé de estado sólido
+        (SSR) que aquece o forno, com sintonia PID identificada por modelo FOPDT e
+        regras SIMC (mesmo procedimento que a trilha de estudo sobre bancada de
+        estresse, adiante neste documento, pede para ser refeito no novo DUT).
+  \item \textbf{DUT.} A FPGA sob teste, executando o RTL do sensor (Seção~\ref{sec:rtl-crashcourse})
+        e respondendo a um protocolo serial simples.
+  \item \textbf{Fonte programável (PSU).} Ajusta a tensão de alimentação do núcleo
+        da FPGA, comandada por VISA/SCPI, com laço de compensação realimentado pela
+        leitura de $V_\text{CCINT}$ do próprio DUT.
+  \item \textbf{Host.} Um computador rodando uma aplicação Python (Seção~\ref{sec:sw-crashcourse})
+        que orquestra os três subsistemas acima, grava um CSV por experimento e
+        exibe gráficos ao vivo.
+  \item \textbf{Pipeline de análise.} Scripts/notebooks Python que processam os CSVs
+        para extrair $\sigma_\text{resid}$ e os demais números reportados nos artigos
+        do grupo --- fora do escopo deste plano em detalhe, mas o formato de saída
+        que ele consome é um requisito de compatibilidade explícito da frente F4.
+\end{itemize}
+
+\subsection{Arquitetura RTL do sensor}
+\label{sec:rtl-crashcourse}
+
+O sensor de referência (branch \texttt{main}, projeto
+\texttt{vivado/aging\_study\_nexys4ddr/}) é construído em torno de quatro blocos.
+
+\campo{Domínios de clock}
+Um único MMCM (\texttt{clk\_wiz\_0}) deriva três clocks de 100~MHz a partir do
+cristal da placa:
+\begin{itemize}
+  \item \texttt{clk\_sys} --- 0°, clock principal do sistema.
+  \item \texttt{psclk} --- 0° com deslocamento de fase dinâmico habilitado; é a
+        \emph{régua temporal} discutida em detalhe na próxima seção.
+  \item \texttt{clk\_en} --- 100° fixo, o clock ``captor'' do sensor de
+        metaestabilidade.
+\end{itemize}
+
+\campo{Sensor de metaestabilidade (\texttt{modern\_sensible})}
+Três \emph{flip-flops} amostram o mesmo sinal combinacional (\texttt{in\_sensor}) em
+domínios de clock diferentes: FF1 em \texttt{psclk} (fase deslocável), FF2 em
+\texttt{clk\_sys} (referência fixa). Um XOR entre FF1 e FF2 é capturado por um
+terceiro \emph{flip-flop}, FF3, no clock \texttt{clk\_en} --- esse é o
+\texttt{alarm}. Se FF1 e FF2 concordam, o caminho sob teste tinha margem suficiente
+na fase atual; se discordam, a fase deslocada empurrou a amostragem para dentro da
+janela de metaestabilidade. É essa discordância, rastreada à medida que a fase
+varre, que converte um evento binário em medida temporal (ver a trilha de estudo
+sobre temporização e régua de fase, adiante).
+
+\campo{Caminho crítico: adder duplo (\texttt{adder\_canary})}
+O \texttt{in\_sensor} de \texttt{modern\_sensible} vem de um somador
+\emph{ripple-carry} de 16 bits (\texttt{ripple\_adder}), construído com primitivas
+\texttt{LUT3\_L} explícitas e atributo \texttt{DONT\_TOUCH} em cada estágio --- isso
+impede a ferramenta de colapsar a cadeia de \emph{carry} em blocos \texttt{CARRY4}
+dedicados, o que destruiria a sensibilidade ao envelhecimento do caminho. Há duas
+instâncias estruturalmente idênticas: \texttt{u\_sensor}, cujo operando alterna a
+cada ciclo entre \texttt{0x5555}/\texttt{0x5556} para forçar propagação de
+\emph{carry} completa e determinística, alimentando o sensor de metaestabilidade
+acima; e \texttt{u\_canary}, um segundo somador com um contador livre, cujo
+resultado é comparado a uma recomputação redundante para detectar erro funcional
+(\texttt{wrong}/\texttt{correct}/\texttt{error\_count}). As duas instâncias
+envelhecem no mesmo ritmo por construção (mesma estrutura, mesmas restrições de
+posicionamento) --- ver \texttt{SENSOR\_ARCHITECTURE.md} para a justificativa
+completa.
+
+\campo{Controlador de varredura de fase (\texttt{controller\_controller})}
+Uma máquina de estados finita desloca a fase de \texttt{psclk} incrementalmente,
+observando o \texttt{alarm}: \texttt{CHECK\_ALARM} $\rightarrow$
+\texttt{INIT\_SHIFT} $\rightarrow$ \texttt{WAIT\_SHIFT} (repete até o alarme disparar)
+$\rightarrow$ \texttt{DONE} (registra o número de passos em
+\texttt{display\_value}) $\rightarrow$ \texttt{RESET\_PHASE} $\rightarrow$
+\texttt{WAIT\_RESET} (desfaz os passos) $\rightarrow$ \texttt{IDLE} $\rightarrow$
+reinicia autonomamente. \texttt{display\_value} é o valor de \emph{slack} em
+incrementos de fase --- a grandeza bruta que, multiplicada pelo passo de fase
+medido, vira picossegundos.
+
+\campo{Telemetria PVT e empacotamento}
+Um XADC interno fornece temperatura de junção e $V_\text{CCINT}$
+(\texttt{temp\_catcher.sv}). Ao receber o byte \texttt{'T'} (\texttt{0x54}) pela
+UART, \texttt{sensor\_stream} congela todas as leituras correntes e serializa um
+pacote de 15 bytes: \texttt{[TEMP×3][SLACK×2][VCCINT×3][FAIL×1][WRONG×2][CORRECT×2][ERR\_CNT×2]},
+\emph{Little Endian} --- ver \texttt{PROTOCOL.md} para o mapa de bytes completo.
+
+\subsection{Arquitetura do software de aquisição}
+\label{sec:sw-crashcourse}
+
+A aplicação de referência é \texttt{App\_Nexys/} (PySide6). Três padrões valem a
+pena internalizar antes de portar qualquer parte dela:
+
+\begin{enumerate}
+  \item \textbf{\emph{Workers} em \texttt{QThread}.} Cada dispositivo físico
+        (\texttt{DUTWorker}, \texttt{ArduinoWorker}, \texttt{PSUWorker}) roda em sua
+        própria \emph{thread}, comunicando com a UI só por sinais Qt. O
+        \texttt{DUTWorker} envia o \texttt{'T'} e lê os 15 bytes descritos acima uma
+        vez por ciclo de \texttt{QTimer}.
+  \item \textbf{\texttt{TestSequencer} como orquestrador.} Uma classe central lê o
+        estado mais recente de todos os \emph{workers}, monta uma linha de dados,
+        grava no CSV, verifica limites de segurança (temperatura máxima do forno e
+        do DUT, corrente máxima da fonte) e roda o laço de compensação de
+        $V_\text{CCINT}$ (proporcional puro: \texttt{psu\_cmd += Kv × (setpoint -
+        medido)}).
+  \item \textbf{\texttt{config.py} + \texttt{settings.json}.} Todo parâmetro
+        ajustável (portas seriais, ganhos, limites) vive em um módulo de
+        configuração global, persistido em JSON e editado por um diálogo modal
+        (\texttt{setup\_config.py}) mostrado na inicialização.
+\end{enumerate}
+
+\subsection{Onde aprofundar}
+
+Esta seção é deliberadamente incompleta. Antes de escrever RTL ou código para o
+MAX~10, leia, no repositório principal:
+
+\begin{itemize}
+  \item \texttt{CLAUDE.md} --- mapa denso e atualizado de todo o código, incluindo
+        as variantes experimentais que \emph{não} são a base deste port (ver a
+        próxima seção).
+  \item \texttt{docs/onboarding.tex} (ou o PDF compilado) --- as 35 páginas
+        completas: física do envelhecimento, RTL linha a linha, protocolos,
+        preparação de estação de trabalho, execução de experimento, análise de
+        dados.
+  \item \texttt{ARCHITECTURE.md} e \texttt{PROTOCOL.md} --- intenção de projeto e
+        protocolos byte a byte.
+  \item \texttt{vivado/aging\_study\_nexys4ddr/SENSOR\_ARCHITECTURE.md} --- a
+        justificativa científica completa do desenho de adder duplo resumido acima.
+\end{itemize}
+
+%=========================================================================
+\section{Organização do Repositório e deste Branch}
+\label{sec:repo-org}
+%=========================================================================
+
+O repositório foi reorganizado, no mesmo esforço em que este plano foi incorporado a
+ele, especificamente para acomodar esta nova linha de pesquisa sem confundi-la com a
+implementação de referência. Duas coisas para internalizar antes de navegar o código.
+
+\subsection{Mapa de branches}
+
+O repositório tem, hoje, quatro branches ativos:
+
+\begin{description}[leftmargin=0em,style=nextline,itemsep=6pt]
+  \item[\texttt{main}]
+        \textbf{A referência deste port.} Sensor único, adder duplo (RCA), validado
+        e publicado (SBCCI 2025/2026). É o que a Tabela~\ref{tab:subsistemas}
+        descreve e o que a Seção~\ref{sec:crashcourse} resume.
+  \item[\texttt{inverter-chain-sensor}]
+        Variante experimental: mesmo sensor único, caminho crítico por cadeia de
+        inversores em vez de adder. \textbf{Não} é a base deste port.
+  \item[\texttt{experimental-multi-sensor}]
+        Variante experimental: quatro canais RCA independentes, protocolo próprio,
+        ainda sem validação em \emph{hardware}. \textbf{Não} é a base deste port.
+  \item[\texttt{max10-de10lite-port}]
+        Este branch. Contém tudo o que está descrito no restante deste documento,
+        sob \texttt{max10\_port/}.
+\end{description}
+
+\begin{warnbox}[title={Não confundir os branches experimentais com a referência}]
+Os branches \texttt{inverter-chain-sensor} e \texttt{experimental-multi-sensor}
+existem para explorar variações do sensor \emph{no mesmo Artix-7}, não para portar
+para MAX~10. Se você encontrar código ou documentação referenciando um sensor de
+múltiplos canais ou uma cadeia de inversores fora de \texttt{max10\_port/}, você está
+olhando para um desses branches, não para a base deste projeto.
+\end{warnbox}
+
+\subsection{Estrutura de \texttt{max10\_port/}}
+
+Todo o trabalho deste branch vive sob \texttt{max10\_port/}, seguindo a convenção de
+repositório recomendada mais adiante neste plano (Seção~\ref{sec:convencoes}):
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{2.2cm} X@{}}
+\toprule
+\textbf{Diretório} & \textbf{Conteúdo} \\
+\midrule
+\texttt{docs/} & Este documento, a nota de direcionamento complementar, e os
+artefatos escritos que a Fase~0 produzir. \\
+\texttt{hdl/} & Projeto Quartus Prime: RTL, restrições, scripts de build. Hoje é
+apenas andaime (\emph{scaffold}) --- ver \texttt{hdl/README.md}. \\
+\texttt{host/} & Software de aquisição do lado PC (frente F4). \\
+\texttt{analysis/} & Análise offline (frente F6). \\
+\texttt{data/} & Dados brutos de campanha, imutáveis (Seção~\ref{sec:convencoes}). \\
+\texttt{minutes/} & Atas de reunião semanal versionadas (Seção~\ref{sec:ritual}). \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\textbf{Tudo fora de \texttt{max10\_port/} é material de referência para este
+branch, não uma base sobre a qual construir diretamente.} Ler, entender, e --- onde
+fizer sentido, como em \texttt{App\_Nexys/} para a frente F4 --- bifurcar
+(\emph{fork}) o que for útil. Não modificar em \emph{place}: o resto do repositório
+continua sendo o código de produção da pesquisa em Artix-7/UltraScale+, usado por
+outra equipe em paralelo.
+
 %=========================================================================
 \section{Diagnóstico técnico de portabilidade}
+\label{sec:portabilidade}
 %=========================================================================
 
 Esta seção existe para que a equipe entre na Fase~0 sabendo onde está a dificuldade.
@@ -362,6 +585,7 @@ opção de ferramenta que o reduza. Qualquer resolução mais fina exige uma arq
 de medição diferente, não uma sintonia diferente.
 
 \subsection{Propagação da perda de resolução}
+\label{sec:propagacao-perda}
 
 A penalidade não é uma abstração. Ela se propaga diretamente para a métrica que
 sustenta a aplicabilidade do sensor em gerenciamento de ciclo de vida do silício (SLM).
@@ -469,6 +693,7 @@ adotar um setpoint conservador e prever verificação de integridade da configur
 final de cada campanha.
 
 \subsubsection{Ausência de monitor interno de alimentação}
+\label{sec:ausencia-vcore}
 
 A perda do monitor de $V_\text{CCINT}$ é a mais consequente para a metodologia, porque
 o eixo de tensão participa de duas funções distintas na versão de referência:
@@ -481,6 +706,7 @@ alimentar o núcleo pela fonte programável --- intervenção invasiva, irrevers
 risco alto. O plano trata as duas separadamente e adia a segunda.
 
 \subsubsection{Envelhecimento mais lento em nó tecnológico maior}
+\label{sec:envelhecimento-lento}
 
 O MAX~10 é fabricado em \SI{55}{\nano\meter}. Os mecanismos dominantes de degradação
 (NBTI e HCI) produzem, nesse nó, deslocamentos de $V_\text{th}$ menores e mais lentos
@@ -504,6 +730,7 @@ mudança de eixo de estresse. Esta decisão pertence à semana 4, não à semana
 %=========================================================================
 
 \subsection{Justificativa e método}
+\label{sec:fase0-metodo}
 
 A Fase~0 é obrigatória e bloqueante. Nenhum integrante abre o Quartus antes de concluir
 a trilha de estudo correspondente à sua frente. A razão não é pedagógica em sentido
@@ -561,7 +788,7 @@ Quatro semanas, sobrepostas à preparação de bancada, com marco de saída na s
 \campo{Entregável}
 Nota técnica derivando $\text{AF}(T,V)$ para os parâmetros da bancada e para o
 dispositivo alvo, contendo obrigatoriamente a resposta numérica à pergunta de
-viabilidade da Seção~2.5.3, com a faixa de $E_a$ considerada e a sensibilidade do
+viabilidade da Seção~\ref{sec:envelhecimento-lento}, com a faixa de $E_a$ considerada e a sensibilidade do
 resultado a essa escolha.
 
 \campo{Critério de aceite}
@@ -659,7 +886,7 @@ de convergência da busca inicial.
   \item Modo de diodo térmico (TSD): princípio, exatidão nominal, necessidade de
         calibração, e restrição de multiplexação com os canais analógicos externos.
   \item Ausência de monitor interno de trilha de alimentação e as consequências
-        metodológicas discutidas na Seção~2.5.2.
+        metodológicas discutidas na Seção~\ref{sec:ausencia-vcore}.
   \item Propagação de incerteza: como o erro de temperatura entra no cálculo de AF.
 \end{itemize}
 
@@ -735,6 +962,7 @@ arredondamento.
 Reprodução numérica confirmada, com \emph{diff} apresentado contra os valores dos artigos.
 
 \subsection{Marco de saída --- Reprodução de referência}
+\label{sec:marco-reproducao}
 
 \begin{keybox}[title={Marco bloqueante da semana 4}]
 Antes de qualquer trabalho sobre MAX~10, a equipe executa uma campanha curta
@@ -1188,6 +1416,7 @@ controle cursada.
 
 %-------------------------------------------------------------------------
 \subsection{F6 --- Caracterização, dados e produção científica}
+\label{sec:F6}
 
 \frenteheader{F6 --- Caracterização, dados e produção científica}
 {Transformar a implementação em resultado defensável, com incerteza declarada e método auditável.}
@@ -1278,7 +1507,89 @@ Relatório técnico e rascunho de artigo \\
 \end{tabularx}
 \end{table}
 
+\subsection{Sequência consolidada de tarefas}
+\label{sec:sequencia}
+
+O cronograma acima e a matriz de cobertura (Tabela~\ref{tab:cobertura}) mostram a
+dependência entre trilhas e frentes, mas exigem cruzar duas tabelas para responder
+``o que eu faço primeiro?''. Esta lista achata as Seções~3 e~4 em uma única sequência
+de execução, numerada, na ordem em que cada item deveria começar. Cada item cita sua
+origem (\texttt{E\#} para trilha de estudo, \texttt{F\#} para frente de
+implementação) --- volte à seção correspondente para o conteúdo completo da tarefa;
+esta lista é um roteiro de ordem, não um substitutivo das seções~3 e~4.
+
+\begin{enumerate}[leftmargin=2.4em]
+  \item \textbf{[Semana 1]} Leia esta seção e a Seção~\ref{sec:crashcourse} por
+        inteiro antes de qualquer outra coisa. \emph{(pré-requisito de todas as
+        trilhas)}
+  \item \textbf{[Semanas 1--4, paralelo]} Execute as seis trilhas de estudo
+        (E1--E6), cada uma com apresentador primário e leitor secundário, seminário
+        semanal de 90~min e artefato escrito de 2--4~páginas. \emph{(E1--E6)}
+  \item \textbf{[Semana 4]} Rode a campanha de reprodução de referência na Nexys~4
+        DDR, do início ao fim, com as próprias mãos --- este é o \emph{golden
+        reference} contra o qual toda medida futura em MAX~10 será comparada.
+        \emph{(marco bloqueante, Seção~\ref{sec:marco-reproducao})}
+  \item \textbf{[Semana 4]} Todas as seis trilhas precisam estar aprovadas em
+        arguição antes deste ponto. Trilha reprovada é reapresentada antes de sua
+        frente correspondente iniciar.
+  \item \textbf{[Semana 5]} F1 inicia: instanciar e caracterizar o PLL, medir o
+        passo de fase real em \emph{hardware}. \emph{(F1, tarefa~1)}
+  \item \textbf{[Semana 5]} F2 inicia em paralelo: traduzir o vocabulário de
+        restrições Xilinx~$\rightarrow$~Quartus e desabilitar otimizações do
+        \emph{fitter} que reescreveriam o caminho sintético. \emph{(F2, tarefas~1--2)}
+  \item \textbf{[Semanas 5--6]} F1: portar a máquina de estados do laço de
+        auto-\emph{tuning}, com os parâmetros já reformulados para passo grosso pela
+        trilha E3. \emph{(F1, tarefa~2)}
+  \item \textbf{[Semanas 5--6]} F3 e F5 iniciam preparação (não dependem do
+        resultado de F1): caracterização do ADC/TSD e adaptação mecânica da bancada.
+        \emph{(F3 tarefa~1; F5 tarefa~1)}
+  \item \textbf{[Semana 6]} F4 decide o transporte de telemetria (JTAG UART vs.
+        módulo USB-serial externo) --- decisão que não bloqueia nem é bloqueada por
+        F1/F2, mas precisa estar tomada antes de F4 poder integrar com F3.
+        \emph{(F4, tarefa~1)}
+  \item \textbf{[Semanas 6--8]} F1: redesenho do caminho sintético para o tecido
+        lógico de 4 entradas; investigação do Vernier de dois PLLs (a tarefa de
+        maior valor e maior risco da frente); banco de testes de simulação.
+        \emph{(F1, tarefas~3--6)}
+  \item \textbf{[Semana 8]} \textbf{Gate A.} Evidência: passo de fase medido, laço
+        rastreando borda deslocada termicamente em \emph{hardware}, parecer sobre o
+        Vernier com dados de \emph{jitter}. Decisão do orientador, não da equipe.
+        \emph{(Seção~\ref{sec:gateA}; ver também a nota de direcionamento sobre
+        enquadramento deste portão, \texttt{nota-limite-deteccao.pdf})}
+  \item \textbf{[Semanas 9--10]} Se Gate~A aprovar o Vernier: F1 conclui sua
+        implementação. Se reprovar com passo nativo funcionando: projeto se
+        reposiciona (ou já estava posicionado, se a nota de direcionamento foi
+        adotada) como estudo de limite de detectabilidade, sem mudança de
+        cronograma. \emph{(F1, desfechos do Gate~A)}
+  \item \textbf{[Semanas 9--12]} F3: calibração do TSD em cinco pontos; esquema de
+        intercalação TSD/canais externos; --- \textbf{se} a modificação de placa
+        para acesso a $V_\text{CORE}$ estiver no escopo da fase~1 (decisão explícita
+        de escopo, ver a caixa de aviso na Seção~F3), ela exige revisão de projeto
+        com o orientador antes de qualquer solda. \emph{(F3, tarefas~2--4)}
+  \item \textbf{[Semanas 9--12]} F4: porte do protocolo de pacote e da política de
+        \emph{timestamp}; adaptação do software \emph{host} (reconexão automática,
+        gravação incremental). \emph{(F4, tarefas~2--4)}
+  \item \textbf{[Semana 11]} F4: ensaio de resistência de 72~horas com injeção
+        deliberada de falhas, \emph{antes} do Gate~B. \emph{(F4, tarefa~5)}
+  \item \textbf{[Semana 12]} \textbf{Gate B.} Evidência: campanha de 24~horas com
+        arquivo único, sem lacunas não marcadas, séries de \emph{slack}/temperatura/
+        tensão correlacionadas, e análise preliminar de F6 já capaz de produzir uma
+        estimativa de $\sigma_\text{resid}$ a partir desse arquivo. Se não conseguir,
+        a campanha longa \textbf{não} é autorizada. \emph{(Seção~\ref{sec:gateB})}
+  \item \textbf{[Semanas 13--16]} F5 executa a campanha longa, dentro do envelope de
+        estresse definido (limite térmico do dispositivo, retenção da \emph{flash}
+        de configuração, piso de estresse da trilha E1 --- os três simultaneamente).
+        \emph{(F5, tarefas~3--5)}
+  \item \textbf{[Semanas 13--16, em paralelo à campanha]} F6 conduz a caracterização
+        completa da régua, a decomposição de variância PVT, a estimação de
+        $\sigma_\text{resid}$ e do degrau resolvível, a comparação sistemática entre
+        plataformas, e inicia a redação. \emph{(F6, tarefas~1--6)}
+  \item \textbf{[Semana 16]} Entrega: relatório técnico interno e rascunho de
+        artigo, com os produtos da Seção~\ref{sec:produtos} completos.
+\end{enumerate}
+
 \subsection{Gate A --- Viabilidade da régua (semana 8)}
+\label{sec:gateA}
 
 \begin{keybox}[title={Gate A é o portão real do projeto}]
 Gate~A decide se o projeto continua sendo uma migração ou passa a ser outro projeto.
@@ -1310,6 +1621,7 @@ disponíveis na semana~8 --- não adiada para quando houver mais dados.
 \end{itemize}
 
 \subsection{Gate B --- Integridade da cadeia (semana 12)}
+\label{sec:gateB}
 
 Verifica que a cadeia completa --- sensor, PVT, telemetria, \emph{host}, análise ---
 opera em conjunto antes de comprometer semanas de forno.
@@ -1325,6 +1637,7 @@ com o arquivo obtido, a campanha longa não é autorizada. O problema está na c
 e uma campanha de duas semanas apenas produzirá o mesmo problema em maior volume.
 
 \subsection{Ritual de acompanhamento}
+\label{sec:ritual}
 
 \begin{itemize}
   \item \textbf{Reunião semanal de 60 minutos} com toda a equipe. Cada frente reporta:
@@ -1341,6 +1654,7 @@ e uma campanha de duas semanas apenas produzirá o mesmo problema em maior volum
 
 %=========================================================================
 \section{Gestão de risco}
+\label{sec:riscos}
 %=========================================================================
 
 \begin{table}[htbp]
@@ -1399,6 +1713,7 @@ Compatibilidade de formato CSV tratada como requisito, não como preferência. \
 \end{itemize}
 
 \subsection{Repositório e convenções}
+\label{sec:convencoes}
 
 \begin{itemize}
   \item Repositório único, com separação clara entre \texttt{hdl/}, \texttt{host/},
@@ -1455,6 +1770,7 @@ O erro a evitar não é adotar essa rota --- é adotá-la sem declarar a limita�
 sem perceber que ela existe.
 
 \subsection{Resultado desfavorável bem medido é resultado}
+\label{sec:resultado-desfavoravel}
 
 A afirmação ``a arquitetura não porta com fidelidade útil para este nó tecnológico,
 pelas razões X e Y, com penalidade quantificada em Z'' é contribuição legítima e
@@ -1468,6 +1784,7 @@ definitivos. A prevenção é declarar, no dia um, que o desfecho desfavorável 
 
 %=========================================================================
 \section{Produtos esperados}
+\label{sec:produtos}
 %=========================================================================
 
 \begin{table}[htbp]
