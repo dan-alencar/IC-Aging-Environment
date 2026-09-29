@@ -1,0 +1,64 @@
+%==============================================================================
+\section{Introduction}
+\label{sec:intro}
+
+% --- maps to 01_Project_Overview.md §1, §2 ---
+
+\subsection{Motivation and point of departure}
+Integrated circuits degrade. Bias-temperature instability (BTI/NBTI), hot-carrier
+injection and related mechanisms slow critical paths over a device's lifetime,
+and SLM aims to monitor that degradation in-field to enable adaptive voltage
+scaling and remaining-useful-life (RUL) prediction. This project builds on three
+correlated prior efforts: an auto-tuning on-chip slack sensor
+\cite{nogueira_sensor}, a thermal-control fidelity study comparing bang-bang and
+PID burn-in ovens on the same device and sensor \cite{alencar_fidelity}, and a
+low-cost automated burn-in platform \cite{alencarfilho_tcc}. Across all three, a
+single fact recurs: the slack a sensor reports is a \emph{mixture} of a
+permanent aging term and a reversible PVT term,
+\begin{equation}
+  \signalmodel ,
+  \label{eq:model}
+\end{equation}
+where $\eq$ is quantization noise bounded by the sensor LSB
+(\valLSBps~ps per count).
+
+\subsection{The gap}
+The prior work measures the reversible contamination with the linear $R^2$ of
+slack regressed on $\Tdie$ and $\Vcore$ (e.g.\ \valRsqBangBang{} under bang-bang
+vs.\ \valRsqPid{} under PID control). This has two limitations central to this
+physical domain: it captures \emph{only linear} dependence, although BTI is
+super-linear in $\Vcore$ and the Arrhenius acceleration is exponential in
+inverse temperature; and it yields \emph{no transferable unit}---``variance
+explained'' does not answer how many aging states the sensor resolves, how early
+a trend is detectable, or how much aging information a given bench preserves.
+Information theory answers all three in one currency: \textbf{bits}.
+
+\subsection{Contribution}
+We add an analytical measurement layer---no new silicon, sensor, or oven---that
+re-expresses noise, correction and recoverability in the language of entropy,
+mutual information and channel capacity. Concretely:
+\begin{enumerate}
+  \item $\MI{\slk}{\Tdie,\Vcore}$ replaces $R^2$ as a non-linear contamination
+        measure (\cref{sec:results});
+  \item an entropy account of PVT correction quantifies, in bits, the
+        uncertainty each auxiliary channel removes;
+  \item a capacity estimate and a BSC alarm model convert measured noise into
+        resolvable aging states and alarm reliability;
+  \item a Cram\'er--Rao/Bayesian detectability bound states the earliest
+        detectable aging trend given the noise floor, complemented by a
+        Wiener-process/Kalman-filter treatment that turns the same problem
+        into a continuously-updated, denoised aging trajectory and a
+        closed-form Inverse-Gaussian RUL \emph{distribution}
+        (\cref{sec:res-wiener}).
+\end{enumerate}
+We additionally exercise source coding, Kolmogorov/MDL model selection and
+ICA-based blind separation on the same logs, so that the project spans the full
+syllabus of the course (\cref{sec:methodology} and the topic mapping).
+
+\subsection{Scope and honesty}
+The primary dataset is a single \valDurationHours~h PID campaign on one device;
+it is long enough to expose a measurable aging drift but cannot, alone,
+cross-validate a permanent-aging trajectory across devices. RUL results are thus
+framed as a \emph{methodology and a detectability bound}. Mutual-information
+estimation on strongly autocorrelated series is bias-prone; we report everything
+on an effective sample size $\neff$ with block-bootstrap intervals.

@@ -1,0 +1,82 @@
+%==============================================================================
+\section{Metodologia}
+\label{sec:methodology}
+
+% --- corresponde a 02_Methodology.md; o arco de cinco estágios ---
+% O desenvolvimento completo está em 02_Methodology.md; esta seção é a
+% condensação em formato de artigo, organizada como adquirir -> transformar
+% -> quantificar -> preservar -> inferir.
+
+\subsection{Estágio 1 --- Adquirir}
+Reaproveitar os registros sincronizados $(\slk,\Tdie,\Vcore,\tm)$
+(\cref{sec:dataset}); excluir o transiente térmico inicial de 1.0~h; manter a
+resolução bruta (a discretização é postergada para a etapa de estimação).
+
+\subsection{Estágio 2 --- Transformar}
+O acoplamento ambiental \emph{reversível} --- a grandeza que a correção PVT
+avalia (\cref{sec:res-correction}) --- é medido sobre sinais com a tendência
+retirada (\emph{detrend}, mediana em janela longa), de modo que
+$\MI{\scorr}{\Tdie,\Vcore}$ não confunda a deriva lenta de envelhecimento com
+acoplamento ambiental. O número-manchete $\MI{\slk}{\Tdie,\Vcore}$ da
+\cref{sec:res-mi}, por construção, \textbf{não} é detrendizado: ele é
+calculado sobre a mesma série bruta pós-\emph{soak} usada para o $R^2$ do
+trabalho anterior, precisamente para permitir a comparação
+maçã-com-maçã da \cref{sec:res-mi}. Padronizar $\Tdie,\Vcore$. Tratar a
+correlação serial via (i)~o tempo de autocorrelação integrado $\tauint$ e um
+tamanho efetivo de amostra $\neff=n/(2\tauint)$; (ii)~intervalos de confiança
+por \emph{moving-block bootstrap}; (iii)~decimação como verificação cruzada.
+Duas famílias de estimadores são comparadas: \emph{plug-in} com
+\emph{binning} e correção de viés de Miller--Madow, e $k$-vizinhos-mais-próximos
+(Kozachenko--Leonenko / KSG); as duas concordam na conclusão qualitativa
+(acoplamento muito acima do piso nulo; excesso positivo sobre o
+equivalente Gaussiano), mas divergem além do intervalo de confiança do
+estimador com \emph{binning} --- essa diferença sistemática entre
+estimadores é caracterizada, não escondida, na \cref{sec:res-mi}.
+
+\subsection{Estágio 3 --- Quantificar}
+Estimar $\Ent{\slk}$, $\Ent{\slk\mid\Tdie,\Vcore}$, as informações mútuas por
+canal $\MI{\slk}{\Tdie}$, $\MI{\slk}{\Vcore}$, a conjunta
+$\MI{\slk}{\Tdie,\Vcore}$ e a fração de informação; comparar regimes;
+calcular $\KL{\cdot}{\cdot}$ entre bancadas (\cref{eq:mi}).
+
+\subsection{Estágio 4 --- Preservar (correção PVT como recuperação de informação)}
+Ajustar $\hat{\dpvt}(\Tdie,\Vcore)$ (OLS linear; GLS/MLE não-linear;
+Bayesiano) e formar $\scorr=\slk-\hat{\dpvt}$. Avaliar cada correção pela MI
+residual \emph{reversível} (detrendizada) $\MI{\scorr}{\Tdie,\Vcore}\to 0$ e
+pelo desvio-padrão residual em relação ao piso de quantização; selecionar o
+modelo por MDL. Classificar $\Tdie$ vs.\ $\Vcore$ por contribuição de
+informação (seleção de atributos). Como um dual exploratório, executar
+separação cega por ICA/negentropia e avaliá-la pela MI residual entre
+componentes.
+
+\subsection{Estágio 5 --- Inferir (capacidade e RUL)}
+Converter o ruído residual pós-correção em estados de envelhecimento
+resolvíveis via \cref{eq:capacity}; modelar o alarme por limiar como um BSC e
+reportar $\Cbsc=1-\Hb(p)$ (\cref{eq:bsc}). Derivar o limite de
+detectabilidade de Cram\'er--Rao sobre a inclinação de envelhecimento usando
+$\neff$, complementado por uma posterior Bayesiana. Como uma segunda rota de
+estimação sequencial para a mesma questão (\cref{sec:th-wiener}), fazer a
+média em blocos de $\scorr$ em $\sim\!\neff$ observações
+quase-independentes (comprimento de bloco $2\tauint$, ou seja, uma unidade de
+$\neff$ por bloco por construção), ajustar a difusão de Wiener $\sigma_B^2$ e
+o ruído de observação por bloco $R$ pelo método dos momentos (variância dos
+incrementos de média de bloco vs.\ defasagem), ajustar o ruído de taxa
+$\sigma_{\mathrm{rate}}^2$ por MLE unidimensional sobre a verossimilhança de
+inovações do filtro de Kalman, e executar um suavizador Kalman/RTS para
+obter uma trajetória de envelhecimento denoised $\hat\Xlat(t)$ com bandas de
+credibilidade e a distribuição de RUL Gaussiana-inversa da
+\cref{eq:invgauss} em dois limiares já calculados
+($D=\sigma_{\text{noise}}$, $D=\sigma_{\text{signal}}$). Por fim, enquadrar a
+``melhor condição de \emph{burn-in}'' como a minimização de
+$\MI{\slk}{\Tdie,\Vcore}$ sujeita a entregar o fator de aceleração de
+Arrhenius exigido.
+
+\subsection{Validação}
+Comparação entre estimadores independentes (Miller--Madow com
+\emph{binning} vs.\ KSG), com a diferença entre eles reportada como faixa de
+incerteza de estimador, não suprimida; ordenação consistente entre bancadas
+com o ranqueamento de $\sigma$ publicado; testes surrogate/nulos por
+randomização de fase para calibrar o piso de viés de MI; \emph{dither}
+ligado/desligado para controlar artefatos de quantização; sensibilidade ao
+número de \emph{bins} de $\Tdie,\Vcore$ reportada explicitamente
+(\cref{sec:res-mi}).

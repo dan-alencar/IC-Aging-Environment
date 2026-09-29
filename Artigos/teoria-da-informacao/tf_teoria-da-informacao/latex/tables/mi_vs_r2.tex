@@ -1,0 +1,27 @@
+% Headline table: information measures vs. the linear R^2 baseline.
+% [TODO] cells are filled by the Tier-1 MI analysis (see 05_Execution_Plan.md).
+\begin{table}[t]
+  \centering
+  \caption{Information measures (bits) vs.\ the linear $R^2$ baseline on the PID
+           campaign. The measured $\MI{\slk}{\Tdie,\Vcore}$ exceeds the
+           Gaussian-equivalent MI of the linear fit
+           ($-\tfrac12\log_2(1-R^2)$) by \valMIexcessPct\,\%, evidencing
+           non-linear coupling. Prior-work columns are the published
+           thermal-fidelity statistics.}
+  \label{tab:mi_vs_r2}
+  \begin{tabular}{lccc}
+    \toprule
+     & PID (new run) & PID (prior) & Bang-bang (prior) \\
+    \midrule
+    linear $R^2(\slk\mid\Tdie,\Vcore)$       & \valRsqLinear & \valRsqPid & \valRsqBangBang \\
+    \;$\hookrightarrow$ Gaussian-equiv.\ MI (bits) & \valMIlinEquiv & --- & --- \\
+    $\Ent{\slk}$ (bits)                      & \valHs        & ---        & --- \\
+    $\MI{\slk}{\Tdie}$ (bits)                & \valMIst      & ---        & --- \\
+    $\MI{\slk}{\Vcore}$ (bits)               & \valMIsv      & ---        & --- \\
+    $\MI{\slk}{\Tdie,\Vcore}$ binned (bits)  & \valMIstv     & ---        & --- \\
+    \;$\hookrightarrow$ KSG cross-check (bits) & \valKSGstv  & ---        & --- \\
+    \;$\hookrightarrow$ 95\,\% CI (block btstrp) & [\valMIciLo,\,\valMIciHi] & --- & --- \\
+    info.\ fraction $\MI{}{}/\Ent{}$         & \valInfoFraction & ---     & --- \\
+    \bottomrule
+  \end{tabular}
+\end{table}

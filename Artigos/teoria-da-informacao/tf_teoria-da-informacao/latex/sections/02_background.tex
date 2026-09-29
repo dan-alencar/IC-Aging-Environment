@@ -1,0 +1,52 @@
+%==============================================================================
+\section{Background and Related Work}
+\label{sec:background}
+
+% --- maps to 01_Project_Overview.md §1; artigos/ ---
+
+\subsection{The on-chip slack sensor}
+The auto-tuning aging sensor \cite{nogueira_sensor} measures critical-path
+timing slack on a Xilinx Artix-7 FPGA using a dynamically phase-shifted clock,
+reporting one slack count per \valLSBps~ps phase increment, and tracks delay
+degradation under burn-in, temperature and voltage stress.
+
+\subsection{Thermal-control fidelity}
+The thermal-fidelity study \cite{alencar_fidelity} compares a thermostatic
+bang-bang oven against a closed-loop PID oven on the \emph{same} device and
+sensor, showing that the burn-in thermal architecture changes both the delivered
+acceleration factor and the reversible environmental noise on the sensor output.
+It reports a steady-state thermal standard deviation of $\sigma=\valSigmaPid$~$^\circ$C
+(PID) vs.\ $\valSigmaBangBang$~$^\circ$C (bang-bang), residual slack noise of
+$\valResidPid$ vs.\ $\valResidBangBang$ counts, and a linear variance-explained of
+$\valRsqPid$ vs.\ $\valRsqBangBang$. These are the numbers this work re-expresses
+in information-theoretic terms.
+
+\subsection{The automated burn-in platform}
+The platform \cite{alencarfilho_tcc} delivers PID-controlled, multi-threaded
+acquisition logging slack with synchronized temperature and voltage at 1~Hz. The
+dataset analyzed here (\cref{sec:dataset}) is one such log.
+
+\subsection{Why information theory}
+\Cref{eq:model} is, in information terms, a noisy channel: the transmitter is the
+latent degradation state, the channel adds reversible PVT fluctuation and
+quantization noise, and the receiver estimates the slow aging trajectory. This
+framing makes entropy, mutual information and capacity the natural figures of
+merit and motivates the methodology of \cref{sec:methodology}.
+
+\subsection{Why $R^2$ is structurally blind to the physics}
+\label{sec:background-r2}
+The deeper reason $R^2$ understates environmental coupling is not incidental to
+this dataset---it is structural. $R^2$ is a monotone function of the Pearson
+correlation/covariance between $\slk$ and its linear fit on $(\Tdie,\Vcore)$, and
+$\mathrm{Cov}(X,Y)=0$ characterizes only the \emph{absence of linear}
+association: independence implies zero covariance, but the converse is false in
+general (a textbook example is $Y=X^2$ for symmetric $X$, where $\mathrm{Cov}=0$
+yet $Y$ is a deterministic, fully dependent function of $X$). Consequently any
+regression-$R^2$ metric can read as ``mostly independent'' a variable that is, in
+fact, entirely determined by the inputs through a non-linear map---precisely the
+situation here, since BTI aging acceleration is super-linear in $\Vcore$ and the
+Arrhenius rate is exponential in $1/\Tdie$. Mutual information
+(\cref{sec:th-mi}) is built from the full joint distribution rather than a
+second-moment summary, so $\MI{\slk}{\Tdie,\Vcore}=0$ if and only if $\slk$ and
+$(\Tdie,\Vcore)$ are independent, with no linearity assumption---closing exactly
+the gap this section identifies.

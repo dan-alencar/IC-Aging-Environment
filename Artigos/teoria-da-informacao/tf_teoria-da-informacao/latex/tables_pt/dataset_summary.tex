@@ -1,0 +1,26 @@
+% Tabela-resumo do conjunto de dados (números de generated/values.tex).
+\begin{table}[t]
+  \centering
+  \caption{Canais relevantes ao sensor e relações medidas na janela
+           pós-estabilização ($n=\valPostSoakSamples$).}
+  \label{tab:dataset}
+  \begin{tabular}{lll}
+    \toprule
+    Grandeza & Valor & Leitura \\
+    \midrule
+    Duração              & \valDurationHours~h        & campanha PID única \\
+    Amostras pós-soak     & \valPostSoakSamples        & após 1\,h de soak \\
+    $\Tdie$ (média)      & \valDutTempMean~$^\circ$C & regime de alto estresse \\
+    $\Vcore$ (média)     & \valDutVoltMean~V  & mantida pela PSU \\
+    $\slk$ (média / desvio) & \valSlackMean\,/\,\valSlackStd & contagens \\
+    $\slk$ níveis / faixa & \valSlackLevels\,/\,\valSlackRange & estados inteiros ocupados \\
+    \midrule
+    $\operatorname{corr}(\slk,\Tdie)$ & \valCorrST & temperatura domina \\
+    $\operatorname{corr}(\slk,\Vcore)$ & \valCorrSV & fraco, sinal correto \\
+    $\operatorname{corr}(\slk,\tm)$ & \valCorrSt & deriva lenta de envelhecimento \\
+    inclinação bruta $d\slk/d\tm$ & \valSlopeRaw~cnt/h & confundida com PVT \\
+    $R^2$ linear $(\slk\mid\Tdie,\Vcore)$ & \valRsqLinear & motivação da análise de MI (\cref{sec:res-mi}) \\
+    $\Ent{\slk}$ (discreta) & \valHs~bits & orçamento total de saída \\
+    \bottomrule
+  \end{tabular}
+\end{table}

@@ -1,0 +1,62 @@
+%==============================================================================
+\section{Methodology}
+\label{sec:methodology}
+
+% --- maps to 02_Methodology.md; the five-stage arc ---
+% Full development is in 02_Methodology.md; this section is the paper-length
+% condensation, organized as acquire -> transform -> quantify -> preserve -> infer.
+
+\subsection{Stage 1 --- Acquire}
+Reuse the synchronized $(\slk,\Tdie,\Vcore,\tm)$ logs (\cref{sec:dataset});
+exclude the first 1.0~h thermal-soak transient; retain raw resolution
+(discretization is deferred to the estimation step).
+
+\subsection{Stage 2 --- Transform}
+Detrend the slow aging drift with a robust estimator (long-window median /
+Theil--Sen) so that $\MI{\slk}{\Tdie,\Vcore}$ measures reversible coupling rather
+than a shared time trend; standardize $\Tdie,\Vcore$. Handle serial correlation
+via (i)~the integrated autocorrelation time $\tauint$ and an effective sample
+size $\neff=n/(2\tauint)$; (ii)~moving-block bootstrap confidence intervals;
+(iii)~thinning as a cross-check. Two estimator families are compared:
+binned plug-in with Miller--Madow bias correction, and $k$-nearest-neighbour
+(Kozachenko--Leonenko / KSG); their agreement is a robustness check.
+
+\subsection{Stage 3 --- Quantify}
+Estimate $\Ent{\slk}$, $\Ent{\slk\mid\Tdie,\Vcore}$, the per-channel
+$\MI{\slk}{\Tdie}$, $\MI{\slk}{\Vcore}$, the joint $\MI{\slk}{\Tdie,\Vcore}$ and
+the information fraction; compare regimes; compute $\KL{\cdot}{\cdot}$ between
+benches (\cref{eq:mi}).
+
+\subsection{Stage 4 --- Preserve (PVT correction as information recovery)}
+Fit $\hat{\dpvt}(\Tdie,\Vcore)$ (linear OLS; non-linear GLS/MLE; Bayesian) and
+form $\scorr=\slk-\hat{\dpvt}$. Judge each correction by the \emph{reversible}
+(detrended) residual MI $\MI{\scorr}{\Tdie,\Vcore}\to 0$ and the residual
+standard deviation relative to the quantization floor; select the model by MDL.
+Rank $\Tdie$ vs.\ $\Vcore$ by information contribution (feature selection). As an
+exploratory dual, run ICA/negentropy blind separation and score it by residual
+inter-component MI.
+
+\subsection{Stage 5 --- Infer (capacity and RUL)}
+Convert post-correction residual noise into resolvable aging states via
+\cref{eq:capacity}; model the threshold alarm as a BSC and report
+$\Cbsc=1-\Hb(p)$ (\cref{eq:bsc}). Derive the Cram\'er--Rao detectability bound on
+the aging slope using $\neff$, complemented by a Bayesian posterior. As a
+second, sequential-estimation route to the same question
+(\cref{sec:th-wiener}), block-average $\scorr$ into $\sim\!\neff$
+quasi-independent observations (block length $2\tauint$, i.e.\ one $\neff$
+unit per block by construction), fit the Wiener diffusion $\sigma_B^2$ and the
+block observation noise $R$ by the method of moments (variance of block-mean
+increments vs.\ lag), fit the rate-noise $\sigma_{\mathrm{rate}}^2$ by 1-D MLE
+on the Kalman filter's innovation likelihood, and run a Kalman/RTS smoother to
+obtain a denoised aging trajectory $\hat\Xlat(t)$ with credible bands and the
+Inverse-Gaussian RUL distribution of \cref{eq:invgauss} at two
+already-computed thresholds ($D=\sigma_{\text{noise}}$,
+$D=\sigma_{\text{signal}}$). Finally, frame ``best burn-in condition'' as
+minimizing $\MI{\slk}{\Tdie,\Vcore}$ subject to delivering the required Arrhenius
+acceleration factor.
+
+\subsection{Validation}
+Cross-estimator agreement (binned Miller--Madow vs.\ KSG); cross-bench ordering
+consistent with the published $\sigma$ ranking; phase-randomized surrogate/null
+tests to calibrate the MI bias floor; dither on/off to control for quantization
+artifacts.

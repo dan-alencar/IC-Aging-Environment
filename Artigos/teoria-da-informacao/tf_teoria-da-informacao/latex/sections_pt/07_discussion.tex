@@ -1,0 +1,136 @@
+%==============================================================================
+\section{Discussão}
+\label{sec:discussion}
+
+% --- corresponde a 01_Project_Overview.md §6 (contribuição) e §7 (ressalvas) ---
+
+\subsection{O que a teoria da informação acrescenta sobre $R^2$}
+Uma métrica de ruído correta e transferível: a informação mútua não assume
+uma forma funcional, é válida onde a física é não-linear e é expressa em
+bits, ao contrário da fração de variância. Sobre a série bruta --- o
+pareamento correto com o $R^2$ publicado do trabalho anterior, também
+medido sobre série bruta --- a dependência medida excede o equivalente
+linear-$R^2$ em $\valMIexcessPctBinned$--$\valMIexcessPctKSG\,\%$. Esse
+excesso é real (sobrevive ao piso de viés do estimador,
+\cref{sec:res-mi}), mas \textbf{não é, por si só, evidência de
+não-linearidade instantânea na relação reversível $\Tdie,\Vcore\to\slk$}: a
+mesma comparação sobre as séries detrendizadas mostra um \emph{déficit}, não
+um excesso ($\valMIexcessPctDetrended\,\%$, \cref{sec:res-mi}), de modo que
+o excesso bruto está concentrado na tendência lenta que envelhecimento e
+$\Tdie,\Vcore$ compartilham ao longo da campanha, não na física
+Arrhenius/BTI instantânea que motivou este projeto. A contribuição
+metodológica --- MI em vez de $R^2$ como a métrica correta e transferível,
+válida mesmo quando a forma da dependência é desconhecida --- permanece de
+pé; a interpretação causal específica (``a MI excede o $R^2$ porque a
+física subjacente é não-linear'') não é sustentada por este resultado e é
+retirada. Isso também enfraquece a extrapolação entre regimes térmicos: mesmo a
+leitura mais cautelosa --- que a comparação anterior, baseada em $R^2$,
+entre bang-bang e PID poderia subestimar a diferença real entre eles ---
+perde parte de sua base, já que o excesso não-linear que a sustentaria não
+se mostrou robusto ao \emph{detrend}; recalcular ambas as bancadas lado a
+lado em bits exigiria, de qualquer forma, uma execução pareada no mesmo
+dispositivo em ambos os regimes, fora do escopo deste estudo de regime
+único (\cref{sec:discussion}, ameaças à validade).
+
+\subsection{Uma definição principiada de qualidade de \emph{burn-in}}
+Reenquadrar a qualidade de \emph{burn-in} como a minimização de
+$\MI{\slk}{\Tdie,\Vcore}$ dá à afirmação qualitativa ``PID é um ambiente de
+validação mais limpo'' uma unidade rigorosa e um alvo de otimização: cada
+bit que o ambiente escreve na leitura de \emph{slack} é um bit de
+informação de envelhecimento perdido. Enunciamos isso como um princípio, em
+vez de demonstrá-lo dentro de um único dispositivo; o suporte empírico mais
+próximo aqui é a lacuna distribucional entre as duas bancadas
+(\cref{sec:res-kl}), medida em um dispositivo de teste separado.
+
+\subsection{Uma visão por comprimento de descrição da escolha linear-vs-não-linear}
+O critério MDL da \cref{sec:th-mdl}, que seleciona a correção PVT linear
+(\cref{sec:res-correction}), não é uma penalidade \emph{ad hoc} sobre
+parâmetros extras: é um substituto computável para a intuição de
+complexidade de Kolmogorov de que o melhor modelo é a \emph{descrição mais
+curta} que ainda explica os dados (\cref{eq:kolmogorov}). Enquadrado dessa
+forma, o resultado não é meramente ``a correção não-linear não vale a pena
+aqui'' --- é que, neste único e estreito ponto de operação
+(\valDutTempMean~$^\circ$C, \valDutVoltMean~V), os dados ainda não contêm
+informação de curvatura suficiente para justificar pagar pelos parâmetros
+extras do modelo Arrhenius/super-linear, mesmo que a física subjacente seja
+genuinamente não-linear (\cref{sec:background-r2}). Isso é, na verdade,
+\textbf{a mesma conclusão} alcançada por uma rota independente: o excesso
+de MI sobre o equivalente Gaussiano linear, que motivou este projeto, não
+sobrevive quando medido sobre o acoplamento reversível detrendizado
+(\cref{sec:res-mi}). MDL (nesta seção) e a checagem de MI detrendizada
+(\cref{sec:res-mi}) perguntam coisas diferentes --- se uma forma paramétrica
+não-linear específica se paga na correção, e se o acoplamento reversível
+\emph{instantâneo} contém excesso de dependência não-linear, respectivamente
+--- mas os dois, de forma independente, dizem que este conjunto de dados de
+único ponto de operação não contém evidência de não-linearidade
+\emph{instantânea} entre $\Tdie,\Vcore$ e $\slk$, mesmo que a física
+subjacente seja genuinamente não-linear em uma faixa mais ampla de operação.
+Uma campanha de faixa mais larga ou com múltiplos pontos de ajuste, cobrindo
+curvatura Arrhenius/BTI suficiente para ser compressível pelo modelo
+não-linear, é a condição natural sob a qual ambos os vereditos se
+inverteriam.
+
+\subsection{Um limite de resolução para sensores de SLM}
+Os resultados de capacidade e BSC colocam números concretos sobre o que o
+sensor consegue fazer: \valCapacityStates{} estados de envelhecimento
+distinguíveis ao longo da campanha, um alarme diário
+($\valBSCwindow$~h) de envelhecimento de $\Cbsc=\valBSCcap$~bits, e um piso
+de detecção a $3\sigma$ de \valMinDetectRate~m-cnt/h atingido após
+$\sim$\valMinObsTime~h. Isso informa a um projetista de SLM quão finamente o
+sensor resolve o envelhecimento e quão confiavelmente ele pode disparar um
+alarme sob ruído realista --- grandezas diretamente consumidas por
+escalonamento adaptativo de tensão e RUL, e que a métrica residual-$\sigma$
+anterior deixava implícitas. Sua consistência mútua (a confiabilidade do
+BSC por janela cruza próximo ao tempo mínimo de observação do CRLB) é
+evidência de que o modelo de canal é coerente, e não três heurísticas
+desconectadas.
+
+\subsection{Estimação sequencial e RUL como distribuição}
+O tratamento Wiener/Kalman da \cref{sec:res-wiener} deliberadamente não é um
+substituto do limite de Cram\'er--Rao/Bayesiano da \cref{sec:res-rul}, mas
+uma verificação cruzada a partir de uma rota de estimação independente (um
+modelo dinâmico e filtrado, em vez de uma única regressão sobre toda a
+série) que, por sinal, concorda no sinal e na ordem de grandeza da taxa de
+envelhecimento. Seu valor agregado é estrutural, não numérico: transforma
+uma única taxa pontual com barra de erro em (i) uma estimativa de
+trajetória denoised, continuamente atualizada, que o operador poderia, em
+princípio, consumir on-line, e (ii) uma \emph{distribuição} completa de RUL,
+em vez de um limite, expondo a assimetria à direita que uma barra de erro
+Gaussiana esconde. O fato de que o MLE do ruído de taxa e o critério MDL da
+\cref{sec:res-correction} \emph{independentemente} preferem, ambos, o modelo
+mais simples disponível (deriva constante; correção linear) neste único
+ponto de operação é, por si só, um achado: dois princípios de estimação
+diferentes, aplicados a duas perguntas diferentes, concordam que esta
+campanha ainda não contém a curvatura necessária para justificar um modelo
+mais flexível --- exatamente o tipo de validação cruzada que este projeto
+usou ao longo de todo o trabalho (KSG vs.\ MI com \emph{binning},
+frequentista vs.\ RUL Bayesiano, ICA vs.\ correção por regressão).
+
+\subsection{Ameaças à validade}
+O excesso de informação mútua sobre o equivalente Gaussiano-linear, medido
+na série bruta (\cref{sec:res-mi}), não sobrevive à remoção da tendência de
+envelhecimento compartilhada e não deve ser lido como demonstração de
+não-linearidade instantânea na física PVT reversível --- esse é o achado
+mais importante desta seção de ameaças à validade, não uma nota de rodapé,
+e é discutido em detalhe nas \cref{sec:res-mi,sec:discussion}. A análise do
+dispositivo de envelhecimento é de um único dispositivo e um
+único regime térmico, o que limita a separabilidade do envelhecimento
+permanente. A comparação de bancadas da \cref{sec:res-kl} é em um
+dispositivo de teste \emph{diferente}, de modo que sua divergência KL/JS
+fala sobre a fidelidade de bancada, e não sobre o comportamento do
+dispositivo de envelhecimento, e os dois nunca são misturados. Estimativas
+de MI em dados autocorrelacionados são propensas a viés, apesar da grande
+contagem bruta de amostras, mitigado (não eliminado) por $\neff$, pelo piso
+nulo \emph{surrogate} da \cref{sec:res-mi} e pela comparação entre
+estimadores independentes (\emph{binning} vs.\ KSG), cuja diferença
+sistemática é reportada como faixa de incerteza, não escondida; a
+expressão de capacidade é uma heurística de resolução
+efetiva; a separação por ICA é corroborativa, não uma desmistura limpa. O
+modelo Wiener/Kalman da \cref{sec:res-wiener} assume ruído de observação por
+média de bloco constante e um processo latente genuinamente difusivo
+(Wiener); a distribuição de RUL que ele produz é reportada em limiares
+auto-referenciados, já calculados, precisamente porque não existe um limiar
+de falha calibrado de forma independente para este sensor, de modo que é
+uma demonstração de \emph{metodologia}, não uma predição operacional de
+vida útil, no mesmo espírito do limite de Cram\'er--Rao da
+\cref{sec:res-rul}.

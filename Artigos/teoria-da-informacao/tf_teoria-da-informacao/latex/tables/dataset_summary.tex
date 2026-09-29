@@ -1,0 +1,26 @@
+% Dataset summary table (numbers from generated/values.tex).
+\begin{table}[t]
+  \centering
+  \caption{Sensor-relevant channels and measured relationships on the
+           post-soak window ($n=\valPostSoakSamples$).}
+  \label{tab:dataset}
+  \begin{tabular}{lll}
+    \toprule
+    Quantity & Value & Reading \\
+    \midrule
+    Duration            & \valDurationHours~h        & single PID campaign \\
+    Post-soak samples   & \valPostSoakSamples        & after 1\,h soak \\
+    $\Tdie$ (mean)      & \valDutTempMean~$^\circ$C & high-stress steady state \\
+    $\Vcore$ (mean)     & \valDutVoltMean~V  & held by PSU \\
+    $\slk$ (mean / std) & \valSlackMean\,/\,\valSlackStd & counts \\
+    $\slk$ levels / range & \valSlackLevels\,/\,\valSlackRange & occupied integer states \\
+    \midrule
+    $\operatorname{corr}(\slk,\Tdie)$ & \valCorrST & temperature dominates \\
+    $\operatorname{corr}(\slk,\Vcore)$ & \valCorrSV & weak, correct sign \\
+    $\operatorname{corr}(\slk,\tm)$ & \valCorrSt & slow aging drift \\
+    raw slope $d\slk/d\tm$ & \valSlopeRaw~cnt/h & confounded w/ PVT \\
+    linear $R^2(\slk\mid\Tdie,\Vcore)$ & \valRsqLinear & lower bound on coupling \\
+    $\Ent{\slk}$ (discrete) & \valHs~bits & total output budget \\
+    \bottomrule
+  \end{tabular}
+\end{table}

@@ -1,0 +1,49 @@
+%==============================================================================
+\begin{abstract}
+Sensores de \emph{slack} embarcados usados em Gerenciamento do Ciclo de Vida
+de Silício (\emph{Silicon Lifecycle Management}, SLM) reportam uma grandeza
+que mistura um componente permanente, de deriva lenta, de envelhecimento com
+um componente reversível causado por processo, tensão e temperatura (PVT).
+Trabalhos anteriores quantificam essa contaminação com o coeficiente de
+determinação ($R^2$) de uma regressão linear do \emph{slack} sobre temperatura
+e tensão --- uma medida que captura apenas dependência linear e não produz
+uma unidade transferível. Este trabalho coloca uma \emph{camada de medição
+informacional} sobre uma plataforma de \emph{burn-in} de envelhecimento
+acelerado de baixo custo já existente e seus registros sincronizados
+\mbox{(slack, $\Tdie$, $\Vcore$, tempo)}. Tratando o sensor como um canal de
+comunicação ruidoso, nós (i)~substituímos $R^2$ pela informação mútua
+$\MI{\slk}{\Tdie,\Vcore}$ como a medida correta e não-linear de contaminação
+ambiental; (ii)~quantificamos, em bits, quanta incerteza o registro de PVT
+remove via $\Ent{\slk}-\Ent{\slk\mid\Tdie,\Vcore}$; (iii)~estimamos o poder de
+resolução efetivo do sensor por meio de uma heurística de capacidade de canal
+e de um modelo de Canal Binário Simétrico para a decisão de alarme de
+envelhecimento; (iv)~derivamos um limite de detectabilidade limitado por
+ruído para a estimação de vida útil remanescente (\emph{Remaining Useful
+Life}, RUL), tanto por uma estimativa pontual de Cram\'er--Rao/Bayesiana
+quanto por um tratamento sequencial via processo de Wiener e filtro de Kalman
+que produz uma trajetória de envelhecimento denoised com bandas de
+credibilidade e uma distribuição de RUL Gaussiana-inversa completa, em forma
+fechada. Aplicamos ainda seleção de modelo por MDL e separação cega de fontes
+via ICA sobre os mesmos dados, além de uma comparação KL/Jensen--Shannon
+entre duas bancadas de validação. Em uma campanha de \valDurationHours~h
+controlada por PID (\valPostSoakSamples{} amostras pós-estabilização; tamanho
+efetivo de amostra $\neff=\valNeff$) medimos $\Ent{\slk}=\valHs$~bits e
+$\MI{\slk}{\Tdie,\Vcore}=\valMIstv$~bits (verificação cruzada por KSG
+\valKSGstv~bits). Essa dependência medida excede a informação mútua
+Gaussiana-equivalente do ajuste linear do trabalho anterior
+($R^2=\valRsqLinear\Rightarrow\valMIlinEquiv$~bits) em
+\valMIexcessPctBinned--\valMIexcessPctKSG\,\%; verificamos honestamente,
+porém, que esse excesso não sobrevive à remoção da tendência de
+envelhecimento compartilhada e está concentrado nela, não na física PVT
+reversível instantânea --- um achado negativo que delimita com precisão o
+que o ponto metodológico central pode reivindicar: a informação mútua
+captura dependência que $R^2$ estruturalmente não vê, seja qual for sua
+origem física. A contribuição é uma métrica de ruído correta e
+transferível para sensores de SLM, e uma definição principiada e
+otimizável de qualidade de \emph{burn-in} como a minimização da informação
+mútua entre ambiente e sensor.
+\end{abstract}
+
+\noindent\textbf{Palavras-chave:} teoria da informação; informação mútua;
+entropia; capacidade de canal; gerenciamento do ciclo de vida de silício;
+sensor de envelhecimento; \emph{slack}; \emph{burn-in}; vida útil remanescente.

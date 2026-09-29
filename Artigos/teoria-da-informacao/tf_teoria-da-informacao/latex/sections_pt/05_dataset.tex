@@ -1,0 +1,49 @@
+%==============================================================================
+\section{Conjunto de Dados}
+\label{sec:dataset}
+
+% --- corresponde a 04_Dataset.md ---
+
+O substrato primário é uma única campanha de envelhecimento acelerado
+controlada por PID (\texttt{Tentative\_\allowbreak{}1\_\allowbreak{}20260524\_\allowbreak{}203756.csv}),
+iniciada em 24/05/2026, amostrada a 1~Hz por \valDurationHours~h
+(\valRawSamples{} linhas brutas, das quais \valDropouts{} são
+\emph{dropouts} de queda de enlace). Após excluir o transiente de
+estabilização térmica de 1.0~h, restam \valPostSoakSamples{} amostras. O DUT
+é mantido em um regime permanente de alto estresse
+($\Tdie\approx\valDutTempMean$~$^\circ$C, $\Vcore\approx\valDutVoltMean$~V)
+sob controle PID, com um modelo de planta FOPDT identificado
+$G(s)=1.56\,e^{-150.6 s}/(1307.2 s+1)$.
+
+A \Cref{tab:dataset} resume os canais relevantes ao sensor e as relações
+medidas. O \emph{slack} ocupa \valSlackLevels{} níveis inteiros ao longo da
+faixa de \valSlackRange{} contagens, resultando em uma entropia discreta de
+$\Ent{\slk}=\valHs$~bits. A temperatura é o principal fator reversível
+($\operatorname{corr}(\slk,\Tdie)=\valCorrST$), com um acoplamento de tensão
+mais fraco ($\valCorrSV$) e uma deriva de envelhecimento lenta e genuína
+($\operatorname{corr}(\slk,\tm)=\valCorrSt$; inclinação bruta por mínimos
+quadrados \valSlopeRaw{} contagens/h). Uma regressão linear do \emph{slack}
+em $(\Tdie,\Vcore)$ explica $R^2=\valRsqLinear$ da variância --- um valor
+que, como a física subjacente é não-linear, motivou a hipótese central
+deste trabalho de que $R^2$ subestima o verdadeiro acoplamento ambiental,
+testada --- e não confirmada, ao menos não como não-linearidade
+instantânea --- na análise de informação mútua da \cref{sec:results}.
+
+\input{tables_pt/dataset_summary}
+
+Os riscos dos dados carregados para o \emph{pipeline} são: forte correlação
+serial ($\neff\ll n$, com $\neff=\valNeff$ aqui), quantização inteira de
+$\slk$, e um fator de confusão tendência/ambiente que exige remoção de
+tendência antes da MI.
+
+Para a comparação de bancadas da \cref{sec:res-kl}, são usadas duas
+execuções \emph{estabilizadas} de $\sim$24~h: uma bancada SBCCI não-PID
+(ruído de \emph{slack} $\valSlackStdSBCCI$ contagens) e a referência
+controlada por PID ($\valSlackStdPID$ contagens). Ambas foram adquiridas em
+um \textbf{dispositivo de teste dedicado, distinto do dispositivo de
+envelhecimento de 214~h}; as duas bancadas compartilham esse dispositivo de
+teste, de modo que sua divergência isola a diferença de bancada/ambiente,
+mas seus níveis absolutos de \emph{slack} não são comparáveis aos do
+dispositivo de envelhecimento. Seus pontos de operação distintos são
+tratados comparando a flutuação centrada do \emph{slack}, de modo que a
+divergência reflete o caráter do ruído, e não o ponto de ajuste.

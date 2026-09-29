@@ -1,0 +1,74 @@
+%==============================================================================
+\section{Introdução}
+\label{sec:intro}
+
+% --- corresponde a 01_Project_Overview.md §1, §2 ---
+
+\subsection{Motivação e ponto de partida}
+Circuitos integrados se degradam. Instabilidade de polarização-temperatura
+(BTI/NBTI), injeção de portadores quentes e mecanismos relacionados tornam
+mais lentos os caminhos críticos ao longo da vida útil de um dispositivo, e o
+SLM visa monitorar essa degradação em campo para viabilizar escalonamento
+adaptativo de tensão e predição de vida útil remanescente (RUL). Este projeto
+se apoia em três esforços anteriores correlacionados: um sensor de \emph{slack}
+embarcado com auto-ajuste \cite{nogueira_sensor}, um estudo de fidelidade de
+controle térmico comparando fornos de \emph{burn-in} \emph{bang-bang} e PID no
+mesmo dispositivo e sensor \cite{alencar_fidelity}, e uma plataforma de
+\emph{burn-in} automatizada de baixo custo \cite{alencarfilho_tcc}. Nos três,
+um único fato se repete: o \emph{slack} reportado por um sensor é uma
+\emph{mistura} de um termo permanente de envelhecimento e um termo PVT
+reversível,
+\begin{equation}
+  \signalmodel ,
+  \label{eq:model}
+\end{equation}
+em que $\eq$ é ruído de quantização limitado pelo LSB do sensor
+(\valLSBps~ps por contagem).
+
+\subsection{A lacuna}
+O trabalho anterior mede a contaminação reversível com o $R^2$ linear do
+\emph{slack} regredido em $\Tdie$ e $\Vcore$ (por exemplo, \valRsqBangBang{}
+sob controle \emph{bang-bang} vs.\ \valRsqPid{} sob controle PID. Isso tem
+duas limitações centrais para este domínio físico: captura \emph{apenas}
+dependência linear, embora BTI seja super-linear em $\Vcore$ e a aceleração de
+Arrhenius seja exponencial no inverso da temperatura; e não produz
+\emph{nenhuma unidade transferível} --- ``variância explicada'' não responde
+quantos estados de envelhecimento o sensor resolve, quão cedo uma tendência é
+detectável, ou quanta informação de envelhecimento uma dada bancada
+preserva. A teoria da informação responde às três perguntas em uma única
+moeda: \textbf{bits}.
+
+\subsection{Contribuição}
+Adicionamos uma camada de medição analítica --- sem novo silício, sensor ou
+forno --- que reexpressa ruído, correção e recuperabilidade na linguagem de
+entropia, informação mútua e capacidade de canal. Concretamente:
+\begin{enumerate}
+  \item $\MI{\slk}{\Tdie,\Vcore}$ substitui $R^2$ como medida de contaminação
+        não-linear (\cref{sec:results});
+  \item uma contabilização entrópica da correção PVT quantifica, em bits, a
+        incerteza que cada canal auxiliar remove;
+  \item uma estimativa de capacidade e um modelo de alarme BSC convertem o
+        ruído medido em estados de envelhecimento resolvíveis e
+        confiabilidade de alarme;
+  \item um limite de detectabilidade de Cram\'er--Rao/Bayesiano estabelece a
+        tendência de envelhecimento mais cedo detectável dado o piso de
+        ruído, complementado por um tratamento via processo de Wiener e
+        filtro de Kalman que transforma o mesmo problema em uma trajetória
+        de envelhecimento denoised e continuamente atualizada, e uma
+        \emph{distribuição} de RUL Gaussiana-inversa em forma fechada
+        (\cref{sec:res-wiener}).
+\end{enumerate}
+Exercitamos ainda codificação de fonte, seleção de modelo por
+Kolmogorov/MDL e separação cega por ICA sobre os mesmos registros, de modo
+que o projeto percorra toda a ementa da disciplina (\cref{sec:methodology} e
+o mapeamento de tópicos).
+
+\subsection{Escopo e honestidade}
+O conjunto de dados primário é uma única campanha PID de \valDurationHours~h
+em um dispositivo; é longo o suficiente para expor uma deriva de
+envelhecimento mensurável, mas não pode, sozinho, validar cruzadamente uma
+trajetória de envelhecimento permanente entre dispositivos. Os resultados de
+RUL são, portanto, enquadrados como uma \emph{metodologia e um limite de
+detectabilidade}. A estimação de informação mútua em séries fortemente
+autocorrelacionadas é propensa a viés; reportamos tudo sobre um tamanho
+efetivo de amostra $\neff$ com intervalos por \emph{block-bootstrap}.

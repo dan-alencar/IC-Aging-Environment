@@ -1,0 +1,280 @@
+%==============================================================================
+\section{Information-Theoretic Framework}
+\label{sec:theory}
+
+% --- maps to 03_Course_Topic_Mapping.md; defines every course tool used ---
+% This section is where the course content is formally introduced. Each
+% subsection states the definition, its key properties/theorem AND its role
+% in the sensor problem, so the link between syllabus and application is
+% explicit (rubric item 03).
+
+\subsection{Self-information and entropy}
+\label{sec:th-entropy}
+For a discrete source with alphabet $\{s_k\}$ and probabilities $p_k=P(\slk=s_k)$,
+the \emph{self-information} of an outcome is $I(s_k)=-\log_2 p_k$: rare outcomes
+are more surprising and carry more information, and independence makes
+self-information additive, $I(s_ks_j)=I(s_k)+I(s_j)$ for independent $s_k,s_j$---the
+property that forces the logarithm in the definition, since only $\log$ turns a
+product of probabilities into a sum. \textbf{Entropy} is the expected
+self-information,
+\begin{equation}
+  \Ent{\slk} = -\sum_k p_k\log_2 p_k = E\{I(\slk)\},
+  \label{eq:entropy}
+\end{equation}
+the total uncertainty of the sensor reading, bounded by $0\le\Ent{\slk}\le\log_2 K$
+($K$ = number of slack levels): zero when one level is certain, maximal when all
+$K$ levels are equiprobable. The conditional entropy
+$\Ent{\slk\mid\Tdie,\Vcore}$ is the residual uncertainty once the environment is
+known, and the chain rule $\Ent{\slk,\Tdie,\Vcore}=\Ent{\Tdie,\Vcore}+\Ent{\slk\mid\Tdie,\Vcore}$
+decomposes total uncertainty into an environmental part and a residual part---the
+gap between $\Ent{\slk}$ and $\Ent{\slk\mid\Tdie,\Vcore}$ \emph{is} the
+environmental information, formalized as mutual information next.
+
+\subsection{Kullback--Leibler divergence and mutual information}
+\label{sec:th-mi}
+For two distributions $p,g$ over the same alphabet,
+\begin{equation}
+  \KL{p}{g} = \sum_x p(x)\log_2\frac{p(x)}{g(x)} = E_p\!\left\{\log_2\frac{p(x)}{g(x)}\right\}
+  \label{eq:kl}
+\end{equation}
+measures the cost, in bits, of assuming $g$ when the true law is $p$.
+$\KL{p}{g}\ge0$ with equality iff $p=g$: writing $-\log_2(\cdot)$, a convex
+function, Jensen's inequality gives
+$\KL{p}{g}=E_p\{-\log_2\frac{g(x)}{p(x)}\}\ge-\log_2 E_p\{\frac{g(x)}{p(x)}\}=-\log_2\sum_x g(x)=0$.
+$D_{\mathrm{KL}}$ is \emph{not symmetric} and does not satisfy the triangle
+inequality, so it is not a metric---exactly the asymmetry exploited in
+\cref{sec:res-kl} to read $\KL{p_{\text{SBCCI}}}{p_{\text{PID}}}$ as ``the cost of
+describing the noisy bench with the tight reference'' and not the reverse.
+\textbf{Mutual information} is the KL divergence between the joint law and the
+product of marginals,
+\begin{equation}
+  \MI{\slk}{\Tdie,\Vcore} = \KL{p(\slk,\Tdie,\Vcore)}{p(\slk)p(\Tdie,\Vcore)}
+  = \Ent{\slk}-\Ent{\slk\mid\Tdie,\Vcore} \ge 0,
+  \label{eq:mi}
+\end{equation}
+zero iff $\slk\perp(\Tdie,\Vcore)$, and, via the entropy Venn diagram (the union
+of the $\Ent{\slk}$ and $\Ent{\Tdie,\Vcore}$ circles is the joint entropy, their
+intersection is $\MI{\slk}{\Tdie,\Vcore}$), symmetric:
+$\MI{\slk}{\Tdie,\Vcore}=\Ent{\Tdie,\Vcore}-\Ent{\Tdie,\Vcore\mid \slk}$. Unlike
+$R^2$, \cref{eq:mi} captures \emph{arbitrary} dependence, linear or not, because
+it is built from the full joint law rather than from a second-moment (linear)
+summary; this is the formal reason a vanishing correlation does not imply
+independence (\cref{sec:background}) while $\MI{}{}=0$ does. The normalized
+\emph{information fraction} $\MI{\slk}{\Tdie,\Vcore}/\Ent{\slk}$ is the
+information-theoretic analogue of $R^2$.
+
+\subsection{Differential entropy: why the sensor is treated as discrete}
+\label{sec:th-diffent}
+For a continuous variable $X$ with density $f$, differential entropy
+$\Ent{X}=-\int f(x)\log_2 f(x)\,dx$ generalizes \cref{eq:entropy}, but loses two
+properties that hold in the discrete case: it is not scale-invariant,
+$\Ent{cX}=\Ent{X}+\log_2|c|$, and it can be \emph{negative}. Among all
+densities of fixed variance $\sigma^2$, the Gaussian uniquely maximizes
+differential entropy, $\Ent{X}=\tfrac12\log_2(2\pi e\sigma^2)$---a fact used
+twice in this paper: it is why the Gaussian-equivalent MI conversion of $R^2$ in
+\cref{sec:res-mi} is a meaningful comparison, and it is the crux step of the
+Gaussian channel-capacity derivation below. Because the sensor's slack output is
+in reality a $19.85$-ps phase count---an integer, not a real number---all the
+entropy and mutual-information quantities reported for $\slk$ in this paper
+(\cref{sec:results}) use the \emph{discrete} definition \cref{eq:entropy} on the
+native integer levels, sidestepping the scale-dependence of the differential
+form and any arbitrary choice of binning.
+
+\subsection{Source coding: the entropy as a compression limit}
+\label{sec:th-source}
+For a prefix code assigning codeword length $l_k$ to symbol $k$, the
+Kraft--McMillan inequality $\sum_k 2^{-l_k}\le1$ is necessary and sufficient for
+a decodable prefix code with those lengths to exist, and it implies Shannon's
+\emph{source coding theorem}:
+\begin{equation}
+  \Ent{A} \le L < \Ent{A}+1, \qquad L=\sum_k p_k l_k,
+  \label{eq:source-coding}
+\end{equation}
+so no lossless code can average fewer than $\Ent{A}$ bits per symbol, and a code
+within one bit of that limit always exists (Huffman achieves it up to rounding).
+Extending to length-$n$ blocks of an i.i.d.\ source, $\Ent{A^n}=n\Ent{A}$, so
+$L_n/n\to \Ent{A}$: coding longer blocks squeezes the one-bit slack away at the
+cost of decoding complexity. This paper uses \cref{eq:source-coding} only as the
+\emph{limit}---``no code can beat $\Ent{\slk}$ bits/sample''---never
+instantiating a concrete codec (Huffman/LZW), a deliberate scope decision
+(\cref{sec:discussion}) because a codec would be redundant with the entropy and
+autocorrelation results already computed.
+
+\subsection{Channel capacity}
+\label{sec:th-capacity}
+For a channel with conditional law $p(y\mid x)$, capacity is the input
+distribution that maximizes the mutual information it induces,
+\begin{equation}
+  C = \max_{p_X(x)} \MI{X}{Y},
+  \label{eq:capacity-def}
+\end{equation}
+a property of the channel alone (concave in $p_X$, so the maximum is unique and
+well defined). Shannon's \emph{channel coding theorem} states that reliable
+communication (error probability $\to0$) is possible at any rate $r<C$ and
+\emph{impossible} at any rate $r>C$---an existence result proved by random
+coding, not a construction; finding codes that approach $C$ in practice (Turbo,
+LDPC) took decades. For the binary aging-alarm decision, $X,Y\in\{0,1\}$ with
+crossover (error) probability $p$ gives the \textbf{Binary Symmetric Channel}
+\begin{equation}
+  \Cbsc = 1 - \Hb(p), \qquad \Hb(p) = -p\log_2 p - (1-p)\log_2(1-p),
+  \label{eq:bsc}
+\end{equation}
+maximal ($1$ bit) at $p=0$ and zero at $p=0.5$ (the alarm is indistinguishable
+from a coin flip). For a channel with additive noise, $Y=X+N$ with $X\perp N$,
+$\MI{X}{Y}=\Ent{Y}-\Ent{N}$; since $\Ent{N}$ does not depend on how $X$ is
+coded, maximizing $\MI{X}{Y}$ reduces to maximizing $\Ent{Y}$, and by
+\cref{sec:th-diffent} that maximum (for fixed output power) is attained when $Y$
+is Gaussian, forcing the capacity-achieving $X$ to be Gaussian as well. With
+signal power $\sigma^2_{\text{sig}}$ and noise power $\sigma^2_{\text{noise}}$
+this yields the familiar
+\begin{equation}
+  C \approx \tfrac{1}{2}\log_2\!\Big(1+\tfrac{\sigma^2_{\text{sig}}}{\sigma^2_{\text{noise}}}\Big)\ \text{bits/sample},
+  \label{eq:capacity}
+\end{equation}
+the discrete-time form of the Shannon--Hartley law. \Cref{sec:res-capacity} uses
+\cref{eq:capacity} as an \emph{effective-resolution heuristic}---the number of
+distinguishable aging states the post-correction noise floor permits---not a
+literal coded-transmission claim: there is no encoder inserting redundancy into
+the aging process, only a single noisy read-out, so \cref{eq:capacity} is
+applied as an upper bound on distinguishability rather than an achievable rate.
+
+\subsection{Description-length model selection and Kolmogorov complexity}
+\label{sec:th-mdl}
+Shannon entropy quantifies information via the \emph{probability} of an event;
+Kolmogorov's independent, probability-free definition \cite{kolmogorov1965}
+quantifies the information in a specific object $x$ as the length of the
+shortest program that outputs it,
+\begin{equation}
+  \Kolm{x} = \min_{p\,:\,U(p)=x} l(p),
+  \label{eq:kolmogorov}
+\end{equation}
+for a fixed universal interpreter $U$ (the invariance theorem guarantees this is
+well defined up to an additive, $x$-independent constant across choices of
+$U$). This gives Occam's razor a precise form: among descriptions that fit the
+data, prefer the one of least description length. The \emph{Minimum Description
+Length} (MDL) principle \cite{rissanen1978} operationalizes \cref{eq:kolmogorov} for statistical
+model selection, replacing the uncomputable $\Kolm{x}$ by an explicit two-part
+code length $L(\text{model})+L(\text{data}\mid\text{model})$: pay for the
+model's parameters, then pay to describe the residual under that model.
+Concretely, for the PVT correction (\cref{sec:res-correction}) we use the
+BIC-style penalty
+\begin{equation}
+  \mathrm{DL} = \neff\ln\sigma^2_{\text{resid}} + k\ln\neff ,
+  \label{eq:mdl}
+\end{equation}
+the (Gaussian, large-$\neff$) asymptotic form of that two-part code: the first
+term is the description length of the residual under a Gaussian model of
+variance $\sigma^2_{\text{resid}}$, the second is the cost of the $k$ extra
+parameters the non-linear correction adds. The non-linear model is adopted only
+if it compresses the residual enough to pay for its own parameters---exactly
+the Kolmogorov-complexity intuition that the ``best'' model is the shortest one
+that still explains the data, applied here to choose between a linear and a
+physics-motivated non-linear $\hat\dpvt(\Tdie,\Vcore)$.
+
+\subsection{Estimation theory: least squares, MLE, Bayes, Cram\'er--Rao}
+\label{sec:th-estimation}
+PVT corrections are fit by three estimator families, in increasing order of
+assumption: method of moments / ordinary least squares (linear, distribution-free);
+maximum likelihood (MLE, non-linear Arrhenius/super-linear form, efficient and
+consistent under correct specification); and a Bayesian variant carrying a full
+posterior rather than a point estimate. Posing RUL as estimating a latent aging
+slope $\beta$ from noisy observations, the \textbf{Cram\'er--Rao bound} lower-bounds
+any unbiased estimator's variance by the inverse Fisher information,
+$\mathrm{Var}(\hat\beta)\ge \FI(\beta)^{-1}$, which for i.i.d.\ Gaussian residuals of
+variance $\sigma^2$ observed at $\neff$ effectively independent points reduces
+to a closed form in $\sigma^2$ and $\neff$ (\cref{sec:res-rul}); it is the
+frequentist floor beneath which no estimator---however clever---can pin down the
+aging rate, given the measured noise and effective sample size. The Bayesian
+variant complements it with a Student-$t$ posterior (Jeffreys prior on the
+thinned, i.i.d.\ series) and a credible interval that is compared against the
+CRLB point estimate as a cross-check (\cref{sec:res-rul}).
+
+\subsection{ICA, negentropy and blind source separation}
+\label{sec:th-ica}
+Independent Component Analysis seeks a linear unmixing $\vec z = W\vec x$ of
+observed channels $\vec x=(\slk,\Tdie,\Vcore)$ into components that are
+maximally statistically independent and non-Gaussian, using
+\textbf{negentropy}
+\begin{equation}
+  \Neg{X} = \Ent{X_{\text{Gauss}}} - \Ent{X},
+  \label{eq:negentropy}
+\end{equation}
+as the non-Gaussianity contrast: since the Gaussian maximizes differential
+entropy at fixed variance (\cref{sec:th-diffent}), $\Neg{X}\ge0$ with equality
+iff $X$ is Gaussian, so maximizing an estimate of $\Neg{X}$ (via higher-order
+statistics such as excess kurtosis, as used here, or a Gram--Charlier expansion
+around the Gaussian) drives the unmixing toward independent, physically
+distinct sources without needing a parametric model for $\dpvt(\Tdie,\Vcore)$.
+Applied to $(\slk,\Tdie,\Vcore)$, ICA tests whether the aging source can be
+recovered by non-Gaussianity/independence alone, as a model-free counterpart to
+the regression-based correction of \cref{sec:th-mdl}; separation quality is
+scored by the residual inter-component mutual information (ideal value $0$),
+using \cref{eq:mi} as the independence measure.
+
+\subsection{Sequential estimation: Wiener-process degradation and Kalman filtering}
+\label{sec:th-wiener}
+\Cref{sec:th-estimation} treats aging-slope estimation as a single,
+campaign-wide point-estimation problem: one $\beta$, fit once, with a
+Cram\'er--Rao or Bayesian error bar attached after the fact. The course's
+stochastic-process material --- Markov chains as the discrete-state,
+discrete-time model of a system whose future depends on the present alone,
+not the past --- has a direct continuous-state, continuous-time analogue: the
+\textbf{Wiener process}, whose independent, stationary Gaussian increments
+make it the simplest Markov process with continuous sample paths. Modelling
+the latent, denoised aging level $\Xlat(t)$ (what \cref{eq:model} calls
+$\saged(t)$, net of the removable $\dpvt$ term) as a Wiener process with drift,
+\begin{equation}
+  d\Xlat(t) = \mu\,dt + \sigma_B\,dW(t), \qquad
+  \scorr(t_k) = \Xlat(t_k) + v_k,\quad v_k\sim\mathcal N(0,R),
+  \label{eq:wiener-model}
+\end{equation}
+turns RUL from a single-slope bound into two richer questions: (i) what is
+the \emph{best current estimate} of $\Xlat(t)$, continuously updated and with
+honestly propagated uncertainty, rather than a single after-the-fact
+regression line; and (ii) what is the \emph{full probability distribution} of
+the time to a future degradation milestone, not just a point rate and its
+standard error. \Cref{eq:wiener-model} is a linear-Gaussian state-space model,
+so both are answered by the \textbf{Kalman filter} \cite{kalman1960}: given a
+Gaussian prior $\Xlat_{k-1}\sim\mathcal N(\hat x_{k-1},P_{k-1})$, the recursive
+predict/update pair
+\begin{equation}
+  \hat x_{k}^{-} = \hat x_{k-1}+\mu\,\Delta t_k,\quad
+  P_{k}^{-} = P_{k-1}+\sigma_B^2\Delta t_k;\qquad
+  \hat x_k = \hat x_k^{-} + K_k(y_k-\hat x_k^{-}),\quad
+  K_k=\frac{P_k^{-}}{P_k^{-}+R}
+  \label{eq:kalman}
+\end{equation}
+is the exact Bayesian posterior update at each step (Gaussian priors and
+Gaussian likelihoods stay Gaussian), and a backward Rauch--Tung--Striebel pass
+turns the causal filtered estimate into a smoothed, whole-campaign trajectory
+$\hat\Xlat(t)$ with credible bands --- the direct denoising counterpart to the
+per-sample $\scorr$ residual of \cref{sec:th-mdl}, now propagated as a
+posterior over the entire latent path rather than a single detrended series.
+Letting the drift itself follow a slow random walk, $d\mu(t)=\sigma_{\mathrm
+rate}\,dW'(t)$ (a \emph{local linear trend} model \cite{harvey1989}), makes
+the constant-rate assumption of \cref{sec:th-estimation} a special case
+($\sigma_{\mathrm{rate}}\to0$) rather than an assumption baked into the model,
+and its process-noise variance $\sigma_{\mathrm{rate}}^2$ is fit, like any
+other model parameter in this paper, by maximizing the Gaussian likelihood of
+the filter's own one-step-ahead prediction errors (the innovations
+form of \cref{eq:kalman}) --- the same maximum-likelihood principle of
+\cref{sec:th-estimation}, applied here to a dynamic rather than a static model.
+
+For a Wiener process with drift $\mu<0$ and diffusion $\sigma_B^2$, the time
+to first travel a distance $D$ (e.g.\ one further noise-floor-sized or
+signal-sized excursion) is classical in accelerated-degradation modelling
+\cite{whitmore1997,si2011}: it follows an \textbf{Inverse Gaussian}
+distribution,
+\begin{equation}
+  T_D \sim \IG{D/|\mu|}{D^2/\sigma_B^2}, \qquad
+  f(t) = \sqrt{\frac{D^2}{2\pi\sigma_B^2 t^3}}\,
+         \exp\!\left(-\frac{(D+\mu t)^2}{2\sigma_B^2 t}\right),
+  \label{eq:invgauss}
+\end{equation}
+with mean $D/|\mu|$ and, notably, variance $D^3/(|\mu|^3\sigma_B^2)$: unlike
+the Cram\'er--Rao bound's single standard error, \cref{eq:invgauss} gives the
+\emph{entire} RUL distribution in closed form, including its skew --- and,
+because no calibrated failure threshold $D$ is established for this sensor
+(\cref{sec:th-estimation}'s honesty caveat), \cref{sec:res-wiener} reports it
+parametrically at thresholds that are already-computed quantities from
+\cref{sec:res-capacity} rather than a new, uncalibrated assumption.

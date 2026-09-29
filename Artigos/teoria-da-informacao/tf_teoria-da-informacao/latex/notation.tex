@@ -1,0 +1,40 @@
+%==============================================================================
+%  notation.tex — project-wide symbols and operators.
+%  Keeping these in one place guarantees the slack/PVT model is written
+%  identically in every section.
+%==============================================================================
+
+% random variables
+\newcommand{\slk}{S}                 % slack reading (sensor output)
+\newcommand{\Tdie}{T}                % die temperature
+\newcommand{\Vcore}{V}               % core voltage
+\newcommand{\tm}{t}                  % time (\time is a TeX primitive)
+
+% model components
+\newcommand{\saged}{S_{\mathrm{aged}}}      % permanent aging term
+\newcommand{\dpvt}{\Delta_{\mathrm{PVT}}}   % reversible PVT term
+\newcommand{\eq}{\varepsilon_q}             % quantization noise
+\newcommand{\scorr}{S_{\mathrm{corr}}}      % PVT-corrected residual
+
+% information-theoretic operators
+\newcommand{\Ent}[1]{H\!\left(#1\right)}                 % entropy
+\newcommand{\MI}[2]{I\!\left(#1 ; #2\right)}             % mutual information
+\newcommand{\KL}[2]{D_{\mathrm{KL}}\!\left(#1 \,\|\, #2\right)}  % KL divergence
+\newcommand{\neff}{n_{\mathrm{eff}}}                     % effective sample size
+\newcommand{\tauint}{\tau_{\mathrm{int}}}                % integrated autocorr. time
+\newcommand{\Hb}{H_2}                                    % binary entropy function
+\newcommand{\Cbsc}{C_{\mathrm{BSC}}}                     % BSC capacity
+
+% complexity, estimation and ICA operators
+\newcommand{\Kolm}[1]{K\!\left(#1\right)}                % Kolmogorov complexity
+\newcommand{\Neg}[1]{N_G\!\left(#1\right)}               % negentropy
+\newcommand{\FI}{\mathcal{I}_F}                          % Fisher information
+
+% Wiener-process degradation / Kalman filtering operators
+\newcommand{\Xlat}{X}                    % latent (denoised) aging level
+\newcommand{\IG}[2]{\mathrm{IG}\!\left(#1,#2\right)}     % Inverse Gaussian(mean,shape)
+
+% the inherited signal model, written once
+\newcommand{\signalmodel}{%
+  \slk(\tm) = \saged(\tm) - \dpvt(\Tdie,\Vcore) + \eq
+}

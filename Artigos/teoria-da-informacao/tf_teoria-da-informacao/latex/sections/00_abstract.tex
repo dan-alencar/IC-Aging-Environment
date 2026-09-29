@@ -1,0 +1,38 @@
+%==============================================================================
+\begin{abstract}
+On-chip slack sensors used in Silicon Lifecycle Management (SLM) report a
+quantity that mixes a permanent, slowly-drifting aging component with a
+reversible component driven by process, voltage and temperature (PVT). Prior
+work quantifies this contamination with the coefficient of determination
+($R^2$) of a linear regression of slack on temperature and voltage---a measure
+that captures only linear dependence and yields no transferable unit. This work
+places an \emph{information-theoretic measurement layer} on top of an existing
+low-cost accelerated-aging burn-in platform and its synchronized
+\mbox{(slack, $\Tdie$, $\Vcore$, time)} logs. Treating the sensor as a noisy
+communication channel, we (i)~replace $R^2$ with the mutual information
+$\MI{\slk}{\Tdie,\Vcore}$ as the correct, non-linear measure of environmental
+contamination; (ii)~quantify, in bits, how much uncertainty PVT logging removes
+via $\Ent{\slk}-\Ent{\slk\mid\Tdie,\Vcore}$; (iii)~estimate the sensor's
+effective resolving power through a channel-capacity heuristic and a Binary
+Symmetric Channel model of the aging-alarm decision; (iv)~derive a
+noise-limited detectability bound for remaining-useful-life (RUL) estimation,
+via both a Cram\'er--Rao/Bayesian point estimate and a sequential Wiener-process/
+Kalman-filter treatment that yields a denoised aging trajectory with credible
+bands and a full, closed-form Inverse-Gaussian RUL distribution. We further
+apply MDL model selection and ICA-based blind source separation to the same
+data, and a KL/Jensen--Shannon comparison of two validation benches. On a
+\valDurationHours~h PID-controlled campaign (\valPostSoakSamples{} post-soak
+samples; effective sample size $\neff=\valNeff$) we measure
+$\Ent{\slk}=\valHs$~bits and $\MI{\slk}{\Tdie,\Vcore}=\valMIstv$~bits
+(KSG cross-check \valKSGstv~bits). This measured dependence exceeds the
+Gaussian-equivalent MI of the prior work's linear fit
+($R^2=\valRsqLinear\Rightarrow\valMIlinEquiv$~bits) by \valMIexcessPct\,\%,
+directly evidencing the non-linear environmental coupling that $R^2$ cannot
+capture. The contribution is a correct, transferable noise metric for SLM
+sensors and a principled, optimizable definition of burn-in quality as the
+minimization of environment--sensor mutual information.
+\end{abstract}
+
+\noindent\textbf{Keywords:} information theory; mutual information; entropy;
+channel capacity; silicon lifecycle management; aging sensor; slack;
+burn-in; remaining useful life.

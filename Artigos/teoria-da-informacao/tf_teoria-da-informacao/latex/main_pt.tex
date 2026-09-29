@@ -1,0 +1,91 @@
+%==============================================================================
+%  Trabalho Final — Teoria da Informação (TIP7266 / PGETI-UFC) — 2026.1
+%  Caracterização Informacional do Envelhecimento e do Ruído em Sensores
+%  de Slack Embarcados — versão em português de main.tex
+%
+%  Build:  pdflatex main_pt && bibtex main_pt && pdflatex main_pt && pdflatex main_pt
+%  (ou simplesmente: latexmk -pdf main_pt.tex)
+%
+%  Esta é uma tradução do documento em inglês (main.tex): mesmos macros de
+%  notação, mesmos números gerados pelo pipeline (generated/values.tex),
+%  mesmas figuras e mesma bibliografia -- apenas o texto corrido, em
+%  sections_pt/ e tables_pt/, está em português. Ver CLAUDE.md /
+%  05_Execution_Plan.md para o contrato de reprodutibilidade.
+%==============================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazilian]{babel}
+\usepackage[margin=1in]{geometry}
+
+% --- math ---
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{bm}
+
+% --- tables / figures ---
+\usepackage{booktabs}
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{multirow}
+
+% --- references / links ---
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[hidelinks]{hyperref}
+\usepackage{cleveref}
+
+% cleveref não tem nomes nativos em português -- definidos explicitamente
+% (o documento só usa \cref para section/equation/table)
+\crefname{section}{seção}{seções}
+\Crefname{section}{Seção}{Seções}
+\crefname{equation}{eq.}{eqs.}
+\Crefname{equation}{Eq.}{Eqs.}
+\crefname{table}{tabela}{tabelas}
+\Crefname{table}{Tabela}{Tabelas}
+\crefname{figure}{figura}{figuras}
+\Crefname{figure}{Figura}{Figuras}
+
+% cleveref também não localiza os conectores de referências múltiplas
+% (\cref{a,b} / \cref{a,b,c} / \crefrange{a}{b}) -- por padrão usa "and"/"to"
+% mesmo com os \crefname acima; redefinidos explicitamente para pt-BR.
+\newcommand{\crefpairconjunction}{ e }
+\newcommand{\crefmiddleconjunction}{, }
+\newcommand{\creflastconjunction}{ e }
+\newcommand{\crefrangeconjunction}{ a }
+
+% --- macros de notação do projeto (fonte única) ---
+\input{notation}
+
+% --- números produzidos pelo pipeline de análise (auto-gerados; ver 05_Execution_Plan.md) ---
+\input{generated/values}
+
+\title{\textbf{Caracterização Informacional do Envelhecimento e do Ruído em
+Sensores de \emph{Slack} Embarcados para Gerenciamento do Ciclo de Vida de
+Silício}}
+
+\author{%
+  Danilo Alencar\\
+  \small Programa de P\'os-Gradua\c{c}\~ao em Engenharia de Teleinform\'atica (PPGETI)\\
+  \small Universidade Federal do Cear\'a\\
+  \small Disciplina: Teoria da Informa\c{c}\~ao (TIP7266) --- Trabalho Final, 2026.1
+}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\input{sections_pt/00_abstract}
+
+\input{sections_pt/01_introduction}
+\input{sections_pt/02_background}
+\input{sections_pt/03_theory}
+\input{sections_pt/04_methodology}
+\input{sections_pt/05_dataset}
+\input{sections_pt/06_results}
+\input{sections_pt/07_discussion}
+\input{sections_pt/08_conclusion}
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}
