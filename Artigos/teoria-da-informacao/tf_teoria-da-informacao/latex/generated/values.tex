@@ -1,0 +1,145 @@
+%==============================================================================
+%  generated/values.tex
+%  Scalar results injected from the analysis pipeline. Edit via the analysis
+%  scripts, NOT by hand, so the paper and the data never drift apart.
+%  (See 05_Execution_Plan.md, "Pipeline contract".)
+%
+%  Values below were computed from Tentative_1_20260524_203756.csv.
+%  All values are filled by the analysis scripts (tier1_pipeline.py,
+%  kl_benches.py, ica_separation.py). Re-run them to regenerate.
+%==============================================================================
+
+% --- dataset (computed) ---
+\newcommand{\valDurationHours}{214.6}
+\newcommand{\valRawSamples}{772{,}484}
+\newcommand{\valPostSoakSamples}{768{,}884}
+\newcommand{\valDropouts}{5}
+\newcommand{\valDutTempMean}{125.1}
+\newcommand{\valDutVoltMean}{1.400}
+\newcommand{\valSlackMean}{278.5}
+\newcommand{\valSlackStd}{3.03}
+\newcommand{\valSlackLevels}{27}
+\newcommand{\valSlackRange}{267\text{--}300}
+
+% --- second-order relationships (computed) ---
+\newcommand{\valCorrST}{-0.859}
+\newcommand{\valCorrSV}{+0.213}
+\newcommand{\valCorrSt}{-0.348}
+\newcommand{\valSlopeRaw}{-0.0171}
+\newcommand{\valRsqLinear}{0.738}
+
+% --- entropy (computed, discrete plug-in) ---
+\newcommand{\valHs}{3.43}
+
+% --- prior-work anchors (external published numbers from the
+%     thermal-fidelity paper; intentionally NOT recomputed by this
+%     pipeline -- there is no raw log for the bang-bang regime) ---
+\newcommand{\valRsqBangBang}{0.921}
+\newcommand{\valRsqPid}{0.592}
+\newcommand{\valSigmaBangBang}{3.29}    % deg C
+\newcommand{\valSigmaPid}{0.40}         % deg C
+\newcommand{\valResidBangBang}{0.90}    % counts
+\newcommand{\valResidPid}{0.73}         % counts
+\newcommand{\valLSBps}{19.85}           % ps per slack count
+
+% --- Tier-1 information measures (tier1_pipeline.py) ---
+\newcommand{\valMIst}{1.087}
+\newcommand{\valMIsv}{0.113}
+\newcommand{\valMIstv}{1.132}
+\newcommand{\valInfoFraction}{0.330}
+\newcommand{\valHscondTV}{2.30}
+\newcommand{\valKSGstv}{1.221}
+\newcommand{\valMIciLo}{1.091}
+\newcommand{\valMIciHi}{1.176}
+\newcommand{\valMIlinEquiv}{0.967}
+\newcommand{\valMIexcessPct}{17}
+\newcommand{\valMIexcessPctBinned}{17}
+\newcommand{\valMIexcessPctKSG}{26}
+\newcommand{\valMIexcessCiLoBinned}{13}
+\newcommand{\valMIexcessCiHiBinned}{22}
+\newcommand{\valMIexcessCiLoKSG}{20}
+\newcommand{\valMIexcessCiHiKSG}{32}
+\newcommand{\valMIbins}{16}
+\newcommand{\valMIbinSensLo}{1.111}
+\newcommand{\valMIbinSensHi}{1.171}
+\newcommand{\valKSGciLo}{1.156}
+\newcommand{\valKSGciHi}{1.275}
+\newcommand{\valMIexcessFloorAdjBits}{0.10}
+\newcommand{\valMIexcessFloorAdjPct}{10}
+\newcommand{\valRsqDetrended}{0.640}
+\newcommand{\valMIlinEquivDetrended}{0.736}
+\newcommand{\valMIdtBinned}{0.596}
+\newcommand{\valMIdtCiLo}{0.582}
+\newcommand{\valMIdtCiHi}{0.632}
+\newcommand{\valMIexcessPctDetrended}{-19}
+\newcommand{\valMIdtKSG}{0.656}
+\newcommand{\valMIdtKsgCiLo}{0.622}
+\newcommand{\valMIdtKsgCiHi}{0.735}
+\newcommand{\valMIexcessPctDetrKSG}{-11}
+\newcommand{\valMInullFloor}{0.097}
+\newcommand{\valMInullMean}{0.069}
+\newcommand{\valMIfloorRatio}{12}
+\newcommand{\valResidMI}{0.046}
+\newcommand{\valPreMIrev}{0.656}
+\newcommand{\valResidMIlin}{0.046}
+\newcommand{\valResidMInl}{0.024}
+\newcommand{\valResidSigmaLin}{0.84}
+\newcommand{\valResidSigmaNL}{0.84}
+\newcommand{\valCorrModel}{linear}
+\newcommand{\valMIreductionPct}{93}
+\newcommand{\valCorrStRaw}{-0.35}
+\newcommand{\valCorrStCorr}{-0.73}
+\newcommand{\valNeff}{1{,}224}
+\newcommand{\valTauInt}{314}
+\newcommand{\valAgingSlope}{-18.3}
+\newcommand{\valSigSignal}{1.29}
+\newcommand{\valSigNoise}{0.84}
+\newcommand{\valSNR}{2.36}
+\newcommand{\valCapacityBits}{0.87}
+\newcommand{\valCapacityStates}{1.8}
+\newcommand{\valCRLBsd}{0.39}
+\newcommand{\valMinDetectRate}{1.2}
+\newcommand{\valMinObsTime}{34}
+\newcommand{\valBSCwindow}{24}
+\newcommand{\valBSCp}{0.001}
+\newcommand{\valBSCcap}{0.99}
+% --- Bayesian posterior on the aging slope (tier1_pipeline.py) ---
+\newcommand{\valBayesSlope}{-18.2}
+\newcommand{\valBayesSlopeLo}{-19.2}
+\newcommand{\valBayesSlopeHi}{-17.2}
+\newcommand{\valBayesPaging}{100.00}
+\newcommand{\valBayesMotLo}{33}
+\newcommand{\valBayesMotHi}{36}
+% --- KL / Jensen-Shannon between benches (kl_benches.py) ---
+\newcommand{\valSlackStdSBCCI}{3.23}
+\newcommand{\valSlackStdPID}{1.46}
+\newcommand{\valTstdSBCCI}{2.64}
+\newcommand{\valTstdPID}{1.25}
+\newcommand{\valKLsp}{1.94}
+\newcommand{\valKLps}{1.01}
+\newcommand{\valJSbench}{0.279}
+\newcommand{\valKLgauss}{1.67}
+
+% --- ICA blind source separation (ica_separation.py) ---
+\newcommand{\valICAagingScorr}{0.834}
+\newcommand{\valICAagingVarExpl}{70}
+\newcommand{\valICAagingTime}{-0.575}
+\newcommand{\valICAthermalT}{0.688}
+\newcommand{\valICAkurtAging}{+5.82}
+\newcommand{\valICAkurtThermal}{+29.91}
+\newcommand{\valICAresidMI}{0.571}
+\newcommand{\valICAverdict}{recovers}
+
+% --- Wiener/Kalman aging-trajectory + RUL extension (kalman_rul.py) ---
+\newcommand{\valWienerSigmaB}{0.403}
+\newcommand{\valWienerQRate}{1.0\times10^{-10}}
+\newcommand{\valWienerRateEnd}{-15.9}
+\newcommand{\valWienerLevelSDstart}{0.214}
+\newcommand{\valWienerLevelSDend}{0.218}
+\newcommand{\valRULmeanNoise}{52.9}
+\newcommand{\valRULmedianNoise}{8.0}
+\newcommand{\valRULmeanSignal}{81.3}
+\newcommand{\valRULmedianSignal}{17.5}
+\newcommand{\valDnoise}{0.84}
+\newcommand{\valDsignal}{1.29}
+\newcommand{\valNBlocks}{1{,}224}

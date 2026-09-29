@@ -1,0 +1,70 @@
+%==============================================================================
+%  Trabalho Final — Teoria da Informação (TIP7266 / PGETI-UFC) — 2026.1
+%  Information-Theoretic Characterization of Aging Information and Noise
+%  in On-Chip Slack Sensors for Silicon Lifecycle Management
+%
+%  Build:  pdflatex main && bibtex main && pdflatex main && pdflatex main
+%  (or simply: latexmk -pdf main.tex)
+%
+%  Document class: 'article' is used for maximum portability. To submit in
+%  IEEE format, replace the \documentclass line below with:
+%      \documentclass[conference]{IEEEtran}
+%  and remove the geometry/abstract tweaks that IEEEtran already provides.
+%==============================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage[margin=1in]{geometry}
+
+% --- math ---
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{bm}
+
+% --- tables / figures ---
+\usepackage{booktabs}
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{multirow}
+
+% --- references / links ---
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[hidelinks]{hyperref}
+\usepackage{cleveref}
+
+% --- project-wide notation macros (single source of truth) ---
+\input{notation}
+
+% --- numbers produced by the analysis pipeline (auto-generated; see 05_Execution_Plan.md) ---
+\input{generated/values}
+
+\title{\textbf{Information-Theoretic Characterization of Aging Information and
+Noise in On-Chip Slack Sensors for Silicon Lifecycle Management}}
+
+\author{%
+  Danilo Alencar\\
+  \small Programa de P\'os-Gradua\c{c}\~ao em Engenharia de Teleinform\'atica (PGETI)\\
+  \small Universidade Federal do Cear\'a\\
+  \small Disciplina: Teoria da Informa\c{c}\~ao (TIP7266) --- Trabalho Final, 2026.1
+}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\input{sections/00_abstract}
+
+\input{sections/01_introduction}
+\input{sections/02_background}
+\input{sections/03_theory}
+\input{sections/04_methodology}
+\input{sections/05_dataset}
+\input{sections/06_results}
+\input{sections/07_discussion}
+\input{sections/08_conclusion}
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

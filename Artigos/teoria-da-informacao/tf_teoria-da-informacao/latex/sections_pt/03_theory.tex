@@ -1,0 +1,310 @@
+%==============================================================================
+\section{Arcabouço Teórico-Informacional}
+\label{sec:theory}
+
+% --- corresponde a 03_Course_Topic_Mapping.md; define cada ferramenta da disciplina usada ---
+% Esta seção é onde o conteúdo da disciplina é formalmente introduzido. Cada
+% subseção enuncia a definição, sua propriedade/teorema chave E seu papel no
+% problema do sensor, tornando explícita a ligação entre ementa e aplicação
+% (item 03 da rubrica).
+
+\subsection{Autoinformação e entropia}
+\label{sec:th-entropy}
+Para uma fonte discreta com alfabeto $\{s_k\}$ e probabilidades
+$p_k=P(\slk=s_k)$, a \emph{autoinformação} de um resultado é
+$I(s_k)=-\log_2 p_k$: resultados raros são mais surpreendentes e carregam
+mais informação, e independência torna a autoinformação aditiva,
+$I(s_ks_j)=I(s_k)+I(s_j)$ para $s_k,s_j$ independentes --- a propriedade que
+impõe o logaritmo na definição, já que somente $\log$ transforma um produto
+de probabilidades em uma soma. A \textbf{entropia} \cite{cover2006} é a
+autoinformação esperada,
+\begin{equation}
+  \Ent{\slk} = -\sum_k p_k\log_2 p_k = E\{I(\slk)\},
+  \label{eq:entropy}
+\end{equation}
+a incerteza total da leitura do sensor, limitada por
+$0\le\Ent{\slk}\le\log_2 K$ ($K$ = número de níveis de \emph{slack}): zero
+quando um nível é certo, máxima quando todos os $K$ níveis são
+equiprováveis. A entropia condicional $\Ent{\slk\mid\Tdie,\Vcore}$ é a
+incerteza residual uma vez conhecido o ambiente, e a regra da cadeia
+$\Ent{\slk,\Tdie,\Vcore}=\Ent{\Tdie,\Vcore}+\Ent{\slk\mid\Tdie,\Vcore}$
+decompõe a incerteza total em uma parte ambiental e uma parte residual --- a
+diferença entre $\Ent{\slk}$ e $\Ent{\slk\mid\Tdie,\Vcore}$ \emph{é} a
+informação ambiental, formalizada como informação mútua a seguir.
+
+\subsection{Divergência de Kullback--Leibler e informação mútua}
+\label{sec:th-mi}
+Para duas distribuições $p,g$ sobre o mesmo alfabeto \cite{cover2006},
+\begin{equation}
+  \KL{p}{g} = \sum_x p(x)\log_2\frac{p(x)}{g(x)} = E_p\!\left\{\log_2\frac{p(x)}{g(x)}\right\}
+  \label{eq:kl}
+\end{equation}
+mede o custo, em bits, de assumir $g$ quando a lei verdadeira é $p$.
+$\KL{p}{g}\ge0$ com igualdade sse $p=g$: escrevendo $-\log_2(\cdot)$, uma
+função convexa, a desigualdade de Jensen fornece
+$\KL{p}{g}=E_p\{-\log_2\frac{g(x)}{p(x)}\}\ge-\log_2 E_p\{\frac{g(x)}{p(x)}\}=-\log_2\sum_x g(x)=0$.
+$D_{\mathrm{KL}}$ \emph{não é simétrica} e não satisfaz a desigualdade
+triangular, portanto não é uma métrica --- exatamente a assimetria explorada
+na \cref{sec:res-kl} para ler $\KL{p_{\text{SBCCI}}}{p_{\text{PID}}}$ como ``o
+custo de descrever a bancada ruidosa com a referência apertada'' e não o
+inverso. A \textbf{informação mútua} é a divergência KL entre a lei conjunta
+e o produto das marginais,
+\begin{equation}
+  \MI{\slk}{\Tdie,\Vcore} = \KL{p(\slk,\Tdie,\Vcore)}{p(\slk)p(\Tdie,\Vcore)}
+  = \Ent{\slk}-\Ent{\slk\mid\Tdie,\Vcore} \ge 0,
+  \label{eq:mi}
+\end{equation}
+zero sse $\slk\perp(\Tdie,\Vcore)$, e, via o diagrama de Venn de entropias (a
+união dos círculos $\Ent{\slk}$ e $\Ent{\Tdie,\Vcore}$ é a entropia conjunta,
+sua interseção é $\MI{\slk}{\Tdie,\Vcore}$), simétrica:
+$\MI{\slk}{\Tdie,\Vcore}=\Ent{\Tdie,\Vcore}-\Ent{\Tdie,\Vcore\mid \slk}$.
+Diferente de $R^2$, a \cref{eq:mi} captura dependência \emph{arbitrária},
+linear ou não, pois é construída a partir da lei conjunta completa e não de
+um resumo de segundo momento (linear); essa é a razão formal pela qual uma
+correlação nula não implica independência (\cref{sec:background}), enquanto
+$\MI{}{}=0$ implica. A \emph{fração de informação} normalizada
+$\MI{\slk}{\Tdie,\Vcore}/\Ent{\slk}$ é o análogo informacional de
+$R^2$.
+
+\subsection{Entropia diferencial: por que o sensor é tratado como discreto}
+\label{sec:th-diffent}
+Para uma variável contínua $X$ com densidade $f$, a entropia diferencial
+$\Ent{X}=-\int f(x)\log_2 f(x)\,dx$ generaliza a \cref{eq:entropy}, mas perde
+duas propriedades válidas no caso discreto: não é invariante a escala,
+$\Ent{cX}=\Ent{X}+\log_2|c|$, e pode ser \emph{negativa}. Entre todas as
+densidades de variância fixa $\sigma^2$, a Gaussiana maximiza unicamente a
+entropia diferencial, $\Ent{X}=\tfrac12\log_2(2\pi e\sigma^2)$ --- um fato
+usado duas vezes neste trabalho: é a razão pela qual a conversão de $R^2$ em
+MI Gaussiana-equivalente na \cref{sec:res-mi} é uma comparação significativa,
+e é o passo crucial da derivação de capacidade de canal Gaussiano abaixo.
+Como a saída de \emph{slack} do sensor é, na realidade, uma contagem de fase
+de \valLSBps~ps --- um inteiro, não um número real --- todas as grandezas de
+entropia e informação mútua reportadas para $\slk$ neste trabalho
+(\cref{sec:results}) usam a definição \emph{discreta} \cref{eq:entropy} sobre
+os níveis inteiros nativos, evitando a dependência de escala da forma
+diferencial e qualquer escolha arbitrária de \emph{binning} \textbf{para o
+próprio $\slk$}. O mesmo não vale para $\Tdie,\Vcore$: sendo contínuos, são
+discretizados em \valMIbins{} \emph{bins} equiprováveis para estimar
+$\MI{\slk}{\Tdie,\Vcore}$, e a sensibilidade dessa escolha é reportada e
+quantificada na \cref{sec:res-mi}.
+
+\subsection{Codificação de fonte: a entropia como limite de compressão}
+\label{sec:th-source}
+Para um código-prefixo que atribui comprimento de palavra-código $l_k$ ao
+símbolo $k$, a desigualdade de Kraft--McMillan $\sum_k 2^{-l_k}\le1$ é
+necessária e suficiente para que exista um código-prefixo decodificável com
+esses comprimentos, e implica o \emph{teorema da codificação de fonte} de
+Shannon \cite{cover2006}:
+\begin{equation}
+  \Ent{A} \le L < \Ent{A}+1, \qquad L=\sum_k p_k l_k,
+  \label{eq:source-coding}
+\end{equation}
+de modo que nenhum código sem perdas pode ter média inferior a $\Ent{A}$
+bits por símbolo, e sempre existe um código a menos de um bit desse limite
+(Huffman o atinge a menos de arredondamento). Estendendo para blocos de
+comprimento $n$ de uma fonte i.i.d., $\Ent{A^n}=n\Ent{A}$, de modo que
+$L_n/n\to \Ent{A}$: codificar blocos maiores espreme essa folga de um bit ao
+custo de complexidade de decodificação. Este trabalho usa a
+\cref{eq:source-coding} apenas como \emph{limite} --- ``nenhum código pode
+superar $\Ent{\slk}$ bits/amostra'' --- sem nunca instanciar um codec
+concreto (Huffman/LZW), uma decisão deliberada de escopo
+(\cref{sec:discussion}) porque um codec seria redundante com os resultados
+de entropia e autocorrelação já calculados.
+
+\subsection{Capacidade de canal}
+\label{sec:th-capacity}
+Para um canal com lei condicional $p(y\mid x)$, a capacidade é a distribuição
+de entrada que maximiza a informação mútua que ela induz,
+\begin{equation}
+  C = \max_{p_X(x)} \MI{X}{Y},
+  \label{eq:capacity-def}
+\end{equation}
+uma propriedade do canal apenas (côncava em $p_X$, logo o máximo é único e
+bem definido) \cite{cover2006}. O \emph{teorema da codificação de canal} de Shannon afirma que
+comunicação confiável (probabilidade de erro $\to0$) é possível em qualquer
+taxa $r<C$ e \emph{impossível} em qualquer taxa $r>C$ --- um resultado de
+existência provado por codificação aleatória, não uma construção; encontrar
+códigos que se aproximam de $C$ na prática (Turbo, LDPC) levou décadas. Para
+a decisão binária de alarme de envelhecimento, $X,Y\in\{0,1\}$ com
+probabilidade de cruzamento (erro) $p$ dá o \textbf{Canal Binário Simétrico}
+\begin{equation}
+  \Cbsc = 1 - \Hb(p), \qquad \Hb(p) = -p\log_2 p - (1-p)\log_2(1-p),
+  \label{eq:bsc}
+\end{equation}
+máximo ($1$ bit) em $p=0$ e nulo em $p=0.5$ (o alarme é indistinguível de
+um lançamento de moeda). Para um canal com ruído aditivo, $Y=X+N$ com
+$X\perp N$, $\MI{X}{Y}=\Ent{Y}-\Ent{N}$; como $\Ent{N}$ não depende de como
+$X$ é codificado, maximizar $\MI{X}{Y}$ se reduz a maximizar $\Ent{Y}$, e
+pela \cref{sec:th-diffent} esse máximo (para potência de saída fixa) é
+atingido quando $Y$ é Gaussiano, forçando o $X$ que atinge a capacidade a
+também ser Gaussiano. Com potência de sinal $\sigma^2_{\text{sig}}$ e
+potência de ruído $\sigma^2_{\text{noise}}$ isso produz a conhecida
+\begin{equation}
+  C \approx \tfrac{1}{2}\log_2\!\Big(1+\tfrac{\sigma^2_{\text{sig}}}{\sigma^2_{\text{noise}}}\Big)\ \text{bits/amostra},
+  \label{eq:capacity}
+\end{equation}
+a forma em tempo discreto da lei de Shannon--Hartley. A
+\cref{sec:res-capacity} usa a \cref{eq:capacity} como uma \emph{heurística de
+resolução efetiva} --- o número de estados de envelhecimento
+distinguíveis que o piso de ruído pós-correção permite --- não como uma
+alegação literal de transmissão codificada: não há um codificador inserindo
+redundância no processo de envelhecimento, apenas uma única leitura ruidosa,
+de modo que a \cref{eq:capacity} é aplicada como um limite superior de
+distinguibilidade, e não como uma taxa alcançável.
+
+\subsection{Seleção de modelo por comprimento de descrição e complexidade de Kolmogorov}
+\label{sec:th-mdl}
+A entropia de Shannon quantifica informação via a \emph{probabilidade} de um
+evento; a definição independente e livre de probabilidade de Kolmogorov
+\cite{kolmogorov1965} quantifica a informação em um objeto específico $x$
+como o comprimento do menor programa que o produz,
+\begin{equation}
+  \Kolm{x} = \min_{p\,:\,U(p)=x} l(p),
+  \label{eq:kolmogorov}
+\end{equation}
+para um interpretador universal fixo $U$ (o teorema da invariância garante
+que isso é bem definido a menos de uma constante aditiva, independente de
+$x$, entre escolhas de $U$). Isso dá à navalha de Occam uma forma precisa:
+entre descrições que se ajustam aos dados, prefira aquela de menor
+comprimento de descrição. O princípio do \emph{Comprimento Mínimo de
+Descrição} (MDL) \cite{rissanen1978} operacionaliza a \cref{eq:kolmogorov}
+para seleção estatística de modelos, substituindo o incomputável $\Kolm{x}$
+por um comprimento de código explícito em duas partes
+$L(\text{modelo})+L(\text{dados}\mid\text{modelo})$: paga-se pelos
+parâmetros do modelo, depois paga-se para descrever o resíduo sob esse
+modelo. Concretamente, para a correção PVT (\cref{sec:res-correction})
+usamos a penalidade no estilo BIC
+\begin{equation}
+  \mathrm{DL} = \neff\ln\sigma^2_{\text{resid}} + k\ln\neff ,
+  \label{eq:mdl}
+\end{equation}
+a forma assintótica (Gaussiana, $\neff$ grande) desse código em duas partes:
+o primeiro termo é o comprimento de descrição do resíduo sob um modelo
+Gaussiano de variância $\sigma^2_{\text{resid}}$, o segundo é o custo dos $k$
+parâmetros extras que a correção não-linear adiciona. O modelo não-linear só
+é adotado se comprimir o resíduo o suficiente para pagar por seus próprios
+parâmetros --- exatamente a intuição de complexidade de Kolmogorov de que o
+``melhor'' modelo é o mais curto que ainda explica os dados, aplicada aqui
+para escolher entre um $\hat\dpvt(\Tdie,\Vcore)$ linear e um não-linear
+motivado pela física.
+
+\subsection{Teoria da estimação: mínimos quadrados, MLE, Bayes, Cram\'er--Rao}
+\label{sec:th-estimation}
+As correções PVT são ajustadas por três famílias de estimadores, em ordem
+crescente de hipóteses: método dos momentos / mínimos quadrados ordinários
+(linear, livre de distribuição); máxima verossimilhança (MLE, forma
+não-linear Arrhenius/super-linear, eficiente e consistente sob especificação
+correta); e uma variante Bayesiana carregando uma posterior completa em vez
+de uma estimativa pontual. Colocando o RUL como a estimação de uma
+inclinação latente de envelhecimento $\beta$ a partir de observações
+ruidosas, o \textbf{limite de Cram\'er--Rao} limita inferiormente a
+variância de qualquer estimador não-viesado pelo inverso da informação de
+Fisher, $\mathrm{Var}(\hat\beta)\ge \FI(\beta)^{-1}$, que para resíduos
+Gaussianos i.i.d.\ de variância $\sigma^2$ observados em $\neff$ pontos
+efetivamente independentes se reduz a uma forma fechada em $\sigma^2$ e
+$\neff$ (\cref{sec:res-rul}); é o piso frequentista abaixo do qual nenhum
+estimador --- por mais engenhoso que seja --- consegue determinar a taxa de
+envelhecimento, dado o ruído medido e o tamanho efetivo de amostra. A
+variante Bayesiana a complementa com uma posterior $t$ de Student (\emph{prior}
+de Jeffreys sobre a série decimada, i.i.d.) e um intervalo de credibilidade
+comparado contra a estimativa pontual do CRLB como verificação cruzada
+(\cref{sec:res-rul}).
+
+\subsection{ICA, negentropia e separação cega de fontes}
+\label{sec:th-ica}
+A Análise de Componentes Independentes \cite{hyvarinen2001} busca uma
+desmistura linear $\vec z = W\vec x$ dos canais observados
+$\vec x=(\slk,\Tdie,\Vcore)$ em componentes que são máxima e
+estatisticamente independentes e não-Gaussianas, usando \textbf{negentropia}
+\begin{equation}
+  \Neg{X} = \Ent{X_{\text{Gauss}}} - \Ent{X},
+  \label{eq:negentropy}
+\end{equation}
+como o contraste de não-Gaussianidade: como a Gaussiana maximiza a entropia
+diferencial a variância fixa (\cref{sec:th-diffent}), $\Neg{X}\ge0$ com
+igualdade sse $X$ for Gaussiana, de modo que maximizar uma estimativa de
+$\Neg{X}$ (via estatísticas de ordem superior, como a curtose em excesso
+usada aqui, ou uma expansão de Gram--Charlier em torno da Gaussiana) conduz a
+desmistura em direção a fontes independentes e fisicamente distintas sem
+precisar de um modelo paramétrico para $\dpvt(\Tdie,\Vcore)$. Aplicado a
+$(\slk,\Tdie,\Vcore)$, o ICA testa se a fonte de envelhecimento pode ser
+recuperada apenas por não-Gaussianidade/independência, como uma contraparte
+livre de modelo à correção baseada em regressão da \cref{sec:th-mdl}; a
+qualidade da separação é avaliada pela informação mútua residual entre
+componentes (valor ideal $0$), usando a \cref{eq:mi} como medida de
+independência.
+
+\subsection{Estimação sequencial: degradação por processo de Wiener e filtragem de Kalman}
+\label{sec:th-wiener}
+A \Cref{sec:th-estimation} trata a estimação da inclinação de envelhecimento
+como um problema de estimação pontual único, para toda a campanha: um único
+$\beta$, ajustado uma vez, com uma barra de erro de Cram\'er--Rao ou
+Bayesiana anexada a posteriori. O material de processos estocásticos da
+disciplina --- cadeias de Markov como o modelo de estado discreto e tempo
+discreto de um sistema cujo futuro depende apenas do presente, não do
+passado --- tem um análogo direto de estado contínuo e tempo contínuo: o
+\textbf{processo de Wiener}, cujos incrementos Gaussianos independentes e
+estacionários o tornam o processo de Markov mais simples com trajetórias
+contínuas. Modelando o nível latente e denoised de envelhecimento $\Xlat(t)$
+(o que a \cref{eq:model} chama de $\saged(t)$, líquido do termo removível
+$\dpvt$) como um processo de Wiener com deriva,
+\begin{equation}
+  d\Xlat(t) = \mu\,dt + \sigma_B\,dW(t), \qquad
+  \scorr(t_k) = \Xlat(t_k) + v_k,\quad v_k\sim\mathcal N(0,R),
+  \label{eq:wiener-model}
+\end{equation}
+transforma o RUL de um limite de inclinação única em duas perguntas mais
+ricas: (i) qual é a \emph{melhor estimativa atual} de $\Xlat(t)$, atualizada
+continuamente e com incerteza honestamente propagada, em vez de uma única
+reta de regressão a posteriori; e (ii) qual é a \emph{distribuição de
+probabilidade completa} do tempo até um marco futuro de degradação, não
+apenas uma taxa pontual e seu erro-padrão. A \cref{eq:wiener-model} é um
+modelo de espaço de estados linear-Gaussiano, de modo que ambas são
+respondidas pelo \textbf{filtro de Kalman} \cite{kalman1960}: dada uma
+\emph{prior} Gaussiana $\Xlat_{k-1}\sim\mathcal N(\hat x_{k-1},P_{k-1})$, o
+par recursivo de predição/atualização
+\begin{equation}
+  \hat x_{k}^{-} = \hat x_{k-1}+\mu\,\Delta t_k,\quad
+  P_{k}^{-} = P_{k-1}+\sigma_B^2\Delta t_k;\qquad
+  \hat x_k = \hat x_k^{-} + K_k(y_k-\hat x_k^{-}),\quad
+  K_k=\frac{P_k^{-}}{P_k^{-}+R}
+  \label{eq:kalman}
+\end{equation}
+é a atualização Bayesiana posterior exata a cada passo (\emph{priors}
+Gaussianas e verossimilhanças Gaussianas permanecem Gaussianas), e uma
+passagem retroativa de Rauch--Tung--Striebel transforma a estimativa
+filtrada causal em uma trajetória suavizada de toda a campanha
+$\hat\Xlat(t)$ com bandas de credibilidade --- a contraparte direta de
+\emph{denoising} do resíduo $\scorr$ por amostra da \cref{sec:th-mdl}, agora
+propagada como uma posterior sobre todo o caminho latente, em vez de uma
+única série detrendizada. Permitindo que a própria deriva siga um passeio
+aleatório lento, $d\mu(t)=\sigma_{\mathrm{rate}}\,dW'(t)$ (um modelo de
+\emph{tendência linear local} \cite{harvey1989}), a hipótese de taxa
+constante da \cref{sec:th-estimation} passa a ser um caso especial
+($\sigma_{\mathrm{rate}}\to0$) em vez de uma hipótese embutida no modelo, e
+sua variância de ruído de processo $\sigma_{\mathrm{rate}}^2$ é ajustada,
+como qualquer outro parâmetro de modelo neste trabalho, maximizando a
+verossimilhança Gaussiana dos erros de predição um-passo-à-frente do próprio
+filtro (a forma de inovações da \cref{eq:kalman}) --- o mesmo princípio de
+máxima verossimilhança da \cref{sec:th-estimation}, aplicado aqui a um
+modelo dinâmico em vez de estático.
+
+Para um processo de Wiener com deriva $\mu<0$ e difusão $\sigma_B^2$, o
+tempo até percorrer pela primeira vez uma distância $D$ (por exemplo, mais
+uma excursão do tamanho do piso de ruído ou do sinal) é clássico em
+modelagem de degradação acelerada \cite{whitmore1997,si2011}: segue uma
+distribuição \textbf{Gaussiana inversa},
+\begin{equation}
+  T_D \sim \IG{D/|\mu|}{D^2/\sigma_B^2}, \qquad
+  f(t) = \sqrt{\frac{D^2}{2\pi\sigma_B^2 t^3}}\,
+         \exp\!\left(-\frac{(D+\mu t)^2}{2\sigma_B^2 t}\right),
+  \label{eq:invgauss}
+\end{equation}
+com média $D/|\mu|$ e, notavelmente, variância
+$D^3/(|\mu|^3\sigma_B^2)$: diferente do erro-padrão único do limite de
+Cram\'er--Rao, a \cref{eq:invgauss} fornece a \emph{distribuição completa} de
+RUL em forma fechada, incluindo sua assimetria --- e, como nenhum limiar de
+falha calibrado $D$ está estabelecido para este sensor (a ressalva de
+honestidade da \cref{sec:th-estimation}), a \cref{sec:res-wiener} a reporta
+parametricamente em limiares que são grandezas já calculadas da
+\cref{sec:res-capacity}, em vez de uma nova hipótese não-calibrada.

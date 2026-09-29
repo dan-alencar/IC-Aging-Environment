@@ -1,0 +1,289 @@
+%==============================================================================
+\section{Results}
+\label{sec:results}
+
+% --- Fill from the analysis pipeline (05_Execution_Plan.md, Tier 1 first).
+%     Numbers come from generated/values.tex; [TODO] macros mark pending runs.
+
+\subsection{Mutual information vs.\ $R^2$}
+\label{sec:res-mi}
+\Cref{tab:mi_vs_r2} sets the information measures beside the linear $R^2$
+baseline on the PID campaign. The binned (Miller--Madow) estimate gives
+$\MI{\slk}{\Tdie,\Vcore}=\valMIstv$~bits, with temperature dominating
+($\MI{\slk}{\Tdie}=\valMIst$ vs.\ $\MI{\slk}{\Vcore}=\valMIsv$~bits); the KSG
+estimator independently yields $\valKSGstv$~bits, and the moving-block bootstrap
+95\,\% interval on the binned value is $[\valMIciLo,\valMIciHi]$~bits. The
+cross-estimator agreement is the robustness evidence of \cref{sec:methodology}.
+
+\paragraph{The non-linearity result.} The correct, apples-to-apples comparison is
+\emph{not} the entropy fraction against the variance fraction (different scales),
+but the measured MI against the \emph{Gaussian-equivalent} MI implied by the
+linear fit, $-\tfrac12\log_2(1-R^2)=\valMIlinEquiv$~bits for
+$R^2=\valRsqLinear$. The measured dependence ($\valKSGstv$~bits) \textbf{exceeds}
+this linear-equivalent value by $\valMIexcessPct\,\%$: there is genuine
+environmental information that a linear model cannot see---exactly the gap this
+project set out to expose, and direct quantitative support for replacing $R^2$
+with mutual information in this domain.
+
+\paragraph{Surrogate null floor.} Because MI estimators are biased upward on
+finite, autocorrelated samples, the measured value must be checked against the
+floor the estimator produces under genuine independence. Circularly shifting the
+$(\Tdie,\Vcore)$ stream against $\slk$ by large random lags---destroying the
+cross-dependence while preserving each channel's marginal \emph{and}
+autocorrelation---yields a null $\MI{\slk}{\Tdie,\Vcore}$ of mean
+$\valMInullMean$~bits and 95th percentile $\valMInullFloor$~bits. The measured
+$\valMIstv$~bits is $\approx\valMIfloorRatio\times$ this floor, so the dependence
+is overwhelmingly real rather than estimator bias. The same floor frames the
+post-correction reversible residual ($\valResidMI$~bits, \cref{sec:res-correction}):
+having driven the leftover coupling down to the same order as the null floor is
+exactly what ``the environment has been removed'' means in information terms.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.86\linewidth]{fig_mi.pdf}
+  \caption{Per-channel and joint mutual information between slack and the
+  environment (bits). The joint $\MI{\slk}{\Tdie,\Vcore}$ exceeds the
+  Gaussian-equivalent of the linear $R^2$ (dashed) by $26\%$, and sits well above
+  the surrogate null floor (dotted), confirming genuine non-linear coupling.}
+  \label{fig:mi}
+\end{figure}
+
+\input{tables/mi_vs_r2}
+
+\subsection{PVT correction as information recovery}
+\label{sec:res-correction}
+We fit $\hat{\dpvt}(\Tdie,\Vcore)$ and form $\scorr=\slk-\hat{\dpvt}$. The
+ordinary-least-squares (linear) correction drives the linear coupling to zero by
+construction ($\operatorname{corr}(\scorr,\Tdie)=+0.00$,
+$\operatorname{corr}(\scorr,\Vcore)=-0.00$); the methodologically relevant
+question is how much \emph{reversible} mutual information it removes. Measured on
+detrended signals---so that the slow aging drift does not masquerade as
+environmental coupling---the reversible coupling falls from
+$\valPreMIrev$~bits before correction to $\valResidMI$~bits after, i.e.\ the
+linear correction removes \textbf{\valMIreductionPct\,\%} of the reversible
+environment--sensor information, leaving a residual at the estimator's noise
+floor. The reversible residual standard deviation is $\valResidSigmaLin$~counts,
+consistent with the prior work's published PID residual ($0.73$~counts)---an
+independent cross-check of the pipeline.
+
+The physics-motivated non-linear correction (Arrhenius-like in $\Tdie$,
+super-linear in $\Vcore$) removes marginally more residual MI
+($\valResidMInl$ vs.\ $\valResidMIlin$~bits) but reduces the residual variance
+negligibly; the MDL/BIC criterion (\cref{eq:mdl}, \cref{sec:th-mdl}) therefore
+\textbf{selects the linear model} ($\valCorrModel$), judging the extra
+parameters unjustified at this stress point---a description-length verdict
+revisited in \cref{sec:discussion}.
+
+\paragraph{Aging recovery (key result).} Removing the PVT contribution does not
+merely clean the signal---it \emph{exposes} the latent aging trajectory. The
+correlation of slack with time strengthens from
+$\operatorname{corr}(\slk,\tm)=\valCorrStRaw$ on the raw stream to
+$\operatorname{corr}(\scorr,\tm)=\valCorrStCorr$ after correction: stripping the
+reversible environmental information makes the permanent aging drift the dominant
+structure in the residual, which is precisely the information-recovery objective
+of \cref{eq:model} and the empirical anchor for the RUL bound of
+\cref{sec:res-rul}.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig_correction.pdf}
+  \caption{(a) Raw slack tracks die temperature (corr $-0.86$). (b) After PVT
+  correction the reversible coupling is gone and the permanent aging trend is
+  \emph{exposed} (slack--time correlation strengthens from $-0.35$ to $-0.73$);
+  the dashed line is the fitted aging rate.}
+  \label{fig:correction}
+\end{figure}
+
+\subsection{Distributional distance between benches}
+\label{sec:res-kl}
+Two $\sim$24~h stabilized runs on different benches---the non-PID SBCCI setup
+and the PID-controlled reference---let us put a number on ``how far the
+non-compliant environment pushes the slack distribution.'' Both runs are on a
+dedicated test device, distinct from the 214~h aging device of the preceding
+sections; they share that test device, so the divergence isolates the
+bench/environment difference rather than device-to-device variation. The benches
+sit at different operating points, so the comparison is made on the centered
+slack fluctuation, isolating noise character from setpoint. The slack noise is
+$\valSlackStdSBCCI$ counts (SBCCI) vs.\ $\valSlackStdPID$ counts (PID), tracking
+the temperature noise ($\valTstdSBCCI$ vs.\ $\valTstdPID$~$^\circ$C)---the
+contamination is thermally driven.
+
+The Kullback--Leibler divergence is strongly \emph{asymmetric}:
+$\KL{p_{\text{SBCCI}}}{p_{\text{PID}}}=\valKLsp$~bits (the cost of describing the
+noisy bench with the tight PID reference) versus
+$\KL{p_{\text{PID}}}{p_{\text{SBCCI}}}=\valKLps$~bits---a direct illustration of
+the course's point that KL is not a metric. The symmetric Jensen--Shannon
+divergence is $\valJSbench$~bits (of a maximum of 1), a single transferable
+``distance between validation environments.'' A zero-mean Gaussian closed form
+gives $1.67$~bits for $\KL{p_{\text{SBCCI}}}{p_{\text{PID}}}$; the empirical
+value is higher ($\valKLsp$~bits), and that excess is itself evidence that the
+non-compliant bench injects \emph{non-Gaussian}, heavy-tailed excursions---which
+motivates the blind-separation analysis of \cref{sec:res-ica}.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.86\linewidth]{fig_kl.pdf}
+  \caption{Centered slack-fluctuation distributions of the two benches (same test
+  device). The non-PID SBCCI bench is markedly wider than the PID reference;
+  the divergence $\KL{p_{\text{SBCCI}}}{p_{\text{PID}}}=\valKLsp$~bits
+  (JS $=\valJSbench$~bits) quantifies the bench-fidelity gap.}
+  \label{fig:kl}
+\end{figure}
+
+\subsection{Effective resolution and alarm reliability}
+\label{sec:res-capacity}
+Taking the post-correction reversible noise $\sigma_{\text{noise}}=\valSigNoise$
+counts and the aging-signal spread $\sigma_{\text{sig}}=\valSigSignal$ counts,
+the capacity heuristic (\cref{eq:capacity}, derived in \cref{sec:th-capacity}
+from the Gaussian maximum-entropy argument) gives $\mathrm{SNR}=\valSNR$,
+$C=\valCapacityBits$~bits and therefore $\valCapacityStates$ distinguishable
+aging states over this campaign---a deliberately modest figure that reflects an
+aging excursion only $\sim\!\sqrt{\valSNR}\times$ the noise floor, and that the
+prior residual-$\sigma$ metric could not express.
+
+The aging-alarm decision is modelled as a BSC whose crossover $p$ follows from
+the per-window detection SNR (\cref{eq:bsc}). Reliability is strongly
+\emph{time-scale dependent}: a per-hour decision is essentially a coin flip
+($p\approx0.49$, $\Cbsc\approx0$) because one hour of drift is buried in the
+noise, whereas a $\valBSCwindow$~h operational window gives $p=\valBSCp$ and
+$\Cbsc=\valBSCcap$~bits/decision (near-perfect), and the full campaign is
+effectively certain. The crossover between these regimes coincides with the
+minimum observation time derived next.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.82\linewidth]{fig_capacity_rul.pdf}
+  \caption{Aging-alarm channel capacity $\Cbsc=1-\Hb(p)$ as a function of the
+  decision-window length. Reliability climbs from $\approx0$ (per-hour, buried in
+  noise) to $\approx1$ bit, with the transition coinciding with the
+  Cram\'er--Rao minimum observation time ($\approx\valMinObsTime$~h, dashed)---the
+  three figures of merit are mutually consistent.}
+  \label{fig:capacity}
+\end{figure}
+
+\subsection{RUL detectability bound}
+\label{sec:res-rul}
+Posing RUL as least-squares estimation of the aging slope, and using the measured
+noise with the effective sample size $\neff=\valNeff$
+($\tauint=\valTauInt$~samples, i.e.\ $\sim$5~min decorrelation), the
+Cram\'er--Rao bound (\cref{sec:th-estimation}) gives a slope-estimate standard deviation of $\valCRLBsd$
+m-cnt/h over the $\sim$214~h campaign, hence a minimum detectable aging rate
+(at $3\sigma$) of \textbf{\valMinDetectRate~m-cnt/h}. The measured corrected
+aging rate is $\valAgingSlope$~m-cnt/h---roughly $15\times$ above this floor, so
+the trend is firmly detectable. Equivalently, the minimum observation time to
+resolve the measured trend at $3\sigma$ is \textbf{$\sim$\valMinObsTime~h}, well
+within this campaign (and explaining why the prior $\sim$23~h runs could not
+separate aging from the reversible floor). This is the honest detectability
+statement the project promised: not a lifetime prediction, but a noise-limited
+bound on \emph{when} aging becomes observable.
+
+\paragraph{Bayesian credible bars.} The frequentist bound is complemented by a
+Bayesian linear regression of $\scorr$ on time, fit on the data thinned to the
+$\neff$ effectively-independent points (so the i.i.d.\ likelihood holds) under a
+Jeffreys prior, giving a Student-$t$ posterior for the slope. The posterior aging
+rate is $\valBayesSlope$~m-cnt/h with a $95\%$ credible interval of
+$[\valBayesSlopeHi,\valBayesSlopeLo]$~m-cnt/h, and the posterior probability that
+the slope is genuinely negative---that aging is present---is
+$\valBayesPaging\,\%$, numerically indistinguishable from certainty. Propagating
+the slope posterior through the detectability relation gives a credible interval
+of $[\valBayesMotLo,\valBayesMotHi]$~h on the minimum observation time, bracketing
+the $\valMinObsTime$~h point estimate. The two paradigms agree, and the Bayesian
+treatment supplies the calibrated error bars a future RUL study would propagate
+forward.
+
+\subsection{A denoised aging trajectory and RUL as a distribution (Wiener/Kalman)}
+\label{sec:res-wiener}
+The Cram\'er--Rao and Bayesian results above give a single campaign-wide rate
+and its error bar. Here we ask the sequential-estimation question of
+\cref{sec:th-wiener} instead: block-averaging $\scorr$ into $\valNBlocks$
+quasi-independent observations (one per $2\tauint$, i.e.\ one $\neff$ unit
+each), the method-of-moments fit of \cref{eq:wiener-model} gives a Wiener
+diffusion $\sigma_B=\valWienerSigmaB$ counts/$\sqrt{\text{h}}$ and a
+block-mean observation noise $R$ notably \emph{below} the native
+per-sample $\sigma_{\text{noise}}^2$ (\cref{sec:res-capacity}) --- direct
+evidence that averaging over a full decorrelation window still removes
+sub-$\tauint$ structure that the single autocorrelation time alone does not
+capture. The rate-noise MLE collapses to its numerical floor
+($\sigma_{\mathrm{rate}}^2\!\approx\!\valWienerQRate$): the data prefer a
+\emph{constant}-drift Wiener process over a time-varying one, a second,
+independent confirmation --- alongside the MDL verdict of
+\cref{sec:res-correction} --- that this single, narrow-operating-point
+campaign does not contain enough curvature information to support a more
+flexible model. The Kalman/RTS-smoothed rate at the end of the campaign is
+$\valWienerRateEnd$~m-cnt/h, consistent in sign and order of magnitude with
+the CRLB/Bayesian estimate of \cref{sec:res-rul} ($\sim\!-18$~m-cnt/h); the
+$\sim$15\% gap between the two independently-derived rates reflects the
+different estimators (whole-series OLS vs.\ a filtered, block-averaged
+state), not a contradiction. The smoothed level's posterior standard
+deviation is essentially flat across the campaign
+($\valWienerLevelSDstart\to\valWienerLevelSDend$ counts): the filter reaches
+its steady-state uncertainty within the first few blocks and does not
+keep shrinking indefinitely, exactly as a linear-Gaussian filter with
+constant $R$ and $\sigma_B^2$ predicts.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig_wiener_rul.pdf}
+  \caption{(a) Block-mean $\scorr$ (light) and the Kalman/RTS-smoothed aging
+  trajectory $\hat\Xlat(t)$ with a 95\% credible band. (b) The Inverse-Gaussian
+  RUL distribution (\cref{eq:invgauss}) at two Tier-1-anchored thresholds: one
+  noise-floor increment ($D=\sigma_{\text{noise}}$) and one
+  already-observed signal-scale excursion ($D=\sigma_{\text{signal}}$).}
+  \label{fig:wiener}
+\end{figure}
+
+\paragraph{RUL as a distribution.} At $D=\sigma_{\text{noise}}=\valDnoise$
+counts (the same noise floor that limits the sensor to
+\valCapacityStates{} distinguishable states, \cref{sec:res-capacity}), the
+Wiener first-passage time has mean $\valRULmeanNoise$~h but median
+$\valRULmedianNoise$~h; at $D=\sigma_{\text{signal}}=\valDsignal$ counts, mean
+$\valRULmeanSignal$~h and median $\valRULmedianSignal$~h. The large gap
+between mean and median in both cases is not an artifact: the Inverse
+Gaussian is strongly right-skewed exactly when the threshold $D$ is small
+relative to the diffusion scale $\sigma_B$, which is precisely the
+low-SNR ($\mathrm{SNR}=\valSNR$, \cref{sec:res-capacity}) regime measured
+here --- \emph{the same noise limitation that caps the sensor's resolvable
+states also makes short-horizon RUL predictions highly uncertain}, a
+quantitative link between the capacity result and the RUL result that a
+single point estimate cannot express. This is offered as a
+\emph{methodology} for a full RUL distribution, exercised at self-referential
+thresholds because, as throughout this paper, no externally calibrated
+failure threshold exists for this sensor; supplying one (\cref{sec:conclusion})
+turns \cref{eq:invgauss} directly into an operational RUL distribution.
+
+\subsection{Blind source separation (ICA)}
+\label{sec:res-ica}
+As a model-free counterpart to the regression correction of
+\cref{sec:res-correction}, FastICA (negentropy contrast, \cref{eq:negentropy} in
+\cref{sec:th-ica}) was applied to the three
+observed channels $(\slk,\Tdie,\Vcore)$ alone, with no functional form assumed
+for $\dpvt$. The recovered component that tracks time matches the
+regression-based aging residual $\scorr$ at
+$|\mathrm{corr}|=\valICAagingScorr$---\emph{model-free ICA independently arrives
+at essentially the same aging signal the regression produced}, which
+cross-validates the PVT correction without using the measured $\Tdie,\Vcore$
+coupling. A second component aligns with temperature
+($|\mathrm{corr}(\cdot,\Tdie)|=\valICAthermalT$). Both recovered sources are
+strongly non-Gaussian (excess kurtosis $\valICAkurtAging$ and
+$\valICAkurtThermal$), confirming the premise that non-Gaussianity is the feature
+distinguishing the physical sources---and consistent with the heavy-tailed
+excursions the KL analysis (\cref{sec:res-kl}) exposed.
+
+The separation is \emph{partial}, and is reported as such: the residual pairwise
+mutual information between recovered components reaches $\valICAresidMI$~bits
+(ideal independence is $0$), because the slow, non-stationary aging drift and the
+heavy-tailed noise only approximately satisfy ICA's i.i.d./stationarity
+assumptions. ICA is therefore corroborative here---an independent, assumption-light
+route to the same aging component---rather than a clean unmixing. That a method
+using none of the $\Tdie,\Vcore$ coupling still recovers $83\%$ of the regression
+aging signal is itself the result.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig_ica.pdf}
+  \caption{The ICA-recovered aging component (purple) overlaid on the
+  regression-based residual $\scorr$ (green), both $z$-scored. Model-free ICA,
+  given only $(\slk,\Tdie,\Vcore)$, tracks the regression aging signal at
+  $|\mathrm{corr}|=\valICAagingScorr$.}
+  \label{fig:ica}
+\end{figure}

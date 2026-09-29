@@ -1,0 +1,59 @@
+%==============================================================================
+\section{Contexto e Trabalhos Relacionados}
+\label{sec:background}
+
+% --- corresponde a 01_Project_Overview.md §1; artigos/ ---
+
+\subsection{O sensor de \emph{slack} embarcado}
+O sensor de envelhecimento com auto-ajuste \cite{nogueira_sensor} mede o
+\emph{slack} de tempo do caminho crítico em um FPGA Xilinx Artix-7 usando um
+relógio com deslocamento de fase dinâmico, reportando uma contagem de
+\emph{slack} por incremento de fase de \valLSBps~ps, e acompanha a degradação
+de atraso sob estresse de \emph{burn-in}, temperatura e tensão.
+
+\subsection{Fidelidade de controle térmico}
+O estudo de fidelidade térmica \cite{alencar_fidelity} compara um forno
+termostático \emph{bang-bang} contra um forno PID em malha fechada no
+\emph{mesmo} dispositivo e sensor, mostrando que a arquitetura térmica do
+\emph{burn-in} altera tanto o fator de aceleração entregue quanto o ruído
+ambiental reversível na saída do sensor. Reporta um desvio-padrão térmico em
+regime permanente de $\sigma=\valSigmaPid$~$^\circ$C (PID) vs.\
+$\valSigmaBangBang$~$^\circ$C (\emph{bang-bang}), ruído residual de
+\emph{slack} de $\valResidPid$ vs.\ $\valResidBangBang$ contagens, e uma
+variância explicada linear de $\valRsqPid$ vs.\ $\valRsqBangBang$. Esses são
+os números que este trabalho reexpressa em termos informacionais.
+
+\subsection{A plataforma automatizada de \emph{burn-in}}
+A plataforma \cite{alencarfilho_tcc} entrega aquisição multi-thread
+controlada por PID, registrando \emph{slack} com temperatura e tensão
+sincronizadas a 1~Hz. O conjunto de dados analisado aqui (\cref{sec:dataset})
+é um desses registros.
+
+\subsection{Por que teoria da informação}
+A \Cref{eq:model} é, em termos informacionais, um canal ruidoso: o
+transmissor é o estado de degradação latente, o canal adiciona flutuação PVT
+reversível e ruído de quantização, e o receptor estima a trajetória lenta de
+envelhecimento. Esse enquadramento torna entropia, informação mútua e
+capacidade as figuras de mérito naturais e motiva a metodologia da
+\cref{sec:methodology}.
+
+\subsection{Por que $R^2$ é estruturalmente cego à física}
+\label{sec:background-r2}
+A razão mais profunda pela qual $R^2$ subestima o acoplamento ambiental não é
+incidental a este conjunto de dados --- é estrutural. $R^2$ é uma função
+monótona da correlação/covariância de Pearson entre $\slk$ e seu ajuste
+linear em $(\Tdie,\Vcore)$, e $\mathrm{Cov}(X,Y)=0$ caracteriza apenas a
+\emph{ausência de associação linear}: independência implica covariância
+nula, mas a recíproca é falsa em geral (um exemplo clássico é $Y=X^2$ para
+$X$ simétrico, em que $\mathrm{Cov}=0$ mas $Y$ é uma função determinística,
+totalmente dependente de $X$). Consequentemente, qualquer métrica de
+$R^2$-de-regressão pode ler como ``majoritariamente independente'' uma
+variável que é, de fato, inteiramente determinada pelas entradas por meio de
+um mapeamento não-linear --- precisamente o risco neste domínio, já que a
+aceleração de envelhecimento por BTI é super-linear em $\Vcore$ e a taxa de
+Arrhenius é exponencial em $1/\Tdie$ (se esse risco de fato se instancia nos
+dados desta campanha é examinado, e qualificado, na \cref{sec:res-mi}). A informação mútua (\cref{sec:th-mi}) é
+construída a partir da distribuição conjunta completa, e não de um resumo de
+segundo momento, de modo que $\MI{\slk}{\Tdie,\Vcore}=0$ se e somente se
+$\slk$ e $(\Tdie,\Vcore)$ forem independentes, sem nenhuma hipótese de
+linearidade --- fechando exatamente a lacuna que esta seção identifica.

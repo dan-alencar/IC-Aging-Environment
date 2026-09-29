@@ -1,0 +1,90 @@
+%==============================================================================
+\section{Discussion}
+\label{sec:discussion}
+
+% --- maps to 01_Project_Overview.md §6 (contribution) and §7 (caveats) ---
+
+\subsection{What information theory adds over $R^2$}
+A correct, transferable noise metric: mutual information is valid where the
+physics is non-linear and is expressed in bits. On the (PID) aging device the
+measured dependence exceeds the linear-$R^2$ equivalent by $\valMIexcessPct\,\%$,
+showing that $R^2$ systematically understates the true environment--sensor
+coupling. This \emph{implies} that the prior $R^2$-based comparison of thermal
+regimes understates their difference; recomputing both benches head-to-head in
+bits would require a matched run on the same device, which is outside this
+single-regime study (\cref{sec:discussion}, threats to validity).
+
+\subsection{A principled definition of burn-in quality}
+Reframing burn-in quality as the minimization of $\MI{\slk}{\Tdie,\Vcore}$ gives
+the qualitative claim ``PID is a cleaner validation environment'' a rigorous unit
+and an optimization target: every bit the environment writes into the slack
+reading is a bit of aging information lost. We state this as a principle rather
+than demonstrate it within one device; the closest empirical support here is the
+distributional gap between the two benches (\cref{sec:res-kl}), measured on a
+separate test device.
+
+\subsection{A description-length view of the linear-vs-non-linear choice}
+The MDL criterion of \cref{sec:th-mdl} that selects the linear PVT correction
+(\cref{sec:res-correction}) is not an ad-hoc penalty on extra parameters: it is
+a computable stand-in for the Kolmogorov-complexity intuition that the best
+model is the \emph{shortest description} that still accounts for the data
+(\cref{eq:kolmogorov}). Framed this way, the result is not merely ``the
+non-linear correction is not worth it here''---it is that at this single,
+narrow operating point (\valDutTempMean~$^\circ$C, \valDutVoltMean~V) the
+data do not yet contain enough curvature information to justify paying for the
+Arrhenius/super-linear model's extra parameters, even though the underlying
+physics is genuinely non-linear (\cref{sec:background-r2}). This is consistent
+with, not contradictory to, the non-linearity result of \cref{sec:res-mi}: MI
+detects non-linear \emph{dependence} that $R^2$ misses, while MDL asks whether
+a specific parametric non-linear \emph{form} pays for itself in \emph{this}
+narrow-range dataset. A wider-range or multi-setpoint campaign, spanning enough
+of the Arrhenius/BTI curvature to be compressible by the non-linear model, is
+the natural condition under which MDL would flip its verdict.
+
+\subsection{A resolution limit for SLM sensors}
+The capacity and BSC results put concrete numbers on what the sensor can do:
+$\valCapacityStates$ distinguishable aging states over the campaign, a daily
+($\valBSCwindow$~h) aging alarm of $\Cbsc=\valBSCcap$~bits, and a $3\sigma$
+detection floor of \valMinDetectRate~m-cnt/h reached after $\sim$\valMinObsTime~h.
+These tell an SLM designer how finely the sensor resolves aging and how reliably
+it can raise an alarm under realistic noise---quantities directly consumed by
+adaptive voltage scaling and RUL, and which the prior residual-$\sigma$ metric
+left implicit. Their mutual consistency (the BSC per-window reliability crosses
+over near the CRLB minimum observation time) is evidence the channel model is
+coherent rather than three disconnected heuristics.
+
+\subsection{Sequential estimation and RUL as a distribution}
+The Wiener/Kalman treatment of \cref{sec:res-wiener} is deliberately not a
+replacement for the Cram\'er--Rao/Bayesian bound of \cref{sec:res-rul}, but a
+cross-check from an independent estimation route (a dynamic, filtered model
+rather than a single whole-series regression) that happens to agree on the
+sign and order of magnitude of the aging rate. Its added value is
+structural, not numerical: it turns a single point-rate-with-error-bar into
+(i) a continuously updated, denoised trajectory estimate the operator could
+in principle consume online, and (ii) a full RUL \emph{distribution} rather
+than a bound, exposing the right-skew that a Gaussian error bar hides. That
+the rate-noise MLE and the MDL criterion of \cref{sec:res-correction}
+\emph{independently} both prefer the simplest available model (constant
+drift; linear correction) at this single operating point is itself a
+finding: two different estimation principles, applied to two different
+questions, agree that this campaign does not yet contain the curvature
+needed to justify a more flexible model --- exactly the kind of
+cross-validation this project has used throughout (KSG vs.\ binned MI,
+frequentist vs.\ Bayesian RUL, ICA vs.\ regression correction).
+
+\subsection{Threats to validity}
+The aging-device analysis is a single device and single thermal regime, which
+limits permanent-aging separability. The bench comparison of \cref{sec:res-kl}
+is on a \emph{different} test device, so its KL/JS divergence speaks to bench
+fidelity, not to the aging device's behaviour, and the two are never mixed. MI
+estimates on autocorrelated data are bias-prone despite the large raw sample
+count, mitigated (not eliminated) by $\neff$, the surrogate null floor of
+\cref{sec:res-mi} and cross-estimator agreement; the capacity expression is an
+effective-resolution heuristic; the ICA separation is corroborative, not a clean
+unmixing. The Wiener/Kalman model of \cref{sec:res-wiener} assumes constant
+block-mean observation noise and a genuinely diffusive (Wiener) latent
+process; the RUL distribution it produces is reported at self-referential,
+already-computed thresholds precisely because no independently calibrated
+failure threshold exists for this sensor, so it is a \emph{methodology}
+demonstration, not an operational lifetime prediction, in the same spirit as
+the Cram\'er--Rao bound of \cref{sec:res-rul}.

@@ -1,0 +1,140 @@
+%%==============================================================================
+%% beamerthemeTFinfo.sty — tema sóbrio para defesa acadêmica (TIP7266 / PGETI-UFC)
+%% pdflatex / latexmk, TeX Live puro. 16:9.
+%% Paleta: azul-petróleo estrutural; verde #27AE60 e laranja #E67E22 como cores
+%% de dado (casadas com as figuras matplotlib); cinzas de apoio; contraste AA.
+%% Uso: \usetheme{TFinfo}
+%%   \guidequestion{pergunta da seção}  — antes de um frame; vale até ser trocada
+%%   \guidequestion{}                   — limpa
+%%   \begin{TFhonest}...\end{TFhonest}  — painel de "honestidade deliberada"
+%%   \figframe{\includegraphics{...}}   — moldura hairline opcional para figuras
+%%==============================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{beamerthemeTFinfo}[2026/08/21 v1.0 Tema TFinfo]
+\mode<presentation>
+
+% ---------- fontes (pdflatex, TeX Live) ----------
+\RequirePackage[T1]{fontenc}
+\RequirePackage[sfdefault]{FiraSans}
+\RequirePackage{newtxsf}                  % matemática sans compatível
+\usefonttheme{professionalfonts}
+
+% ---------- numeração própria dos backups ----------
+\RequirePackage{appendixnumberbeamer}
+
+% ---------- paleta ----------
+\definecolor{TFpetrol}{HTML}{0B4F60}      % estrutural
+\definecolor{TFpetrolDeep}{HTML}{073844}
+\definecolor{TFink}{HTML}{20313A}         % texto
+\definecolor{TFslate}{HTML}{55676F}       % apoio
+\definecolor{TFmist}{HTML}{ECF1F3}        % fundo de bloco
+\definecolor{TFline}{HTML}{C9D6DA}        % hairlines
+\definecolor{TFgreen}{HTML}{27AE60}       % dado (preenchimentos)
+\definecolor{TFgreenInk}{HTML}{18703D}    % dado (texto, AA)
+\definecolor{TForange}{HTML}{E67E22}      % dado (preenchimentos)
+\definecolor{TForangeInk}{HTML}{A85A10}   % dado (texto, AA) — números-âncora
+\definecolor{TForangeMist}{HTML}{FBEEDF}  % fundo do painel de honestidade
+
+\setbeamercolor{normal text}{fg=TFink,bg=white}
+\setbeamercolor{structure}{fg=TFpetrol}
+\setbeamercolor{frametitle}{fg=TFpetrolDeep,bg=white}
+\setbeamercolor{title}{fg=TFpetrolDeep}
+\setbeamercolor{subtitle}{fg=TFslate}
+\setbeamercolor{author}{fg=TFink}
+\setbeamercolor{institute}{fg=TFslate}
+\setbeamercolor{date}{fg=TFslate}
+\setbeamercolor{alerted text}{fg=TForangeInk}   % \alert = tratamento dos números-âncora
+\setbeamercolor{example text}{fg=TFgreenInk}
+\setbeamercolor{itemize item}{fg=TFpetrol}
+\setbeamercolor{itemize subitem}{fg=TFslate}
+\setbeamercolor{enumerate item}{fg=TFpetrol}
+\setbeamercolor{caption name}{fg=TFslate}
+\setbeamercolor{footnote}{fg=TFslate}
+\setbeamercolor{footnote mark}{fg=TFslate}
+\setbeamercolor{block title}{fg=TFpetrolDeep,bg=TFmist}
+\setbeamercolor{block body}{fg=TFink,bg=TFmist}
+\setbeamercolor{block title alerted}{fg=TForangeInk,bg=TForangeMist}
+\setbeamercolor{block body alerted}{fg=TFink,bg=TForangeMist}
+\setbeamercolor{block title example}{fg=TFgreenInk,bg=TFmist}
+\setbeamercolor{block body example}{fg=TFink,bg=TFmist}
+\setbeamercolor{TFfootline}{fg=TFslate,bg=white}
+
+% ---------- tipografia ----------
+\setbeamerfont{title}{size=\LARGE,series=\bfseries}
+\setbeamerfont{subtitle}{size=\large,series=\mdseries}
+\setbeamerfont{author}{size=\normalsize,series=\bfseries}
+\setbeamerfont{institute}{size=\small}
+\setbeamerfont{date}{size=\small}
+\setbeamerfont{frametitle}{size=\large,series=\bfseries}
+\setbeamerfont{block title}{size=\normalsize,series=\bfseries}
+% [FIX 2026-08-21] alert math-safe: \bfseries é inválido em modo matemático
+% (disparado por $\alert{\valMIstv}$ no slide da manchete). O template usa
+% \boldsymbol em math e \textbf em texto, mantendo negrito+laranja em ambos.
+\RequirePackage{amsbsy}
+\setbeamertemplate{alerted text}{%
+  {\usebeamercolor[fg]{alerted text}%
+   \ifmmode\boldsymbol{\insertalertedtext}\else\textbf{\insertalertedtext}\fi}}
+\setbeamerfont{footnote}{size=\scriptsize}
+\setbeamerfont{caption}{size=\scriptsize}
+
+% ---------- limpeza / geometria ----------
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{blocks}[default]
+\setbeamersize{text margin left=1.05cm,text margin right=1.05cm}
+\setbeamertemplate{itemize item}{\raisebox{0.28ex}{\rule{0.55em}{0.12em}}}
+\setbeamertemplate{itemize subitem}{\raisebox{0.28ex}{\rule{0.35em}{0.12em}}}
+
+% ---------- frametitle: título petróleo + hairline ----------
+\defbeamertemplate*{frametitle}{TFinfo}{%
+  \vskip0.50cm
+  {\usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle\par}%
+  \vskip0.14cm
+  {\color{TFline}\hrule height 0.6pt}%
+  \vskip0.10cm
+}
+
+% ---------- fio condutor: pergunta-guia por seção na footline ----------
+\newcommand{\TF@guide}{}
+\newcommand{\guidequestion}[1]{\gdef\TF@guide{#1}}
+\newif\ifTF@appendix
+\g@addto@macro\appendix{\TF@appendixtrue\guidequestion{}}
+
+\defbeamertemplate*{footline}{TFinfo}{%
+  \begin{beamercolorbox}[wd=\paperwidth,ht=2.6ex,dp=1.4ex,%
+      leftskip=1.05cm,rightskip=1.05cm]{TFfootline}%
+    {\scriptsize\itshape\TF@guide}\hfill
+    {\scriptsize\ifTF@appendix backup~\fi\insertframenumber\,/\,\inserttotalframenumber}%
+  \end{beamercolorbox}}
+
+% ---------- slide de título: limpo, sem decoração genérica ----------
+\defbeamertemplate*{title page}{TFinfo}{%
+  \vskip1.40cm
+  {\usebeamerfont{institute}\usebeamercolor[fg]{institute}\insertinstitute\par}%
+  \vskip0.55cm
+  {\color{TFpetrol}\rule{2.2cm}{2.2pt}\par}%
+  \vskip0.42cm
+  {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}%
+  \vskip0.28cm
+  {\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}%
+  \vfill
+  {\usebeamerfont{author}\usebeamercolor[fg]{author}\insertauthor\par}%
+  \vskip0.10cm
+  {\usebeamerfont{date}\usebeamercolor[fg]{date}\insertdate\par}%
+  \vskip1.10cm
+}
+% \maketitle: slide de título plain e fora da contagem
+\def\maketitle{%
+  \ifbeamer@inframe\titlepage\else
+    \begin{frame}[plain,noframenumbering]\titlepage\end{frame}\fi}
+
+% ---------- painel "honestidade deliberada" (slide de ressalvas) ----------
+\newenvironment{TFhonest}{%
+  \par\noindent{\color{TForange}\rule{\textwidth}{1.6pt}}\par\nointerlineskip
+  \begin{beamercolorbox}[wd=\textwidth,sep=0.26cm]{block body alerted}}%
+  {\end{beamercolorbox}\par}
+
+% ---------- moldura hairline opcional para figuras ----------
+\setlength{\fboxsep}{2pt}\setlength{\fboxrule}{0.4pt}
+\newcommand{\figframe}[1]{\fcolorbox{TFline}{white}{#1}}
+
+\mode<all>

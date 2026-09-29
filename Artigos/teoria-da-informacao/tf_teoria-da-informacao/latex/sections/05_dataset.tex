@@ -1,0 +1,43 @@
+%==============================================================================
+\section{Dataset}
+\label{sec:dataset}
+
+% --- maps to 04_Dataset.md ---
+
+The primary substrate is a single PID-controlled accelerated-aging campaign
+(\texttt{Tentative\_\allowbreak{}1\_\allowbreak{}20260524\_\allowbreak{}203756.csv}), started 2026-05-24, sampled at
+1~Hz for \valDurationHours~h (\valRawSamples{} raw rows, of which \valDropouts{}
+are link-down dropouts). After excluding the first 1.0~h soak transient,
+\valPostSoakSamples{} samples remain. The DUT is held in a high-stress steady
+state ($\Tdie\approx\valDutTempMean$~$^\circ$C,
+$\Vcore\approx\valDutVoltMean$~V) under PID control with an identified
+FOPDT plant model $G(s)=1.56\,e^{-150.6 s}/(1307.2 s+1)$.
+
+\Cref{tab:dataset} summarizes the sensor-relevant channels and the measured
+relationships. Slack occupies \valSlackLevels{} integer levels over the range
+\valSlackRange{} counts, giving a discrete entropy of $\Ent{\slk}=\valHs$~bits.
+Temperature is the dominant reversible driver
+($\operatorname{corr}(\slk,\Tdie)=\valCorrST$), with a weaker voltage coupling
+($\valCorrSV$) and a genuine slow aging drift
+($\operatorname{corr}(\slk,\tm)=\valCorrSt$; raw least-squares slope
+\valSlopeRaw{} counts/h). A linear regression of slack on $(\Tdie,\Vcore)$
+explains $R^2=\valRsqLinear$ of the variance---a value that, because the
+underlying physics is non-linear, is a \emph{lower bound} on the true
+environmental coupling and thus the central motivation for the mutual-information
+analysis of \cref{sec:results}.
+
+\input{tables/dataset_summary}
+
+The data hazards carried into the pipeline are: heavy serial correlation
+($\neff\ll n$, with $\neff=\valNeff$ here), integer quantization of $\slk$, and a
+trend/environment confound requiring detrending before MI.
+
+For the bench comparison of \cref{sec:res-kl}, two $\sim$24~h \emph{stabilized}
+runs are used: a non-PID SBCCI bench (slack noise $\valSlackStdSBCCI$ counts) and
+the PID-controlled reference ($\valSlackStdPID$ counts). These were acquired on a
+\textbf{dedicated test device distinct from the 214~h aging device}; the two
+benches share that test device, so their divergence isolates the
+bench/environment difference, but their absolute slack levels are not comparable
+to the aging device's. Their differing operating points are handled by comparing
+the centered slack fluctuation, so the divergence reflects noise character rather
+than setpoint.

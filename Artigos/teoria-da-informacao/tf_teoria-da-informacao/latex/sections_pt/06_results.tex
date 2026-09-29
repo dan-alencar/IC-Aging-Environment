@@ -1,0 +1,420 @@
+%==============================================================================
+\section{Resultados}
+\label{sec:results}
+
+% --- Preenchido pelo pipeline de análise (05_Execution_Plan.md, Tier 1 primeiro).
+%     Números vêm de generated/values.tex; macros [TODO] marcam execuções pendentes.
+
+\subsection{Informação mútua vs.\ $R^2$}
+\label{sec:res-mi}
+A \Cref{tab:mi_vs_r2} coloca as medidas de informação ao lado da referência
+linear $R^2$ na campanha PID, todas computadas sobre a série \emph{bruta}
+pós-\emph{soak} (não detrendizada), para pareamento direto com o $R^2$ do
+trabalho anterior (\cref{sec:res-correction} trata a MI \emph{reversível},
+detrendizada, separadamente). A estimativa com \emph{binning}
+(Miller--Madow) --- o estimador-manchete deste trabalho, por ser o único com
+intervalo de confiança reportado --- dá $\MI{\slk}{\Tdie,\Vcore}=\valMIstv$~bits,
+com a temperatura dominando ($\MI{\slk}{\Tdie}=\valMIst$ vs.\
+$\MI{\slk}{\Vcore}=\valMIsv$~bits) e intervalo de 95\,\% por
+\emph{moving-block bootstrap} $[\valMIciLo,\valMIciHi]$~bits. O estimador
+KSG, aplicado como verificação independente sobre uma subamostra decimada,
+produz $\valKSGstv$~bits, com seu próprio intervalo de 95\,\% por
+\emph{bootstrap} em blocos $[\valKSGciLo,\valKSGciHi]$~bits --- os dois
+intervalos se sobrepõem apenas estreitamente (em
+$[\valKSGciLo,\valMIciHi]$), com os pontos estimados em extremos opostos da
+sobreposição: uma diferença sistemática entre estimadores caracterizada com
+barras de erro próprias abaixo, não uma concordância numérica.
+
+\paragraph{O resultado de não-linearidade.} A comparação correta,
+maçã-com-maçã, \emph{não} é a fração de entropia contra a fração de
+variância (escalas diferentes), mas a MI medida contra a MI
+\emph{Gaussiana-equivalente} implicada pelo ajuste linear,
+$-\tfrac12\log_2(1-R^2)=\valMIlinEquiv$~bits para $R^2=\valRsqLinear$. A
+dependência medida com \emph{binning} ($\valMIstv$~bits) \textbf{excede} esse
+valor linear-equivalente em $\valMIexcessPctBinned\,\%$; o estimador KSG,
+sobre a mesma comparação, dá um excesso de $\valMIexcessPctKSG\,\%$. Os dois
+estimadores concordam na conclusão qualitativa --- existe informação
+ambiental genuína que um modelo linear não consegue ver --- mas não no valor
+exato do excesso; reportamos, portanto, uma faixa de
+\textbf{$\valMIexcessPctBinned$--$\valMIexcessPctKSG\,\%$} conforme o
+estimador, em vez de um único número pontual, como o suporte quantitativo
+para substituir $R^2$ por informação mútua neste domínio. Essa faixa é o
+intervalo entre as estimativas pontuais dos dois estimadores; propagando o
+IC de cada um, o envelope completo é
+$\valMIexcessCiLoBinned$--$\valMIexcessCiHiKSG\,\%$, cujo extremo inferior
+permanece acima do equivalente linear.
+
+\paragraph{Sensibilidade ao número de \emph{bins}.} $\Tdie$ e $\Vcore$ são
+contínuos e foram discretizados em $\valMIbins$ \emph{bins} equiprováveis
+para a estimativa acima (\cref{sec:th-diffent}). Repetindo a estimativa com
+\emph{binning} para $12$, $24$, $32$ \emph{bins}, $\MI{\slk}{\Tdie,\Vcore}$ varia
+em $[\valMIbinSensLo,\valMIbinSensHi]$~bits --- uma faixa de
+$\sim$0.06~bits, da mesma ordem da largura do intervalo de confiança por
+bootstrap. Mesmo no extremo inferior dessa faixa ($\valMIbinSensLo$~bits), o
+valor permanece muito acima do piso nulo \emph{surrogate}
+(\valMInullFloor~bits, abaixo) e acima do equivalente Gaussiano linear
+($\valMIlinEquiv$~bits): nenhuma conclusão deste trabalho depende da escolha
+particular de $\valMIbins$ \emph{bins}.
+
+\paragraph{O excesso sobrevive à remoção da tendência? (achado negativo,
+reportado honestamente).} O resultado de não-linearidade acima é
+deliberadamente medido sobre a série \emph{bruta}, pareada com o $R^2$
+também bruto do trabalho anterior. Isso deixa em aberto uma pergunta mais
+forte: o excesso está no acoplamento reversível \emph{instantâneo}
+$\Tdie,\Vcore\to\slk$, ou concentrado na tendência lenta que envelhecimento
+e $\Tdie,\Vcore$ compartilham ao longo de uma campanha de
+\valDurationHours~h? Repetindo a mesma comparação sobre as séries
+detrendizadas usadas na correção PVT (\cref{sec:res-correction}):
+$R^2_{\text{detr}}=\valRsqDetrended$, equivalente Gaussiano
+$=\valMIlinEquivDetrended$~bits; a MI medida com \emph{binning} é
+$\valMIdtBinned$~bits (IC 95\,\% $[\valMIdtCiLo,\valMIdtCiHi]$) e o KSG,
+aplicado à mesma série detrendizada com seu próprio \emph{bootstrap} em
+blocos, dá $\valMIdtKSG$~bits (IC 95\,\% $[\valMIdtKsgCiLo,\valMIdtKsgCiHi]$)
+--- \textbf{os dois estimadores ficam no equivalente Gaussiano linear ou
+abaixo dele} (déficit de $\valMIexcessPctDetrended$--$\valMIexcessPctDetrKSG\,\%$
+conforme o estimador; o extremo superior do IC do KSG, $\valMIdtKsgCiHi$,
+toca o equivalente Gaussiano $\valMIlinEquivDetrended$, então o KSG é
+compatível com paridade exata, enquanto o binned fica claramente abaixo).
+Os dois valores detrendizados, binned ($\valMIdtBinned$) e KSG
+($\valMIdtKSG$), diferem entre si pela mesma razão que os valores brutos da
+\cref{sec:res-mi} diferem (\valMIstv\ vs.\ \valKSGstv): é a mesma série
+detrendizada em ambos os casos, apenas estimada por famílias de estimador
+distintas (\emph{binning} com correção de Miller--Madow vs.\
+$k$-vizinhos-mais-próximos) --- não um erro de pré-processamento nem duas
+séries diferentes.
+
+\emph{Como um déficit numérico deve ser lido.} Isto é reportado
+honestamente, no mesmo espírito dos demais resultados negativos deste
+trabalho (\cref{sec:res-correction,sec:res-wiener}): o excesso não-linear de
+$\valMIexcessPctBinned$--$\valMIexcessPctKSG\,\%$ medido na série bruta
+\emph{não sobrevive} à remoção da tendência lenta compartilhada, e portanto
+não pode ser atribuído com confiança a uma não-linearidade
+\emph{instantânea} do tipo Arrhenius/super-linear na relação reversível
+$\Tdie,\Vcore\to\slk$ --- ele está concentrado, ao menos em parte, na
+interação entre a deriva de envelhecimento e a deriva lenta de
+$\Tdie,\Vcore$ ao longo da campanha. Esse déficit numérico, porém,
+\textbf{não} deve ser lido como ``dependência menor que a linear'': o
+equivalente Gaussiano é um construto de variáveis contínuas, e para um
+resíduo quantizado em poucas contagens a MI discreta pode legitimamente
+ficar abaixo dele (o teto entrópico do resíduo e o viés
+descendente do estimador nesse regime de MI pequena e $\neff$ reduzido
+empurram nessa direção); a leitura defensável é que \textbf{nenhum excesso
+não-linear é resolvível acima do piso do estimador} nesta série, não que a
+relação reversível seja ``sub-linear''. A comparação bruta permanece o
+pareamento correto e honesto com o $R^2$ publicado do trabalho anterior
+(também medido sobre série bruta, sem \emph{detrend}), mas a leitura causal
+--- ``a física é não-linear, por isso a MI excede o $R^2$'' --- deve ser
+lida como a hipótese que motivou este trabalho, não como algo que este
+resultado demonstra; a \cref{sec:discussion} retoma este ponto.
+
+\paragraph{Piso nulo \emph{surrogate}.} Como estimadores de MI são viesados
+para cima em amostras finitas e autocorrelacionadas, o valor medido precisa
+ser verificado contra o piso que o estimador produz sob independência
+genuína. Deslocando circularmente o fluxo $(\Tdie,\Vcore)$ contra $\slk$ em
+defasagens aleatórias grandes --- destruindo a dependência cruzada enquanto
+preserva a marginal \emph{e} a autocorrelação de cada canal --- obtém-se um
+$\MI{\slk}{\Tdie,\Vcore}$ nulo de média $\valMInullMean$~bits e percentil 95
+de $\valMInullFloor$~bits. O valor medido de $\valMIstv$~bits é
+$\approx\valMIfloorRatio\times$ esse piso, de modo que a dependência é
+esmagadoramente real, e não viés de estimador. O mesmo raciocínio se aplica
+ao excesso sobre o equivalente Gaussiano linear da série bruta: descontando
+o viés médio do estimador ($\valMInullMean$~bits) do excesso com
+\emph{binning} ($\valMIexcessPctBinned\,\%$), sobra $\valMIexcessFloorAdjBits$~bits
+($\approx\valMIexcessFloorAdjPct\,\%$) ainda positivo --- o excesso da série
+bruta não é, ele próprio, um artefato do piso de viés (isso não contradiz o
+achado do parágrafo anterior: o piso de viés e a confusão com a tendência
+compartilhada são duas ameaças distintas, e o excesso bruto sobrevive à
+primeira mas não à segunda). O mesmo piso enquadra o
+resíduo reversível pós-correção ($\valResidMI$~bits,
+\cref{sec:res-correction}): ter reduzido o acoplamento remanescente à mesma
+ordem de grandeza do piso nulo é exatamente o que ``o ambiente foi removido''
+significa em termos de informação.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.86\linewidth]{fig_mi.pdf}
+  \caption{Informação mútua por canal e conjunta entre \emph{slack} e o
+  ambiente (bits), estimador com \emph{binning}. A conjunta
+  $\MI{\slk}{\Tdie,\Vcore}$ excede a Gaussiana-equivalente do $R^2$ linear
+  (tracejado) em $\valMIexcessPctBinned\%$ (KSG: $\valMIexcessPctKSG\%$), e
+  fica bem acima do piso nulo \emph{surrogate} (pontilhado), confirmando
+  acoplamento genuíno (a atribuição do excesso à não-linearidade é
+  discutida na \cref{sec:discussion}).}
+  \label{fig:mi}
+\end{figure}
+
+\input{tables_pt/mi_vs_r2}
+
+\subsection{Correção PVT como recuperação de informação}
+\label{sec:res-correction}
+Ajustamos $\hat{\dpvt}(\Tdie,\Vcore)$ e formamos $\scorr=\slk-\hat{\dpvt}$. A
+correção por mínimos quadrados ordinários (linear) zera o acoplamento linear
+por construção ($\operatorname{corr}(\scorr,\Tdie)=+0.00$,
+$\operatorname{corr}(\scorr,\Vcore)=-0.00$); a pergunta metodologicamente
+relevante é quanta informação mútua \emph{reversível} ela remove. Medido
+sobre sinais detrendizados --- para que a deriva lenta de envelhecimento não
+se disfarce de acoplamento ambiental --- o acoplamento reversível cai de
+$\valPreMIrev$~bits antes da correção para $\valResidMI$~bits depois, ou
+seja, a correção linear remove \textbf{\valMIreductionPct\,\%} da informação
+reversível ambiente--sensor, deixando um resíduo no piso de ruído do
+estimador. O desvio-padrão residual reversível é $\valResidSigmaLin$~contagens,
+consistente com o resíduo PID publicado no trabalho anterior
+($\valResidPid$~contagens) --- uma verificação cruzada independente do
+\emph{pipeline}.
+
+A correção não-linear motivada pela física (tipo Arrhenius em $\Tdie$,
+super-linear em $\Vcore$) remove marginalmente mais MI residual
+($\valResidMInl$ vs.\ $\valResidMIlin$~bits), mas reduz a variância residual
+de forma negligenciável; o critério MDL/BIC (\cref{eq:mdl},
+\cref{sec:th-mdl}) portanto \textbf{seleciona o modelo linear}
+($\valCorrModel$), julgando os parâmetros extras injustificados neste ponto
+de estresse --- um veredito de comprimento de descrição revisitado na
+\cref{sec:discussion}.
+
+\paragraph{Recuperação do envelhecimento (resultado-chave).} Remover a
+contribuição PVT não apenas limpa o sinal --- ela \emph{expõe} a trajetória
+latente de envelhecimento. A correlação do \emph{slack} com o tempo se
+fortalece de $\operatorname{corr}(\slk,\tm)=\valCorrStRaw$ no fluxo bruto
+para $\operatorname{corr}(\scorr,\tm)=\valCorrStCorr$ após a correção:
+retirar a informação ambiental reversível torna a deriva permanente de
+envelhecimento a estrutura dominante no resíduo, precisamente o objetivo de
+recuperação de informação da \cref{eq:model} e a âncora empírica para o
+limite de RUL da \cref{sec:res-rul}.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig_correction.pdf}
+  \caption{(a) O \emph{slack} bruto acompanha a temperatura do \emph{die}
+  (corr $\valCorrST$). (b) Após a correção PVT o acoplamento reversível
+  desaparece e a tendência permanente de envelhecimento é \emph{exposta}
+  (a correlação \emph{slack}--tempo se fortalece de $\valCorrStRaw$ para
+  $\valCorrStCorr$); a linha tracejada é a taxa de envelhecimento ajustada.}
+  \label{fig:correction}
+\end{figure}
+
+\subsection{Distância distribucional entre bancadas}
+\label{sec:res-kl}
+Duas execuções estabilizadas de $\sim$24~h em bancadas diferentes --- a
+configuração SBCCI não-PID e a referência controlada por PID --- permitem
+colocar um número em ``quão longe o ambiente não-conforme empurra a
+distribuição do \emph{slack}''. Ambas as execuções são no mesmo dispositivo
+de teste dedicado, distinto do dispositivo de envelhecimento de 214~h das
+seções anteriores; elas compartilham esse dispositivo de teste, de modo que
+a divergência isola a diferença de bancada/ambiente e não a variação
+dispositivo-a-dispositivo. As bancadas operam em pontos de operação
+diferentes, então a comparação é feita sobre a flutuação centrada do
+\emph{slack}, isolando o caráter do ruído do ponto de ajuste. O ruído de
+\emph{slack} é de $\valSlackStdSBCCI$ contagens (SBCCI) vs.\
+$\valSlackStdPID$ contagens (PID), acompanhando o ruído de temperatura
+($\valTstdSBCCI$ vs.\ $\valTstdPID$~$^\circ$C) --- a contaminação é de
+origem térmica.
+
+A divergência de Kullback--Leibler é fortemente \emph{assimétrica}:
+$\KL{p_{\text{SBCCI}}}{p_{\text{PID}}}=\valKLsp$~bits (o custo de descrever a
+bancada ruidosa com a referência PID apertada) contra
+$\KL{p_{\text{PID}}}{p_{\text{SBCCI}}}=\valKLps$~bits --- uma ilustração
+direta do ponto da disciplina de que KL não é uma métrica. A divergência de
+Jensen--Shannon, simétrica, é $\valJSbench$~bits (de um máximo de 1), uma
+única ``distância entre ambientes de validação'' transferível. Uma forma
+fechada Gaussiana de média nula dá $\valKLgauss$~bits para
+$\KL{p_{\text{SBCCI}}}{p_{\text{PID}}}$; o valor empírico é maior
+($\valKLsp$~bits), e esse excesso é, por si só, evidência de que a bancada
+não-conforme injeta excursões \emph{não-Gaussianas}, de cauda pesada --- o
+que motiva a análise de separação cega da \cref{sec:res-ica}.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.86\linewidth]{fig_kl.pdf}
+  \caption{Distribuições da flutuação centrada de \emph{slack} das duas
+  bancadas (mesmo dispositivo de teste). A bancada SBCCI não-PID é
+  marcadamente mais larga que a referência PID; a divergência
+  $\KL{p_{\text{SBCCI}}}{p_{\text{PID}}}=\valKLsp$~bits (JS $=\valJSbench$~bits)
+  quantifica a lacuna de fidelidade de bancada.}
+  \label{fig:kl}
+\end{figure}
+
+\subsection{Resolução efetiva e confiabilidade de alarme}
+\label{sec:res-capacity}
+Tomando o ruído reversível pós-correção $\sigma_{\text{noise}}=\valSigNoise$
+contagens e a dispersão do sinal de envelhecimento
+$\sigma_{\text{sig}}=\valSigSignal$ contagens, a heurística de capacidade
+(\cref{eq:capacity}, derivada na \cref{sec:th-capacity} a partir do
+argumento de entropia máxima Gaussiana) dá $\mathrm{SNR}=\valSNR$,
+$C=\valCapacityBits$~bits e, portanto, \valCapacityStates{} estados de
+envelhecimento distinguíveis ao longo desta campanha --- um número
+deliberadamente modesto, que reflete uma excursão de envelhecimento de
+apenas $\sim\!\sqrt{\valSNR}\times$ o piso de ruído, e que a métrica
+residual-$\sigma$ anterior não conseguia expressar.
+
+A decisão de alarme de envelhecimento é modelada como um BSC cujo
+cruzamento $p$ decorre do SNR de detecção por janela (\cref{eq:bsc}). A
+confiabilidade é fortemente \emph{dependente da escala de tempo}: uma
+decisão por hora é essencialmente um lançamento de moeda ($p\approx0.49$,
+$\Cbsc\approx0$) porque uma hora de deriva está enterrada no ruído, enquanto
+uma janela operacional de \valBSCwindow~h dá $p=\valBSCp$ e
+$\Cbsc=\valBSCcap$~bits/decisão (quase perfeito), e a campanha completa é
+efetivamente certa. A transição entre esses regimes coincide com o tempo
+mínimo de observação derivado a seguir.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.82\linewidth]{fig_capacity_rul.pdf}
+  \caption{Capacidade do canal de alarme de envelhecimento
+  $\Cbsc=1-\Hb(p)$ em função do comprimento da janela de decisão. A
+  confiabilidade sobe de $\approx0$ (por hora, enterrada no ruído) para
+  $\approx1$ bit, com a transição coincidindo com o tempo mínimo de
+  observação de Cram\'er--Rao ($\approx\valMinObsTime$~h, tracejado) --- as
+  três figuras de mérito são mutuamente consistentes.}
+  \label{fig:capacity}
+\end{figure}
+
+\subsection{Limite de detectabilidade de RUL}
+\label{sec:res-rul}
+Colocando o RUL como estimação por mínimos quadrados da inclinação de
+envelhecimento, e usando o ruído medido com o tamanho efetivo de amostra
+$\neff=\valNeff$ ($\tauint=\valTauInt$~amostras, ou seja,
+$\sim$5~min de decorrelação), o limite de Cram\'er--Rao
+(\cref{sec:th-estimation}) dá um desvio-padrão da estimativa de inclinação
+de $\valCRLBsd$~m-cnt/h ao longo da campanha de $\sim$214~h, portanto uma
+taxa mínima detectável de envelhecimento (a $3\sigma$) de
+\textbf{\valMinDetectRate~m-cnt/h}. A taxa de envelhecimento corrigida
+medida é $\valAgingSlope$~m-cnt/h --- aproximadamente $15\times$ acima desse
+piso, de modo que a tendência é firmemente detectável. Equivalentemente, o
+tempo mínimo de observação para resolver a tendência medida a $3\sigma$ é
+\textbf{$\sim$\valMinObsTime~h}, bem dentro desta campanha (e explicando por
+que as execuções anteriores de $\sim$23~h não conseguiam separar o
+envelhecimento do piso reversível). Esta é a afirmação honesta de
+detectabilidade que o projeto prometeu: não uma predição de vida útil, mas
+um limite limitado por ruído sobre \emph{quando} o envelhecimento se torna
+observável.
+
+\paragraph{Barras de credibilidade Bayesianas.} O limite frequentista é
+complementado por uma regressão linear Bayesiana de $\scorr$ sobre o tempo,
+ajustada sobre os dados decimados até os $\neff$ pontos efetivamente
+independentes (para que a verossimilhança i.i.d.\ seja válida) sob uma
+\emph{prior} de Jeffreys, dando uma posterior $t$ de Student para a
+inclinação. A taxa de envelhecimento posterior é $\valBayesSlope$~m-cnt/h
+com um intervalo de credibilidade de $95\%$ de
+$[\valBayesSlopeLo,\valBayesSlopeHi]$~m-cnt/h, e a probabilidade posterior de
+que a inclinação seja genuinamente negativa é de $\valBayesPaging\,\%$ ---
+numericamente indistinguível de certeza; a leitura dessa deriva residual
+\textbf{como envelhecimento} permanece condicionada à hipótese de
+identificação deste estudo de dispositivo único (\cref{sec:discussion},
+ameaças à validade). Propagar a posterior da inclinação pela relação de detectabilidade
+dá um intervalo de credibilidade de $[\valBayesMotLo,\valBayesMotHi]$~h para
+o tempo mínimo de observação, contendo a estimativa pontual de
+$\valMinObsTime$~h. Os dois paradigmas concordam, e o tratamento Bayesiano
+fornece as barras de erro calibradas que um futuro estudo de RUL propagaria
+adiante.
+
+\subsection{Uma trajetória de envelhecimento denoised e o RUL como distribuição (Wiener/Kalman)}
+\label{sec:res-wiener}
+Os resultados de Cram\'er--Rao e Bayesiano acima fornecem uma única taxa
+para toda a campanha e sua barra de erro. Aqui fazemos, em vez disso, a
+pergunta de estimação sequencial da \cref{sec:th-wiener}: fazendo a média em
+blocos de $\scorr$ em $\valNBlocks$ observações quase-independentes (uma a
+cada $2\tauint$, ou seja, uma unidade de $\neff$ cada), o ajuste por método
+dos momentos da \cref{eq:wiener-model} dá uma difusão de Wiener
+$\sigma_B=\valWienerSigmaB$ contagens/$\sqrt{\text{h}}$ e um ruído de
+observação por média de bloco $R$ notavelmente \emph{abaixo} do
+$\sigma_{\text{noise}}^2$ nativo por amostra (\cref{sec:res-capacity}) ---
+evidência direta de que a média sobre uma janela completa de decorrelação
+ainda remove estrutura sub-$\tauint$ que o tempo de autocorrelação único,
+sozinho, não captura. O MLE do ruído de taxa colapsa para seu piso numérico
+($\sigma_{\mathrm{rate}}^2\!\approx\!\valWienerQRate$): os dados preferem um
+processo de Wiener de deriva \emph{constante} a um variável no tempo, uma
+segunda confirmação independente --- ao lado do veredito de MDL da
+\cref{sec:res-correction} --- de que esta campanha única, de ponto de
+operação estreito, não contém informação de curvatura suficiente para
+sustentar um modelo mais flexível. A taxa suavizada por Kalman/RTS ao final
+da campanha é $\valWienerRateEnd$~m-cnt/h, consistente em sinal e ordem de
+grandeza com a estimativa CRLB/Bayesiana da \cref{sec:res-rul}
+($\sim\!-18$~m-cnt/h); a diferença de $\sim$15\% entre as duas taxas
+derivadas independentemente reflete os estimadores distintos (OLS sobre toda
+a série vs.\ um estado filtrado, com média em blocos), não uma contradição.
+O desvio-padrão posterior do nível suavizado é essencialmente plano ao longo
+da campanha ($\valWienerLevelSDstart\to\valWienerLevelSDend$ contagens): o
+filtro atinge sua incerteza de regime permanente dentro dos primeiros
+blocos e não continua encolhendo indefinidamente, exatamente como um filtro
+linear-Gaussiano com $R$ e $\sigma_B^2$ constantes prevê.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig_wiener_rul.pdf}
+  \caption{(a) Média de bloco de $\scorr$ (claro) e a trajetória de
+  envelhecimento suavizada por Kalman/RTS $\hat\Xlat(t)$ com uma banda de
+  credibilidade de 95\%. (b) A distribuição de RUL Gaussiana-inversa
+  (\cref{eq:invgauss}) em dois limiares ancorados no Tier 1: um incremento
+  do piso de ruído ($D=\sigma_{\text{noise}}$) e uma excursão em escala de
+  sinal já observada ($D=\sigma_{\text{signal}}$).}
+  \label{fig:wiener}
+\end{figure}
+
+\paragraph{RUL como distribuição.} Em $D=\sigma_{\text{noise}}=\valDnoise$
+contagens (o mesmo piso de ruído que limita o sensor a
+\valCapacityStates{} estados distinguíveis, \cref{sec:res-capacity}), o
+tempo de primeira passagem de Wiener tem média $\valRULmeanNoise$~h mas
+mediana $\valRULmedianNoise$~h; em $D=\sigma_{\text{signal}}=\valDsignal$
+contagens, média $\valRULmeanSignal$~h e mediana $\valRULmedianSignal$~h. A
+grande diferença entre média e mediana em ambos os casos não é um artefato:
+a Gaussiana inversa é fortemente assimétrica à direita exatamente quando o
+limiar $D$ é pequeno em relação à escala de difusão $\sigma_B$, que é
+precisamente o regime de SNR baixo ($\mathrm{SNR}=\valSNR$,
+\cref{sec:res-capacity}) medido aqui --- \emph{a mesma limitação de ruído
+que restringe os estados resolvíveis do sensor também torna as predições de
+RUL de curto horizonte altamente incertas}, uma ligação quantitativa entre o
+resultado de capacidade e o resultado de RUL que uma única estimativa
+pontual não consegue expressar. Isso é oferecido como uma
+\emph{metodologia} para uma distribuição completa de RUL, exercitada em
+limiares auto-referenciados porque, como em todo este trabalho, não existe
+um limiar de falha calibrado externamente para este sensor; fornecer um
+(\cref{sec:conclusion}) transforma a \cref{eq:invgauss} diretamente em uma
+distribuição de RUL operacional.
+
+\subsection{Separação cega de fontes (ICA)}
+\label{sec:res-ica}
+Como contraparte livre de modelo à correção por regressão da
+\cref{sec:res-correction}, o FastICA \cite{hyvarinen2001} (contraste de
+negentropia, \cref{eq:negentropy} na \cref{sec:th-ica}) foi aplicado aos três canais
+observados $(\slk,\Tdie,\Vcore)$ isoladamente, sem nenhuma forma funcional
+assumida para $\dpvt$. O componente recuperado que acompanha o tempo bate
+com o resíduo de envelhecimento baseado em regressão $\scorr$ em
+$|\mathrm{corr}|=\valICAagingScorr$ --- \emph{o ICA livre de modelo chega
+independentemente a essencialmente o mesmo sinal de envelhecimento que a
+regressão produziu}, o que valida cruzadamente a correção PVT sem usar o
+acoplamento medido $\Tdie,\Vcore$. Um segundo componente se alinha com a
+temperatura ($|\mathrm{corr}(\cdot,\Tdie)|=\valICAthermalT$). Ambas as
+fontes recuperadas são fortemente não-Gaussianas (curtose em excesso
+$\valICAkurtAging$ e $\valICAkurtThermal$), confirmando a premissa de que a
+não-Gaussianidade é a característica que distingue as fontes físicas --- e
+consistente com as excursões de cauda pesada que a análise KL
+(\cref{sec:res-kl}) expôs.
+
+A separação é \emph{parcial}, e é reportada como tal: a informação mútua
+residual entre pares de componentes recuperados atinge $\valICAresidMI$~bits
+(a independência ideal é $0$), porque a deriva lenta e não-estacionária de
+envelhecimento e o ruído de cauda pesada satisfazem apenas
+aproximadamente as hipóteses de i.i.d./estacionariedade do ICA. O ICA é,
+portanto, corroborativo aqui --- uma rota independente, com poucas hipóteses,
+para o mesmo componente de envelhecimento --- em vez de uma desmistura
+limpa. O ICA recebe os três mesmos canais observados $(\slk,\Tdie,\Vcore)$ da
+regressão e busca no mesmo espaço linear de 3 dimensões; a diferença está no
+\emph{critério}, não no espaço de busca --- mínimos quadrados de um lado,
+independência/não-Gaussianidade (negentropia) do outro. Que dois critérios
+tão distintos, aplicados às mesmas observações, cheguem a componentes de
+envelhecimento com $|\mathrm{corr}|=\valICAagingScorr$ (isto é,
+$\approx\valICAagingVarExpl\,\%$ de variância compartilhada --- não
+$\valICAagingVarExpl\,\%$ do ``sinal recuperado'', uma leitura que confundiria
+correlação com fração de sinal) é, ainda assim, uma corroboração de critério
+não trivial.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig_ica.pdf}
+  \caption{O componente de envelhecimento recuperado pelo ICA (roxo)
+  sobreposto ao resíduo baseado em regressão $\scorr$ (verde), ambos
+  padronizados ($z$-score). O ICA livre de modelo, dado apenas
+  $(\slk,\Tdie,\Vcore)$, acompanha o sinal de envelhecimento da regressão em
+  $|\mathrm{corr}|=\valICAagingScorr$.}
+  \label{fig:ica}
+\end{figure}

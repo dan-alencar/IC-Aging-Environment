@@ -1,0 +1,60 @@
+%==============================================================================
+\section{Conclusão e Trabalhos Futuros}
+\label{sec:conclusion}
+
+Colocamos uma camada de medição informacional sobre uma plataforma de
+\emph{burn-in} de envelhecimento acelerado já existente, reexpressando a
+contaminação ambiental, a correção PVT e a recuperabilidade do
+envelhecimento como entropia, informação mútua e capacidade de canal. Em
+uma campanha PID de \valDurationHours~h estabelecemos as âncoras empíricas
+($\Ent{\slk}=\valHs$~bits; $R^2$ linear $=\valRsqLinear$) e uma metodologia
+que substitui o $R^2$ dependente de modelo pela informação mútua, define
+qualidade de \emph{burn-in} como a minimização de
+$\MI{\slk}{\Tdie,\Vcore}$, converte o ruído medido em estados de
+envelhecimento resolvíveis e uma capacidade de canal de alarme, e limita a
+detectabilidade de RUL honestamente via Cram\'er--Rao e estimação
+Bayesiana. Uma extensão via processo de Wiener e filtro de Kalman do mesmo
+ferramental de estimação transforma ainda mais esse limite pontual de RUL
+em uma trajetória de envelhecimento denoised, continuamente atualizada, e
+uma \emph{distribuição} de RUL Gaussiana-inversa em forma fechada
+(\cref{sec:res-wiener}), validada cruzadamente contra a estimativa
+CRLB/Bayesiana e contra o resultado de seleção de modelo por MDL da
+\cref{sec:res-correction}.
+
+A proposta original deste projeto previa uma estimativa de capacidade
+\emph{por regime térmico} (\emph{bang-bang} vs.\ PID); sem um registro bruto
+de \emph{bang-bang} sincronizado e comparável ao da campanha PID de
+\valDurationHours~h, essa comparação por regime não foi entregue como tal
+--- em seu lugar, este trabalho entrega a capacidade e o limite de RUL no
+regime PID (\cref{sec:res-capacity,sec:res-rul}) e, como sucedâneo direto
+para a comparação entre regimes, a divergência distribucional KL/JS entre
+as duas bancadas (\cref{sec:res-kl}), que já mostra numericamente que a
+bancada não-PID é mais ruidosa. Completar a comparação de capacidade por
+regime com um registro \emph{bang-bang} novo é, por isso, o primeiro item
+de trabalho futuro abaixo, não uma lacuna silenciosa.
+
+\paragraph{Trabalhos futuros.} Adquirir uma campanha \emph{bang-bang} de
+duração equivalente para completar a comparação de KL e capacidade
+entre regimes com dados novos; estender para múltiplos dispositivos para
+separar uma trajetória de envelhecimento permanente da variação
+dispositivo-a-dispositivo; implantar o \emph{pipeline} em janelas
+deslizantes, on-line, como um gerador contínuo de atributos informacionais
+alimentando o controlador de SLM, com a trajetória suavizada por Kalman da
+\cref{sec:res-wiener} como sua estimativa de envelhecimento ao vivo;
+calibrar um limiar de falha real $D$ (por exemplo, a partir de uma
+especificação de margem de tempo) para que a \cref{eq:invgauss} produza uma
+distribuição de RUL operacional, em vez dos limiares auto-referenciados
+usados aqui; e prosseguir com a rota de ICA/separação cega com canais
+derivados adicionais para fortalecer a recuperação de envelhecimento livre
+de modelo.
+
+\section*{Reprodutibilidade}
+Todo escalar neste trabalho é gerado pelo \emph{pipeline} de análise em
+\texttt{generated/values.tex}, e cada figura/tabela em \texttt{figures/} e
+\texttt{tables\_pt/}; reexecutar a análise sobre um novo registro
+regenera o documento sem transcrição manual.
+
+\section*{Agradecimentos}
+Este trabalho foi desenvolvido para a disciplina de Teoria da Informação
+(TIP7266, PGETI/UFC, 2026.1) e se apoia na pesquisa do autor sobre sensores
+de envelhecimento de circuitos integrados e instrumentação de \emph{burn-in}.

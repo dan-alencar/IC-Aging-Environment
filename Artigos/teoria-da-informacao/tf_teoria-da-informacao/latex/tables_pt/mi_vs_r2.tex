@@ -1,0 +1,30 @@
+% Tabela principal: medidas de informação vs. a referência linear R^2.
+\begin{table}[t]
+  \centering
+  \caption{Medidas de informação (bits) vs.\ a referência linear $R^2$ na
+           campanha PID. A $\MI{\slk}{\Tdie,\Vcore}$ medida excede a MI
+           Gaussiana-equivalente do ajuste linear
+           ($-\tfrac12\log_2(1-R^2)$) em \valMIexcessPct\,\% --- um excesso
+           real (sobrevive ao piso de viés do estimador), cuja atribuição à
+           não-linearidade instantânea, porém, não sobrevive à remoção da
+           tendência compartilhada (\cref{sec:res-mi,sec:discussion}). As
+           colunas de trabalho anterior são as estatísticas publicadas de
+           fidelidade térmica.}
+  \label{tab:mi_vs_r2}
+  \begin{tabular}{lccc}
+    \toprule
+     & PID (nova execução) & PID (anterior) & Bang-bang (anterior) \\
+    \midrule
+    $R^2$ linear $(\slk\mid\Tdie,\Vcore)$       & \valRsqLinear & \valRsqPid & \valRsqBangBang \\
+    \;$\hookrightarrow$ MI Gaussiana-equiv.\ (bits) & \valMIlinEquiv & --- & --- \\
+    $\Ent{\slk}$ (bits)                      & \valHs        & ---        & --- \\
+    $\Ent{\slk\mid\Tdie,\Vcore}$ (bits)      & \valHscondTV  & ---        & --- \\
+    $\MI{\slk}{\Tdie}$ (bits)                & \valMIst      & ---        & --- \\
+    $\MI{\slk}{\Vcore}$ (bits)               & \valMIsv      & ---        & --- \\
+    $\MI{\slk}{\Tdie,\Vcore}$ com \emph{binning} (bits)  & \valMIstv     & ---        & --- \\
+    \;$\hookrightarrow$ verificação cruzada KSG (bits) & \valKSGstv  & ---        & --- \\
+    \;$\hookrightarrow$ IC 95\,\% (bootstrap em blocos) & [\valMIciLo,\,\valMIciHi] & --- & --- \\
+    fração de informação $\MI{}{}/\Ent{}$         & \valInfoFraction & ---     & --- \\
+    \bottomrule
+  \end{tabular}
+\end{table}
