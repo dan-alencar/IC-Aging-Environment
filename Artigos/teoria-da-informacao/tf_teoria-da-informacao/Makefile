@@ -2,7 +2,7 @@
 #
 #   make            # venv + análise + todos os PDFs
 #   make analysis   # só o pipeline Python (regrava latex/generated e latex/figures)
-#   make pdf        # só o LaTeX (main_pt, seminar, main)
+#   make pdf        # só o LaTeX (main_pt, seminar, seminar_15min, main)
 #   make clean      # remove auxiliares do LaTeX e caches Python
 #   make distclean  # clean + remove .venv e os PDFs compilados
 #
@@ -14,7 +14,7 @@ VENV    := .venv
 PY      := $(VENV)/bin/python
 LATEXMK ?= latexmk -pdf -interaction=nonstopmode -halt-on-error
 
-DOCS := main_pt seminar main
+DOCS := main_pt seminar seminar_15min main
 
 .PHONY: all venv analysis pdf clean distclean
 

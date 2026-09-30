@@ -1,4 +1,4 @@
-# Contexto do Syllabus — TIP7266 Teoria da Informação (PGETI/UFC, 2026.1)
+# Contexto do Syllabus — TIP7266 Teoria da Informação (PPGETI/UFC, 2026.1)
 
 > Fonte: `material/Sumula Teoria_da_Informacao - TIP-7266-2026-1.pdf`. Serve para que a análise crítica julgue *pertinência* e *profundidade* do TF em relação ao que a disciplina realmente cobre — nem mais nem menos do que o programa declara.
 

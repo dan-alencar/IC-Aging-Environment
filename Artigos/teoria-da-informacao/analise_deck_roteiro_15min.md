@@ -278,7 +278,7 @@ segundo de silêncio antes das perguntas.
 ```
 Você vai redesenhar visualmente um deck Beamer acadêmico SEM alterar uma
 palavra do conteúdo. Contexto: defesa de Trabalho Final da disciplina
-TIP7266 (Teoria da Informação, PGETI/UFC), 15 minutos, banca de professores
+TIP7266 (Teoria da Informação, PPGETI/UFC), 15 minutos, banca de professores
 de engenharia elétrica. O deck apresenta um trabalho que trata um sensor de
 envelhecimento em FPGA como canal de comunicação ruidoso e mede tudo em bits.
 

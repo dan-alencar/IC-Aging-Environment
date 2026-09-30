@@ -1,0 +1,209 @@
+% Versão de 15 min efetivamente apresentada na defesa de 22/08/2026 (10 slides).
+% Recorte de seminar.tex, que é a versão completa e canônica (KL/JS, ICA, ressalvas, backups).
+%==============================================================================
+%  seminar.tex — apresentação do TF (15 min), Beamer.
+%  Reaproveita as fontes únicas de verdade do artigo: notation.tex +
+%  generated/values.tex, para que todo número fique em lockstep com o
+%  pipeline de análise (nunca digitado à mão).
+%  Build:  latexmk -pdf seminar.tex     (ou: pdflatex seminar)
+%  Esboço + notas do apresentador: ../seminar_deck_outline.md
+%==============================================================================
+\documentclass[aspectratio=169,11pt]{beamer}
+\usetheme{TFinfo}% [TFinfo] era: \usetheme{metropolis}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazilian]{babel}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{booktabs}
+
+\input{notation.tex}
+\input{generated/values.tex}
+\graphicspath{{figures/}}
+\newcommand{\degC}{\,\textcelsius}
+
+\title{Informação de Envelhecimento \& Ruído em Sensores de \emph{Slack} On-Chip}
+\subtitle{Uma camada de medição informacional --- substituindo $R^2$ por bits}
+\author{Danilo Alencar}
+\institute{PPGETI / UFC --- Teoria da Informa\c{c}\~ao (TIP7266), Trabalho Final 2026.1}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+%------------------------------------------------------------------------------
+\begin{frame}{Problema \& objetivo}
+  \textbf{O trabalho anterior mede a contaminação ambiente$\rightarrow$slack com um $R^2$ linear $= \valRsqLinear$.}
+  \begin{itemize}
+    \item Captura \alert{apenas} dependência linear --- mas a física é não-linear
+          (Arrhenius em $\Tdie$, super-linear em $\Vcore$).
+    \item ``Variância explicada'' \alert{não tem unidade transferível}.
+  \end{itemize}
+  \vfill
+  \begin{block}{Objetivo}
+    Tratar o sensor de \emph{slack} como um \textbf{canal de comunicação ruidoso}
+    e reexpressar ruído, correção e recuperabilidade do envelhecimento \textbf{em bits}.
+  \end{block}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\guidequestion{quanto ambiente há na leitura?}% [TFinfo] fio condutor, slides 3–5
+\begin{frame}{O modelo de canal + os dados}
+  \begin{block}{Um modelo de sinal}
+    \[ \signalmodel \]
+    transmissor (envelhecimento latente) $-$ ruído de canal (PVT reversível $+$ quantização)
+    $\rightarrow$ receptor (estimador de RUL).
+  \end{block}
+  \textbf{Dispositivo A:} \valDurationHours~h, \valPostSoakSamples{} amostras pós-\emph{soak} @ 1\,Hz,
+  \valSlackLevels{} níveis de \emph{slack}.\\
+  Orçamento total de incerteza a dividir: $\Ent{\slk} = \valHs$~bits.
+\end{frame}
+
+%------------------------------------------------------------------------------
+\begin{frame}{\textbf{$\bigstar$ Informação mútua substitui $R^2$}}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}% [TFinfo] era 0.52 — herói: mais espaço p/ figura
+      \footnotesize
+      \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}\setlength{\topsep}{0pt}
+      \begin{itemize}
+        \item $\MI{\slk}{\Tdie,\Vcore} = \alert{\valMIstv}$~bits (\emph{binning},
+              série bruta, pareada com o $R^2$ bruto), $\valKSGstv$~bits (KSG)
+              --- ICs se sobrepõem só estreitamente: uma diferença
+              sistemática caracterizada, não concordância.
+        \item Equivalente-linear do $R^2$: $\valMIlinEquiv$~bits
+              $\Rightarrow$ medida \alert{excede em $\valMIexcessPctBinned$--$\valMIexcessPctKSG\,\%$}.
+        \item Piso nulo \emph{surrogate} $\valMInullFloor$~bits
+              $\Rightarrow$ \alert{$\valMIfloorRatio\times$ o piso} = real, não viés.
+      \end{itemize}
+      \vfill
+      \footnotesize\emph{Achado negativo: esse excesso \textbf{não} sobrevive
+      ao \emph{detrend} ($\valMIexcessPctDetrended$~a~$\valMIexcessPctDetrKSG\,\%$
+      de déficit na série reversível) --- acompanha a tendência compartilhada
+      envelhecimento/ambiente, não uma não-linearidade instantânea
+      demonstrada. Foi o próprio protocolo que encontrou e corrigiu a
+      hipótese motivadora.}
+    \end{column}
+    \begin{column}{0.52\textwidth}% [TFinfo] era 0.48
+      \centering\includegraphics[width=\linewidth]{fig_mi_slide.pdf}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\begin{frame}{O pilar da honestidade: $\neff$}
+  \begin{itemize}
+    \item \valPostSoakSamples{} amostras brutas é \alert{enganoso}:
+          $\tauint = \valTauInt$~s ($\sim$5\,min de decorrelação).
+    \item Tamanho efetivo de amostra $\;\neff = \alert{\valNeff}\;$ (não 768{,}884).
+    \item Todo intervalo de confiança, o piso \emph{surrogate} e o ajuste
+          Bayesiano usam $\neff$ --- nunca a contagem bruta.
+  \end{itemize}
+  \vfill
+  \begin{alertblock}{Por que importa}
+    A série 1\,Hz é fortemente autocorrelacionada. Reportar sobre $\neff$ com
+    ICs por \emph{block-bootstrap} + um nulo \emph{surrogate} é a espinha
+    dorsal metodológica.
+  \end{alertblock}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\guidequestion{dá para remover?}% [TFinfo] fio condutor, slide 6
+\begin{frame}{Correção PVT = \emph{denoise} + recuperação do envelhecimento}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item Acoplamento reversível $\valPreMIrev \rightarrow \valResidMI$~bits
+              (\alert{$\valMIreductionPct\,\%$ removidos}); MDL seleciona o
+              modelo \valCorrModel.
+        \item \textbf{Chave:} remover PVT \emph{expõe} o envelhecimento ---
+              $\operatorname{corr}(\slk,\tm)\;\valCorrStRaw \rightarrow \valCorrStCorr$.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \centering\includegraphics[width=\linewidth]{fig_correction_slide.pdf}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\guidequestion{o que o sensor resolve?}% [TFinfo] fio condutor, slide 7
+\begin{frame}{Resolução efetiva \& confiabilidade do alarme}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item $\mathrm{SNR} = \valSNR \Rightarrow C = \valCapacityBits$~bits
+              $\Rightarrow \alert{\valCapacityStates}$ estados de envelhecimento distinguíveis.
+        \item Alarme de envelhecimento (BSC): 1\,h $\approx$ lançamento de moeda;
+              \alert{$\valBSCwindow$\,h $\rightarrow \Cbsc = \valBSCcap$~bits}.
+        \item A transição coincide com o tempo mínimo de observação do CRLB.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \centering\includegraphics[width=\linewidth]{fig_capacity_rul.pdf}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\guidequestion{quando o envelhecimento aparece?}% [TFinfo] fio condutor, slides 8–8b
+\begin{frame}{Limite de detectabilidade de RUL}
+  \begin{itemize}
+    \item \textbf{Cram\'er--Rao:} taxa mín.\ detectável \alert{\valMinDetectRate~m-cnt/h};
+          tempo mín.\ de observação \alert{\valMinObsTime~h}
+          (execuções anteriores de $\sim$23\,h não separavam o envelhecimento).
+    \item \textbf{Bayesiano:} inclinação $\valBayesSlope$~m-cnt/h,
+          IC 95\% $[\valBayesSlopeLo,\valBayesSlopeHi]$;
+          $P(\text{inclinação} < 0) \approx \valBayesPaging\,\%$.
+    \item Frequentista $=$ Bayesiano $\Rightarrow$ robusto.
+  \end{itemize}
+  \vfill
+  \begin{block}{Enquadramento}
+    Um limite, limitado por ruído, sobre \emph{quando} o envelhecimento se
+    torna observável --- \textbf{não} uma predição de vida útil.
+  \end{block}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\begin{frame}{RUL como distribuição: Wiener/Kalman}
+  \footnotesize
+  \begin{itemize}
+    \item Rota \emph{sequencial} sobre o mesmo $\scorr$: média em blocos até
+          $\neff$ pontos, suavização Kalman/RTS de uma trajetória de
+          envelhecimento \textbf{processo de Wiener}. MLE do ruído de taxa
+          $\to\!0$ --- \alert{concorda com o MDL} (taxa suavizada
+          $\valWienerRateEnd$ vs.\ CRLB/Bayesiano $\sim\!-18$~m-cnt/h).
+    \item \textbf{Distribuição de RUL Gaussiana-inversa} em forma fechada:
+          média/mediana $\valRULmeanNoise$/$\valRULmedianNoise$~h em
+          $D{=}\sigma_{\text{noise}}$;
+          $\valRULmeanSignal$/$\valRULmedianSignal$~h em $D{=}\sigma_{\text{signal}}$.
+  \end{itemize}
+  \centering\includegraphics[width=0.76\linewidth]{fig_wiener_rul_slide.pdf}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\guidequestion{}% [TFinfo] limpa o fio condutor (conclusão)
+\begin{frame}{Contribuições \& conclusão}
+  \begin{itemize}
+    \item Uma \textbf{métrica de contaminação em bits} (MI), sem hipótese de
+          forma funcional e com unidade transferível entre sensores e bancadas.
+    \item Uma \textbf{definição principiada de qualidade de \emph{burn-in}} $=$
+          minimizar $\MI{\slk}{\Tdie,\Vcore}$, junto com um protocolo
+          objetivo.
+    \item Uma \textbf{especificação informacional do sensor}: $\valCapacityStates$
+          estados resolvíveis, $\valBSCcap$~bits por decisão diária, e
+          detectabilidade em $\valMinObsTime$~h --- explicando por que
+          campanhas de $\sim$23\,h nunca foram suficientes.
+  \end{itemize}
+  \vfill
+  \begin{alertblock}{Conclusão}
+    $R^2$ diz que o ambiente explica $R^2=\valRsqLinear$ da variância. A
+    teoria da informação diz que ele escreve \textbf{\valMIstv~bits} em
+    cada leitura --- e, do acoplamento reversível
+    ($\valPreMIrev\to\valResidMI$~bits), removemos
+    \textbf{\valMIreductionPct\,\%}. Bits são transferíveis; frações de
+    variância não são.
+  \end{alertblock}
+\end{frame}
+
+\end{document}

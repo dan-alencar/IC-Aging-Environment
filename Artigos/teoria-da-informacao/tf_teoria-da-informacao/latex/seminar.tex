@@ -23,7 +23,7 @@
 \title{Informação de Envelhecimento \& Ruído em Sensores de \emph{Slack} On-Chip}
 \subtitle{Uma camada de medição informacional --- substituindo $R^2$ por bits}
 \author{Danilo Alencar}
-\institute{PGETI / UFC --- Teoria da Informa\c{c}\~ao (TIP7266), Trabalho Final 2026.1}
+\institute{PPGETI / UFC --- Teoria da Informa\c{c}\~ao (TIP7266), Trabalho Final 2026.1}
 \date{\today}
 
 \begin{document}
@@ -79,11 +79,12 @@
               $\Rightarrow$ \alert{$\valMIfloorRatio\times$ o piso} = real, não viés.
       \end{itemize}
       \vfill
-      \footnotesize\emph{Ressalva honesta: esse excesso \textbf{não} sobrevive
+      \footnotesize\emph{Achado negativo: esse excesso \textbf{não} sobrevive
       ao \emph{detrend} ($\valMIexcessPctDetrended$~a~$\valMIexcessPctDetrKSG\,\%$
-      na série reversível) --- acompanha a tendência compartilhada
+      de déficit na série reversível) --- acompanha a tendência compartilhada
       envelhecimento/ambiente, não uma não-linearidade instantânea
-      demonstrada. A metodologia MI-em-vez-de-$R^2$ permanece de pé.}
+      demonstrada. Foi o próprio protocolo que encontrou e corrigiu a
+      hipótese motivadora; a metodologia MI-em-vez-de-$R^2$ permanece de pé.}
       \hfill [\textbf{N2}]
     \end{column}
     \begin{column}{0.52\textwidth}% [TFinfo] era 0.48
@@ -258,18 +259,24 @@
 \end{frame}
 
 %------------------------------------------------------------------------------
-\begin{frame}{Contribuições \& conclusão}
+\begin{frame}[shrink=6]{Contribuições \& conclusão}
+  \small
   \begin{itemize}
-    \item Uma \textbf{métrica de ruído transferível em bits} (MI) que, ao
-          contrário do $R^2$, não assume forma funcional --- o excesso na
-          série bruta é real, embora mostremos honestamente que ele
-          acompanha a tendência compartilhada, não uma não-linearidade
-          instantânea demonstrada.
+    \setlength{\itemsep}{1pt}
+    \item Uma \textbf{métrica de contaminação em bits} (MI), sem hipótese de
+          forma funcional e com unidade transferível entre sensores e bancadas
+          --- o excesso bruto acompanha a tendência compartilhada, não uma
+          não-linearidade instantânea.
     \item Uma \textbf{definição principiada de qualidade de \emph{burn-in}} $=$
-          minimizar $\MI{\slk}{\Tdie,\Vcore}$.
-    \item Um \textbf{limite de resolução} do sensor, um \textbf{limite honesto de RUL} ---
-          estendido a uma \textbf{distribuição de RUL} completa via Wiener/Kalman ---
-          e uma \textbf{recuperação de envelhecimento livre de modelo} (ICA).
+          minimizar $\MI{\slk}{\Tdie,\Vcore}$, junto com um protocolo
+          objetivo.
+    \item Uma \textbf{especificação informacional do sensor}: $\valCapacityStates$
+          estados resolvíveis, $\valBSCcap$~bits por decisão diária, e
+          detectabilidade em $\valMinObsTime$~h --- explicando por que
+          campanhas de $\sim$23\,h nunca foram suficientes.
+    \item Um \textbf{limite honesto de RUL} --- estendido a uma
+          \textbf{distribuição de RUL} completa via Wiener/Kalman --- e uma
+          \textbf{recuperação de envelhecimento livre de modelo} (ICA).
   \end{itemize}
   \vfill
   \begin{alertblock}{Conclusão}

@@ -1,10 +1,13 @@
-# TF — Teoria da Informação (TIP7266, PGETI/UFC, 2026.1)
+# TF — Teoria da Informação (TIP7266, PPGETI/UFC, 2026.1)
 
 Sensor de envelhecimento on-chip tratado como **canal de comunicação ruidoso**:
 entropia, informação mútua, divergência KL/JS, capacidade e estimação (CRLB,
 Bayes, Kalman) aplicadas aos logs de slack de uma FPGA Artix-7 em burn-in.
 
-Entregável avaliado: **`latex/main_pt.pdf`**. Apresentação: `latex/seminar.pdf`.
+Entregável avaliado: **`latex/main_pt.pdf`**. Apresentação: `latex/seminar.pdf` (completa).
+Versões da defesa de 22/08/2026: `latex/seminar_15min.pdf` (recorte de 10 slides apresentado) e
+`latex/entregue_2026-08-22/trabalho_final.pdf` (artigo entregue, sem as seções KL/JS e ICA). As fontes
+mantêm a versão completa, que serve de base para a extensão do artigo GSEM para o IEEE D&T.
 Versão em inglês (`latex/main.pdf`) está desatualizada — ver `CLAUDE.md`.
 
 ## Reproduzir
