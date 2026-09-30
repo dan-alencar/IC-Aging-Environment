@@ -88,6 +88,10 @@ class LauncherDialog(QDialog):
         btn_corner.setToolTip("Single Nexys4 DDR board; sweeps VCCINT corners to characterize the failure boundary")
         btn_corner.clicked.connect(lambda: _launch("App_CornerSweep/run.sh"))
 
+        btn_ultrascale = QPushButton("App UltraScale+  —  CROC & STM32 Bridge")
+        btn_ultrascale.setToolTip("UltraScale+ custom board with ESP32 UART router and STM32 supervisory bridge")
+        btn_ultrascale.clicked.connect(lambda: _launch("App_FPGAging_Slack_Sensor/run.sh"))
+
         hint = QLabel("Each app manages its own virtual environment and hardware connections.")
         hint.setObjectName("hint")
         hint.setAlignment(Qt.AlignCenter)
@@ -98,6 +102,7 @@ class LauncherDialog(QDialog):
         layout.addWidget(btn_1dut)
         layout.addWidget(btn_2dut)
         layout.addWidget(btn_corner)
+        layout.addWidget(btn_ultrascale)
         layout.addWidget(hint)
 
         self.adjustSize()

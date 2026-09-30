@@ -1,0 +1,234 @@
+\documentclass[11pt,a4paper]{article}
+
+%========================= FONTES E CODIFICAÇÃO =========================
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{mathptmx}
+\usepackage[scaled=0.88]{helvet}
+\usepackage{courier}
+\usepackage{microtype}
+
+\hyphenpenalty=9000
+\exhyphenpenalty=9000
+\tolerance=2500
+\emergencystretch=3em
+
+%========================= GEOMETRIA =========================
+\usepackage[a4paper,top=2.6cm,bottom=2.6cm,left=2.7cm,right=2.7cm,headheight=14pt]{geometry}
+
+%========================= PACOTES =========================
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{siunitx}
+\usepackage[most]{tcolorbox}
+\usepackage[hidelinks,pdfusetitle]{hyperref}
+% Resolve \ref{} to plano-port-max10.tex's section numbers automatically
+% (reads plano-port-max10.aux -- compile that document at least once first,
+% and again after any section renumbering there, before recompiling this one).
+\usepackage{xr}
+\externaldocument{plano-port-max10}
+
+%========================= CORES (mesma paleta do plano principal) =========================
+\definecolor{lescblue}{HTML}{1F3A5F}
+\definecolor{lescaccent}{HTML}{2E6DA4}
+\definecolor{lescgray}{HTML}{4A4A4A}
+\definecolor{lesclight}{HTML}{EEF3F8}
+\definecolor{okcolor}{HTML}{2F5D3A}
+\definecolor{oklight}{HTML}{EDF4EE}
+\definecolor{rulegray}{HTML}{B8C4D0}
+
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{lescblue}}
+  {\thesection}{0.7em}{}[{\vspace{2pt}\color{rulegray}\titlerule[0.8pt]}]
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{lescaccent}}
+  {\thesubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{16pt}{8pt}
+\titlespacing*{\subsection}{0pt}{12pt}{5pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+\fancyhead[L]{\footnotesize\color{lescgray}Nota de direcionamento --- limite de detectabilidade}
+\fancyhead[R]{\footnotesize\color{lescgray}LESC/UFC}
+\fancyfoot[C]{\footnotesize\color{lescgray}\thepage}
+
+\setlist[itemize]{leftmargin=1.3em,itemsep=2pt,topsep=4pt,parsep=0pt}
+\setlist[enumerate]{leftmargin=1.6em,itemsep=3pt,topsep=4pt,parsep=0pt}
+
+\newtcolorbox{keybox}[1][]{
+  enhanced, breakable,
+  colback=lesclight, colframe=lescaccent,
+  boxrule=0.4pt, left=8pt, right=8pt, top=7pt, bottom=7pt,
+  arc=1.5pt,
+  fonttitle=\bfseries\small\color{white},
+  coltitle=white, colbacktitle=lescaccent,
+  attach boxed title to top left={xshift=6pt,yshift=-3pt},
+  boxed title style={arc=1pt,boxrule=0pt},
+  #1}
+
+\newtcolorbox{okbox}[1][]{
+  enhanced, breakable,
+  colback=oklight, colframe=okcolor,
+  boxrule=0.4pt, left=8pt, right=8pt, top=7pt, bottom=7pt,
+  arc=1.5pt,
+  fonttitle=\bfseries\small\color{white},
+  coltitle=white, colbacktitle=okcolor,
+  attach boxed title to top left={xshift=6pt,yshift=-3pt},
+  boxed title style={arc=1pt,boxrule=0pt},
+  #1}
+
+\renewcommand{\arraystretch}{1.2}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\title{Nota de Direcionamento --- O Estudo de Limite de Detectabilidade como Objetivo Primário}
+\author{LESC --- Laboratório de Engenharia de Sistemas de Computação, UFC}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\noindent\textbf{Relação com o plano principal.} Este documento é um complemento a
+\texttt{plano-port-max10.tex/pdf}, no mesmo espírito dos artefatos de 2 a 4 páginas
+que a Fase~0 exige de cada trilha de estudo (Seção~\ref{sec:fase0-metodo} do plano principal). Não
+substitui nenhuma seção do plano; propõe uma mudança de \emph{enquadramento} do
+objetivo do projeto, com efeito concreto e limitado sobre um pequeno número de
+seções --- listadas ao final.
+
+\section{A proposta em uma frase}
+
+Declarar, desde o dia um, que o objetivo primário do projeto é \textbf{caracterizar
+com rigor o limite de detectabilidade de um sensor de \emph{slack} portado entre
+fabricante e nó tecnológico}, e tratar a recuperação de resolução por Vernier de
+dois PLLs --- hoje a tarefa de maior valor da frente F1 --- como um resultado
+\emph{adicional} que, se bem-sucedido, eleva a contribuição, mas cuja falha não
+esvazia o semestre.
+
+\section{Por que propor isto agora}
+
+O próprio plano principal já contém o argumento --- só não o usa como ponto de
+partida. Três passagens, lidas em conjunto, sustentam a proposta:
+
+\begin{itemize}
+  \item A Seção~\ref{sec:propagacao-perda} do plano principal deriva, por cálculo, uma perda de resolução
+        de $4{,}86\times$ entre o passo de fase do MMCM e o do PLL do MAX~10 ---
+        \emph{antes} de qualquer tentativa de mitigação. Esse número já é, por si
+        só, um resultado científico: ninguém publicou a penalidade de portabilidade
+        de um sensor de \emph{slack} entre fabricantes com dados de \emph{hardware}
+        real.
+  \item A Seção~\ref{sec:gateA} (Gate~A) já prevê o desfecho ``Vernier inviável, passo nativo
+        funcionando'' como aceitável, reposicionando o projeto como ``estudo de
+        limite de detectabilidade de sensores de \emph{slack} em nó tecnológico
+        maior'' --- \emph{e afirma explicitamente que isso continua sendo resultado
+        publicável}.
+  \item A Seção~\ref{sec:resultado-desfavoravel} (``Resultado desfavorável bem medido é resultado'') já instrui
+        o orientador a comunicar isso à equipe no dia um, precisamente para evitar
+        que, sob pressão de prazo, a equipe tente forçar um resultado favorável.
+\end{itemize}
+
+Ou seja: o plano principal já trata o estudo de limite de detectabilidade como
+\emph{desfecho aceitável de contingência}. A proposta aqui é promovê-lo a
+\emph{objetivo declarado desde o início}, não a resultado de consolação decidido na
+semana~8.
+
+\subsection{O que isso muda na prática}
+\label{sec:pratica}
+
+\begin{keybox}[title={A diferença não é técnica, é de sequenciamento}]
+Em nenhum dos dois enquadramentos o trabalho de engenharia muda --- a frente F1
+ainda tenta o Vernier, o Gate~A ainda acontece na semana~8. O que muda é o que
+\emph{depende} do sucesso do Vernier. Hoje, formalmente, o sucesso do projeto
+depende do Gate~A ter um desfecho favorável. Com a proposta, o sucesso do projeto
+depende apenas da caracterização estar bem feita --- o Gate~A decide qual
+\emph{versão} do resultado é publicada, não se há resultado.
+\end{keybox}
+
+\begin{itemize}
+  \item \textbf{Risco do semestre.} Hoje, o pior desfecho documentado no registro de
+        riscos (Seção~\ref{sec:riscos}, plano principal) é ``sinal de envelhecimento permanece
+        abaixo do piso de ruído'' --- um risco que existe \emph{independente} do
+        Vernier. Ancorar o sucesso do projeto na caracterização, e não na
+        recuperação de resolução, remove uma dependência de risco (falha do
+        Vernier) da definição de sucesso, sem removê-la do escopo de trabalho.
+  \item \textbf{Redação da produção científica.} A tarefa~6 da frente F6 (``Produção
+        escrita'') passa a ser redigida, desde a primeira versão, em uma forma que
+        sobrevive a qualquer desfecho do Gate~A: \emph{``Caracterizamos o limite de
+        detectabilidade alcançável para um sensor de \emph{slack} portado entre
+        fronteiras de fabricante e de nó tecnológico, e adicionalmente reportamos
+        uma tentativa de recuperação de resolução por batimento Vernier de dois
+        PLLs, com eficácia caracterizada e limitada por \emph{jitter}.''} Se o
+        Vernier funcionar, a segunda oração cresce; se não funcionar, ela encolhe
+        para um parágrafo de tentativa caracterizada --- nunca precisa ser reescrita
+        do zero.
+  \item \textbf{Critério de aceite da frente F6.} Não precisa mais aguardar o
+        desfecho do Gate~A para ser considerado satisfeito. Assim que
+        $\sigma_\text{resid}$ do passo nativo do PLL estiver medido (o que acontece
+        \emph{antes} do Gate~A, como pré-requisito dele --- Seção~\ref{sec:gateA}, evidência~1),
+        o critério de aceite de F6 já pode ser declarado cumprido para a versão
+        ``limite de detectabilidade''. O Vernier, se bem-sucedido, adiciona uma
+        segunda medida ao mesmo critério, não o substitui.
+  \item \textbf{Comunicação com a equipe.} Em vez de ``o Gate~A decide se o projeto
+        continua sendo uma migração ou vira outra coisa'' (redação atual da
+        Seção~\ref{sec:gateA}), a mensagem passa a ser ``o projeto já é, desde o início, uma
+        caracterização de limite de detectabilidade; o Gate~A decide se ganhamos
+        também uma técnica de mitigação validada''. A diferença psicológica para uma
+        equipe em formação, sob pressão de prazo no fim do semestre, não é
+        pequena --- é exatamente o tipo de situação que a
+        Seção~\ref{sec:resultado-desfavoravel} do plano principal já identifica
+        como modo de falha recorrente.
+\end{itemize}
+
+\section{O que \emph{não} muda}
+
+Esta proposta não altera nenhuma tarefa de engenharia, nenhum cronograma, nenhuma
+alocação de integrante. F1 continua investigando o Vernier com a mesma prioridade;
+o Gate~A continua na semana~8 com os mesmos critérios de evidência. A mudança é
+inteiramente de enquadramento e de ordem de redação --- baixo custo, baixo risco de
+implementação, e reversível a qualquer momento caso a equipe prefira o enquadramento
+original.
+
+\section{Extensão natural, se adotada: comparação de três nós}
+
+Com este enquadramento, uma extensão de custo marginal quase nulo se torna
+disponível para a frente F6 (Seção~\ref{sec:F6} do plano principal, tarefa~4 ``Comparação
+sistemática entre plataformas''): o laboratório já possui, ou terá em breve, dados
+de sensor de \emph{slack} com metodologia consistente em \textbf{três} nós/fabricantes
+--- UltraScale+ customizado (\SI{16}{\nano\meter} FinFET), Artix-7 (\SI{28}{\nano\meter}
+planar) e MAX~10 (\SI{55}{\nano\meter}). Um gráfico de
+$\sigma_\text{resid}$ (ou do degrau detectável $3\sigma$) em função do nó, com os
+três pontos, é uma figura adicional de baixo esforço que fortalece exatamente o
+resultado que esta nota propõe como objetivo primário --- vale considerar incluí-la
+no rascunho de artigo da tarefa~6, mesmo que como figura secundária.
+
+\section{Seções do plano principal afetadas, se a proposta for adotada}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}L{3.6cm} X@{}}
+\toprule
+\textbf{Seção (plano principal)} & \textbf{Ajuste sugerido} \\
+\midrule
+Seção~\ref{sec:objetivo} Objetivo &
+Adicionar uma frase declarando a caracterização de limite de detectabilidade como
+objetivo primário e a recuperação por Vernier como objetivo secundário. \\
+Seção~\ref{sec:gateA} Gate A, ``Desfechos possíveis'' &
+Reescrever a lista de três desfechos como duas variantes do mesmo resultado
+(caracterização sozinha vs.\ caracterização + mitigação validada), não como
+bifurcação de sucesso/fracasso do projeto. \\
+Seção~\ref{sec:F6} F6, tarefa 6 (Produção escrita) &
+Redigir o rascunho de artigo desde a primeira versão na forma dupla descrita na
+Seção~\ref{sec:pratica} desta nota. \\
+Seção~\ref{sec:produtos} Produtos esperados &
+Nenhuma mudança de conteúdo; ajustar apenas a descrição do produto ``Submissão a
+conferência'' para refletir o enquadramento primário. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\end{document}
