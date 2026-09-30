@@ -1,6 +1,6 @@
 # Work Summary — Information-Theoretic Characterization of Aging Information and Noise in On-Chip Slack Sensors
 
-This is the entry-point summary of the final project (TF) for **Teoria da Informação (TIP7266, PGETI/UFC, 2026.1)**. It records *what was used* — the data, the course concepts and how each was applied, the results, and the deliverables.
+This is the entry-point summary of the final project (TF) for **Teoria da Informação (TIP7266, PPGETI/UFC, 2026.1)**. It records *what was used* — the data, the course concepts and how each was applied, the results, and the deliverables.
 
 ---
 

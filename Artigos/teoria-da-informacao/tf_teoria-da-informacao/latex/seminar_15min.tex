@@ -1,3 +1,5 @@
+% Versão de 15 min efetivamente apresentada na defesa de 22/08/2026 (10 slides).
+% Recorte de seminar.tex, que é a versão completa e canônica (KL/JS, ICA, ressalvas, backups).
 %==============================================================================
 %  seminar.tex — apresentação do TF (15 min), Beamer.
 %  Reaproveita as fontes únicas de verdade do artigo: notation.tex +
@@ -56,10 +58,6 @@
   \textbf{Dispositivo A:} \valDurationHours~h, \valPostSoakSamples{} amostras pós-\emph{soak} @ 1\,Hz,
   \valSlackLevels{} níveis de \emph{slack}.\\
   Orçamento total de incerteza a dividir: $\Ent{\slk} = \valHs$~bits.
-  \begin{itemize}
-    \item[\textbf{N2}] entropia, entropia conjunta/condicional \quad
-    \textbf{N1} modelo de canal.
-  \end{itemize}
 \end{frame}
 
 %------------------------------------------------------------------------------
@@ -84,8 +82,7 @@
       de déficit na série reversível) --- acompanha a tendência compartilhada
       envelhecimento/ambiente, não uma não-linearidade instantânea
       demonstrada. Foi o próprio protocolo que encontrou e corrigiu a
-      hipótese motivadora; a metodologia MI-em-vez-de-$R^2$ permanece de pé.}
-      \hfill [\textbf{N2}]
+      hipótese motivadora.}
     \end{column}
     \begin{column}{0.52\textwidth}% [TFinfo] era 0.48
       \centering\includegraphics[width=\linewidth]{fig_mi_slide.pdf}
@@ -106,7 +103,7 @@
   \begin{alertblock}{Por que importa}
     A série 1\,Hz é fortemente autocorrelacionada. Reportar sobre $\neff$ com
     ICs por \emph{block-bootstrap} + um nulo \emph{surrogate} é a espinha
-    dorsal metodológica. \hfill [\textbf{N4} / fundamentos]
+    dorsal metodológica.
   \end{alertblock}
 \end{frame}
 
@@ -122,8 +119,6 @@
         \item \textbf{Chave:} remover PVT \emph{expõe} o envelhecimento ---
               $\operatorname{corr}(\slk,\tm)\;\valCorrStRaw \rightarrow \valCorrStCorr$.
       \end{itemize}
-      \vfill
-      \footnotesize \emph{DeNoise} (N3); MQO/MLE/MDL (N4).
     \end{column}
     \begin{column}{0.5\textwidth}
       \centering\includegraphics[width=\linewidth]{fig_correction_slide.pdf}
@@ -143,8 +138,6 @@
               \alert{$\valBSCwindow$\,h $\rightarrow \Cbsc = \valBSCcap$~bits}.
         \item A transição coincide com o tempo mínimo de observação do CRLB.
       \end{itemize}
-      \vfill
-      \footnotesize Capacidade de canal (N1); BSC (N3).
     \end{column}
     \begin{column}{0.5\textwidth}
       \centering\includegraphics[width=\linewidth]{fig_capacity_rul.pdf}
@@ -168,7 +161,6 @@
   \begin{block}{Enquadramento}
     Um limite, limitado por ruído, sobre \emph{quando} o envelhecimento se
     torna observável --- \textbf{não} uma predição de vida útil.
-    \hfill [\textbf{N4}: CRLB, Bayesiano]
   \end{block}
 \end{frame}
 
@@ -185,88 +177,16 @@
           média/mediana $\valRULmeanNoise$/$\valRULmedianNoise$~h em
           $D{=}\sigma_{\text{noise}}$;
           $\valRULmeanSignal$/$\valRULmedianSignal$~h em $D{=}\sigma_{\text{signal}}$.
-          \hfill [\textbf{N4}: Kalman, processos estocásticos]
   \end{itemize}
   \centering\includegraphics[width=0.76\linewidth]{fig_wiener_rul_slide.pdf}
 \end{frame}
 
 %------------------------------------------------------------------------------
-\guidequestion{isso transfere entre bancadas?}% [TFinfo] fio condutor, slides 9–10
-\begin{frame}{Fidelidade de bancada: divergência KL / JS}
-  \begin{columns}[T]
-    \begin{column}{0.5\textwidth}
-      \alert{Dispositivo diferente (B)} --- comparação de bancada, não de envelhecimento.
-      \begin{itemize}
-        \item $\KL{p_{\text{SBCCI}}}{p_{\text{PID}}} = \valKLsp$~bits vs.\
-              $\KL{p_{\text{PID}}}{p_{\text{SBCCI}}} = \valKLps$~bits
-              (assimétrica $\Rightarrow$ não é métrica).
-        \item JS $= \valJSbench$~bits.
-        \item Empírico $>$ forma fechada Gaussiana $\Rightarrow$ caudas pesadas não-Gaussianas.
-      \end{itemize}
-      \vfill
-      \footnotesize Divergência KL, JS (N3).
-    \end{column}
-    \begin{column}{0.5\textwidth}
-      \centering\includegraphics[width=\linewidth]{fig_kl.pdf}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-%------------------------------------------------------------------------------
-\begin{frame}{Separação cega de fontes: ICA}
-  \begin{columns}[T]
-    \begin{column}{0.5\textwidth}
-      \begin{itemize}
-        \item ICA livre de modelo recupera um componente de envelhecimento
-              que bate com a regressão $\scorr$ em
-              \alert{$|\mathrm{corr}| = \valICAagingScorr$} --- mesmo espaço
-              de busca $(\slk,\Tdie,\Vcore)$, critério de ajuste diferente
-              (independência, não mínimos quadrados).
-        \item Fortemente não-Gaussiano (curtose $\valICAkurtAging$/$\valICAkurtThermal$).
-        \item Separação \emph{parcial} (MI residual $\valICAresidMI$~bits) ---
-              corroborativa, reportada honestamente.
-      \end{itemize}
-      \vfill
-      \footnotesize ICA, negentropia (N4).
-    \end{column}
-    \begin{column}{0.5\textwidth}
-      \centering\includegraphics[width=\linewidth]{fig_ica_slide.pdf}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-%------------------------------------------------------------------------------
-\guidequestion{}% [TFinfo] limpa o fio condutor (ressalvas + conclusão)
-\begin{frame}{Ressalvas de honestidade}
-  \begin{TFhonest}% [TFinfo] painel de honestidade deliberada
-  \footnotesize
+\guidequestion{}% [TFinfo] limpa o fio condutor (conclusão)
+\begin{frame}{Contribuições \& conclusão}
   \begin{itemize}
-    \item O excesso não-linear de MI na série bruta \alert{não sobrevive ao
-          \emph{detrend}} --- concentrado na tendência compartilhada
-          envelhecimento/ambiente, não em não-linearidade PVT instantânea
-          demonstrada.
-    \item Um único dispositivo de envelhecimento \& regime único
-          $\Rightarrow$ RUL é um \emph{limite} de detectabilidade, não uma predição validada.
-    \item $\neff \ll n$ --- toda inferência sobre o tamanho efetivo de amostra.
-    \item Capacidade é uma \emph{heurística} de resolução efetiva.
-    \item ICA é corroborativa, não uma desmistura limpa.
-    \item A comparação KL é um \alert{dispositivo separado} --- nunca misturado com o Dispositivo A.
-    \item A distribuição de RUL Wiener/Kalman usa limiares
-          auto-referenciados (não existe limiar de falha calibrado para
-          este sensor) --- uma metodologia, não uma predição de vida útil.
-  \end{itemize}
-  \end{TFhonest}
-\end{frame}
-
-%------------------------------------------------------------------------------
-\begin{frame}[shrink=6]{Contribuições \& conclusão}
-  \small
-  \begin{itemize}
-    \setlength{\itemsep}{1pt}
     \item Uma \textbf{métrica de contaminação em bits} (MI), sem hipótese de
-          forma funcional e com unidade transferível entre sensores e bancadas
-          --- o excesso bruto acompanha a tendência compartilhada, não uma
-          não-linearidade instantânea.
+          forma funcional e com unidade transferível entre sensores e bancadas.
     \item Uma \textbf{definição principiada de qualidade de \emph{burn-in}} $=$
           minimizar $\MI{\slk}{\Tdie,\Vcore}$, junto com um protocolo
           objetivo.
@@ -274,9 +194,6 @@
           estados resolvíveis, $\valBSCcap$~bits por decisão diária, e
           detectabilidade em $\valMinObsTime$~h --- explicando por que
           campanhas de $\sim$23\,h nunca foram suficientes.
-    \item Um \textbf{limite honesto de RUL} --- estendido a uma
-          \textbf{distribuição de RUL} completa via Wiener/Kalman --- e uma
-          \textbf{recuperação de envelhecimento livre de modelo} (ICA).
   \end{itemize}
   \vfill
   \begin{alertblock}{Conclusão}
@@ -287,56 +204,6 @@
     \textbf{\valMIreductionPct\,\%}. Bits são transferíveis; frações de
     variância não são.
   \end{alertblock}
-\end{frame}
-
-%------------------------------------------------------------------------------
-\appendix
-\begin{frame}{Backup --- ``Cadê a capacidade bang-bang vs.\ PID?''}
-  \begin{itemize}
-    \item Proposta original: capacidade \emph{por regime térmico}
-          (bang-bang vs.\ PID).
-    \item Não existe registro bruto de bang-bang sincronizado e comparável
-          à campanha PID de \valDurationHours~h $\Rightarrow$ não entregue
-          como originalmente proposto.
-    \item \textbf{Entregue em seu lugar:} capacidade \& limite de RUL no
-          regime PID (este deck); a lacuna distribucional KL/JS entre as
-          duas bancadas ($\valKLsp$~bits, JS $=\valJSbench$) como
-          sucedâneo direto --- já mostra que a bancada não-PID é mais ruidosa.
-    \item \textbf{Primeiro item de trabalho futuro:} adquirir um registro
-          bang-bang pareado para completar a comparação de capacidade por regime.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Backup --- déficit de MI detrendizada: como responder}
-  \begin{itemize}
-    \item ``Como a MI pode ser \emph{menor} que o equivalente do $R^2$?''
-    \item Equivalente Gaussiano é um construto de variáveis \emph{contínuas};
-          para um resíduo quantizado em poucas contagens, a MI discreta
-          pode legitimamente ficar abaixo dele (teto entrópico do resíduo
-          + viés descendente do estimador em MI pequena/$\neff$ reduzido).
-    \item Leitura defensável: \textbf{nenhum} excesso não-linear é
-          resolvível acima do piso do estimador nesta série --- não que o
-          acoplamento reversível seja ``sub-linear''.
-    \item Dois estimadores independentes (\emph{binning} e KSG) concordam
-          no sinal do déficit ($\valMIexcessPctDetrended\,\%$ e
-          $\valMIexcessPctDetrKSG\,\%$).
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Backup --- mapa n\'ucleo do curso $\rightarrow$ resultado}
-  \centering
-  \resizebox{\linewidth}{!}{%
-  \begin{tabular}{@{}lll@{}}
-    \toprule
-    \textbf{N\'ucleo} & \textbf{Ferramenta} & \textbf{Onde} \\
-    \midrule
-    N1 Limites     & modelo de canal, capacidade, limite de fonte           & modelo, capacidade \\
-    N2 Medidas     & $\Ent{\slk}$, $\Ent{\slk\mid\Tdie,\Vcore}$, \textbf{MI} & MI vs $R^2$ \\
-    N3 Transmissão & \emph{denoise}, \textbf{KL/JS}, BSC                    & correção, KL, alarme \\
-    N4 Estimação   & MDL, MQO/MLE, \textbf{CRLB, Bayesiano, ICA, RUL Kalman/Wiener} & correção, RUL, ICA, Wiener/Kalman \\
-    Fundamentos    & $\neff$, \emph{block-bootstrap}, nulo \emph{surrogate} & usado em todo o trabalho \\
-    \bottomrule
-  \end{tabular}}
 \end{frame}
 
 \end{document}

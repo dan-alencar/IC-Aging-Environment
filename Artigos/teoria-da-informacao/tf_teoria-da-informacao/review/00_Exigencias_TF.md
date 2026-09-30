@@ -1,4 +1,4 @@
-# Exigências do Trabalho Final (TF) — TIP7266, PGETI/UFC, 2026.1
+# Exigências do Trabalho Final (TF) — TIP7266, PPGETI/UFC, 2026.1
 
 > Fonte: `material/Sumula Teoria_da_Informacao - TIP-7266-2026-1.pdf` (Plano de Ensino-Aprendizagem, Prof. Dr. Julio César Santos dos Anjos). Transcrito e organizado para uso como critério objetivo de revisão — não editorializado.
 

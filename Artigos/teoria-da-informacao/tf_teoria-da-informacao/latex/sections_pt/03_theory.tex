@@ -44,10 +44,12 @@ $\KL{p}{g}\ge0$ com igualdade sse $p=g$: escrevendo $-\log_2(\cdot)$, uma
 função convexa, a desigualdade de Jensen fornece
 $\KL{p}{g}=E_p\{-\log_2\frac{g(x)}{p(x)}\}\ge-\log_2 E_p\{\frac{g(x)}{p(x)}\}=-\log_2\sum_x g(x)=0$.
 $D_{\mathrm{KL}}$ \emph{não é simétrica} e não satisfaz a desigualdade
-triangular, portanto não é uma métrica --- exatamente a assimetria explorada
-na \cref{sec:res-kl} para ler $\KL{p_{\text{SBCCI}}}{p_{\text{PID}}}$ como ``o
-custo de descrever a bancada ruidosa com a referência apertada'' e não o
-inverso. A \textbf{informação mútua} é a divergência KL entre a lei conjunta
+triangular, portanto não é uma métrica: $\KL{p}{g}$ e $\KL{g}{p}$ respondem
+perguntas diferentes --- o custo de descrever $p$ com um código otimizado
+para $g$, e vice-versa --- e em geral não coincidem. É exatamente essa
+assimetria que a \cref{sec:res-kl} explora para ler
+$\KL{p_{\text{SBCCI}}}{p_{\text{PID}}}$ como ``o custo de descrever a bancada
+ruidosa com a referência apertada'' e não o inverso. A \textbf{informação mútua} é a divergência KL entre a lei conjunta
 e o produto das marginais,
 \begin{equation}
   \MI{\slk}{\Tdie,\Vcore} = \KL{p(\slk,\Tdie,\Vcore)}{p(\slk)p(\Tdie,\Vcore)}
