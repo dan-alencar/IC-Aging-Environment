@@ -36,16 +36,30 @@ USB_ID_PSU1 = "usb-Prolific_Technology_Inc._USB-Serial_Controller_BDDCb12CJ06-if
 #   via JTAG every time the 1V0 rail is toggled. Programming happens
 #   automatically at test start, after the PSU stabilisation delay.
 # =============================================================================
-_REPO_ROOT = os.path.dirname(_HERE)
+def _find_repo_root(start_dir):
+    curr = os.path.abspath(start_dir)
+    while curr != os.path.dirname(curr):
+        if os.path.exists(os.path.join(curr, ".git")):
+            return curr
+        curr = os.path.dirname(curr)
+    return os.path.abspath(os.path.join(start_dir, "..", "..", ".."))
+
+_REPO_ROOT = _find_repo_root(_HERE)
 DUT0_DIGILENT_SERIAL = "210292A6E9A7"   # Vivado hw_target wildcard match
 DUT1_DIGILENT_SERIAL = "210292745007"
+
+# Check new hardware/fpga/xilinx path first, fall back to vivado/ symlink
+_VIVADO_PROJ_DIR = os.path.join(_REPO_ROOT, "hardware", "fpga", "xilinx", "nexys4_ddr")
+if not os.path.exists(_VIVADO_PROJ_DIR):
+    _VIVADO_PROJ_DIR = os.path.join(_REPO_ROOT, "vivado", "aging_study_nexys4ddr")
+
 BITSTREAM_PATH = os.path.join(
-    _REPO_ROOT, "vivado", "aging_study_nexys4ddr",
+    _VIVADO_PROJ_DIR,
     "build", "aging_study_nexys4ddr", "aging_study_nexys4ddr.runs",
     "impl_1", "nexys4_aging_top.bit",
 )
 BITSTREAM_LTX = os.path.join(
-    _REPO_ROOT, "vivado", "aging_study_nexys4ddr",
+    _VIVADO_PROJ_DIR,
     "build", "aging_study_nexys4ddr", "aging_study_nexys4ddr.runs",
     "impl_1", "nexys4_aging_top.ltx",
 )
