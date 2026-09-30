@@ -29,14 +29,18 @@ class DataLogger:
       - Dados sincronizados de todos os sensores
     """
     
-    def __init__(self, log_folder, test_name):
+    def __init__(self, log_folder, test_name, controller_info=None):
         """
         Inicializa o logger.
-        
+
         Args:
             log_folder: Pasta para salvar os logs
             test_name: Nome base do teste
+            controller_info: dict do controlador do forno identificado via
+                firmware (ver config.parse_controller_config). Quando None,
+                o cabeçalho cai no bloco PID configurado.
         """
+        self.controller_info = controller_info
         self.filepath = self._create_log_file(log_folder, test_name)
         self.csv_writer = None
         self.file_handle = None
@@ -71,21 +75,13 @@ class DataLogger:
         self.file_handle.write(f"# ==============================================\n")
         self.file_handle.write(f"# Data/Hora Início: {self.start_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
         self.file_handle.write(f"# \n")
-        self.file_handle.write(f"# PARÂMETROS PID (FIXOS):\n")
-        self.file_handle.write(f"#   Kp = {config.PID_KP:.6f}\n")
-        self.file_handle.write(f"#   Ki = {config.PID_KI:.8f}\n")
-        self.file_handle.write(f"#   Kd = {config.PID_KD:.6f}\n")
-        self.file_handle.write(f"# \n")
-        self.file_handle.write(f"# MODELO FOPDT IDENTIFICADO:\n")
-        self.file_handle.write(f"#   G(s) = 1.56 * exp(-150.6s) / (1307.2s + 1)\n")
-        self.file_handle.write(f"#   K = 1.56 °C/%\n")
-        self.file_handle.write(f"#   θ = 150.6 s\n")
-        self.file_handle.write(f"#   τ = 1307.2 s\n")
+        self._write_controller_block()
         self.file_handle.write(f"# \n")
         self.file_handle.write(f"# CONFIGURAÇÃO:\n")
         self.file_handle.write(f"#   Taxa de Rampa: {config.DEFAULT_RAMP_RATE_C_PER_SEC} °C/s\n")
         self.file_handle.write(f"#   Intervalo de Amostragem: {config.LOG_INTERVAL_MS} ms\n")
-        self.file_handle.write(f"#   Janela PWM (SSR): {config.DEFAULT_OVEN_SAMPLE_TIME_MS} ms\n")
+        if (self.controller_info or {}).get("type", "PID") == "PID":
+            self.file_handle.write(f"#   Janela PWM (SSR): {config.DEFAULT_OVEN_SAMPLE_TIME_MS} ms\n")
         self.file_handle.write(f"# \n")
         self.file_handle.write(f"# LIMITES DE SEGURANÇA:\n")
         self.file_handle.write(f"#   Temp. Máx. Forno: {config.MAX_OVEN_TEMP_C} °C\n")
@@ -102,7 +98,7 @@ class DataLogger:
             'time_sec',           # Tempo desde início (s)
             'oven_temp_c',        # Temperatura do forno (°C)
             'oven_setpoint_c',    # Setpoint atual (°C)
-            'oven_output_pct',    # Saída do PID (%)
+            'oven_output_pct',    # Saída do controlador (% / duty; bang-bang = 0/100)
             'psu_voltage_v',      # Tensão da fonte (V)
             'psu_current_a',      # Corrente da fonte (A)
             'dut_temp_c',         # Temperatura do DUT (°C)
@@ -110,6 +106,37 @@ class DataLogger:
             'dut_volt'            # Tensão do DUT (V)
         ]
         self.csv_writer.writerow(header)
+
+    def _write_controller_block(self):
+        """Escreve no cabeçalho o controlador do forno realmente em uso.
+
+        PID e bang-bang são firmwares distintos com o mesmo protocolo serial;
+        registrar o tipo correto (consultado via GET_CONFIG) é essencial para
+        que a análise documente o regime sem ambiguidade.
+        """
+        info   = self.controller_info or {}
+        ctype  = info.get("type", "PID")
+        params = info.get("params", {})
+        source = info.get("source", "config-fallback")
+        raw    = info.get("raw")
+
+        if ctype == "BANGBANG":
+            self.file_handle.write("# CONTROLADOR DO FORNO: BANG-BANG (termostático)\n")
+            self.file_handle.write(f"#   Histerese liga  (T < SP - x): -{params.get('HYST_LOW', '?')} °C\n")
+            self.file_handle.write(f"#   Histerese desliga (T > SP + x): +{params.get('HYST_HIGH', '?')} °C\n")
+            self.file_handle.write(f"#   Intervalo de amostragem do controle: {params.get('SAMPLE_MS', '?')} ms\n")
+        elif ctype == "PID":
+            self.file_handle.write("# CONTROLADOR DO FORNO: PID (FIXO)\n")
+            self.file_handle.write(f"#   Kp = {params.get('KP', f'{config.PID_KP:.6f}')}\n")
+            self.file_handle.write(f"#   Ki = {params.get('KI', f'{config.PID_KI:.8f}')}\n")
+            self.file_handle.write(f"#   Kd = {params.get('KD', f'{config.PID_KD:.6f}')}\n")
+            self.file_handle.write("#   MODELO FOPDT: G(s) = 1.56 exp(-150.6s)/(1307.2s + 1)\n")
+        else:
+            self.file_handle.write(f"# CONTROLADOR DO FORNO: {ctype}\n")
+
+        self.file_handle.write(f"#   Identificação: {source}\n")
+        if raw:
+            self.file_handle.write(f"#   GET_CONFIG: {raw}\n")
 
     def write_data_row(self, data_dict):
         """

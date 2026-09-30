@@ -101,6 +101,7 @@ The UI uses a Catppuccin Mocha dark theme (`_DARK_STYLE` in `main_window.py`). L
 
 Workers run in QThread via QObject + QTimer polling:
 - `ArduinoWorker` — sends `GET_DATA\n`, receives `DATA,<temp>,<sp>,<out>` ASCII
+  - At test start `TestSequencer` queries `GET_CONFIG` (`ArduinoWorker.query_controller_config()` → `config.parse_controller_config()`) to identify the oven firmware actually loaded — `PID_Controller.ino` and `arduino_termostato.ino` (bang-bang) share the same serial protocol. The result goes into the CSV header (`# CONTROLADOR DO FORNO: ...` + `Identificação: firmware|config-fallback|arduino-disabled`) and the UI label, so a bang-bang run is never logged as PID. App_2Nexys and App_CornerSweep do not have this yet.
 - `PSUWorker` — ITECH IT6502D via PyVISA (`@py` backend), SCPI: `MEAS:VOLT?`, `MEAS:CURR?`, `OUTP ON/OFF`. No baud rate — USB-TMC only.
 - `DUTWorker` — sends byte `'T'` (`\x54`), reads 15 binary bytes Little Endian: `[TEMP×3][SLACK×2][VCCINT×3][FAIL×1][WRONG×2][CORRECT×2][ERR_CNT×2]`, converts temp/voltage by dividing raw by 1000. **DUT baud rate is 9600, not 115200.** Adder-canary fields (`wrong`, `correct`, `error_count`) are logged to CSV but not shown in the UI.
 - `TestSequencer` — orchestrates all workers, runs safety limit checks, writes CSV rows. Runs the same VCCINT P-only closed-loop trim as App_2Nexys (`VOLTAGE_KP = 0.1` V/V in `config.py`); logs both `psu_cmd_v` and `psu_voltage`.

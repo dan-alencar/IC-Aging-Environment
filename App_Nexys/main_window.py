@@ -433,8 +433,7 @@ class MainWindow(QMainWindow):
             "Temperatura alvo do DUT. 0 = desabilitado. Ajuste ±1°C/30 min até ±3°C do alvo."
         )
         self.pid_info_label = QLabel(
-            f"<b>PID (Fixo):</b> Kp={config.PID_KP:.4f} &nbsp;"
-            f"Ki={config.PID_KI:.6f} &nbsp;Kd={config.PID_KD:.4f}"
+            "<b>Forno:</b> controlador consultado do firmware ao iniciar o teste"
         )
         self.pid_info_label.setStyleSheet(
             f"color: {_SUBTEXT}; background-color: {_SURFACE}; "
@@ -729,6 +728,7 @@ class MainWindow(QMainWindow):
         sequencer_worker.plot_data_update.connect(self._update_sensor_display)
         sequencer_worker.test_finished.connect(self.on_test_finished)
         sequencer_worker.sweep_step_changed.connect(self._on_sweep_step_changed)  # type: ignore[arg-type]
+        sequencer_worker.controller_info_signal.connect(self._on_controller_info)
 
     def _connect_signals(self):
         self.toggle_test_button.clicked.connect(self.on_toggle_test)
@@ -838,6 +838,11 @@ class MainWindow(QMainWindow):
         self._sb_test.setText(
             f'<span style="color:{_BLUE}; font-weight:bold;">◈ {text}</span>'
         )
+
+    def _on_controller_info(self, info: dict):
+        """Mostra o controlador do forno realmente em uso (consultado do
+        firmware no início do teste) em vez de assumir PID."""
+        self.pid_info_label.setText("<b>Forno:</b> " + config.controller_summary(info))
 
     @Slot()
     def on_update_psu_voltage(self):

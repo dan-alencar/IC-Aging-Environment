@@ -75,7 +75,10 @@ class ArduinoWorker(QObject):
                     self.ser.readline()
 
             self.log_message.emit(f"Arduino pronto em {config.ARDUINO_PORT}")
-            self.log_message.emit(f"Parâmetros PID fixos: {config.get_pid_info_string()}")
+            self.log_message.emit(
+                f"Config padrão (será confirmada via GET_CONFIG no teste): "
+                f"{config.get_pid_info_string()}"
+            )
             
             self.is_running = True
             self.is_ready = True
@@ -174,6 +177,28 @@ class ArduinoWorker(QObject):
     def get_config(self):
         """Solicita configuração atual do Arduino."""
         return self.send_command("GET_CONFIG")
+
+    def query_controller_config(self):
+        """Consulta o firmware do forno (GET_CONFIG) e devolve o controlador
+        identificado (ver config.parse_controller_config) ou None.
+
+        Faz a leitura própria (sem send_command) porque a resposta é
+        'CONFIG,...' e não 'OK', evitando o falso aviso de falha. O serial_lock
+        garante exclusão mútua com o poll_data periódico.
+        """
+        if not config.ARDUINO_ENABLED or not self.is_ready:
+            return None
+        try:
+            with self.serial_lock:
+                if not (self.ser and self.ser.is_open):
+                    return None
+                self.ser.reset_input_buffer()
+                self.ser.write(b"GET_CONFIG\n")
+                raw = self.ser.readline().decode("ascii", errors="ignore").strip()
+        except Exception as e:
+            self.log_message.emit(f"ERRO consultando controlador do forno: {e}")
+            return None
+        return config.parse_controller_config(raw)
 
 
 # =============================================================================
@@ -427,6 +452,7 @@ class TestSequencer(QObject):
     plot_data_update = Signal(dict)
     test_finished = Signal()
     sweep_step_changed = Signal(int, float, int, str)  # (step_idx_0based, target, total_steps, mode)
+    controller_info_signal = Signal(object)            # oven controller dict resolved at test start
 
     def __init__(self, arduino_worker, psu_worker, dut_worker):
         super().__init__()
@@ -446,6 +472,9 @@ class TestSequencer(QObject):
         # DUT temperature outer loop
         self._dut_target_temp = 0.0
         self._outer_tick = 0
+
+        # Oven controller identified from firmware (provenance)
+        self._oven_controller = None
 
         # VCCINT closed-loop (IT6502D)
         self._psu_cmd_v = 0.0
@@ -483,7 +512,15 @@ class TestSequencer(QObject):
             # 1. Criar o Logger
             self._dut_target_temp = float(settings.get('dut_target_temp', 0.0))
             self._outer_tick = 0
-            self.logger = DataLogger(config.LOG_FOLDER, settings['test_name'])
+
+            # Identifica o controlador real do forno ANTES de abrir o log, para
+            # que o cabeçalho registre o regime correto (PID vs bang-bang são
+            # firmwares distintos com o mesmo protocolo serial).
+            self._oven_controller = self._resolve_oven_controller()
+            self.controller_info_signal.emit(self._oven_controller)
+
+            self.logger = DataLogger(config.LOG_FOLDER, settings['test_name'],
+                                     controller_info=self._oven_controller)
             self.log_message.emit(f"Log criado: {self.logger.filepath}")
             
             # Log dos parâmetros do sistema
@@ -566,7 +603,7 @@ class TestSequencer(QObject):
             self.log_message.emit("=" * 50)
             self.log_message.emit(">>> TESTE INICIADO <<<")
             self.log_message.emit(f"Setpoint: {settings['oven_setpoint']}°C | PSU: {settings['psu_voltage']}V")
-            self.log_message.emit(f"PID: {config.get_pid_info_string()}")
+            self.log_message.emit(f"Forno: {config.controller_summary(self._oven_controller)}")
             self.log_message.emit("=" * 50)
             
         except Exception as e:
@@ -576,6 +613,31 @@ class TestSequencer(QObject):
                 self.logger.close()
             self.test_finished.emit()
 
+    def _resolve_oven_controller(self):
+        """Consulta o firmware do forno (GET_CONFIG) para registrar o regime de
+        forma honesta. Cai nas constantes PID configuradas — claramente
+        marcadas — quando o Arduino está desabilitado ou não responde.
+        """
+        if not config.ARDUINO_ENABLED:
+            return {"type": "UNKNOWN", "raw": None,
+                    "source": "arduino-disabled", "params": {}}
+
+        # Dá tempo para o boot do Arduino terminar, se necessário.
+        t0 = time.time()
+        while not self.arduino.is_ready and (time.time() - t0 < 6):
+            time.sleep(0.5)
+
+        info = self.arduino.query_controller_config()
+        if info:
+            self.log_message.emit("Controlador do forno: " + config.controller_summary(info))
+            return info
+
+        self.log_message.emit(
+            "AVISO: firmware do forno não respondeu GET_CONFIG — "
+            "registrando controlador como fallback de configuração."
+        )
+        return config.fallback_controller_info()
+
     def _log_system_config(self, settings):
         """Registra configuração do sistema no início do teste."""
         self.log_message.emit("-" * 50)
@@ -584,9 +646,7 @@ class TestSequencer(QObject):
         self.log_message.emit(f"Nome: {settings['test_name']}")
         self.log_message.emit(f"Setpoint Forno: {settings['oven_setpoint']}°C")
         self.log_message.emit(f"Tensão PSU: {settings['psu_voltage']}V")
-        self.log_message.emit(f"Kp = {config.PID_KP:.4f}")
-        self.log_message.emit(f"Ki = {config.PID_KI:.6f}")
-        self.log_message.emit(f"Kd = {config.PID_KD:.4f}")
+        self.log_message.emit(f"Forno: {config.controller_summary(self._oven_controller)}")
         self.log_message.emit(f"Taxa Rampa: {config.DEFAULT_RAMP_RATE_C_PER_SEC}°C/s")
         self.log_message.emit(f"Intervalo Log: {config.LOG_INTERVAL_MS}ms")
         self.log_message.emit("-" * 50)
@@ -656,14 +716,17 @@ class TestSequencer(QObject):
         
         # Output
         output_mean = statistics.mean(output_regime)
-        self.log_message.emit(f"Output PID Médio: {output_mean:.1f}%")
-        
-        # Decomposição P/I estimada
-        contrib_P = config.PID_KP * error_mean
-        contrib_I = output_mean - contrib_P
-        self.log_message.emit(f"Contribuição P estimada: {contrib_P:.2f}%")
-        self.log_message.emit(f"Contribuição I estimada: {contrib_I:.2f}%")
-        
+        ctype = (self._oven_controller or {}).get("type")
+        if ctype == "PID":
+            self.log_message.emit(f"Output PID Médio: {output_mean:.1f}%")
+            # Decomposição P/I estimada (apenas PID)
+            contrib_P = config.PID_KP * error_mean
+            contrib_I = output_mean - contrib_P
+            self.log_message.emit(f"Contribuição P estimada: {contrib_P:.2f}%")
+            self.log_message.emit(f"Contribuição I estimada: {contrib_I:.2f}%")
+        else:
+            self.log_message.emit(f"Duty médio do atuador: {output_mean:.1f}%")
+
         # Conformidade JEDEC
         if (temp_max - temp_min) <= 4.0:
             self.log_message.emit("✓ CONFORME JEDEC (±2°C)")
@@ -759,12 +822,18 @@ class TestSequencer(QObject):
 
     def _log_periodic_status(self, elapsed, temp, setpoint, output, error):
         """Log periódico de status."""
-        contrib_P = config.PID_KP * error
-        contrib_I = output - contrib_P
-        
-        print(f"[{elapsed:.0f}s] T={temp:.2f}°C | SP={setpoint:.1f}°C | "
-              f"Erro={error:.2f}°C | Out={output:.1f}% | "
-              f"P={contrib_P:.1f}% | I≈{contrib_I:.1f}%")
+        ctype = (self._oven_controller or {}).get("type")
+        if ctype == "PID":
+            contrib_P = config.PID_KP * error
+            contrib_I = output - contrib_P
+            print(f"[{elapsed:.0f}s] T={temp:.2f}°C | SP={setpoint:.1f}°C | "
+                  f"Erro={error:.2f}°C | Out={output:.1f}% | "
+                  f"P={contrib_P:.1f}% | I≈{contrib_I:.1f}%")
+        else:
+            # Bang-bang (e demais): a saída é estado do SSR (0/100%); a
+            # decomposição P/I não se aplica.
+            print(f"[{elapsed:.0f}s] T={temp:.2f}°C | SP={setpoint:.1f}°C | "
+                  f"Erro={error:.2f}°C | SSR={output:.0f}%")
 
     def _adjust_oven_outer_loop(self, dut_temp: float, sp_oven: float):
         """Shift oven setpoint every ~30 min to bring DUT temp to target."""
