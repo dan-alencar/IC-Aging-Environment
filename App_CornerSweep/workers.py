@@ -111,6 +111,13 @@ class ArduinoWorker(QObject):
     def stop_test_oven(self):
         return self._send("STOP_TEST")
 
+    def query_controller_config(self):
+        """Query the oven firmware (GET_CONFIG) and return the identified
+        controller (see config.parse_controller_config), or None."""
+        if not config.ARDUINO_ENABLED or not self.is_ready:
+            return None
+        return config.parse_controller_config(self._send("GET_CONFIG"))
+
 
 # ── Worker 2: PSU — Agilent E3634A via RS-232 ────────────────────────────────
 

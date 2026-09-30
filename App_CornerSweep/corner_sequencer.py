@@ -100,6 +100,29 @@ class CornerSweepSequencer(QObject):
 
     # ── Public API ────────────────────────────────────────────────────────────
 
+    def _resolve_oven_controller(self):
+        """Query the oven firmware (GET_CONFIG) so the log records the real
+        control regime; never silently assumes PID."""
+        if not config.ARDUINO_ENABLED:
+            return {"type": "UNKNOWN", "raw": None,
+                    "source": "arduino-disabled", "params": {}}
+
+        # Give the Arduino time to finish booting, if needed.
+        t0 = time.time()
+        while not self._arduino.is_ready and (time.time() - t0 < 6):
+            time.sleep(0.5)
+
+        info = self._arduino.query_controller_config()
+        if info:
+            self.log_message.emit("Controlador do forno: " + config.controller_summary(info))
+            return info
+
+        self.log_message.emit(
+            "AVISO: firmware do forno não respondeu GET_CONFIG — "
+            "controlador registrado como desconhecido."
+        )
+        return config.fallback_controller_info()
+
     @Slot(dict)
     def start_test(self, settings: dict):
         if self._phase != Phase.IDLE:
@@ -116,12 +139,17 @@ class CornerSweepSequencer(QObject):
 
         target_temp = settings.get('target_dut_temp', 85.0)
 
+        # Identify the oven controller BEFORE opening the log so the header
+        # records the real regime (PID vs bang-bang firmware).
+        controller = self._resolve_oven_controller()
+
         self._logger = CornerSweepLogger(
             config.LOG_FOLDER,
             settings.get('test_name', 'sweep'),
             target_temp,
             config.CORNERS_V,
             config.SWEEP_STEP_V,
+            controller_info=controller,
         )
         self.log_message.emit(f"Log: {self._logger.filepath}")
 

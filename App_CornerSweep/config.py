@@ -87,4 +87,65 @@ def save_config(dut_p, dut_b, arduino_p, arduino_b, arduino_en, psu_p, psu_b, ps
         return False
 
 
+# =============================================================================
+#   IDENTIFICAÇÃO DO CONTROLADOR DO FORNO (provenance)
+# =============================================================================
+# A lei de controle do forno vive no firmware do Arduino: PID_Controller.ino e
+# arduino_termostato.ino compartilham o MESMO protocolo serial, então o app não
+# sabe qual está em execução a menos que pergunte (GET_CONFIG). Estas funções
+# evitam que um ensaio bang-bang seja registrado como se fosse PID.
+
+def parse_controller_config(raw):
+    """Converte a resposta de GET_CONFIG do firmware em um dicionário.
+
+    Aceita as duas variantes de firmware:
+      PID:       'CONFIG,KP=2.78,KI=...,KD=...,WINDOW=...'
+      Bang-bang: 'CONFIG,TYPE=BANGBANG,HYST_HIGH=2.0,HYST_LOW=2.0,SAMPLE_MS=1000'
+
+    Retorna None se a linha não for um CONFIG válido (assim o chamador cai no
+    fallback explícito em vez de inventar um tipo).
+    """
+    if not raw or "CONFIG" not in raw:
+        return None
+    raw = raw[raw.index("CONFIG"):].strip()
+    params = {}
+    for part in raw.split(",")[1:]:          # descarta o token 'CONFIG'
+        if "=" in part:
+            key, val = part.split("=", 1)
+            params[key.strip().upper()] = val.strip()
+    if "TYPE" in params:
+        ctype = params["TYPE"].upper()
+    elif "KP" in params:
+        ctype = "PID"
+    else:
+        ctype = "UNKNOWN"
+    return {"type": ctype, "raw": raw, "source": "firmware", "params": params}
+
+
+def fallback_controller_info():
+    """Usado quando o firmware do forno não respondeu GET_CONFIG.
+
+    Este app não mantém constantes PID próprias, então o regime fica
+    explicitamente desconhecido em vez de ser presumido PID.
+    """
+    return {"type": "UNKNOWN", "raw": None, "source": "no-response", "params": {}}
+
+
+def controller_summary(info):
+    """Resumo de uma linha do controlador do forno para logs e UI."""
+    if not info:
+        return "controlador desconhecido"
+    ctype = info.get("type", "UNKNOWN")
+    p = info.get("params", {})
+    src = info.get("source", "?")
+    if ctype == "PID":
+        return (f"PID [Kp={p.get('KP', '?')}, Ki={p.get('KI', '?')}, "
+                f"Kd={p.get('KD', '?')}] (fonte: {src})")
+    if ctype == "BANGBANG":
+        return (f"BANG-BANG [histerese +{p.get('HYST_HIGH', '?')}/"
+                f"-{p.get('HYST_LOW', '?')} °C, amostra {p.get('SAMPLE_MS', '?')} ms] "
+                f"(fonte: {src})")
+    return f"{ctype} (fonte: {src})"
+
+
 load_config()

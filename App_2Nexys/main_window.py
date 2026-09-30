@@ -103,8 +103,7 @@ class MainWindow(QMainWindow):
             "Ajuste ±1°C/30 min até ±3°C do alvo."
         )
         self.pid_info_label = QLabel(
-            f"<b>PID (Fixo):</b> Kp={config.PID_KP:.4f}  "
-            f"Ki={config.PID_KI:.6f}  Kd={config.PID_KD:.4f}"
+            "<b>Forno:</b> controlador consultado do firmware ao iniciar o teste"
         )
         self.pid_info_label.setStyleSheet(
             "background-color: #2d2d2d; padding: 6px; border-radius: 4px;"
@@ -381,6 +380,7 @@ class MainWindow(QMainWindow):
         seq.plot_data_update.connect(self._forward_to_aux1)
         seq.plot_data_update.connect(self._update_sensor_display)
         seq.test_finished.connect(self.on_test_finished)
+        seq.controller_info_signal.connect(self._on_controller_info)
 
     # =========================================================================
     #   Signal routing helpers
@@ -494,6 +494,11 @@ class MainWindow(QMainWindow):
         sp = self.oven_setpoint_input.value()
         self.log_message(f"Setpoint forno: {sp:.1f}°C")
         self.update_oven_setpoint_signal.emit(sp)
+
+    def _on_controller_info(self, info: dict):
+        """Mostra o controlador do forno realmente em uso (consultado do
+        firmware no início do teste) em vez de assumir PID."""
+        self.pid_info_label.setText("<b>Forno:</b> " + config.controller_summary(info))
 
     @Slot()
     def on_test_finished(self):
