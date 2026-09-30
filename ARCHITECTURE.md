@@ -65,7 +65,7 @@ The STM32 (STM32L4R9) controls a TPS65400 PMIC to set VCORE for the FPGA, displa
 
 ## Firmware
 
-### Arduino — PID oven controller (`Arduino-ESP/PID_Controller/`)
+### Arduino — PID oven controller (`firmware/thermal_chamber/PID_Controller/`)
 
 Uses **ArduPID 1.0.1**. The FOPDT model identified via step test:
 
@@ -79,11 +79,11 @@ These are **fixed constants** — do not change without a new step test and SIMC
 
 SSR control uses time-proportioning (5-second window). A 1°C/s ramp prevents step overshoot when setting a new setpoint.
 
-### ESP32 — UART router (`Arduino-ESP/esp32wroom_uart-reader/`)
+### ESP32 — UART router (`firmware/uart_router/esp32_uart_router/`)
 
 Routes packets between the PC and the FPGA/STM32 based on the leading header byte. This enables a single USB connection to serve both targets without a USB hub.
 
-### STM32 firmware (`STM_FW_Aging/`)
+### STM32 firmware (`firmware/supervisory/stm32l4_aging/`)
 
 STM32CubeIDE project for STM32L4R9 (STM32L4xx HAL). Custom drivers:
 - `TPS65400/` — PMIC I²C driver; controls FPGA VCORE via voltage register writes
@@ -96,7 +96,7 @@ The STM32 does not run a PID — voltage control in the UltraScale+ path is open
 
 ## FPGA bitstream projects
 
-### `vivado/aging_study_nexys4ddr/`
+### `hardware/fpga/xilinx/nexys4_ddr/` (symlinked as `vivado/aging_study_nexys4ddr/`)
 
 **Board:** Digilent Nexys4 DDR (Artix-7, `xc7a100tcsg324-1`).  
 **Top:** `design_1_wrapper`.
@@ -109,11 +109,11 @@ The critical path (carry-chain adder) is **fixed in placement and routing** via 
 
 To regenerate `fixed_pnr_constraints.xdc` from the checkpoint (e.g., if constraints are lost):
 ```bash
-cd vivado/aging_study_nexys4ddr
+cd hardware/fpga/xilinx/nexys4_ddr
 scripts/extract_fixed_pnr_constraints.sh
 ```
 
-### `vivado/sbcci_fpga_aging/`
+### `hardware/fpga/xilinx/ultrascale_plus/` (symlinked as `vivado/sbcci_fpga_aging/`)
 
 **Board:** Custom UltraScale+ board (`xcau15p-ffvb676-1-i`).  
 **Top:** `fpga_unified_top`.

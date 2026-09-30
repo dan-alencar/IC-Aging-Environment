@@ -43,25 +43,31 @@ pyinstaller AgingMonitorApp.spec
 
 There are no project-level unit or integration tests. All validation is done by running the app against real hardware. The `.venv/` directories contain third-party library tests — ignore those.
 
-## Building the FPGA bitstreams (Vivado)
+## Building the FPGA bitstreams
 
-Vivado must be on `PATH` (or set `VIVADO_BIN`). Generated output goes to `build/` and `artifacts/` — never commit those.
+Canonical source lives under `hardware/fpga/` (also symlinked from `vivado/` for backwards compatibility). Vivado must be on `PATH` (or set `VIVADO_BIN`). Generated output goes to `build/` and `artifacts/` — never commit those.
 
 ```bash
 # SBCCI UltraScale+ (xcau15p-ffvb676-1-i, top: fpga_unified_top)
 # Requires Vivado 2025.2+; XCI files were last saved with 2025.2.1
-cd vivado/sbcci_fpga_aging
-scripts/check_layout.sh          # sanity check, no Vivado needed
-scripts/create_project.sh        # generates build/*.xpr
+cd hardware/fpga/xilinx/ultrascale_plus   # or vivado/sbcci_fpga_aging
+scripts/check_layout.sh                   # sanity check, no Vivado needed
+scripts/create_project.sh                 # generates build/*.xpr
 scripts/build_bitstream.sh --jobs 8
-scripts/clean.sh                 # removes build/ and artifacts/
+scripts/clean.sh                          # removes build/ and artifacts/
 
 # Nexys4 DDR Artix-7 (xc7a100tcsg324-1, top: nexys4_aging_top)
-cd vivado/aging_study_nexys4ddr
+cd hardware/fpga/xilinx/nexys4_ddr        # or vivado/aging_study_nexys4ddr
 scripts/check_layout.sh
 scripts/create_project.sh
 scripts/build_bitstream.sh --jobs 8
 scripts/clean.sh
+
+# Intel MAX10 DE10-Lite (10M50DAF484C7G, Quartus Prime)
+cd hardware/fpga/intel/de10_lite
+scripts/check_layout.sh
+scripts/create_project.sh
+scripts/build_bitstream.sh
 ```
 
 Bitstreams land in `artifacts/`. To open in the GUI, pass `--gui` to `create_project.sh`.
@@ -208,26 +214,25 @@ a (counter)                        → u_canary (DONT_TOUCH) → wrong/correct/e
 
 Full scientific rationale: `vivado/aging_study_nexys4ddr/SENSOR_ARCHITECTURE.md`. Validation checklist (Phases 3–7 still pending): `IMPLEMENTATION_ROADMAP.md`.
 
-## Arduino sketches
+## Embedded firmware
 
-`Arduino-ESP/` contains active sketches; `Arduino-ESP/legacy/` holds superseded versions.
+Canonical source lives under `firmware/` (also symlinked via `Arduino-ESP/` and `STM_FW_Aging/`):
 
-- `arduino_termostato/` — bang-bang oven controller (SSR + NTC).
-- `PID_Controller/` — SIMC-tuned PID oven controller. Uses **ArduPID 1.0.1** (installed at `~/Arduino/libraries/ArduPID/`). Key API vs 0.2.1: `setTunings()` replaces `begin()`, `setILimits()` replaces `setWindUpLimits()`, `setDtMs()` replaces `setSampleTime()`, `compute(input)` takes input as argument and returns output (no pointer). `start()`/`stop()` were removed; `testRunning` flag controls execution.
-- `esp32wroom_uart-reader/` — UART router between PC and FPGA/STM32 (SBCCI path).
-- `FOPDT_Step_Test.ino/` — step-test sketch used to identify the FOPDT plant model.
-- `arduino_uart_tp_sniffer/` — passive UART sniffer for debugging serial traffic.
+- `firmware/thermal_chamber/PID_Controller/` — SIMC-tuned PID oven controller. Uses **ArduPID 1.0.1** (installed at `~/Arduino/libraries/ArduPID/`). Key API vs 0.2.1: `setTunings()` replaces `begin()`, `setILimits()` replaces `setWindUpLimits()`, `setDtMs()` replaces `setSampleTime()`, `compute(input)` takes input as argument and returns output (no pointer). `start()`/`stop()` were removed; `testRunning` flag controls execution.
+- `firmware/thermal_chamber/arduino_termostato/` — bang-bang oven controller (SSR + NTC).
+- `firmware/thermal_chamber/FOPDT_Step_Test/` — step-test sketch used to identify the FOPDT plant model.
+- `firmware/thermal_chamber/arduino_uart_tp_sniffer/` — passive UART sniffer for debugging serial traffic.
+- `firmware/uart_router/esp32_uart_router/` — UART router between PC and FPGA/STM32 (SBCCI path).
+- `firmware/supervisory/stm32l4_aging/` — STM32L4 supervisory MCU (PMIC TPS65400 & OLED).
 
 ## Reference documents
 
 - `README.md` / `README.pt-BR.md` — repo map and quick start, for humans (this file is for Claude Code).
+- `CONTRIBUTING.md` — guidelines on code style, data hygiene, and lab procedures.
 - `PROTOCOL.md` — serial protocol reference for DUT (Nexys4), Arduino, and PSU.
 - `ARCHITECTURE.md` — design intent behind each subsystem and why decisions were made.
-- `docs/onboarding.tex` (and `docs/IC_Aging_Environment.pdf`) — 35-page onboarding manual: aging physics, RTL, software, protocols, workstation setup, running an experiment, data analysis, troubleshooting.
-- `vivado/aging_study_nexys4ddr/SENSOR_ARCHITECTURE.md` — scientific rationale for the dual-adder sensor design.
-- `vivado/aging_study_nexys4ddr/IMPLEMENTATION_ROADMAP.md` — phased checklist; RTL phases 1–2 are done, phases 3–7 (build, validation, data collection) are pending.
-- `vivado/aging_study_nexys4ddr/CLAUDE.md` — sub-project CLAUDE.md with full RTL module hierarchy, clock domains, XADC formulas, and constraint strategy.
+- `docs/onboarding/onboarding.tex` (and `docs/IC_Aging_Environment.pdf`) — 35-page onboarding manual: aging physics, RTL, software, protocols, workstation setup, running an experiment, data analysis, troubleshooting.
+- `hardware/fpga/xilinx/nexys4_ddr/SENSOR_ARCHITECTURE.md` — scientific rationale for the dual-adder sensor design.
+- `hardware/fpga/xilinx/nexys4_ddr/IMPLEMENTATION_ROADMAP.md` — phased checklist; RTL phases 1–2 are done, phases 3–7 (build, validation, data collection) are pending.
+- `hardware/fpga/intel/de10_lite/README.md` — Intel MAX10 (DE10-Lite) target documentation.
 
-## Related work: MAX10/DE10-Lite port (separate branch)
-
-A second student team is porting this sensor architecture to an Intel MAX10 (10M50DAF484C7G, DE10-Lite) target using Quartus Prime, as a parallel research line — not a replacement for this Vivado/Artix codebase. That work lives on the `max10-de10lite-port` branch, under `max10_port/`, with this repository's current implementation kept there as reference-only guidance material (see `max10_port/README.md` on that branch for the full plan and status).

@@ -2,106 +2,106 @@
 
 *[Read in English](README.md)*
 
-Um ambiente *hardware-in-the-loop* para experimentos de envelhecimento acelerado
-(*burn-in*) de FPGAs. O sistema controla a temperatura do forno por PID, programa e
-monitora um sensor de *slack* (margem temporal) embarcado que acompanha a degradação
-de temporização, e registra tudo para análise posterior. Desenvolvido no
-**LESC — Laboratório de Engenharia de Sistemas de Computação, UFC** (Universidade
-Federal do Ceará).
+Um ambiente central de pesquisa para experimentos de envelhecimento acelerado (*burn-in*), caracterização e confiabilidade de circuitos integrados (CI) e FPGAs. Desenvolvido no **LESC — Laboratório de Engenharia de Sistemas de Computação, UFC** (Universidade Federal do Ceará).
 
-Se você é novo aqui, este arquivo é o mapa. Para se aprofundar, veja:
-- **[`docs/onboarding.tex`](docs/onboarding.tex)** (ou o PDF compilado
-  [`docs/IC_Aging_Environment.pdf`](docs/IC_Aging_Environment.pdf)) — o manual
-  completo de 35 páginas (em inglês): física do envelhecimento, RTL, arquitetura de
-  software, protocolos, preparação de estação de trabalho do zero, execução de
-  experimento e análise de dados.
-- **[`ARCHITECTURE.md`](ARCHITECTURE.md)** — intenção de projeto por trás de cada
-  subsistema (em inglês).
-- **[`PROTOCOL.md`](PROTOCOL.md)** — todo protocolo serial, byte a byte (em inglês).
-- **[`CLAUDE.md`](CLAUDE.md)** — referência de trabalho para assistentes de IA
-  (Claude Code); também é um mapa denso e preciso do código para humanos com pressa
-  (em inglês).
+---
 
-> **Nota de idioma:** os documentos técnicos aprofundados acima permanecem em inglês
-> — é o idioma em que já estão escritos, revisados e usados no dia a dia do
-> laboratório. Este README e a documentação de orientação do port para MAX 10 são
-> bilíngues; o restante é referência técnica em inglês mesmo.
+## Links Rápidos de Documentação
 
-## Branches — qual arquitetura de sensor está onde
+Se você é novo no laboratório, comece por aqui:
+- **[`docs/onboarding/onboarding.tex`](docs/onboarding/onboarding.tex)** (ou o compilado **[`docs/IC_Aging_Environment.pdf`](docs/IC_Aging_Environment.pdf)**) — Manual completo de 35 páginas cobrindo física do envelhecimento, RTL do sensor, arquitetura do software, protocolos seriais, configuração da bancada, execução de testes e análise de dados.
+- **[`CONTRIBUTING.md`](CONTRIBUTING.md)** — Diretrizes para novos pesquisadores sobre padrões de código, higiene de dados e fluxo de trabalho.
+- **[`ARCHITECTURE.md`](ARCHITECTURE.md)** — Decisões de projeto e invariantes arquiteturais.
+- **[`PROTOCOL.md`](PROTOCOL.md)** — Protocolos de comunicação serial e formato dos pacotes.
+- **[`CLAUDE.md`](CLAUDE.md)** — Guia rápido para assistentes de IA e referência rápida para desenvolvedores.
 
-Este repositório hospeda mais de uma variante do sensor de envelhecimento. Escolha o
-branch de acordo com o que você está fazendo:
+---
 
-| Branch | Arquitetura | Situação |
-|---|---|---|
-| `main` | **Sensor único, adder duplo (RCA).** Um caminho crítico de somador *ripple-carry*, amostrado pelo sensor de metaestabilidade `modern_sensible`, com um segundo somador idêntico (`adder_canary`) como canário de erro funcional. É a arquitetura validada e publicada (SBCCI 2025/2026). | Referência / produção |
-| `inverter-chain-sensor` | Mesma arquitetura de sensor único, mas o caminho crítico é uma cadeia de inversores parametrizável (`not_series`) em vez de um somador — apenas temporização, sem canário funcional. | Experimental |
-| `experimental-multi-sensor` | Quatro instâncias independentes de `rca_sensor_channel` compartilhando um único controlador de varredura de fase, reportando todos os canais a cada ciclo. Protocolo novo, interface multi-canal nova. | Experimental, ainda sem validação em hardware |
-| `max10-de10lite-port` | Uma **linha de pesquisa separada**: portar este sensor para um dispositivo Intel MAX 10 (placa DE10-Lite) com Quartus Prime. Tudo em `max10_port/`; o restante deste repositório fica ali como material de referência. Veja `max10_port/README.pt-BR.md` naquele branch. | Nova equipe, escopo exploratório |
+## Estrutura do Repositório
 
-A menos que você esteja trabalhando especificamente em uma das variantes
-experimentais ou no port para MAX 10, o branch que você quer é o `main`.
+O repositório é organizado em domínios modulares e bem definidos:
 
-## O que há neste repositório
+```text
+.
+├── hardware/                    # Projetos digitais e RTL
+│   ├── fpga/
+│   │   ├── xilinx/              # Projetos Vivado
+│   │   │   ├── nexys4_ddr/      # Digilent Nexys4 DDR (Artix-7 xc7a100t)
+│   │   │   └── ultrascale_plus/ # UltraScale+ customizado (xcau15p) - SBCCI
+│   │   └── intel/               # Projetos Quartus Prime
+│   │       └── de10_lite/       # Terasic DE10-Lite (MAX10 10M50DA)
+│   ├── common/                  # Módulos RTL compartilhados (sensores, filtros, UART)
+│   └── asic/                    # Designs para PDKs ASIC (SkyWater 130nm, GF180, etc.)
+│
+├── firmware/                    # Firmware para microcontroladores
+│   ├── thermal_chamber/         # Controladores de temperatura da estufa (PID e bang-bang)
+│   ├── uart_router/             # Roteador de pacotes ESP32 (ponte CROC / STM32)
+│   └── supervisory/             # Firmware supervisório STM32L4 (PMIC e display OLED)
+│
+├── software/                    # Aplicações desktop para host e instrumentação
+│   ├── core/                    # Pacote Python compartilhado (ic_aging_core)
+│   ├── apps/
+│   │   ├── App_Nexys/           # App para 1 DUT (Nexys4 DDR)
+│   │   ├── App_2Nexys/          # App para 2 DUTs simultâneos no mesmo forno
+│   │   ├── App_CornerSweep/     # Ferramenta para varredura de limites de tensão
+│   │   └── App_FPGAging_Slack_Sensor/ # App para UltraScale+ CROC e ponte STM32
+│   └── launcher.py              # Launcher unificado em Qt
+│
+├── analysis/                    # Pós-processamento, modelagem e estatística
+│   ├── notebooks/               # Jupyter notebooks interativos
+│   ├── scripts/                 # Scripts para cálculo de aceleração de Arrhenius e degradação
+│   ├── figures/                 # Gráficos gerados para publicações
+│   └── teoria_da_informacao/    # Métricas de teoria da informação sobre dados de envelhecimento
+│
+├── data/                        # Dados experimentais e padrões
+│   ├── README.md                # Padrões de cabeçalho e regras de nomenclatura
+│   ├── sample_logs/             # Logs pequenos (<1MB) versionados no Git para testes
+│   └── campaigns/               # CSVs de campanhas longas locais (ignorados pelo Git)
+│
+├── publications/                # Produção acadêmica do grupo
+│   ├── papers/                  # Artigos de conferências e periódicos (SBCCI, JICS, IEEE)
+│   ├── theses/                  # Trabalhos de Conclusão de Curso (TCC) e dissertações
+│   ├── coursework/              # Relatórios e materiais de disciplinas
+│   └── literature/              # Banco BibTeX (references.bib) e referências
+│
+└── docs/                        # Manuais de onboarding, protocolos e especificações
+```
 
-| Caminho | O que é |
-|---|---|
-| `vivado/aging_study_nexys4ddr/` | Projeto Vivado para a placa **Nexys4 DDR (Artix-7, xc7a100t)** — o alvo de hardware principal e mais bem documentado. RTL puro, sem *block design*. |
-| `vivado/sbcci_fpga_aging/` | Projeto Vivado para o alvo **SBCCI / Artix UltraScale+ (xcau15p)** — placa customizada, roteia UART tanto para a FPGA do sensor quanto para um STM32. |
-| `App_Nexys/` | Aplicação desktop (PySide6) para um único DUT Nexys4 DDR: PID do forno, controle de fonte, gráficos ao vivo, registro em CSV. A aplicação de referência — leia esta primeiro. |
-| `App_2Nexys/` | Igual à `App_Nexys`, duplicada para dois DUTs Nexys4 DDR independentes, com controle de tensão de fonte independente por DUT. |
-| `App_FPGAging_Slack_Sensor/` | Aplicação desktop para o alvo SBCCI/UltraScale+; roteia tráfego serial entre a FPGA e uma ponte STM32. Deve ser executada isoladamente (família de hardware diferente). |
-| `App_CornerSweep/` | Ferramenta de caracterização de bancada (não é uma aplicação de *burn-in*): varre VCCINT por *corners* fixos e, em cada um, dá passos finos de tensão até localizar a fronteira de falha. |
-| `STM_FW_Aging/` | Firmware do STM32L4R9 (projeto STM32CubeIDE) para o microcontrolador supervisório do alvo SBCCI — controle do PMIC, display OLED. |
-| `Arduino-ESP/` | Sketches Arduino/ESP32: controlador PID do forno, roteador UART (caminho SBCCI), ferramenta de teste de degrau FOPDT, sniffer de UART. `legacy/` guarda versões superadas. |
-| `Artigos/` | Artigos: publicações e rascunhos do grupo (`Artigos_GSEM/`), materiais do TCC (`Artigos_TCC/`), e referências de revisão bibliográfica organizadas por tema (`Artigos_refs_SBCCI_2025/`). |
-| `docs/` | O manual de onboarding (fonte LaTeX + PDF compilado). |
-| `run.sh` / `launcher.py` | Lançador raiz — um diálogo para escolher qual aplicação Nexys4 executar. |
+*(Nota: Atalhos como `vivado/`, `Arduino-ESP/`, `STM_FW_Aging/` e `Artigos/` na raiz são links simbólicos para manter total compatibilidade com scripts legados).*
 
-## Início rápido
+---
 
+## Início Rápido
+
+### 1. Executando as Aplicações
+Para abrir o launcher gráfico unificado a partir da raiz:
 ```bash
 ./run.sh
 ```
 
-Isso mostra um diálogo para escolher entre `App_Nexys` (1 DUT), `App_2Nexys` (2 DUTs)
-e `App_CornerSweep` (caracterização de tensão). Cada aplicação gerencia seu próprio
-ambiente virtual Python (criado automaticamente na primeira execução) e suas próprias
-conexões de hardware — nada é compartilhado entre elas. `App_FPGAging_Slack_Sensor`
-tem hardware diferente e é executada isoladamente:
+### 2. Compilando Bitstreams FPGA
 
+Para **Nexys4 DDR (Artix-7)**:
 ```bash
-cd App_FPGAging_Slack_Sensor && ./run.sh
-```
-
-Para a primeira preparação da estação de trabalho (instalar o Vivado, regras udev
-para dispositivos seriais/JTAG, identificar qual `ttyUSB*` é qual), veja o Capítulo 8
-de `docs/onboarding.tex` — é a parte mais importante de ler antes de mexer no
-hardware.
-
-## Compilando um bitstream de FPGA
-
-```bash
-cd vivado/aging_study_nexys4ddr    # ou vivado/sbcci_fpga_aging
-scripts/check_layout.sh            # checagem de sanidade, não precisa do Vivado
-scripts/create_project.sh          # gera build/*.xpr a partir do RTL/XDC versionado
+cd hardware/fpga/xilinx/nexys4_ddr
+scripts/check_layout.sh
+scripts/create_project.sh
 scripts/build_bitstream.sh --jobs 8
 ```
 
-A saída gerada (`build/`, `artifacts/`) nunca é versionada — tudo o que é necessário
-para reproduzir um bitstream está no controle de versão como fonte (RTL, XDC, XCI).
+Para **UltraScale+ (SBCCI)**:
+```bash
+cd hardware/fpga/xilinx/ultrascale_plus
+scripts/check_layout.sh
+scripts/create_project.sh
+scripts/build_bitstream.sh --jobs 8
+```
 
-## Sem suite de testes automatizada
+---
 
-Toda validação é feita contra hardware real — forno, DUT, fonte. Não há CI. Na
-dúvida, leia a seção "No automated test suite" do `CLAUDE.md` antes de supor que
-algo deveria ter testes unitários.
+## Política de Dados Experimentais
 
-## Contribuindo
-
-Ainda não há um processo formal de contribuição — este é o código de um laboratório
-de pesquisa. Se você é novo na equipe: leia `docs/onboarding.tex` de ponta a ponta
-antes da sua primeira sessão com hardware, e confirme com quem orienta sua trilha
-antes de alterar `fixed_pnr_constraints.xdc`, invariantes documentados em
-`SENSOR_ARCHITECTURE.md`, ou qualquer coisa que já esteja executando uma campanha de
-vários dias.
+Para evitar sobrecarga no repositório Git, **arquivos CSV brutos de campanhas (>1 MB) nunca devem ser commitados**.
+- Logs de experimentos locais são salvos em `test_logs/` ou `data/campaigns/` (preservados localmente no disco, ignorados pelo Git).
+- Dados de campanhas publicados devem ser arquivados no **Zenodo** (gerando DOI) ou no storage do laboratório.
+- Amostras pequenas para validação gráfica estão em `data/sample_logs/`.
