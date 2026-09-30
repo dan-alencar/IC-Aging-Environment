@@ -2,95 +2,115 @@
 
 *[Leia em português](README.pt-BR.md)*
 
-A hardware-in-the-loop environment for accelerated FPGA aging (burn-in) experiments.
-The system drives oven temperature via PID, programs and polls an on-chip slack sensor
-that tracks timing degradation, and logs everything for later analysis. Developed at
-**LESC — Laboratório de Engenharia de Sistemas de Computação, UFC** (Universidade
-Federal do Ceará).
+A central research environment for accelerated integrated circuit (IC) and FPGA aging (burn-in) experiments, characterization, and microelectronics reliability studies. Developed at **LESC — Laboratório de Engenharia de Sistemas de Computação, UFC** (Universidade Federal do Ceará).
 
-If you're new here, this file is the map. For depth, see:
-- **[`docs/onboarding.tex`](docs/onboarding.tex)** (or the compiled
-  [`docs/IC_Aging_Environment.pdf`](docs/IC_Aging_Environment.pdf)) — the full
-  35-page manual: aging physics, RTL walkthrough, software architecture, protocols,
-  workstation setup from scratch, running an experiment, and data analysis.
-- **[`ARCHITECTURE.md`](ARCHITECTURE.md)** — design intent behind each subsystem.
-- **[`PROTOCOL.md`](PROTOCOL.md)** — every serial protocol byte-for-byte.
-- **[`CLAUDE.md`](CLAUDE.md)** — the working reference for AI coding assistants
-  (Claude Code); also a very dense, accurate map of the codebase for humans in a hurry.
+---
 
-## Branches — which sensor architecture is where
+## Documentation Quick Links
 
-This repo hosts more than one variant of the aging sensor. Pick the branch that
-matches what you're doing:
+If you're new here, start with:
+- **[`docs/onboarding/onboarding.tex`](docs/onboarding/onboarding.tex)** (or compiled **[`docs/IC_Aging_Environment.pdf`](docs/IC_Aging_Environment.pdf)**) — The full 35-page onboarding manual covering aging physics, RTL walkthrough, software architecture, serial protocols, workstation setup from scratch, running experiments, and data analysis.
+- **[`CONTRIBUTING.md`](CONTRIBUTING.md)** — Guide for new students and researchers on coding standards, data hygiene, and lab workflows.
+- **[`ARCHITECTURE.md`](ARCHITECTURE.md)** — Design intent and invariants behind each subsystem.
+- **[`PROTOCOL.md`](PROTOCOL.md)** — Serial and byte-level communication protocols.
+- **[`CLAUDE.md`](CLAUDE.md)** — Working map for AI assistants and concise reference for developers.
 
-| Branch | Architecture | Status |
-|---|---|---|
-| `main` | **Single-sensor, dual-adder RCA.** One ripple-carry-adder critical path, sampled by the `modern_sensible` metastability sensor, with a second identical adder (`adder_canary`) as a functional-error canary. This is the validated, published (SBCCI 2025/2026) design. | Reference / production |
-| `inverter-chain-sensor` | Same single-sensor architecture, but the critical path is a parameterized inverter chain (`not_series`) instead of an adder — timing-only, no functional canary. | Experimental |
-| `experimental-multi-sensor` | Four independent `rca_sensor_channel` instances sharing one phase-sweep controller, reporting all channels every tick. New protocol, new multi-channel UI. | Experimental, not yet hardware-validated |
-| `max10-de10lite-port` | A **separate research line**: porting this sensor to an Intel MAX10 (DE10-Lite) target with Quartus Prime. Everything under `max10_port/`; the rest of this repo is kept there as reference material. See `max10_port/README.md` on that branch. | New team, exploratory |
+---
 
-Unless you're specifically working on one of the experimental variants or the MAX10
-port, you want `main`.
+## Repository Structure
 
-## What's in this repository
+The repository is organized into distinct, modular domains:
 
-| Path | What it is |
-|---|---|
-| `vivado/aging_study_nexys4ddr/` | Vivado project for the **Nexys4 DDR (Artix-7, xc7a100t)** target — the primary, best-documented hardware target. Pure RTL, no block design. |
-| `vivado/sbcci_fpga_aging/` | Vivado project for the **SBCCI / Artix UltraScale+ (xcau15p)** target — a custom board, routes UART to both the sensor FPGA and an STM32. |
-| `App_Nexys/` | PySide6 desktop app for a single Nexys4 DDR DUT: oven PID, PSU control, live plots, CSV logging. The reference app — read this one first. |
-| `App_2Nexys/` | Same as `App_Nexys`, doubled for two independent Nexys4 DDR DUTs with independent PSU voltage control. |
-| `App_FPGAging_Slack_Sensor/` | Desktop app for the SBCCI/UltraScale+ target; routes serial traffic between the FPGA and an STM32 bridge. Must be launched standalone (different hardware family). |
-| `App_CornerSweep/` | Bench-characterization tool (not a burn-in app): sweeps VCCINT down through fixed "corners," then fine-steps voltage at each to locate the failure boundary. |
-| `STM_FW_Aging/` | STM32L4R9 firmware (STM32CubeIDE project) for the SBCCI target's supervisory MCU — PMIC control, OLED display. |
-| `Arduino-ESP/` | Arduino/ESP32 sketches: oven PID controller, UART router (SBCCI path), FOPDT step-test tool, UART sniffer. `legacy/` holds superseded versions. |
-| `Artigos/` | Papers: group publications and drafts (`Artigos_GSEM/`), TCC materials (`Artigos_TCC/`), and literature review references organized by topic (`Artigos_refs_SBCCI_2025/`). |
-| `docs/` | The onboarding manual (LaTeX source + compiled PDF). |
-| `run.sh` / `launcher.py` | Root launcher — a dialog to pick which Nexys4 app to run. |
+```text
+.
+├── hardware/                    # Digital hardware and RTL designs
+│   ├── fpga/
+│   │   ├── xilinx/              # Vivado projects
+│   │   │   ├── nexys4_ddr/      # Digilent Nexys4 DDR (Artix-7 xc7a100t)
+│   │   │   └── ultrascale_plus/ # Custom UltraScale+ (xcau15p) SBCCI target
+│   │   └── intel/               # Quartus projects
+│   │       └── de10_lite/       # Terasic DE10-Lite (MAX10 10M50DA) port
+│   ├── common/                  # Shared RTL modules (sensors, filters, UART)
+│   └── asic/                    # ASIC PDK designs (SkyWater 130nm, GF180, etc.)
+│
+├── firmware/                    # Embedded microcontrollers & controllers
+│   ├── thermal_chamber/         # Oven temperature PID & bang-bang controllers
+│   ├── uart_router/             # ESP32 packet router (CROC / STM32 bridge)
+│   └── supervisory/             # STM32L4 supervisory firmware (PMIC & OLED)
+│
+├── software/                    # Desktop host applications and instrumentation
+│   ├── core/                    # Shared Python package (ic_aging_core)
+│   ├── apps/
+│   │   ├── App_Nexys/           # Single DUT (Nexys4 DDR) burn-in app
+│   │   ├── App_2Nexys/          # Dual DUT (dual Nexys4 DDR) burn-in app
+│   │   ├── App_CornerSweep/     # Voltage/failure-boundary sweep tool
+│   │   └── App_FPGAging_Slack_Sensor/ # UltraScale+ CROC & STM32 bridge app
+│   └── launcher.py              # Central Qt selector launcher
+│
+├── analysis/                    # Post-processing, modeling & statistics
+│   ├── notebooks/               # Interactive Jupyter notebooks
+│   ├── scripts/                 # Batch processing & Arrhenius extrapolation
+│   ├── figures/                 # Script-generated publication figures
+│   └── teoria_da_informacao/    # Information theory metrics on aging data
+│
+├── data/                        # Experimental campaign data standards
+│   ├── README.md                # Data naming rules and schema standards
+│   ├── sample_logs/             # Small (<1MB) verification logs tracked in Git
+│   └── campaigns/               # Local multi-day burn-in CSVs (ignored by Git)
+│
+├── publications/                # Group academic production
+│   ├── papers/                  # Conference & journal papers (SBCCI, JICS, IEEE)
+│   ├── theses/                  # Undergraduate theses (TCC) & dissertations
+│   ├── coursework/              # Academic projects & coursework materials
+│   └── literature/              # BibTeX database (references.bib) & references
+│
+└── docs/                        # Onboarding guide, protocols & architecture specs
+```
 
-## Quick start
+*(Note: Root-level aliases such as `vivado/`, `Arduino-ESP/`, `STM_FW_Aging/`, and `Artigos/` are symlinked to their new locations to preserve backwards compatibility with existing lab scripts).*
 
+---
+
+## Quick Start
+
+### 1. Launching Desktop Applications
+Run the unified launcher from the repository root:
 ```bash
 ./run.sh
 ```
+This opens the dark-themed launcher dialog allowing you to select between:
+- **App Nexys (1 DUT)**: Single Artix-7 Nexys4 DDR board with oven PID and optional ITECH PSU.
+- **App 2-Nexys (2 DUTs)**: Dual Nexys4 DDR boards running concurrently in the same oven with closed-loop VCCINT regulation.
+- **App CornerSweep**: Bench-characterization tool for identifying voltage failure boundaries.
+- **App UltraScale+**: Custom UltraScale+ CROC board interfaced via ESP32 UART router and STM32 bridge.
 
-This shows a dialog to choose between `App_Nexys` (1 DUT), `App_2Nexys` (2 DUTs), and
-`App_CornerSweep` (voltage characterization). Each app manages its own Python virtual
-environment (created automatically on first run) and its own hardware connections —
-nothing is shared between them. `App_FPGAging_Slack_Sensor` targets different hardware
-and is launched standalone:
+Each application manages its own Python virtual environment (`.venv/`) independently.
 
+### 2. Building FPGA Bitstreams
+
+For **Nexys4 DDR (Artix-7)**:
 ```bash
-cd App_FPGAging_Slack_Sensor && ./run.sh
-```
-
-For first-time workstation setup (installing Vivado, udev rules for serial/JTAG
-devices, identifying which `ttyUSB*` is which), see Chapter 8 of
-`docs/onboarding.tex` — this is the part most worth reading before touching hardware.
-
-## Building an FPGA bitstream
-
-```bash
-cd vivado/aging_study_nexys4ddr    # or vivado/sbcci_fpga_aging
-scripts/check_layout.sh            # sanity check, no Vivado needed
-scripts/create_project.sh          # generates build/*.xpr from source-controlled RTL/XDC
+cd hardware/fpga/xilinx/nexys4_ddr
+scripts/check_layout.sh
+scripts/create_project.sh
 scripts/build_bitstream.sh --jobs 8
 ```
 
-Generated output (`build/`, `artifacts/`) is never committed — everything needed to
-reproduce a bitstream is version-controlled source (RTL, XDC, XCI).
+For **UltraScale+ (SBCCI target)**:
+```bash
+cd hardware/fpga/xilinx/ultrascale_plus
+scripts/check_layout.sh
+scripts/create_project.sh
+scripts/build_bitstream.sh --jobs 8
+```
 
-## No automated test suite
+---
 
-All validation is against real hardware — oven, DUT, PSU. There is no CI. When in
-doubt, read `CLAUDE.md`'s "No automated test suite" section before assuming something
-should have unit tests.
+## Experimental Data Policy
 
-## Contributing
+To prevent repository bloat, **raw campaign CSV files (>1 MB) are never committed to Git**.
+- Local experiment logs land in `test_logs/` or `data/campaigns/` (locally preserved, ignored by Git).
+- Curated, public campaign datasets are archived with DOIs on **Zenodo** or stored on the lab NAS.
+- Lightweight sample logs for plotting tests are kept under `data/sample_logs/`.
 
-There is no formal contribution process yet — this is a research lab codebase. If
-you're a new team member: read `docs/onboarding.tex` end to end before your first
-hardware session, and check with whoever's supervising your track before changing
-`fixed_pnr_constraints.xdc`, `SENSOR_ARCHITECTURE.md`-documented invariants, or
-anything already running a multi-day campaign.
+See **[`data/README.md`](data/README.md)** and **[`CONTRIBUTING.md`](CONTRIBUTING.md)** for detailed specifications.
