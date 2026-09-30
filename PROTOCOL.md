@@ -107,7 +107,8 @@ All messages are newline-terminated ASCII strings (`\n`).
 | `START_TEST` | `OK,TEST_STARTED\nINFO,PID_CONFIG,<Kp>,<Ki>,<Kd>` | `OK,TEST_STARTED` |
 | `STOP_TEST` | `OK,TEST_STOPPED` | — |
 | `GET_DATA` | `DATA,<temp>,<ramp_sp>,<pid_out>` | `DATA,45.32,44.50,75.60` |
-| `GET_CONFIG` | `CONFIG,KP=<v>,KI=<v>,KD=<v>,WINDOW=<ms>,RAMP=<v>` | — |
+| `GET_CONFIG` (PID firmware) | `CONFIG,KP=<v>,KI=<v>,KD=<v>,WINDOW=<ms>,RAMP=<v>` | — |
+| `GET_CONFIG` (bang-bang firmware) | `CONFIG,TYPE=BANGBANG,HYST_HIGH=<°C>,HYST_LOW=<°C>,SAMPLE_MS=<ms>` | `CONFIG,TYPE=BANGBANG,HYST_HIGH=2.0,HYST_LOW=2.0,SAMPLE_MS=1000` |
 | Power-on | Multi-line banner ending with `READY` | — |
 
 All floats in `DATA` use 2 decimal places. PID output is 0–100 (%).
