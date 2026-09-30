@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ic-aging-core"
+version = "0.1.0"
+description = "Core shared instrumentation, protocols, and UI components for IC Aging experiments"
+authors = [{ name = "LESC - UFC" }]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "pyserial>=3.5",
+    "pyvisa>=1.13.0",
+    "pyvisa-py>=0.7.0",
+    "PySide6>=6.5.0",
+    "pyqtgraph>=0.13.0",
+    "numpy>=1.20.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ic_aging_core*"]
