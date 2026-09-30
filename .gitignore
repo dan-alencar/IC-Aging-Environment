@@ -1,23 +1,62 @@
-# Claude Code worktree metadata
+# ==============================================================================
+# IC-Aging-Environment Central .gitignore
+# ==============================================================================
+
+# Antigravity & Claude metadata
 .claude/
+.gemini/
 
-# Ambientes Virtuais (Virtual Environments)
-App/.venv/
-App/venv
-App_Nexys/.venv
-App_2Nexys/.venv/
-App_2Nexys/test_logs/
-App_FPGAging_Slack_Sensor/.venv/
-App_CornerSweep/.venv/
-App_CornerSweep/test_logs/
-
-# Python generated output
+# ------------------------------------------------------------------------------
+# Python & Virtual Environments
+# ------------------------------------------------------------------------------
+.venv/
+*/.venv/
+venv/
+*/venv/
+env/
+*/env/
 __pycache__/
+*/__pycache__/
+*/**/__pycache__/
 *.py[cod]
-App_FPGAging_Slack_Sensor/test_logs/
+*$py.class
+*.egg-info/
+.pytest_cache/
 
-# Vivado generated output
+# PyInstaller & packaging output
+build/
+*/build/
+*/**/build/
+dist/
+*/dist/
+*/**/dist/
+*.spec.bak
+*.pkg
+*.toc
+
+# ------------------------------------------------------------------------------
+# Experimental Data & Logs
+# (Keep data/sample_logs/ versioned for demos; ignore all other raw data)
+# ------------------------------------------------------------------------------
+*.csv
+*.tsv
+*.parquet
+*.h5
+*.hdf5
+!data/sample_logs/*.csv
+!data/sample_logs/*.tsv
+
+test_logs/
+**/test_logs/
+data/campaigns/*
+!data/campaigns/.gitkeep
+data/local_runs/
+
+# ------------------------------------------------------------------------------
+# EDA Tools: Xilinx Vivado
+# ------------------------------------------------------------------------------
 .Xil/
+**/.Xil/
 *.jou
 *.log
 *.str
@@ -26,19 +65,76 @@ App_FPGAging_Slack_Sensor/test_logs/
 *.pb
 *.rpx
 *.dcp
-!vivado/aging_study_nexys4ddr/references/fixed_pnr.dcp
-*.bit
-*.bin
-*.ltx
 *.mmi
 *.runs/
+**/*.runs/
 *.gen/
+**/*.gen/
 *.cache/
+**/*.cache/
 *.hw/
+**/*.hw/
 *.sim/
+**/*.sim/
 *.ip_user_files/
-vivado/*/.Xil/
-vivado/*/build/
-vivado/*/artifacts/
-/.venv/lib
-/.venv
+**/*.ip_user_files/
+**/artifacts/
+
+# Preserve specific reference DCPs and production bitstreams if needed
+!**/references/*.dcp
+!**/bitstreams/*.bit
+!**/bitstreams/*.ltx
+
+# ------------------------------------------------------------------------------
+# EDA Tools: Intel Quartus Prime (for MAX10 target)
+# ------------------------------------------------------------------------------
+db/
+**/db/
+incremental_db/
+**/incremental_db/
+output_files/
+**/output_files/
+*.qws
+*.rpt
+*.summary
+*.done
+*.jdi
+*.pin
+*.sof
+*.pof
+
+# ------------------------------------------------------------------------------
+# Embedded Systems & IDEs (STM32CubeIDE / Eclipse / Arduino)
+# ------------------------------------------------------------------------------
+Debug/
+**/Debug/
+Release/
+**/Release/
+.metadata/
+*.launch.local
+
+# ------------------------------------------------------------------------------
+# LaTeX Build Artifacts
+# ------------------------------------------------------------------------------
+*.aux
+*.toc
+*.out
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+*.nav
+*.snm
+*.vrb
+*.lof
+*.lot
+
+# ------------------------------------------------------------------------------
+# OS & Editor Metadata
+# ------------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+.Rhistory
+*.swp
+*~
