@@ -62,7 +62,10 @@ class ArduinoWorker(QObject):
             self.is_running = True
             self.is_ready = True
             self.log_message.emit(f"Arduino pronto em {config.ARDUINO_PORT}")
-            self.log_message.emit(f"Parâmetros PID fixos: {config.get_pid_info_string()}")
+            self.log_message.emit(
+                f"Config padrão (será confirmada via GET_CONFIG no teste): "
+                f"{config.get_pid_info_string()}"
+            )
             self.poll_timer = QTimer(self)
             self.poll_timer.setInterval(config.LOG_INTERVAL_MS)
             self.poll_timer.timeout.connect(self.poll_data)
@@ -126,6 +129,28 @@ class ArduinoWorker(QObject):
     @Slot()
     def stop_test_oven(self):
         self.send_command("STOP_TEST")
+
+    def query_controller_config(self):
+        """Consulta o firmware do forno (GET_CONFIG) e devolve o controlador
+        identificado (ver config.parse_controller_config) ou None.
+
+        Faz a leitura própria (sem send_command) para tratar a resposta
+        'CONFIG,...' diretamente. O serial_lock garante exclusão mútua com o
+        poll_data periódico.
+        """
+        if not config.ARDUINO_ENABLED or not self.is_ready:
+            return None
+        try:
+            with self.serial_lock:
+                if not (self.ser and self.ser.is_open):
+                    return None
+                self.ser.reset_input_buffer()
+                self.ser.write(b"GET_CONFIG\n")
+                raw = self.ser.readline().decode("ascii", errors="ignore").strip()
+        except Exception as e:
+            self.log_message.emit(f"ERRO consultando controlador do forno: {e}")
+            return None
+        return config.parse_controller_config(raw)
 
 
 # =============================================================================
@@ -533,6 +558,7 @@ class TestSequencer(QObject):
     log_message = Signal(str)
     plot_data_update = Signal(dict)
     test_finished = Signal()
+    controller_info_signal = Signal(object)  # oven controller dict resolved at test start
 
     def __init__(self, arduino: ArduinoWorker,
                  psu0: PSUWorker0, psu1: PSUWorker1,
@@ -556,6 +582,9 @@ class TestSequencer(QObject):
         # DUT temperature outer loop
         self._dut_target_temp = 0.0
         self._outer_tick = 0
+
+        # Oven controller identified from firmware (provenance)
+        self._oven_controller = None
 
         self.log_timer = QTimer(self)
         self.log_timer.setInterval(config.LOG_INTERVAL_MS)
@@ -644,7 +673,15 @@ exit
             self._settings = settings
             self._dut_target_temp = float(settings.get("dut_target_temp", 0.0))
             self._outer_tick = 0
-            self.logger = DataLogger(config.LOG_FOLDER, settings["test_name"])
+
+            # Identifica o controlador real do forno ANTES de abrir o log, para
+            # que o cabeçalho registre o regime correto (PID vs bang-bang são
+            # firmwares distintos com o mesmo protocolo serial).
+            self._oven_controller = self._resolve_oven_controller()
+            self.controller_info_signal.emit(self._oven_controller)
+
+            self.logger = DataLogger(config.LOG_FOLDER, settings["test_name"],
+                                     controller_info=self._oven_controller)
             self.log_message.emit(f"Log criado: {self.logger.filepath}")
 
             # Oven (optional)
@@ -705,6 +742,7 @@ exit
                 f"PSU0: {settings['psu0_voltage']}V | PSU1: {settings['psu1_voltage']}V"
             )
             self.log_message.emit(f"VCCINT sp0={settings['vccint_sp0']}V  sp1={settings['vccint_sp1']}V")
+            self.log_message.emit(f"Forno: {config.controller_summary(self._oven_controller)}")
             self.log_message.emit("=" * 50)
 
         except Exception as e:
@@ -713,6 +751,31 @@ exit
             if self.logger:
                 self.logger.close()
             self.test_finished.emit()
+
+    def _resolve_oven_controller(self):
+        """Consulta o firmware do forno (GET_CONFIG) para registrar o regime de
+        forma honesta. Cai nas constantes PID configuradas — claramente
+        marcadas — quando o Arduino está desabilitado ou não responde.
+        """
+        if not config.ARDUINO_ENABLED:
+            return {"type": "UNKNOWN", "raw": None,
+                    "source": "arduino-disabled", "params": {}}
+
+        # Dá tempo para o boot do Arduino terminar, se necessário.
+        t0 = time.time()
+        while not self.arduino.is_ready and (time.time() - t0 < 6):
+            time.sleep(0.5)
+
+        info = self.arduino.query_controller_config()
+        if info:
+            self.log_message.emit("Controlador do forno: " + config.controller_summary(info))
+            return info
+
+        self.log_message.emit(
+            "AVISO: firmware do forno não respondeu GET_CONFIG — "
+            "registrando controlador como fallback de configuração."
+        )
+        return config.fallback_controller_info()
 
     @Slot()
     def stop_test(self):

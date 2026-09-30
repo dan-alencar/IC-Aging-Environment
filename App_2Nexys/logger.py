@@ -14,7 +14,11 @@ import config
 
 
 class DataLogger:
-    def __init__(self, log_folder, test_name):
+    def __init__(self, log_folder, test_name, controller_info=None):
+        # controller_info: dict do controlador do forno identificado via
+        # firmware (ver config.parse_controller_config). Quando None, o
+        # cabeçalho cai no bloco PID configurado.
+        self.controller_info = controller_info
         self.filepath = self._create_log_file(log_folder, test_name)
         self.csv_writer = None
         self.file_handle = None
@@ -38,14 +42,7 @@ class DataLogger:
         w(f"# ==============================================\n")
         w(f"# Data/Hora Início: {self.start_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
         w(f"# \n")
-        w(f"# PARÂMETROS PID (FIXOS):\n")
-        w(f"#   Kp = {config.PID_KP:.6f}\n")
-        w(f"#   Ki = {config.PID_KI:.8f}\n")
-        w(f"#   Kd = {config.PID_KD:.6f}\n")
-        w(f"# \n")
-        w(f"# MODELO FOPDT IDENTIFICADO:\n")
-        w(f"#   G(s) = 1.56 * exp(-150.6s) / (1307.2s + 1)\n")
-        w(f"#   K = 1.56 °C/%  θ = 150.6 s  τ = 1307.2 s\n")
+        self._write_controller_block(w)
         w(f"# \n")
         w(f"# CONTROLE VCCINT:\n")
         w(f"#   Kv (P-only) = {config.VOLTAGE_KP:.3f} V/V\n")
@@ -73,6 +70,38 @@ class DataLogger:
             "dut1_temp_c", "dut1_slack", "dut1_volt",
             "psu0_cmd_v", "psu1_cmd_v",
         ])
+
+    def _write_controller_block(self, w):
+        """Escreve no cabeçalho o controlador do forno realmente em uso.
+
+        PID e bang-bang são firmwares distintos com o mesmo protocolo serial;
+        registrar o tipo correto (consultado via GET_CONFIG) é essencial para
+        que a análise documente o regime sem ambiguidade.
+        """
+        info   = self.controller_info or {}
+        ctype  = info.get("type", "PID")
+        params = info.get("params", {})
+        source = info.get("source", "config-fallback")
+        raw    = info.get("raw")
+
+        if ctype == "BANGBANG":
+            w("# CONTROLADOR DO FORNO: BANG-BANG (termostático)\n")
+            w(f"#   Histerese liga  (T < SP - x): -{params.get('HYST_LOW', '?')} °C\n")
+            w(f"#   Histerese desliga (T > SP + x): +{params.get('HYST_HIGH', '?')} °C\n")
+            w(f"#   Intervalo de amostragem do controle: {params.get('SAMPLE_MS', '?')} ms\n")
+        elif ctype == "PID":
+            w("# CONTROLADOR DO FORNO: PID (FIXO)\n")
+            w(f"#   Kp = {params.get('KP', f'{config.PID_KP:.6f}')}\n")
+            w(f"#   Ki = {params.get('KI', f'{config.PID_KI:.8f}')}\n")
+            w(f"#   Kd = {params.get('KD', f'{config.PID_KD:.6f}')}\n")
+            w("#   MODELO FOPDT: G(s) = 1.56 exp(-150.6s)/(1307.2s + 1)\n")
+            w("#   K = 1.56 °C/%  θ = 150.6 s  τ = 1307.2 s\n")
+        else:
+            w(f"# CONTROLADOR DO FORNO: {ctype}\n")
+
+        w(f"#   Identificação: {source}\n")
+        if raw:
+            w(f"#   GET_CONFIG: {raw}\n")
 
     def write_data_row(self, d: dict):
         if not self.csv_writer:

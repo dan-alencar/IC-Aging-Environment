@@ -12,7 +12,8 @@ _FIELDS = [
 
 
 class CornerSweepLogger:
-    def __init__(self, log_folder, test_name, target_temp_c, corner_voltages, sweep_step):
+    def __init__(self, log_folder, test_name, target_temp_c, corner_voltages, sweep_step,
+                 controller_info=None):
         os.makedirs(log_folder, exist_ok=True)
         ts   = datetime.now().strftime('%Y%m%d_%H%M%S')
         safe = "".join(c if c.isalnum() or c in "._-" else "_" for c in test_name)
@@ -28,8 +29,16 @@ class CornerSweepLogger:
             f"# Corner voltages: {corner_voltages} V",
             f"# Sweep step:      {sweep_step} V",
             f"# Protocol:        'T'/0x54 trigger, 15-byte LE packet",
-            "#",
         ]
+        # Oven controller actually loaded (PID vs bang-bang share one serial
+        # protocol, so it is queried via GET_CONFIG at test start).
+        info = controller_info or {"type": "UNKNOWN", "source": "not-queried", "params": {}}
+        lines.append(f"# Oven controller: {info.get('type', 'UNKNOWN')} (source: {info.get('source', '?')})")
+        for k, v in info.get("params", {}).items():
+            lines.append(f"#   {k} = {v}")
+        if info.get("raw"):
+            lines.append(f"#   GET_CONFIG: {info['raw']}")
+        lines.append("#")
         self._fh.write("\n".join(lines) + "\n")
 
         self._wr = csv.DictWriter(self._fh, fieldnames=_FIELDS, extrasaction='ignore')
