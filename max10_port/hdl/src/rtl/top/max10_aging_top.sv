@@ -12,11 +12,29 @@
 // Observacao importante sobre esta etapa:
 //   O controlador SCC (scc_controller) ja esta integrado e aciona
 //   dinamicamente phasestep/phaseupdown, avancando a fase do psclk
-//   (96 ps por incremento, calculado para VCO = 1300 MHz) enquanto o
-//   alarme do sensor estiver em LOW.
+//   enquanto o alarme do sensor estiver em LOW. O passo de fase desta
+//   PLL (Quartus, MAX 10) e vco_phase_shift_step = 179 ps (ver
+//   aging_pll.v, defparam altpll_component.vco_phase_shift_step), NAO
+//   os 96 ps / VCO 1300 MHz do artigo de referencia (que usa MMCM da
+//   Xilinx). Ao converter slack_count para ps no host/UART, use
+//   179 ps/incremento.
 //
-//   phasecounterselect = 3'b100 seleciona o contador c1 (psclk) como alvo
-//   do deslocamento de fase, conforme a codificacao padrao da ALTPLL.
+//   phasecounterselect = 3'b011 seleciona o contador c1 (psclk) como
+//   alvo do deslocamento de fase (000=todos os C, 001=M, 010=C0,
+//   011=C1, 100=C2 -- Intel MAX 10 Clocking and PLL User Guide).
+//
+//   u_scc_controller.pll_locked precisa estar conectado a pll_locked
+//   (saida 'locked' da PLL): sem essa conexao, o Quartus amarra a
+//   entrada em GND por padrao, rst_i fica preso em 1 para sempre, e a
+//   FSM nunca sai de S_IDLE (sintoma: LEDs de debug presos, slack_count
+//   sempre 0). O Connectivity Check do Quartus aponta isso explicitamente
+//   se acontecer de novo ("port ... not connected by instance").
+//
+//   ATENCAO -- HISTORICO: ambas as correcoes acima (phasecounterselect
+//   e a conexao de pll_locked) ja foram feitas, perdidas por uma
+//   reextracao acidental do .zip original do projeto por cima da copia
+//   corrigida, e reaplicadas aqui. Antes de editar este arquivo a partir
+//   de uma copia nova, confirme que essas duas coisas estao presentes.
 // ============================================================================
 
 module max10_aging_top (
@@ -71,7 +89,7 @@ module max10_aging_top (
         .areset            (reset),
 
         // Controle de deslocamento dinamico de fase: agora vindo do scc_controller
-        .phasecounterselect (3'b100),        // seleciona o contador c1 (psclk)
+        .phasecounterselect (3'b011),        // seleciona o contador c1 (psclk) -- CORRIGIDO (regrediu para 3'b100=c2 numa reextracao acidental; ver nota no cabecalho)
         .phaseupdown        (scc_phaseupdown),
         .phasestep          (scc_phasestep),
         .scanclk            (clk50),         // clock do scan chain interno da PLL
@@ -91,6 +109,9 @@ module max10_aging_top (
     ) u_scc_controller (
         .scanclk      (clk50),
         .reset        (reset),
+        .pll_locked   (pll_locked),   // RECONECTADO -- estava ausente (Connectivity Check confirmou:
+                                        // porta nao conectada = amarrada em GND, prendendo rst_i em 1
+                                        // para sempre; causa do travamento com reset permanente)
         .alarm        (alarm_w),
         .phasedone    (pll_phasedone),
         .phasestep    (scc_phasestep),
