@@ -1,0 +1,21 @@
+
+State Machine - |max10_aging_top|uart_packet_sender:u_uart_sender|state
+Name state.S_WAIT_HIGH state.S_IDLE state.S_WAIT_LOW 
+state.S_IDLE 0 0 0 
+state.S_WAIT_HIGH 1 1 0 
+state.S_WAIT_LOW 0 1 1 
+
+State Machine - |max10_aging_top|uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx|state
+Name state.S_STOP state.S_DATA state.S_START state.S_IDLE 
+state.S_IDLE 0 0 0 0 
+state.S_START 0 0 1 1 
+state.S_DATA 0 1 0 1 
+state.S_STOP 1 0 0 1 
+
+State Machine - |max10_aging_top|scc_controller:u_scc_controller|state
+Name state.S_COOLDOWN state.S_WAIT_HIGH state.S_ASSERT_STEP state.S_IDLE state.S_DONE 
+state.S_IDLE 0 0 0 0 0 
+state.S_ASSERT_STEP 0 0 1 1 0 
+state.S_WAIT_HIGH 0 1 0 1 0 
+state.S_COOLDOWN 1 0 0 1 0 
+state.S_DONE 0 0 0 1 1 

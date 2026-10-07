@@ -1,0 +1,1242 @@
+Analysis & Synthesis report for max10_aging_top
+Tue Oct  6 16:11:41 2026
+Quartus Prime Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+
+
+---------------------
+; Table of Contents ;
+---------------------
+  1. Legal Notice
+  2. Analysis & Synthesis Summary
+  3. Analysis & Synthesis Settings
+  4. Parallel Compilation
+  5. Analysis & Synthesis Source Files Read
+  6. Analysis & Synthesis Resource Usage Summary
+  7. Analysis & Synthesis Resource Utilization by Entity
+  8. Analysis & Synthesis IP Cores Summary
+  9. State Machine - |max10_aging_top|uart_packet_sender:u_uart_sender|state
+ 10. State Machine - |max10_aging_top|uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx|state
+ 11. State Machine - |max10_aging_top|scc_controller:u_scc_controller|state
+ 12. Registers Removed During Synthesis
+ 13. Removed Registers Triggering Further Register Optimizations
+ 14. General Register Statistics
+ 15. Inverted Register Statistics
+ 16. Multiplexer Restructuring Statistics (Restructuring Performed)
+ 17. Source assignments for aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated
+ 18. Source assignments for aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_altpll_dyn_phase_le:altpll_dyn_phase_le2
+ 19. Source assignments for aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_altpll_dyn_phase_le1:altpll_dyn_phase_le4
+ 20. Source assignments for aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_altpll_dyn_phase_le12:altpll_dyn_phase_le5
+ 21. Parameter Settings for User Entity Instance: aging_pll:u_aging_pll|altpll:altpll_component
+ 22. Parameter Settings for User Entity Instance: scc_controller:u_scc_controller
+ 23. Parameter Settings for User Entity Instance: critical_path_chain:u_critical_path
+ 24. Parameter Settings for User Entity Instance: uart_packet_sender:u_uart_sender
+ 25. Parameter Settings for User Entity Instance: uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx
+ 26. altpll Parameter Settings by Entity Instance
+ 27. Port Connectivity Checks: "scc_controller:u_scc_controller"
+ 28. Port Connectivity Checks: "aging_pll:u_aging_pll"
+ 29. Post-Synthesis Netlist Statistics for Top Partition
+ 30. Elapsed Time Per Partition
+ 31. Analysis & Synthesis Messages
+
+
+
+----------------
+; Legal Notice ;
+----------------
+Copyright (C) 2025  Altera Corporation. All rights reserved.
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and any partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, the Altera Quartus Prime License Agreement,
+the Altera IP License Agreement, or other applicable license
+agreement, including, without limitation, that your use is for
+the sole purpose of programming logic devices manufactured by
+Altera and sold by Altera or its authorized distributors.  Please
+refer to the Altera Software License Subscription Agreements 
+on the Quartus Prime software download page.
+
+
+
++--------------------------------------------------------------------------------------+
+; Analysis & Synthesis Summary                                                         ;
++------------------------------------+-------------------------------------------------+
+; Analysis & Synthesis Status        ; Successful - Tue Oct  6 16:11:41 2026           ;
+; Quartus Prime Version              ; 25.1std.0 Build 1129 10/21/2025 SC Lite Edition ;
+; Revision Name                      ; max10_aging_top                                 ;
+; Top-level Entity Name              ; max10_aging_top                                 ;
+; Family                             ; MAX 10                                          ;
+; Total logic elements               ; 173                                             ;
+;     Total combinational functions  ; 168                                             ;
+;     Dedicated logic registers      ; 82                                              ;
+; Total registers                    ; 82                                              ;
+; Total pins                         ; 41                                              ;
+; Total virtual pins                 ; 0                                               ;
+; Total memory bits                  ; 0                                               ;
+; Embedded Multiplier 9-bit elements ; 0                                               ;
+; Total PLLs                         ; 1                                               ;
+; UFM blocks                         ; 0                                               ;
+; ADC blocks                         ; 0                                               ;
++------------------------------------+-------------------------------------------------+
+
+
++------------------------------------------------------------------------------------------------------------+
+; Analysis & Synthesis Settings                                                                              ;
++------------------------------------------------------------------+--------------------+--------------------+
+; Option                                                           ; Setting            ; Default Value      ;
++------------------------------------------------------------------+--------------------+--------------------+
+; Device                                                           ; 10M50DAF484C7G     ;                    ;
+; Top-level entity name                                            ; max10_aging_top    ; max10_aging_top    ;
+; Family name                                                      ; MAX 10             ; Cyclone V          ;
+; Use smart compilation                                            ; Off                ; Off                ;
+; Enable parallel Assembler and Timing Analyzer during compilation ; On                 ; On                 ;
+; Enable compact report table                                      ; Off                ; Off                ;
+; Restructure Multiplexers                                         ; Auto               ; Auto               ;
+; Create Debugging Nodes for IP Cores                              ; Off                ; Off                ;
+; Preserve fewer node names                                        ; On                 ; On                 ;
+; Intel FPGA IP Evaluation Mode                                    ; Enable             ; Enable             ;
+; Verilog Version                                                  ; Verilog_2001       ; Verilog_2001       ;
+; VHDL Version                                                     ; VHDL_1993          ; VHDL_1993          ;
+; State Machine Processing                                         ; Auto               ; Auto               ;
+; Safe State Machine                                               ; Off                ; Off                ;
+; Extract Verilog State Machines                                   ; On                 ; On                 ;
+; Extract VHDL State Machines                                      ; On                 ; On                 ;
+; Ignore Verilog initial constructs                                ; Off                ; Off                ;
+; Iteration limit for constant Verilog loops                       ; 5000               ; 5000               ;
+; Iteration limit for non-constant Verilog loops                   ; 250                ; 250                ;
+; Add Pass-Through Logic to Inferred RAMs                          ; On                 ; On                 ;
+; Infer RAMs from Raw Logic                                        ; On                 ; On                 ;
+; Parallel Synthesis                                               ; On                 ; On                 ;
+; DSP Block Balancing                                              ; Auto               ; Auto               ;
+; NOT Gate Push-Back                                               ; On                 ; On                 ;
+; Power-Up Don't Care                                              ; On                 ; On                 ;
+; Remove Redundant Logic Cells                                     ; Off                ; Off                ;
+; Remove Duplicate Registers                                       ; On                 ; On                 ;
+; Ignore CARRY Buffers                                             ; Off                ; Off                ;
+; Ignore CASCADE Buffers                                           ; Off                ; Off                ;
+; Ignore GLOBAL Buffers                                            ; Off                ; Off                ;
+; Ignore ROW GLOBAL Buffers                                        ; Off                ; Off                ;
+; Ignore LCELL Buffers                                             ; Off                ; Off                ;
+; Ignore SOFT Buffers                                              ; On                 ; On                 ;
+; Limit AHDL Integers to 32 Bits                                   ; Off                ; Off                ;
+; Optimization Technique                                           ; Balanced           ; Balanced           ;
+; Carry Chain Length                                               ; 70                 ; 70                 ;
+; Auto Carry Chains                                                ; On                 ; On                 ;
+; Auto Open-Drain Pins                                             ; On                 ; On                 ;
+; Perform WYSIWYG Primitive Resynthesis                            ; Off                ; Off                ;
+; Auto ROM Replacement                                             ; On                 ; On                 ;
+; Auto RAM Replacement                                             ; On                 ; On                 ;
+; Auto DSP Block Replacement                                       ; On                 ; On                 ;
+; Auto Shift Register Replacement                                  ; Auto               ; Auto               ;
+; Allow Shift Register Merging across Hierarchies                  ; Auto               ; Auto               ;
+; Auto Clock Enable Replacement                                    ; On                 ; On                 ;
+; Strict RAM Replacement                                           ; Off                ; Off                ;
+; Allow Synchronous Control Signals                                ; On                 ; On                 ;
+; Force Use of Synchronous Clear Signals                           ; Off                ; Off                ;
+; Auto RAM Block Balancing                                         ; On                 ; On                 ;
+; Auto RAM to Logic Cell Conversion                                ; Off                ; Off                ;
+; Auto Resource Sharing                                            ; Off                ; Off                ;
+; Allow Any RAM Size For Recognition                               ; Off                ; Off                ;
+; Allow Any ROM Size For Recognition                               ; Off                ; Off                ;
+; Allow Any Shift Register Size For Recognition                    ; Off                ; Off                ;
+; Use LogicLock Constraints during Resource Balancing              ; On                 ; On                 ;
+; Ignore translate_off and synthesis_off directives                ; Off                ; Off                ;
+; Timing-Driven Synthesis                                          ; On                 ; On                 ;
+; Report Parameter Settings                                        ; On                 ; On                 ;
+; Report Source Assignments                                        ; On                 ; On                 ;
+; Report Connectivity Checks                                       ; On                 ; On                 ;
+; Ignore Maximum Fan-Out Assignments                               ; Off                ; Off                ;
+; Synchronization Register Chain Length                            ; 2                  ; 2                  ;
+; Power Optimization During Synthesis                              ; Normal compilation ; Normal compilation ;
+; HDL message level                                                ; Level2             ; Level2             ;
+; Suppress Register Optimization Related Messages                  ; Off                ; Off                ;
+; Number of Removed Registers Reported in Synthesis Report         ; 5000               ; 5000               ;
+; Number of Swept Nodes Reported in Synthesis Report               ; 5000               ; 5000               ;
+; Number of Inverted Registers Reported in Synthesis Report        ; 100                ; 100                ;
+; Clock MUX Protection                                             ; On                 ; On                 ;
+; Auto Gated Clock Conversion                                      ; Off                ; Off                ;
+; Block Design Naming                                              ; Auto               ; Auto               ;
+; SDC constraint protection                                        ; Off                ; Off                ;
+; Synthesis Effort                                                 ; Auto               ; Auto               ;
+; Shift Register Replacement - Allow Asynchronous Clear Signal     ; On                 ; On                 ;
+; Pre-Mapping Resynthesis Optimization                             ; Off                ; Off                ;
+; Analysis & Synthesis Message Level                               ; Medium             ; Medium             ;
+; Disable Register Merging Across Hierarchies                      ; Auto               ; Auto               ;
+; Resource Aware Inference For Block RAM                           ; On                 ; On                 ;
++------------------------------------------------------------------+--------------------+--------------------+
+
+
++------------------------------------------+
+; Parallel Compilation                     ;
++----------------------------+-------------+
+; Processors                 ; Number      ;
++----------------------------+-------------+
+; Number detected on machine ; 8           ;
+; Maximum allowed            ; 4           ;
+;                            ;             ;
+; Average used               ; 1.00        ;
+; Maximum used               ; 4           ;
+;                            ;             ;
+; Usage by Processor         ; % Time Used ;
+;     Processor 1            ; 100.0%      ;
+;     Processor 2            ;   0.0%      ;
+;     Processors 3-4         ;   0.0%      ;
++----------------------------+-------------+
+
+
++------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Analysis & Synthesis Source Files Read                                                                                                                                                                                             ;
++---------------------------------------------+-----------------+------------------------------+---------------------------------------------------------------------------------------------------------------------------+---------+
+; File Name with User-Entered Path            ; Used in Netlist ; File Type                    ; File Name with Absolute Path                                                                                              ; Library ;
++---------------------------------------------+-----------------+------------------------------+---------------------------------------------------------------------------------------------------------------------------+---------+
+; src/rtl/aging_sensor/scc_controller.sv      ; yes             ; User SystemVerilog HDL File  ; C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/scc_controller.sv      ;         ;
+; src/rtl/display/hex7seg.sv                  ; yes             ; User SystemVerilog HDL File  ; C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/display/hex7seg.sv                  ;         ;
+; src/rtl/uart/uart_tx.sv                     ; yes             ; User SystemVerilog HDL File  ; C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/uart/uart_tx.sv                     ;         ;
+; src/rtl/uart/uart_packet_sender.sv          ; yes             ; User SystemVerilog HDL File  ; C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/uart/uart_packet_sender.sv          ;         ;
+; src/rtl/aging_sensor/critical_path_chain.sv ; yes             ; User SystemVerilog HDL File  ; C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv ;         ;
+; src/rtl/aging_sensor/aging_sensor_core.sv   ; yes             ; User SystemVerilog HDL File  ; C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/aging_sensor_core.sv   ;         ;
+; src/rtl/top/max10_aging_top.sv              ; yes             ; User SystemVerilog HDL File  ; C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv              ;         ;
+; aging_pll.v                                 ; yes             ; User Wizard-Generated File   ; C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/aging_pll.v                                 ;         ;
+; altpll.tdf                                  ; yes             ; Megafunction                 ; c:/altera_lite/25.1std/quartus/libraries/megafunctions/altpll.tdf                                                         ;         ;
+; aglobal251.inc                              ; yes             ; Megafunction                 ; c:/altera_lite/25.1std/quartus/libraries/megafunctions/aglobal251.inc                                                     ;         ;
+; stratix_pll.inc                             ; yes             ; Megafunction                 ; c:/altera_lite/25.1std/quartus/libraries/megafunctions/stratix_pll.inc                                                    ;         ;
+; stratixii_pll.inc                           ; yes             ; Megafunction                 ; c:/altera_lite/25.1std/quartus/libraries/megafunctions/stratixii_pll.inc                                                  ;         ;
+; cycloneii_pll.inc                           ; yes             ; Megafunction                 ; c:/altera_lite/25.1std/quartus/libraries/megafunctions/cycloneii_pll.inc                                                  ;         ;
+; db/aging_pll_altpll.v                       ; yes             ; Auto-Generated Megafunction  ; C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v                       ;         ;
++---------------------------------------------+-----------------+------------------------------+---------------------------------------------------------------------------------------------------------------------------+---------+
+
+
++----------------------------------------------------------------+
+; Analysis & Synthesis Resource Usage Summary                    ;
++---------------------------------------------+------------------+
+; Resource                                    ; Usage            ;
++---------------------------------------------+------------------+
+; Estimated Total logic elements              ; 173              ;
+;                                             ;                  ;
+; Total combinational functions               ; 168              ;
+; Logic element usage by number of LUT inputs ;                  ;
+;     -- 4 input functions                    ; 89               ;
+;     -- 3 input functions                    ; 13               ;
+;     -- <=2 input functions                  ; 66               ;
+;                                             ;                  ;
+; Logic elements by mode                      ;                  ;
+;     -- normal mode                          ; 122              ;
+;     -- arithmetic mode                      ; 46               ;
+;                                             ;                  ;
+; Total registers                             ; 82               ;
+;     -- Dedicated logic registers            ; 82               ;
+;     -- I/O registers                        ; 0                ;
+;                                             ;                  ;
+; I/O pins                                    ; 41               ;
+;                                             ;                  ;
+; Embedded Multiplier 9-bit elements          ; 0                ;
+;                                             ;                  ;
+; Total PLLs                                  ; 1                ;
+;     -- PLLs                                 ; 1                ;
+;                                             ;                  ;
+; Maximum fan-out node                        ; cpu_resetn~input ;
+; Maximum fan-out                             ; 78               ;
+; Total fan-out                               ; 810              ;
+; Average fan-out                             ; 2.41             ;
++---------------------------------------------+------------------+
+
+
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Analysis & Synthesis Resource Utilization by Entity                                                                                                                                                                                                                                                                                                                                                                            ;
++--------------------------------------------------------------------+---------------------+---------------------------+-------------+------------+--------------+---------+-----------+------+--------------+------------+-----------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------------+--------------+
+; Compilation Hierarchy Node                                         ; Combinational ALUTs ; Dedicated Logic Registers ; Memory Bits ; UFM Blocks ; DSP Elements ; DSP 9x9 ; DSP 18x18 ; Pins ; Virtual Pins ; ADC blocks ; Full Hierarchy Name                                                                                                                                 ; Entity Name                     ; Library Name ;
++--------------------------------------------------------------------+---------------------+---------------------------+-------------+------------+--------------+---------+-----------+------+--------------+------------+-----------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------------+--------------+
+; |max10_aging_top                                                   ; 168 (2)             ; 82 (1)                    ; 0           ; 0          ; 0            ; 0       ; 0         ; 41   ; 0            ; 0          ; |max10_aging_top                                                                                                                                    ; max10_aging_top                 ; work         ;
+;    |aging_pll:u_aging_pll|                                         ; 14 (0)              ; 9 (0)                     ; 0           ; 0          ; 0            ; 0       ; 0         ; 0    ; 0            ; 0          ; |max10_aging_top|aging_pll:u_aging_pll                                                                                                              ; aging_pll                       ; work         ;
+;       |altpll:altpll_component|                                    ; 14 (0)              ; 9 (0)                     ; 0           ; 0          ; 0            ; 0       ; 0         ; 0    ; 0            ; 0          ; |max10_aging_top|aging_pll:u_aging_pll|altpll:altpll_component                                                                                      ; altpll                          ; work         ;
+;          |aging_pll_altpll:auto_generated|                         ; 14 (10)             ; 9 (4)                     ; 0           ; 0          ; 0            ; 0       ; 0         ; 0    ; 0            ; 0          ; |max10_aging_top|aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated                                                      ; aging_pll_altpll                ; work         ;
+;             |aging_pll_altpll_dyn_phase_le12:altpll_dyn_phase_le5| ; 0 (0)               ; 0 (0)                     ; 0           ; 0          ; 0            ; 0       ; 0         ; 0    ; 0            ; 0          ; |max10_aging_top|aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_altpll_dyn_phase_le12:altpll_dyn_phase_le5 ; aging_pll_altpll_dyn_phase_le12 ; work         ;
+;             |aging_pll_altpll_dyn_phase_le1:altpll_dyn_phase_le4|  ; 0 (0)               ; 0 (0)                     ; 0           ; 0          ; 0            ; 0       ; 0         ; 0    ; 0            ; 0          ; |max10_aging_top|aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_altpll_dyn_phase_le1:altpll_dyn_phase_le4  ; aging_pll_altpll_dyn_phase_le1  ; work         ;
+;             |aging_pll_altpll_dyn_phase_le:altpll_dyn_phase_le2|   ; 0 (0)               ; 0 (0)                     ; 0           ; 0          ; 0            ; 0       ; 0         ; 0    ; 0            ; 0          ; |max10_aging_top|aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_altpll_dyn_phase_le:altpll_dyn_phase_le2   ; aging_pll_altpll_dyn_phase_le   ; work         ;
+;             |aging_pll_cntr1:pll_internal_phasestep|               ; 3 (3)               ; 3 (3)                     ; 0           ; 0          ; 0            ; 0       ; 0         ; 0    ; 0            ; 0          ; |max10_aging_top|aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_cntr1:pll_internal_phasestep               ; aging_pll_cntr1                 ; work         ;
+;             |aging_pll_cntr:phasestep_counter|                     ; 1 (1)               ; 2 (2)                     ; 0           ; 0          ; 0            ; 0       ; 0         ; 0    ; 0            ; 0          ; |max10_aging_top|aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_cntr:phasestep_counter                     ; aging_pll_cntr                  ; work         ;
+;    |aging_sensor_core:u_aging_sensor|                              ; 1 (1)               ; 3 (3)                     ; 0           ; 0          ; 0            ; 0       ; 0         ; 0    ; 0            ; 0          ; |max10_aging_top|aging_sensor_core:u_aging_sensor                                                                                                   ; aging_sensor_core               ; work         ;
+;    |critical_path_chain:u_critical_path|                           ; 50 (50)             ; 0 (0)                     ; 0           ; 0          ; 0            ; 0       ; 0         ; 0    ; 0            ; 0          ; |max10_aging_top|critical_path_chain:u_critical_path                                                                                                ; critical_path_chain             ; work         ;
+;    |uart_packet_sender:u_uart_sender|                              ; 101 (60)            ; 69 (42)                   ; 0           ; 0          ; 0            ; 0       ; 0         ; 0    ; 0            ; 0          ; |max10_aging_top|uart_packet_sender:u_uart_sender                                                                                                   ; uart_packet_sender              ; work         ;
+;       |uart_tx:u_uart_tx|                                          ; 41 (41)             ; 27 (27)                   ; 0           ; 0          ; 0            ; 0       ; 0         ; 0    ; 0            ; 0          ; |max10_aging_top|uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx                                                                                 ; uart_tx                         ; work         ;
++--------------------------------------------------------------------+---------------------+---------------------------+-------------+------------+--------------+---------+-----------+------+--------------+------------+-----------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------------+--------------+
+Note: For table entries with two numbers listed, the numbers in parentheses indicate the number of resources of the given type used by the specific entity alone. The numbers listed outside of parentheses indicate the total resources of the given type used by the specific entity and all of its sub-entities in the hierarchy.
+
+
++--------------------------------------------------------------------------------------------------------------------------+
+; Analysis & Synthesis IP Cores Summary                                                                                    ;
++--------+--------------+---------+--------------+--------------+----------------------------------------+-----------------+
+; Vendor ; IP Core Name ; Version ; Release Date ; License Type ; Entity Instance                        ; IP Include File ;
++--------+--------------+---------+--------------+--------------+----------------------------------------+-----------------+
+; Altera ; ALTPLL       ; 25.1    ; N/A          ; N/A          ; |max10_aging_top|aging_pll:u_aging_pll ; aging_pll.v     ;
++--------+--------------+---------+--------------+--------------+----------------------------------------+-----------------+
+
+
+Encoding Type:  One-Hot
++-------------------------------------------------------------------------+
+; State Machine - |max10_aging_top|uart_packet_sender:u_uart_sender|state ;
++-------------------+-------------------+--------------+------------------+
+; Name              ; state.S_WAIT_HIGH ; state.S_IDLE ; state.S_WAIT_LOW ;
++-------------------+-------------------+--------------+------------------+
+; state.S_IDLE      ; 0                 ; 0            ; 0                ;
+; state.S_WAIT_HIGH ; 1                 ; 1            ; 0                ;
+; state.S_WAIT_LOW  ; 0                 ; 1            ; 1                ;
++-------------------+-------------------+--------------+------------------+
+
+
+Encoding Type:  One-Hot
++-------------------------------------------------------------------------------------------+
+; State Machine - |max10_aging_top|uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx|state ;
++---------------+--------------+--------------+---------------+-----------------------------+
+; Name          ; state.S_STOP ; state.S_DATA ; state.S_START ; state.S_IDLE                ;
++---------------+--------------+--------------+---------------+-----------------------------+
+; state.S_IDLE  ; 0            ; 0            ; 0             ; 0                           ;
+; state.S_START ; 0            ; 0            ; 1             ; 1                           ;
+; state.S_DATA  ; 0            ; 1            ; 0             ; 1                           ;
+; state.S_STOP  ; 1            ; 0            ; 0             ; 1                           ;
++---------------+--------------+--------------+---------------+-----------------------------+
+
+
+Encoding Type:  One-Hot
++----------------------------------------------------------------------------------------------------------------+
+; State Machine - |max10_aging_top|scc_controller:u_scc_controller|state                                         ;
++---------------------+------------------+-------------------+---------------------+--------------+--------------+
+; Name                ; state.S_COOLDOWN ; state.S_WAIT_HIGH ; state.S_ASSERT_STEP ; state.S_IDLE ; state.S_DONE ;
++---------------------+------------------+-------------------+---------------------+--------------+--------------+
+; state.S_IDLE        ; 0                ; 0                 ; 0                   ; 0            ; 0            ;
+; state.S_ASSERT_STEP ; 0                ; 0                 ; 1                   ; 1            ; 0            ;
+; state.S_WAIT_HIGH   ; 0                ; 1                 ; 0                   ; 1            ; 0            ;
+; state.S_COOLDOWN    ; 1                ; 0                 ; 0                   ; 1            ; 0            ;
+; state.S_DONE        ; 0                ; 0                 ; 0                   ; 1            ; 1            ;
++---------------------+------------------+-------------------+---------------------+--------------+--------------+
+
+
++-------------------------------------------------------------------------------------------------------------------------------------------------+
+; Registers Removed During Synthesis                                                                                                              ;
++--------------------------------------------------------------------+----------------------------------------------------------------------------+
+; Register name                                                      ; Reason for Removal                                                         ;
++--------------------------------------------------------------------+----------------------------------------------------------------------------+
+; scc_controller:u_scc_controller|locked_meta                        ; Stuck at GND due to stuck port data_in                                     ;
+; scc_controller:u_scc_controller|locked_sync                        ; Stuck at GND due to stuck port data_in                                     ;
+; scc_controller:u_scc_controller|alarm_meta                         ; Stuck at GND due to stuck port clear                                       ;
+; scc_controller:u_scc_controller|tmr[0]                             ; Stuck at GND due to stuck port clear                                       ;
+; scc_controller:u_scc_controller|alarm_sync                         ; Stuck at GND due to stuck port clear                                       ;
+; scc_controller:u_scc_controller|alarm_cnt[0..4]                    ; Stuck at GND due to stuck port clear                                       ;
+; scc_controller:u_scc_controller|pd_low_pos                         ; Stuck at GND due to stuck port clear                                       ;
+; scc_controller:u_scc_controller|pd_low_neg                         ; Stuck at GND due to stuck port clear                                       ;
+; scc_controller:u_scc_controller|phasestep                          ; Stuck at GND due to stuck port clear                                       ;
+; scc_controller:u_scc_controller|slack_count[0..15]                 ; Stuck at GND due to stuck port clear                                       ;
+; scc_controller:u_scc_controller|calibrated                         ; Stuck at GND due to stuck port clear                                       ;
+; scc_controller:u_scc_controller|tmr[1..6]                          ; Stuck at GND due to stuck port clear                                       ;
+; uart_packet_sender:u_uart_sender|byte1[0..7]                       ; Stuck at GND due to stuck port data_in                                     ;
+; uart_packet_sender:u_uart_sender|byte2[0..7]                       ; Stuck at GND due to stuck port data_in                                     ;
+; uart_packet_sender:u_uart_sender|byte3[1..7]                       ; Stuck at GND due to stuck port data_in                                     ;
+; uart_packet_sender:u_uart_sender|byte4[1..7]                       ; Stuck at GND due to stuck port data_in                                     ;
+; uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx|data_reg[3,5,7] ; Merged with uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx|data_reg[1] ;
+; uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx|data_reg[4,6]   ; Merged with uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx|data_reg[2] ;
+; uart_packet_sender:u_uart_sender|data_in[3,5,7]                    ; Merged with uart_packet_sender:u_uart_sender|data_in[1]                    ;
+; uart_packet_sender:u_uart_sender|data_in[4,6]                      ; Merged with uart_packet_sender:u_uart_sender|data_in[2]                    ;
+; uart_packet_sender:u_uart_sender|byte4[0]                          ; Merged with uart_packet_sender:u_uart_sender|byte3[0]                      ;
+; uart_packet_sender:u_uart_sender|data_in[2]                        ; Stuck at GND due to stuck port data_in                                     ;
+; uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx|data_reg[2]     ; Stuck at GND due to stuck port data_in                                     ;
+; uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx|state~8         ; Lost fanout                                                                ;
+; uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx|state~9         ; Lost fanout                                                                ;
+; scc_controller:u_scc_controller|state~4                            ; Lost fanout                                                                ;
+; scc_controller:u_scc_controller|state~5                            ; Lost fanout                                                                ;
+; scc_controller:u_scc_controller|state.S_DONE                       ; Stuck at GND due to stuck port clear                                       ;
+; scc_controller:u_scc_controller|state.S_IDLE                       ; Stuck at GND due to stuck port clear                                       ;
+; scc_controller:u_scc_controller|state.S_COOLDOWN                   ; Lost fanout                                                                ;
+; scc_controller:u_scc_controller|state.S_ASSERT_STEP                ; Stuck at GND due to stuck port clear                                       ;
+; scc_controller:u_scc_controller|state.S_WAIT_HIGH                  ; Stuck at GND due to stuck port clear                                       ;
+; uart_packet_sender:u_uart_sender|state.S_WAIT_HIGH                 ; Lost fanout                                                                ;
+; Total Number of Removed Registers = 89                             ;                                                                            ;
++--------------------------------------------------------------------+----------------------------------------------------------------------------+
+
+
++----------------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Removed Registers Triggering Further Register Optimizations                                                                                                    ;
++----------------------------------------------+---------------------------+-------------------------------------------------------------------------------------+
+; Register name                                ; Reason for Removal        ; Registers Removed due to This Register                                              ;
++----------------------------------------------+---------------------------+-------------------------------------------------------------------------------------+
+; scc_controller:u_scc_controller|locked_meta  ; Stuck at GND              ; scc_controller:u_scc_controller|locked_sync,                                        ;
+;                                              ; due to stuck port data_in ; scc_controller:u_scc_controller|alarm_meta, scc_controller:u_scc_controller|tmr[0], ;
+;                                              ;                           ; scc_controller:u_scc_controller|alarm_sync,                                         ;
+;                                              ;                           ; scc_controller:u_scc_controller|alarm_cnt[4],                                       ;
+;                                              ;                           ; scc_controller:u_scc_controller|alarm_cnt[3],                                       ;
+;                                              ;                           ; scc_controller:u_scc_controller|alarm_cnt[2],                                       ;
+;                                              ;                           ; scc_controller:u_scc_controller|alarm_cnt[1],                                       ;
+;                                              ;                           ; scc_controller:u_scc_controller|alarm_cnt[0],                                       ;
+;                                              ;                           ; scc_controller:u_scc_controller|pd_low_pos,                                         ;
+;                                              ;                           ; scc_controller:u_scc_controller|pd_low_neg,                                         ;
+;                                              ;                           ; scc_controller:u_scc_controller|phasestep,                                          ;
+;                                              ;                           ; scc_controller:u_scc_controller|slack_count[15],                                    ;
+;                                              ;                           ; scc_controller:u_scc_controller|slack_count[14],                                    ;
+;                                              ;                           ; scc_controller:u_scc_controller|slack_count[13],                                    ;
+;                                              ;                           ; scc_controller:u_scc_controller|slack_count[12],                                    ;
+;                                              ;                           ; scc_controller:u_scc_controller|slack_count[11],                                    ;
+;                                              ;                           ; scc_controller:u_scc_controller|slack_count[10],                                    ;
+;                                              ;                           ; scc_controller:u_scc_controller|slack_count[9],                                     ;
+;                                              ;                           ; scc_controller:u_scc_controller|slack_count[8],                                     ;
+;                                              ;                           ; scc_controller:u_scc_controller|slack_count[7],                                     ;
+;                                              ;                           ; scc_controller:u_scc_controller|slack_count[6],                                     ;
+;                                              ;                           ; scc_controller:u_scc_controller|slack_count[5],                                     ;
+;                                              ;                           ; scc_controller:u_scc_controller|slack_count[4],                                     ;
+;                                              ;                           ; scc_controller:u_scc_controller|slack_count[3],                                     ;
+;                                              ;                           ; scc_controller:u_scc_controller|slack_count[2],                                     ;
+;                                              ;                           ; scc_controller:u_scc_controller|slack_count[1],                                     ;
+;                                              ;                           ; scc_controller:u_scc_controller|slack_count[0],                                     ;
+;                                              ;                           ; scc_controller:u_scc_controller|calibrated, scc_controller:u_scc_controller|tmr[6], ;
+;                                              ;                           ; scc_controller:u_scc_controller|tmr[5], scc_controller:u_scc_controller|tmr[4],     ;
+;                                              ;                           ; scc_controller:u_scc_controller|tmr[3], scc_controller:u_scc_controller|tmr[2],     ;
+;                                              ;                           ; scc_controller:u_scc_controller|tmr[1], uart_packet_sender:u_uart_sender|byte1[7],  ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte1[6],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte1[5],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte1[4],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte1[3],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte1[2],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte1[1],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte1[0],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte2[7],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte2[6],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte2[5],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte2[4],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte2[3],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte2[2],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte2[1],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte2[0],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte3[1],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte4[7],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte4[6],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte4[5],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte4[4],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte4[3],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte4[2],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|byte4[1],                                          ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|data_in[2],                                        ;
+;                                              ;                           ; uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx|data_reg[2]                      ;
+; scc_controller:u_scc_controller|state.S_IDLE ; Stuck at GND              ; scc_controller:u_scc_controller|state.S_COOLDOWN,                                   ;
+;                                              ; due to stuck port clear   ; scc_controller:u_scc_controller|state.S_ASSERT_STEP,                                ;
+;                                              ;                           ; scc_controller:u_scc_controller|state.S_WAIT_HIGH                                   ;
++----------------------------------------------+---------------------------+-------------------------------------------------------------------------------------+
+
+
++------------------------------------------------------+
+; General Register Statistics                          ;
++----------------------------------------------+-------+
+; Statistic                                    ; Value ;
++----------------------------------------------+-------+
+; Total registers                              ; 82    ;
+; Number of registers using Synchronous Clear  ; 48    ;
+; Number of registers using Synchronous Load   ; 17    ;
+; Number of registers using Asynchronous Clear ; 79    ;
+; Number of registers using Asynchronous Load  ; 0     ;
+; Number of registers using Clock Enable       ; 7     ;
+; Number of registers using Preset             ; 0     ;
++----------------------------------------------+-------+
+
+
++-----------------------------------------------------------------+
+; Inverted Register Statistics                                    ;
++-------------------------------------------------------+---------+
+; Inverted Register                                     ; Fan out ;
++-------------------------------------------------------+---------+
+; uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx|tx ; 1       ;
+; Total number of inverted registers = 1                ;         ;
++-------------------------------------------------------+---------+
+
+
++----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Multiplexer Restructuring Statistics (Restructuring Performed)                                                                                                                               ;
++--------------------+-----------+---------------+----------------------+------------------------+------------+--------------------------------------------------------------------------------+
+; Multiplexer Inputs ; Bus Width ; Baseline Area ; Area if Restructured ; Saving if Restructured ; Registered ; Example Multiplexer Output                                                     ;
++--------------------+-----------+---------------+----------------------+------------------------+------------+--------------------------------------------------------------------------------+
+; 5:1                ; 2 bits    ; 6 LEs         ; 2 LEs                ; 4 LEs                  ; Yes        ; |max10_aging_top|uart_packet_sender:u_uart_sender|data_in[2]                   ;
+; 5:1                ; 3 bits    ; 9 LEs         ; 3 LEs                ; 6 LEs                  ; Yes        ; |max10_aging_top|uart_packet_sender:u_uart_sender|byte_idx[2]                  ;
+; 3:1                ; 3 bits    ; 6 LEs         ; 6 LEs                ; 0 LEs                  ; No         ; |max10_aging_top|uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx|bit_index  ;
+; 6:1                ; 2 bits    ; 8 LEs         ; 4 LEs                ; 4 LEs                  ; No         ; |max10_aging_top|uart_packet_sender:u_uart_sender|Selector13                   ;
+; 6:1                ; 2 bits    ; 8 LEs         ; 4 LEs                ; 4 LEs                  ; No         ; |max10_aging_top|uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx|Selector22 ;
+; 8:1                ; 2 bits    ; 10 LEs        ; 6 LEs                ; 4 LEs                  ; No         ; |max10_aging_top|uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx|Selector21 ;
++--------------------+-----------+---------------+----------------------+------------------------+------------+--------------------------------------------------------------------------------+
+
+
++------------------------------------------------------------------------------------------------------+
+; Source assignments for aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated ;
++------------------------------+-------------+------+--------------------------------------------------+
+; Assignment                   ; Value       ; From ; To                                               ;
++------------------------------+-------------+------+--------------------------------------------------+
+; ADV_NETLIST_OPT_ALLOWED      ; NEVER_ALLOW ; -    ; remap_decoy_le3a_0                               ;
+; ADV_NETLIST_OPT_ALLOWED      ; NEVER_ALLOW ; -    ; remap_decoy_le3a_1                               ;
+; ADV_NETLIST_OPT_ALLOWED      ; NEVER_ALLOW ; -    ; remap_decoy_le3a_2                               ;
+; IGNORE_LCELL_BUFFERS         ; OFF         ; -    ; remap_decoy_le3a_0                               ;
+; IGNORE_LCELL_BUFFERS         ; OFF         ; -    ; remap_decoy_le3a_1                               ;
+; IGNORE_LCELL_BUFFERS         ; OFF         ; -    ; remap_decoy_le3a_2                               ;
+; REMOVE_REDUNDANT_LOGIC_CELLS ; OFF         ; -    ; remap_decoy_le3a_0                               ;
+; REMOVE_REDUNDANT_LOGIC_CELLS ; OFF         ; -    ; remap_decoy_le3a_1                               ;
+; REMOVE_REDUNDANT_LOGIC_CELLS ; OFF         ; -    ; remap_decoy_le3a_2                               ;
++------------------------------+-------------+------+--------------------------------------------------+
+
+
++---------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Source assignments for aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_altpll_dyn_phase_le:altpll_dyn_phase_le2 ;
++------------------------------+-------------+------+-----------------------------------------------------------------------------------------------------+
+; Assignment                   ; Value       ; From ; To                                                                                                  ;
++------------------------------+-------------+------+-----------------------------------------------------------------------------------------------------+
+; ADV_NETLIST_OPT_ALLOWED      ; NEVER_ALLOW ; -    ; -                                                                                                   ;
+; REMOVE_REDUNDANT_LOGIC_CELLS ; OFF         ; -    ; -                                                                                                   ;
+; IGNORE_LCELL_BUFFERS         ; OFF         ; -    ; -                                                                                                   ;
++------------------------------+-------------+------+-----------------------------------------------------------------------------------------------------+
+
+
++----------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Source assignments for aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_altpll_dyn_phase_le1:altpll_dyn_phase_le4 ;
++------------------------------+-------------+------+------------------------------------------------------------------------------------------------------+
+; Assignment                   ; Value       ; From ; To                                                                                                   ;
++------------------------------+-------------+------+------------------------------------------------------------------------------------------------------+
+; ADV_NETLIST_OPT_ALLOWED      ; NEVER_ALLOW ; -    ; -                                                                                                    ;
+; REMOVE_REDUNDANT_LOGIC_CELLS ; OFF         ; -    ; -                                                                                                    ;
+; IGNORE_LCELL_BUFFERS         ; OFF         ; -    ; -                                                                                                    ;
++------------------------------+-------------+------+------------------------------------------------------------------------------------------------------+
+
+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Source assignments for aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_altpll_dyn_phase_le12:altpll_dyn_phase_le5 ;
++------------------------------+-------------+------+-------------------------------------------------------------------------------------------------------+
+; Assignment                   ; Value       ; From ; To                                                                                                    ;
++------------------------------+-------------+------+-------------------------------------------------------------------------------------------------------+
+; ADV_NETLIST_OPT_ALLOWED      ; NEVER_ALLOW ; -    ; -                                                                                                     ;
+; REMOVE_REDUNDANT_LOGIC_CELLS ; OFF         ; -    ; -                                                                                                     ;
+; IGNORE_LCELL_BUFFERS         ; OFF         ; -    ; -                                                                                                     ;
++------------------------------+-------------+------+-------------------------------------------------------------------------------------------------------+
+
+
++--------------------------------------------------------------------------------------------+
+; Parameter Settings for User Entity Instance: aging_pll:u_aging_pll|altpll:altpll_component ;
++-------------------------------+-----------------------------+------------------------------+
+; Parameter Name                ; Value                       ; Type                         ;
++-------------------------------+-----------------------------+------------------------------+
+; OPERATION_MODE                ; NORMAL                      ; Untyped                      ;
+; PLL_TYPE                      ; AUTO                        ; Untyped                      ;
+; LPM_HINT                      ; CBX_MODULE_PREFIX=aging_pll ; Untyped                      ;
+; QUALIFY_CONF_DONE             ; OFF                         ; Untyped                      ;
+; COMPENSATE_CLOCK              ; CLK0                        ; Untyped                      ;
+; SCAN_CHAIN                    ; LONG                        ; Untyped                      ;
+; PRIMARY_CLOCK                 ; INCLK0                      ; Untyped                      ;
+; INCLK0_INPUT_FREQUENCY        ; 20000                       ; Signed Integer               ;
+; INCLK1_INPUT_FREQUENCY        ; 0                           ; Untyped                      ;
+; GATE_LOCK_SIGNAL              ; NO                          ; Untyped                      ;
+; GATE_LOCK_COUNTER             ; 0                           ; Untyped                      ;
+; LOCK_HIGH                     ; 1                           ; Untyped                      ;
+; LOCK_LOW                      ; 1                           ; Untyped                      ;
+; VALID_LOCK_MULTIPLIER         ; 1                           ; Untyped                      ;
+; INVALID_LOCK_MULTIPLIER       ; 5                           ; Untyped                      ;
+; SWITCH_OVER_ON_LOSSCLK        ; OFF                         ; Untyped                      ;
+; SWITCH_OVER_ON_GATED_LOCK     ; OFF                         ; Untyped                      ;
+; ENABLE_SWITCH_OVER_COUNTER    ; OFF                         ; Untyped                      ;
+; SKIP_VCO                      ; OFF                         ; Untyped                      ;
+; SWITCH_OVER_COUNTER           ; 0                           ; Untyped                      ;
+; SWITCH_OVER_TYPE              ; AUTO                        ; Untyped                      ;
+; FEEDBACK_SOURCE               ; EXTCLK0                     ; Untyped                      ;
+; BANDWIDTH                     ; 0                           ; Untyped                      ;
+; BANDWIDTH_TYPE                ; AUTO                        ; Untyped                      ;
+; SPREAD_FREQUENCY              ; 0                           ; Untyped                      ;
+; DOWN_SPREAD                   ; 0                           ; Untyped                      ;
+; SELF_RESET_ON_GATED_LOSS_LOCK ; OFF                         ; Untyped                      ;
+; SELF_RESET_ON_LOSS_LOCK       ; OFF                         ; Untyped                      ;
+; CLK9_MULTIPLY_BY              ; 0                           ; Untyped                      ;
+; CLK8_MULTIPLY_BY              ; 0                           ; Untyped                      ;
+; CLK7_MULTIPLY_BY              ; 0                           ; Untyped                      ;
+; CLK6_MULTIPLY_BY              ; 0                           ; Untyped                      ;
+; CLK5_MULTIPLY_BY              ; 1                           ; Untyped                      ;
+; CLK4_MULTIPLY_BY              ; 1                           ; Untyped                      ;
+; CLK3_MULTIPLY_BY              ; 1                           ; Untyped                      ;
+; CLK2_MULTIPLY_BY              ; 1                           ; Signed Integer               ;
+; CLK1_MULTIPLY_BY              ; 1                           ; Signed Integer               ;
+; CLK0_MULTIPLY_BY              ; 1                           ; Signed Integer               ;
+; CLK9_DIVIDE_BY                ; 0                           ; Untyped                      ;
+; CLK8_DIVIDE_BY                ; 0                           ; Untyped                      ;
+; CLK7_DIVIDE_BY                ; 0                           ; Untyped                      ;
+; CLK6_DIVIDE_BY                ; 0                           ; Untyped                      ;
+; CLK5_DIVIDE_BY                ; 1                           ; Untyped                      ;
+; CLK4_DIVIDE_BY                ; 1                           ; Untyped                      ;
+; CLK3_DIVIDE_BY                ; 1                           ; Untyped                      ;
+; CLK2_DIVIDE_BY                ; 10                          ; Signed Integer               ;
+; CLK1_DIVIDE_BY                ; 10                          ; Signed Integer               ;
+; CLK0_DIVIDE_BY                ; 10                          ; Signed Integer               ;
+; CLK9_PHASE_SHIFT              ; 0                           ; Untyped                      ;
+; CLK8_PHASE_SHIFT              ; 0                           ; Untyped                      ;
+; CLK7_PHASE_SHIFT              ; 0                           ; Untyped                      ;
+; CLK6_PHASE_SHIFT              ; 0                           ; Untyped                      ;
+; CLK5_PHASE_SHIFT              ; 0                           ; Untyped                      ;
+; CLK4_PHASE_SHIFT              ; 0                           ; Untyped                      ;
+; CLK3_PHASE_SHIFT              ; 0                           ; Untyped                      ;
+; CLK2_PHASE_SHIFT              ; 10000                       ; Untyped                      ;
+; CLK1_PHASE_SHIFT              ; 0                           ; Untyped                      ;
+; CLK0_PHASE_SHIFT              ; 0                           ; Untyped                      ;
+; CLK5_TIME_DELAY               ; 0                           ; Untyped                      ;
+; CLK4_TIME_DELAY               ; 0                           ; Untyped                      ;
+; CLK3_TIME_DELAY               ; 0                           ; Untyped                      ;
+; CLK2_TIME_DELAY               ; 0                           ; Untyped                      ;
+; CLK1_TIME_DELAY               ; 0                           ; Untyped                      ;
+; CLK0_TIME_DELAY               ; 0                           ; Untyped                      ;
+; CLK9_DUTY_CYCLE               ; 50                          ; Untyped                      ;
+; CLK8_DUTY_CYCLE               ; 50                          ; Untyped                      ;
+; CLK7_DUTY_CYCLE               ; 50                          ; Untyped                      ;
+; CLK6_DUTY_CYCLE               ; 50                          ; Untyped                      ;
+; CLK5_DUTY_CYCLE               ; 50                          ; Untyped                      ;
+; CLK4_DUTY_CYCLE               ; 50                          ; Untyped                      ;
+; CLK3_DUTY_CYCLE               ; 50                          ; Untyped                      ;
+; CLK2_DUTY_CYCLE               ; 50                          ; Signed Integer               ;
+; CLK1_DUTY_CYCLE               ; 50                          ; Signed Integer               ;
+; CLK0_DUTY_CYCLE               ; 50                          ; Signed Integer               ;
+; CLK9_USE_EVEN_COUNTER_MODE    ; OFF                         ; Untyped                      ;
+; CLK8_USE_EVEN_COUNTER_MODE    ; OFF                         ; Untyped                      ;
+; CLK7_USE_EVEN_COUNTER_MODE    ; OFF                         ; Untyped                      ;
+; CLK6_USE_EVEN_COUNTER_MODE    ; OFF                         ; Untyped                      ;
+; CLK5_USE_EVEN_COUNTER_MODE    ; OFF                         ; Untyped                      ;
+; CLK4_USE_EVEN_COUNTER_MODE    ; OFF                         ; Untyped                      ;
+; CLK3_USE_EVEN_COUNTER_MODE    ; OFF                         ; Untyped                      ;
+; CLK2_USE_EVEN_COUNTER_MODE    ; OFF                         ; Untyped                      ;
+; CLK1_USE_EVEN_COUNTER_MODE    ; OFF                         ; Untyped                      ;
+; CLK0_USE_EVEN_COUNTER_MODE    ; OFF                         ; Untyped                      ;
+; CLK9_USE_EVEN_COUNTER_VALUE   ; OFF                         ; Untyped                      ;
+; CLK8_USE_EVEN_COUNTER_VALUE   ; OFF                         ; Untyped                      ;
+; CLK7_USE_EVEN_COUNTER_VALUE   ; OFF                         ; Untyped                      ;
+; CLK6_USE_EVEN_COUNTER_VALUE   ; OFF                         ; Untyped                      ;
+; CLK5_USE_EVEN_COUNTER_VALUE   ; OFF                         ; Untyped                      ;
+; CLK4_USE_EVEN_COUNTER_VALUE   ; OFF                         ; Untyped                      ;
+; CLK3_USE_EVEN_COUNTER_VALUE   ; OFF                         ; Untyped                      ;
+; CLK2_USE_EVEN_COUNTER_VALUE   ; OFF                         ; Untyped                      ;
+; CLK1_USE_EVEN_COUNTER_VALUE   ; OFF                         ; Untyped                      ;
+; CLK0_USE_EVEN_COUNTER_VALUE   ; OFF                         ; Untyped                      ;
+; LOCK_WINDOW_UI                ;  0.05                       ; Untyped                      ;
+; LOCK_WINDOW_UI_BITS           ; UNUSED                      ; Untyped                      ;
+; VCO_RANGE_DETECTOR_LOW_BITS   ; UNUSED                      ; Untyped                      ;
+; VCO_RANGE_DETECTOR_HIGH_BITS  ; UNUSED                      ; Untyped                      ;
+; DPA_MULTIPLY_BY               ; 0                           ; Untyped                      ;
+; DPA_DIVIDE_BY                 ; 1                           ; Untyped                      ;
+; DPA_DIVIDER                   ; 0                           ; Untyped                      ;
+; EXTCLK3_MULTIPLY_BY           ; 1                           ; Untyped                      ;
+; EXTCLK2_MULTIPLY_BY           ; 1                           ; Untyped                      ;
+; EXTCLK1_MULTIPLY_BY           ; 1                           ; Untyped                      ;
+; EXTCLK0_MULTIPLY_BY           ; 1                           ; Untyped                      ;
+; EXTCLK3_DIVIDE_BY             ; 1                           ; Untyped                      ;
+; EXTCLK2_DIVIDE_BY             ; 1                           ; Untyped                      ;
+; EXTCLK1_DIVIDE_BY             ; 1                           ; Untyped                      ;
+; EXTCLK0_DIVIDE_BY             ; 1                           ; Untyped                      ;
+; EXTCLK3_PHASE_SHIFT           ; 0                           ; Untyped                      ;
+; EXTCLK2_PHASE_SHIFT           ; 0                           ; Untyped                      ;
+; EXTCLK1_PHASE_SHIFT           ; 0                           ; Untyped                      ;
+; EXTCLK0_PHASE_SHIFT           ; 0                           ; Untyped                      ;
+; EXTCLK3_TIME_DELAY            ; 0                           ; Untyped                      ;
+; EXTCLK2_TIME_DELAY            ; 0                           ; Untyped                      ;
+; EXTCLK1_TIME_DELAY            ; 0                           ; Untyped                      ;
+; EXTCLK0_TIME_DELAY            ; 0                           ; Untyped                      ;
+; EXTCLK3_DUTY_CYCLE            ; 50                          ; Untyped                      ;
+; EXTCLK2_DUTY_CYCLE            ; 50                          ; Untyped                      ;
+; EXTCLK1_DUTY_CYCLE            ; 50                          ; Untyped                      ;
+; EXTCLK0_DUTY_CYCLE            ; 50                          ; Untyped                      ;
+; VCO_MULTIPLY_BY               ; 0                           ; Untyped                      ;
+; VCO_DIVIDE_BY                 ; 0                           ; Untyped                      ;
+; SCLKOUT0_PHASE_SHIFT          ; 0                           ; Untyped                      ;
+; SCLKOUT1_PHASE_SHIFT          ; 0                           ; Untyped                      ;
+; VCO_MIN                       ; 0                           ; Untyped                      ;
+; VCO_MAX                       ; 0                           ; Untyped                      ;
+; VCO_CENTER                    ; 0                           ; Untyped                      ;
+; PFD_MIN                       ; 0                           ; Untyped                      ;
+; PFD_MAX                       ; 0                           ; Untyped                      ;
+; M_INITIAL                     ; 0                           ; Untyped                      ;
+; M                             ; 0                           ; Untyped                      ;
+; N                             ; 1                           ; Untyped                      ;
+; M2                            ; 1                           ; Untyped                      ;
+; N2                            ; 1                           ; Untyped                      ;
+; SS                            ; 1                           ; Untyped                      ;
+; C0_HIGH                       ; 0                           ; Untyped                      ;
+; C1_HIGH                       ; 0                           ; Untyped                      ;
+; C2_HIGH                       ; 0                           ; Untyped                      ;
+; C3_HIGH                       ; 0                           ; Untyped                      ;
+; C4_HIGH                       ; 0                           ; Untyped                      ;
+; C5_HIGH                       ; 0                           ; Untyped                      ;
+; C6_HIGH                       ; 0                           ; Untyped                      ;
+; C7_HIGH                       ; 0                           ; Untyped                      ;
+; C8_HIGH                       ; 0                           ; Untyped                      ;
+; C9_HIGH                       ; 0                           ; Untyped                      ;
+; C0_LOW                        ; 0                           ; Untyped                      ;
+; C1_LOW                        ; 0                           ; Untyped                      ;
+; C2_LOW                        ; 0                           ; Untyped                      ;
+; C3_LOW                        ; 0                           ; Untyped                      ;
+; C4_LOW                        ; 0                           ; Untyped                      ;
+; C5_LOW                        ; 0                           ; Untyped                      ;
+; C6_LOW                        ; 0                           ; Untyped                      ;
+; C7_LOW                        ; 0                           ; Untyped                      ;
+; C8_LOW                        ; 0                           ; Untyped                      ;
+; C9_LOW                        ; 0                           ; Untyped                      ;
+; C0_INITIAL                    ; 0                           ; Untyped                      ;
+; C1_INITIAL                    ; 0                           ; Untyped                      ;
+; C2_INITIAL                    ; 0                           ; Untyped                      ;
+; C3_INITIAL                    ; 0                           ; Untyped                      ;
+; C4_INITIAL                    ; 0                           ; Untyped                      ;
+; C5_INITIAL                    ; 0                           ; Untyped                      ;
+; C6_INITIAL                    ; 0                           ; Untyped                      ;
+; C7_INITIAL                    ; 0                           ; Untyped                      ;
+; C8_INITIAL                    ; 0                           ; Untyped                      ;
+; C9_INITIAL                    ; 0                           ; Untyped                      ;
+; C0_MODE                       ; BYPASS                      ; Untyped                      ;
+; C1_MODE                       ; BYPASS                      ; Untyped                      ;
+; C2_MODE                       ; BYPASS                      ; Untyped                      ;
+; C3_MODE                       ; BYPASS                      ; Untyped                      ;
+; C4_MODE                       ; BYPASS                      ; Untyped                      ;
+; C5_MODE                       ; BYPASS                      ; Untyped                      ;
+; C6_MODE                       ; BYPASS                      ; Untyped                      ;
+; C7_MODE                       ; BYPASS                      ; Untyped                      ;
+; C8_MODE                       ; BYPASS                      ; Untyped                      ;
+; C9_MODE                       ; BYPASS                      ; Untyped                      ;
+; C0_PH                         ; 0                           ; Untyped                      ;
+; C1_PH                         ; 0                           ; Untyped                      ;
+; C2_PH                         ; 0                           ; Untyped                      ;
+; C3_PH                         ; 0                           ; Untyped                      ;
+; C4_PH                         ; 0                           ; Untyped                      ;
+; C5_PH                         ; 0                           ; Untyped                      ;
+; C6_PH                         ; 0                           ; Untyped                      ;
+; C7_PH                         ; 0                           ; Untyped                      ;
+; C8_PH                         ; 0                           ; Untyped                      ;
+; C9_PH                         ; 0                           ; Untyped                      ;
+; L0_HIGH                       ; 1                           ; Untyped                      ;
+; L1_HIGH                       ; 1                           ; Untyped                      ;
+; G0_HIGH                       ; 1                           ; Untyped                      ;
+; G1_HIGH                       ; 1                           ; Untyped                      ;
+; G2_HIGH                       ; 1                           ; Untyped                      ;
+; G3_HIGH                       ; 1                           ; Untyped                      ;
+; E0_HIGH                       ; 1                           ; Untyped                      ;
+; E1_HIGH                       ; 1                           ; Untyped                      ;
+; E2_HIGH                       ; 1                           ; Untyped                      ;
+; E3_HIGH                       ; 1                           ; Untyped                      ;
+; L0_LOW                        ; 1                           ; Untyped                      ;
+; L1_LOW                        ; 1                           ; Untyped                      ;
+; G0_LOW                        ; 1                           ; Untyped                      ;
+; G1_LOW                        ; 1                           ; Untyped                      ;
+; G2_LOW                        ; 1                           ; Untyped                      ;
+; G3_LOW                        ; 1                           ; Untyped                      ;
+; E0_LOW                        ; 1                           ; Untyped                      ;
+; E1_LOW                        ; 1                           ; Untyped                      ;
+; E2_LOW                        ; 1                           ; Untyped                      ;
+; E3_LOW                        ; 1                           ; Untyped                      ;
+; L0_INITIAL                    ; 1                           ; Untyped                      ;
+; L1_INITIAL                    ; 1                           ; Untyped                      ;
+; G0_INITIAL                    ; 1                           ; Untyped                      ;
+; G1_INITIAL                    ; 1                           ; Untyped                      ;
+; G2_INITIAL                    ; 1                           ; Untyped                      ;
+; G3_INITIAL                    ; 1                           ; Untyped                      ;
+; E0_INITIAL                    ; 1                           ; Untyped                      ;
+; E1_INITIAL                    ; 1                           ; Untyped                      ;
+; E2_INITIAL                    ; 1                           ; Untyped                      ;
+; E3_INITIAL                    ; 1                           ; Untyped                      ;
+; L0_MODE                       ; BYPASS                      ; Untyped                      ;
+; L1_MODE                       ; BYPASS                      ; Untyped                      ;
+; G0_MODE                       ; BYPASS                      ; Untyped                      ;
+; G1_MODE                       ; BYPASS                      ; Untyped                      ;
+; G2_MODE                       ; BYPASS                      ; Untyped                      ;
+; G3_MODE                       ; BYPASS                      ; Untyped                      ;
+; E0_MODE                       ; BYPASS                      ; Untyped                      ;
+; E1_MODE                       ; BYPASS                      ; Untyped                      ;
+; E2_MODE                       ; BYPASS                      ; Untyped                      ;
+; E3_MODE                       ; BYPASS                      ; Untyped                      ;
+; L0_PH                         ; 0                           ; Untyped                      ;
+; L1_PH                         ; 0                           ; Untyped                      ;
+; G0_PH                         ; 0                           ; Untyped                      ;
+; G1_PH                         ; 0                           ; Untyped                      ;
+; G2_PH                         ; 0                           ; Untyped                      ;
+; G3_PH                         ; 0                           ; Untyped                      ;
+; E0_PH                         ; 0                           ; Untyped                      ;
+; E1_PH                         ; 0                           ; Untyped                      ;
+; E2_PH                         ; 0                           ; Untyped                      ;
+; E3_PH                         ; 0                           ; Untyped                      ;
+; M_PH                          ; 0                           ; Untyped                      ;
+; C1_USE_CASC_IN                ; OFF                         ; Untyped                      ;
+; C2_USE_CASC_IN                ; OFF                         ; Untyped                      ;
+; C3_USE_CASC_IN                ; OFF                         ; Untyped                      ;
+; C4_USE_CASC_IN                ; OFF                         ; Untyped                      ;
+; C5_USE_CASC_IN                ; OFF                         ; Untyped                      ;
+; C6_USE_CASC_IN                ; OFF                         ; Untyped                      ;
+; C7_USE_CASC_IN                ; OFF                         ; Untyped                      ;
+; C8_USE_CASC_IN                ; OFF                         ; Untyped                      ;
+; C9_USE_CASC_IN                ; OFF                         ; Untyped                      ;
+; CLK0_COUNTER                  ; G0                          ; Untyped                      ;
+; CLK1_COUNTER                  ; G0                          ; Untyped                      ;
+; CLK2_COUNTER                  ; G0                          ; Untyped                      ;
+; CLK3_COUNTER                  ; G0                          ; Untyped                      ;
+; CLK4_COUNTER                  ; G0                          ; Untyped                      ;
+; CLK5_COUNTER                  ; G0                          ; Untyped                      ;
+; CLK6_COUNTER                  ; E0                          ; Untyped                      ;
+; CLK7_COUNTER                  ; E1                          ; Untyped                      ;
+; CLK8_COUNTER                  ; E2                          ; Untyped                      ;
+; CLK9_COUNTER                  ; E3                          ; Untyped                      ;
+; L0_TIME_DELAY                 ; 0                           ; Untyped                      ;
+; L1_TIME_DELAY                 ; 0                           ; Untyped                      ;
+; G0_TIME_DELAY                 ; 0                           ; Untyped                      ;
+; G1_TIME_DELAY                 ; 0                           ; Untyped                      ;
+; G2_TIME_DELAY                 ; 0                           ; Untyped                      ;
+; G3_TIME_DELAY                 ; 0                           ; Untyped                      ;
+; E0_TIME_DELAY                 ; 0                           ; Untyped                      ;
+; E1_TIME_DELAY                 ; 0                           ; Untyped                      ;
+; E2_TIME_DELAY                 ; 0                           ; Untyped                      ;
+; E3_TIME_DELAY                 ; 0                           ; Untyped                      ;
+; M_TIME_DELAY                  ; 0                           ; Untyped                      ;
+; N_TIME_DELAY                  ; 0                           ; Untyped                      ;
+; EXTCLK3_COUNTER               ; E3                          ; Untyped                      ;
+; EXTCLK2_COUNTER               ; E2                          ; Untyped                      ;
+; EXTCLK1_COUNTER               ; E1                          ; Untyped                      ;
+; EXTCLK0_COUNTER               ; E0                          ; Untyped                      ;
+; ENABLE0_COUNTER               ; L0                          ; Untyped                      ;
+; ENABLE1_COUNTER               ; L0                          ; Untyped                      ;
+; CHARGE_PUMP_CURRENT           ; 2                           ; Untyped                      ;
+; LOOP_FILTER_R                 ;  1.000000                   ; Untyped                      ;
+; LOOP_FILTER_C                 ; 5                           ; Untyped                      ;
+; CHARGE_PUMP_CURRENT_BITS      ; 9999                        ; Untyped                      ;
+; LOOP_FILTER_R_BITS            ; 9999                        ; Untyped                      ;
+; LOOP_FILTER_C_BITS            ; 9999                        ; Untyped                      ;
+; VCO_POST_SCALE                ; 0                           ; Untyped                      ;
+; CLK2_OUTPUT_FREQUENCY         ; 0                           ; Untyped                      ;
+; CLK1_OUTPUT_FREQUENCY         ; 0                           ; Untyped                      ;
+; CLK0_OUTPUT_FREQUENCY         ; 0                           ; Untyped                      ;
+; INTENDED_DEVICE_FAMILY        ; MAX 10                      ; Untyped                      ;
+; PORT_CLKENA0                  ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_CLKENA1                  ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_CLKENA2                  ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_CLKENA3                  ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_CLKENA4                  ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_CLKENA5                  ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_EXTCLKENA0               ; PORT_CONNECTIVITY           ; Untyped                      ;
+; PORT_EXTCLKENA1               ; PORT_CONNECTIVITY           ; Untyped                      ;
+; PORT_EXTCLKENA2               ; PORT_CONNECTIVITY           ; Untyped                      ;
+; PORT_EXTCLKENA3               ; PORT_CONNECTIVITY           ; Untyped                      ;
+; PORT_EXTCLK0                  ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_EXTCLK1                  ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_EXTCLK2                  ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_EXTCLK3                  ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_CLKBAD0                  ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_CLKBAD1                  ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_CLK0                     ; PORT_USED                   ; Untyped                      ;
+; PORT_CLK1                     ; PORT_USED                   ; Untyped                      ;
+; PORT_CLK2                     ; PORT_USED                   ; Untyped                      ;
+; PORT_CLK3                     ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_CLK4                     ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_CLK5                     ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_CLK6                     ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_CLK7                     ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_CLK8                     ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_CLK9                     ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_SCANDATA                 ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_SCANDATAOUT              ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_SCANDONE                 ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_SCLKOUT1                 ; PORT_CONNECTIVITY           ; Untyped                      ;
+; PORT_SCLKOUT0                 ; PORT_CONNECTIVITY           ; Untyped                      ;
+; PORT_ACTIVECLOCK              ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_CLKLOSS                  ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_INCLK1                   ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_INCLK0                   ; PORT_USED                   ; Untyped                      ;
+; PORT_FBIN                     ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_PLLENA                   ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_CLKSWITCH                ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_ARESET                   ; PORT_USED                   ; Untyped                      ;
+; PORT_PFDENA                   ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_SCANCLK                  ; PORT_USED                   ; Untyped                      ;
+; PORT_SCANACLR                 ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_SCANREAD                 ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_SCANWRITE                ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_ENABLE0                  ; PORT_CONNECTIVITY           ; Untyped                      ;
+; PORT_ENABLE1                  ; PORT_CONNECTIVITY           ; Untyped                      ;
+; PORT_LOCKED                   ; PORT_USED                   ; Untyped                      ;
+; PORT_CONFIGUPDATE             ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_FBOUT                    ; PORT_CONNECTIVITY           ; Untyped                      ;
+; PORT_PHASEDONE                ; PORT_USED                   ; Untyped                      ;
+; PORT_PHASESTEP                ; PORT_USED                   ; Untyped                      ;
+; PORT_PHASEUPDOWN              ; PORT_USED                   ; Untyped                      ;
+; PORT_SCANCLKENA               ; PORT_UNUSED                 ; Untyped                      ;
+; PORT_PHASECOUNTERSELECT       ; PORT_USED                   ; Untyped                      ;
+; PORT_VCOOVERRANGE             ; PORT_CONNECTIVITY           ; Untyped                      ;
+; PORT_VCOUNDERRANGE            ; PORT_CONNECTIVITY           ; Untyped                      ;
+; M_TEST_SOURCE                 ; 5                           ; Untyped                      ;
+; C0_TEST_SOURCE                ; 5                           ; Untyped                      ;
+; C1_TEST_SOURCE                ; 5                           ; Untyped                      ;
+; C2_TEST_SOURCE                ; 5                           ; Untyped                      ;
+; C3_TEST_SOURCE                ; 5                           ; Untyped                      ;
+; C4_TEST_SOURCE                ; 5                           ; Untyped                      ;
+; C5_TEST_SOURCE                ; 5                           ; Untyped                      ;
+; C6_TEST_SOURCE                ; 5                           ; Untyped                      ;
+; C7_TEST_SOURCE                ; 5                           ; Untyped                      ;
+; C8_TEST_SOURCE                ; 5                           ; Untyped                      ;
+; C9_TEST_SOURCE                ; 5                           ; Untyped                      ;
+; CBXI_PARAMETER                ; aging_pll_altpll            ; Untyped                      ;
+; VCO_FREQUENCY_CONTROL         ; MANUAL_PHASE                ; Untyped                      ;
+; VCO_PHASE_SHIFT_STEP          ; 179                         ; Signed Integer               ;
+; WIDTH_CLOCK                   ; 5                           ; Signed Integer               ;
+; WIDTH_PHASECOUNTERSELECT      ; 3                           ; Signed Integer               ;
+; USING_FBMIMICBIDIR_PORT       ; OFF                         ; Untyped                      ;
+; DEVICE_FAMILY                 ; MAX 10                      ; Untyped                      ;
+; SCAN_CHAIN_MIF_FILE           ; UNUSED                      ; Untyped                      ;
+; SIM_GATE_LOCK_DEVICE_BEHAVIOR ; OFF                         ; Untyped                      ;
+; AUTO_CARRY_CHAINS             ; ON                          ; AUTO_CARRY                   ;
+; IGNORE_CARRY_BUFFERS          ; OFF                         ; IGNORE_CARRY                 ;
+; AUTO_CASCADE_CHAINS           ; ON                          ; AUTO_CASCADE                 ;
+; IGNORE_CASCADE_BUFFERS        ; OFF                         ; IGNORE_CASCADE               ;
++-------------------------------+-----------------------------+------------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++------------------------------------------------------------------------------+
+; Parameter Settings for User Entity Instance: scc_controller:u_scc_controller ;
++---------------------+-------+------------------------------------------------+
+; Parameter Name      ; Value ; Type                                           ;
++---------------------+-------+------------------------------------------------+
+; COUNT_WIDTH         ; 16    ; Signed Integer                                 ;
+; ALARM_FILTER_CYCLES ; 16    ; Signed Integer                                 ;
+; STEP_HIGH_CYCLES    ; 4     ; Signed Integer                                 ;
+; WAIT_CYCLES         ; 32    ; Signed Integer                                 ;
+; COOLDOWN_CYCLES     ; 8     ; Signed Integer                                 ;
++---------------------+-------+------------------------------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++----------------------------------------------------------------------------------+
+; Parameter Settings for User Entity Instance: critical_path_chain:u_critical_path ;
++----------------+-------+---------------------------------------------------------+
+; Parameter Name ; Value ; Type                                                    ;
++----------------+-------+---------------------------------------------------------+
+; NUM_STAGES     ; 50    ; Signed Integer                                          ;
++----------------+-------+---------------------------------------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++-------------------------------------------------------------------------------+
+; Parameter Settings for User Entity Instance: uart_packet_sender:u_uart_sender ;
++------------------+----------+-------------------------------------------------+
+; Parameter Name   ; Value    ; Type                                            ;
++------------------+----------+-------------------------------------------------+
+; CLK_FREQ_HZ      ; 50000000 ; Signed Integer                                  ;
+; BAUD_RATE        ; 115200   ; Signed Integer                                  ;
+; SEND_INTERVAL_MS ; 100      ; Signed Integer                                  ;
++------------------+----------+-------------------------------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++-------------------------------------------------------------------------------------------------+
+; Parameter Settings for User Entity Instance: uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx ;
++----------------+----------+---------------------------------------------------------------------+
+; Parameter Name ; Value    ; Type                                                                ;
++----------------+----------+---------------------------------------------------------------------+
+; CLK_FREQ_HZ    ; 50000000 ; Signed Integer                                                      ;
+; BAUD_RATE      ; 115200   ; Signed Integer                                                      ;
++----------------+----------+---------------------------------------------------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++-------------------------------------------------------------------------------+
+; altpll Parameter Settings by Entity Instance                                  ;
++-------------------------------+-----------------------------------------------+
+; Name                          ; Value                                         ;
++-------------------------------+-----------------------------------------------+
+; Number of entity instances    ; 1                                             ;
+; Entity Instance               ; aging_pll:u_aging_pll|altpll:altpll_component ;
+;     -- OPERATION_MODE         ; NORMAL                                        ;
+;     -- PLL_TYPE               ; AUTO                                          ;
+;     -- PRIMARY_CLOCK          ; INCLK0                                        ;
+;     -- INCLK0_INPUT_FREQUENCY ; 20000                                         ;
+;     -- INCLK1_INPUT_FREQUENCY ; 0                                             ;
+;     -- VCO_MULTIPLY_BY        ; 0                                             ;
+;     -- VCO_DIVIDE_BY          ; 0                                             ;
++-------------------------------+-----------------------------------------------+
+
+
++------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Port Connectivity Checks: "scc_controller:u_scc_controller"                                                                                                                  ;
++------------+-------+----------+----------------------------------------------------------------------------------------------------------------------------------------------+
+; Port       ; Type  ; Severity ; Details                                                                                                                                      ;
++------------+-------+----------+----------------------------------------------------------------------------------------------------------------------------------------------+
+; pll_locked ; Input ; Warning  ; Declared by entity but not connected by instance. If a default value exists, it will be used.  Otherwise, the port will be connected to GND. ;
++------------+-------+----------+----------------------------------------------------------------------------------------------------------------------------------------------+
+
+
++------------------------------------------------------------+
+; Port Connectivity Checks: "aging_pll:u_aging_pll"          ;
++--------------------------+-------+----------+--------------+
+; Port                     ; Type  ; Severity ; Details      ;
++--------------------------+-------+----------+--------------+
+; phasecounterselect[1..0] ; Input ; Info     ; Stuck at GND ;
+; phasecounterselect[2]    ; Input ; Info     ; Stuck at VCC ;
++--------------------------+-------+----------+--------------+
+
+
++-----------------------------------------------------+
+; Post-Synthesis Netlist Statistics for Top Partition ;
++-----------------------+-----------------------------+
+; Type                  ; Count                       ;
++-----------------------+-----------------------------+
+; boundary_port         ; 41                          ;
+; cycloneiii_ff         ; 82                          ;
+;     CLR               ; 25                          ;
+;     CLR SCLR          ; 32                          ;
+;     CLR SCLR SLD      ; 16                          ;
+;     CLR SLD           ; 1                           ;
+;     ENA               ; 2                           ;
+;     ENA CLR           ; 5                           ;
+;     plain             ; 1                           ;
+; cycloneiii_lcell_comb ; 173                         ;
+;     arith             ; 46                          ;
+;         2 data inputs ; 46                          ;
+;     normal            ; 127                         ;
+;         0 data inputs ; 5                           ;
+;         1 data inputs ; 5                           ;
+;         2 data inputs ; 12                          ;
+;         3 data inputs ; 13                          ;
+;         4 data inputs ; 92                          ;
+; cycloneiii_pll        ; 1                           ;
+;                       ;                             ;
+; Max LUT depth         ; 50.00                       ;
+; Average LUT depth     ; 11.01                       ;
++-----------------------+-----------------------------+
+
+
++-------------------------------+
+; Elapsed Time Per Partition    ;
++----------------+--------------+
+; Partition Name ; Elapsed Time ;
++----------------+--------------+
+; Top            ; 00:00:00     ;
++----------------+--------------+
+
+
++-------------------------------+
+; Analysis & Synthesis Messages ;
++-------------------------------+
+Info: *******************************************************************
+Info: Running Quartus Prime Analysis & Synthesis
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Processing started: Tue Oct  6 16:11:32 2026
+Info: Command: quartus_map --read_settings_files=on --write_settings_files=off max10_aging_port -c max10_aging_top
+Warning (18236): Number of processors has not been specified which may cause overloading on shared machines.  Set the global assignment NUM_PARALLEL_PROCESSORS in your QSF to an appropriate value for best performance.
+Info (20030): Parallel compilation is enabled and will use 4 of the 4 processors detected
+Info (12021): Found 1 design units, including 1 entities, in source file src/rtl/aging_sensor/scc_controller.sv
+    Info (12023): Found entity 1: scc_controller File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/scc_controller.sv Line: 74
+Info (12021): Found 1 design units, including 1 entities, in source file src/rtl/display/hex7seg.sv
+    Info (12023): Found entity 1: hex7seg File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/display/hex7seg.sv Line: 11
+Info (12021): Found 1 design units, including 1 entities, in source file src/rtl/uart/uart_tx.sv
+    Info (12023): Found entity 1: uart_tx File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/uart/uart_tx.sv Line: 13
+Info (12021): Found 1 design units, including 1 entities, in source file src/rtl/uart/uart_packet_sender.sv
+    Info (12023): Found entity 1: uart_packet_sender File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/uart/uart_packet_sender.sv Line: 19
+Info (12021): Found 1 design units, including 1 entities, in source file src/rtl/aging_sensor/critical_path_chain.sv
+    Info (12023): Found entity 1: critical_path_chain File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 27
+Info (12021): Found 1 design units, including 1 entities, in source file src/rtl/aging_sensor/aging_sensor_core.sv
+    Info (12023): Found entity 1: aging_sensor_core File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/aging_sensor_core.sv Line: 18
+Info (12021): Found 1 design units, including 1 entities, in source file src/rtl/top/max10_aging_top.sv
+    Info (12023): Found entity 1: max10_aging_top File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 22
+Info (12021): Found 1 design units, including 1 entities, in source file aging_pll.v
+    Info (12023): Found entity 1: aging_pll File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/aging_pll.v Line: 40
+Info (12127): Elaborating entity "max10_aging_top" for the top level hierarchy
+Warning (10036): Verilog HDL or VHDL warning at max10_aging_top.sv(51): object "launch_probe" assigned a value but never read File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 51
+Warning (10036): Verilog HDL or VHDL warning at max10_aging_top.sv(52): object "critical_path_probe" assigned a value but never read File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 52
+Info (12128): Elaborating entity "aging_pll" for hierarchy "aging_pll:u_aging_pll" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 84
+Info (12128): Elaborating entity "altpll" for hierarchy "aging_pll:u_aging_pll|altpll:altpll_component" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/aging_pll.v Line: 127
+Info (12130): Elaborated megafunction instantiation "aging_pll:u_aging_pll|altpll:altpll_component" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/aging_pll.v Line: 127
+Info (12133): Instantiated megafunction "aging_pll:u_aging_pll|altpll:altpll_component" with the following parameter: File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/aging_pll.v Line: 127
+    Info (12134): Parameter "bandwidth_type" = "AUTO"
+    Info (12134): Parameter "clk0_divide_by" = "10"
+    Info (12134): Parameter "clk0_duty_cycle" = "50"
+    Info (12134): Parameter "clk0_multiply_by" = "1"
+    Info (12134): Parameter "clk0_phase_shift" = "0"
+    Info (12134): Parameter "clk1_divide_by" = "10"
+    Info (12134): Parameter "clk1_duty_cycle" = "50"
+    Info (12134): Parameter "clk1_multiply_by" = "1"
+    Info (12134): Parameter "clk1_phase_shift" = "0"
+    Info (12134): Parameter "clk2_divide_by" = "10"
+    Info (12134): Parameter "clk2_duty_cycle" = "50"
+    Info (12134): Parameter "clk2_multiply_by" = "1"
+    Info (12134): Parameter "clk2_phase_shift" = "10000"
+    Info (12134): Parameter "compensate_clock" = "CLK0"
+    Info (12134): Parameter "inclk0_input_frequency" = "20000"
+    Info (12134): Parameter "intended_device_family" = "MAX 10"
+    Info (12134): Parameter "lpm_hint" = "CBX_MODULE_PREFIX=aging_pll"
+    Info (12134): Parameter "lpm_type" = "altpll"
+    Info (12134): Parameter "operation_mode" = "NORMAL"
+    Info (12134): Parameter "pll_type" = "AUTO"
+    Info (12134): Parameter "port_activeclock" = "PORT_UNUSED"
+    Info (12134): Parameter "port_areset" = "PORT_USED"
+    Info (12134): Parameter "port_clkbad0" = "PORT_UNUSED"
+    Info (12134): Parameter "port_clkbad1" = "PORT_UNUSED"
+    Info (12134): Parameter "port_clkloss" = "PORT_UNUSED"
+    Info (12134): Parameter "port_clkswitch" = "PORT_UNUSED"
+    Info (12134): Parameter "port_configupdate" = "PORT_UNUSED"
+    Info (12134): Parameter "port_fbin" = "PORT_UNUSED"
+    Info (12134): Parameter "port_inclk0" = "PORT_USED"
+    Info (12134): Parameter "port_inclk1" = "PORT_UNUSED"
+    Info (12134): Parameter "port_locked" = "PORT_USED"
+    Info (12134): Parameter "port_pfdena" = "PORT_UNUSED"
+    Info (12134): Parameter "port_phasecounterselect" = "PORT_USED"
+    Info (12134): Parameter "port_phasedone" = "PORT_USED"
+    Info (12134): Parameter "port_phasestep" = "PORT_USED"
+    Info (12134): Parameter "port_phaseupdown" = "PORT_USED"
+    Info (12134): Parameter "port_pllena" = "PORT_UNUSED"
+    Info (12134): Parameter "port_scanaclr" = "PORT_UNUSED"
+    Info (12134): Parameter "port_scanclk" = "PORT_USED"
+    Info (12134): Parameter "port_scanclkena" = "PORT_UNUSED"
+    Info (12134): Parameter "port_scandata" = "PORT_UNUSED"
+    Info (12134): Parameter "port_scandataout" = "PORT_UNUSED"
+    Info (12134): Parameter "port_scandone" = "PORT_UNUSED"
+    Info (12134): Parameter "port_scanread" = "PORT_UNUSED"
+    Info (12134): Parameter "port_scanwrite" = "PORT_UNUSED"
+    Info (12134): Parameter "port_clk0" = "PORT_USED"
+    Info (12134): Parameter "port_clk1" = "PORT_USED"
+    Info (12134): Parameter "port_clk2" = "PORT_USED"
+    Info (12134): Parameter "port_clk3" = "PORT_UNUSED"
+    Info (12134): Parameter "port_clk4" = "PORT_UNUSED"
+    Info (12134): Parameter "port_clk5" = "PORT_UNUSED"
+    Info (12134): Parameter "port_clkena0" = "PORT_UNUSED"
+    Info (12134): Parameter "port_clkena1" = "PORT_UNUSED"
+    Info (12134): Parameter "port_clkena2" = "PORT_UNUSED"
+    Info (12134): Parameter "port_clkena3" = "PORT_UNUSED"
+    Info (12134): Parameter "port_clkena4" = "PORT_UNUSED"
+    Info (12134): Parameter "port_clkena5" = "PORT_UNUSED"
+    Info (12134): Parameter "port_extclk0" = "PORT_UNUSED"
+    Info (12134): Parameter "port_extclk1" = "PORT_UNUSED"
+    Info (12134): Parameter "port_extclk2" = "PORT_UNUSED"
+    Info (12134): Parameter "port_extclk3" = "PORT_UNUSED"
+    Info (12134): Parameter "self_reset_on_loss_lock" = "OFF"
+    Info (12134): Parameter "vco_frequency_control" = "MANUAL_PHASE"
+    Info (12134): Parameter "vco_phase_shift_step" = "179"
+    Info (12134): Parameter "width_clock" = "5"
+    Info (12134): Parameter "width_phasecounterselect" = "3"
+Info (12021): Found 8 design units, including 8 entities, in source file db/aging_pll_altpll.v
+    Info (12023): Found entity 1: aging_pll_altpll_dyn_phase_le File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 35
+    Info (12023): Found entity 2: aging_pll_altpll_dyn_phase_le1 File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 78
+    Info (12023): Found entity 3: aging_pll_altpll_dyn_phase_le12 File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 121
+    Info (12023): Found entity 4: aging_pll_cmpr File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 171
+    Info (12023): Found entity 5: aging_pll_cntr File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 205
+    Info (12023): Found entity 6: aging_pll_cmpr1 File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 309
+    Info (12023): Found entity 7: aging_pll_cntr1 File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 343
+    Info (12023): Found entity 8: aging_pll_altpll File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 446
+Info (12128): Elaborating entity "aging_pll_altpll" for hierarchy "aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated" File: c:/altera_lite/25.1std/quartus/libraries/megafunctions/altpll.tdf Line: 898
+Info (12128): Elaborating entity "aging_pll_altpll_dyn_phase_le" for hierarchy "aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_altpll_dyn_phase_le:altpll_dyn_phase_le2" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 509
+Info (12128): Elaborating entity "aging_pll_altpll_dyn_phase_le1" for hierarchy "aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_altpll_dyn_phase_le1:altpll_dyn_phase_le4" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 516
+Info (12128): Elaborating entity "aging_pll_altpll_dyn_phase_le12" for hierarchy "aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_altpll_dyn_phase_le12:altpll_dyn_phase_le5" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 523
+Info (12128): Elaborating entity "aging_pll_cntr" for hierarchy "aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_cntr:phasestep_counter" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 567
+Info (12128): Elaborating entity "aging_pll_cmpr" for hierarchy "aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_cntr:phasestep_counter|aging_pll_cmpr:cmpr12" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 273
+Info (12128): Elaborating entity "aging_pll_cntr1" for hierarchy "aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_cntr1:pll_internal_phasestep" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 573
+Info (12128): Elaborating entity "aging_pll_cmpr1" for hierarchy "aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_cntr1:pll_internal_phasestep|aging_pll_cmpr1:cmpr14" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 421
+Info (12128): Elaborating entity "scc_controller" for hierarchy "scc_controller:u_scc_controller" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 106
+Info (12128): Elaborating entity "critical_path_chain" for hierarchy "critical_path_chain:u_critical_path" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 131
+Info (12128): Elaborating entity "aging_sensor_core" for hierarchy "aging_sensor_core:u_aging_sensor" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 141
+Info (12128): Elaborating entity "uart_packet_sender" for hierarchy "uart_packet_sender:u_uart_sender" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 165
+Info (12128): Elaborating entity "uart_tx" for hierarchy "uart_packet_sender:u_uart_sender|uart_tx:u_uart_tx" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/uart/uart_packet_sender.sv Line: 71
+Info (12128): Elaborating entity "hex7seg" for hierarchy "hex7seg:u_hex0" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 183
+Warning (12241): 1 hierarchies have connectivity warnings - see the Connectivity Checks report folder
+Info (13000): Registers with preset signals will power-up high File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/uart/uart_tx.sv Line: 21
+Info (13003): DEV_CLRn pin will set, and not reset, register with preset signal due to NOT Gate Push-Back
+Warning (13024): Output pins are stuck at VCC or GND
+    Warning (13410): Pin "calibrated" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 27
+    Warning (13410): Pin "hex0[0]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 29
+    Warning (13410): Pin "hex0[1]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 29
+    Warning (13410): Pin "hex0[2]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 29
+    Warning (13410): Pin "hex0[3]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 29
+    Warning (13410): Pin "hex0[4]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 29
+    Warning (13410): Pin "hex0[5]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 29
+    Warning (13410): Pin "hex0[6]" is stuck at VCC File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 29
+    Warning (13410): Pin "hex1[0]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 30
+    Warning (13410): Pin "hex1[1]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 30
+    Warning (13410): Pin "hex1[2]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 30
+    Warning (13410): Pin "hex1[3]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 30
+    Warning (13410): Pin "hex1[4]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 30
+    Warning (13410): Pin "hex1[5]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 30
+    Warning (13410): Pin "hex1[6]" is stuck at VCC File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 30
+    Warning (13410): Pin "hex2[0]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 31
+    Warning (13410): Pin "hex2[1]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 31
+    Warning (13410): Pin "hex2[2]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 31
+    Warning (13410): Pin "hex2[3]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 31
+    Warning (13410): Pin "hex2[4]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 31
+    Warning (13410): Pin "hex2[5]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 31
+    Warning (13410): Pin "hex2[6]" is stuck at VCC File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 31
+    Warning (13410): Pin "hex3[0]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 32
+    Warning (13410): Pin "hex3[1]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 32
+    Warning (13410): Pin "hex3[2]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 32
+    Warning (13410): Pin "hex3[3]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 32
+    Warning (13410): Pin "hex3[4]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 32
+    Warning (13410): Pin "hex3[5]" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 32
+    Warning (13410): Pin "hex3[6]" is stuck at VCC File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 32
+    Warning (13410): Pin "dbg_idle" is stuck at VCC File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 37
+    Warning (13410): Pin "dbg_step" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 38
+    Warning (13410): Pin "dbg_wait_low" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 39
+    Warning (13410): Pin "dbg_wait_high" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 40
+    Warning (13410): Pin "dbg_done" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 41
+    Warning (13410): Pin "dbg_alarm_sync" is stuck at GND File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/top/max10_aging_top.sv Line: 43
+Info (286030): Timing-Driven Synthesis is running
+Info (17049): 6 registers lost all their fanouts during netlist optimizations.
+Info (17016): Found the following redundant logic cells in design
+    Info (17048): Logic cell "aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_altpll_dyn_phase_le:altpll_dyn_phase_le2|wire_le_comb8_combout" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 59
+    Info (17048): Logic cell "aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_altpll_dyn_phase_le1:altpll_dyn_phase_le4|wire_le_comb9_combout" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 102
+    Info (17048): Logic cell "aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|aging_pll_altpll_dyn_phase_le12:altpll_dyn_phase_le5|wire_le_comb10_combout" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 145
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[1]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[2]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[3]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[4]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[5]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[6]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[7]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[8]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[9]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[10]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[11]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[12]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[13]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[14]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[15]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[16]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[17]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[18]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[19]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[20]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[21]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[22]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[23]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[24]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[25]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[26]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[27]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[28]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[29]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[30]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[31]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[32]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[33]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[34]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[35]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[36]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[37]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[38]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[39]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[40]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[41]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[42]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[43]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[44]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[45]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[46]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[47]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[48]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "critical_path_chain:u_critical_path|stage[49]" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/src/rtl/aging_sensor/critical_path_chain.sv Line: 50
+    Info (17048): Logic cell "aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|remap_decoy_le3a_0" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 554
+    Info (17048): Logic cell "aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|remap_decoy_le3a_1" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 558
+    Info (17048): Logic cell "aging_pll:u_aging_pll|altpll:altpll_component|aging_pll_altpll:auto_generated|remap_decoy_le3a_2" File: C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/db/aging_pll_altpll.v Line: 562
+Info (16010): Generating hard_block partition "hard_block:auto_generated_inst"
+    Info (16011): Adding 7 node(s), including 0 DDIO, 1 PLL, 0 transceiver and 6 LCELL
+Info (21057): Implemented 221 device resources after synthesis - the final resource count might be different
+    Info (21058): Implemented 2 input pins
+    Info (21059): Implemented 39 output pins
+    Info (21061): Implemented 179 logic cells
+    Info (21065): Implemented 1 PLLs
+Info: Quartus Prime Analysis & Synthesis was successful. 0 errors, 40 warnings
+    Info: Peak virtual memory: 4809 megabytes
+    Info: Processing ended: Tue Oct  6 16:11:41 2026
+    Info: Elapsed time: 00:00:09
+    Info: Total CPU time (on all processors): 00:00:08
+
+
