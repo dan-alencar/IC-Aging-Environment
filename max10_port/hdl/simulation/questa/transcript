@@ -1,0 +1,54 @@
+# do run_console.do
+# if {[file exists gate_work]} {
+# 	vdel -lib gate_work -all
+# }
+# vlib gate_work
+# vmap work gate_work
+# Questa Altera Starter FPGA Edition-64 vmap 2025.2 Lib Mapping Utility 2025.05 May 31 2025
+# vmap work gate_work 
+# ** Note: (vmap-220) 'C:/altera_lite/25.1std/questa_fse/win64/../modelsim.ini' is used as the ini file.
+# Copying C:/altera_lite/25.1std/questa_fse/win64/../modelsim.ini to modelsim.ini
+# Modifying modelsim.ini
+# 
+# vlog  -work work +incdir+. {max10_aging_top.vo}
+# Questa Altera Starter FPGA Edition-64 vlog 2025.2 Compiler 2025.05 May 31 2025
+# Start time: 15:07:04 on Sep 11,2026
+# vlog -work work "+incdir+." max10_aging_top.vo 
+# ** Note: (vlog-220) 'modelsim.ini' is used as the ini file.
+# -- Compiling module max10_aging_top
+# 
+# Top level modules:
+# 	max10_aging_top
+# End time: 15:07:04 on Sep 11,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# 
+# vlog -sv -work work +incdir+C:/Users/Diogo/Documents/CI\ Amazonia/Fase\ 2/max10_hdl_src/repo/max10_port/hdl/../../../../../../../Downloads {C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/../../../../../../../Downloads/max10_aging_top_gate_tb.sv}
+# Questa Altera Starter FPGA Edition-64 vlog 2025.2 Compiler 2025.05 May 31 2025
+# Start time: 15:07:04 on Sep 11,2026
+# vlog -sv -work work "+incdir+C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/../../../../../../../Downloads" C:/Users/Diogo/Documents/CI Amazonia/Fase 2/max10_hdl_src/repo/max10_port/hdl/../../../../../../../Downloads/max10_aging_top_gate_tb.sv 
+# ** Note: (vlog-220) 'modelsim.ini' is used as the ini file.
+# -- Compiling module max10_aging_top_gate_tb
+# 
+# Top level modules:
+# 	max10_aging_top_gate_tb
+# End time: 15:07:04 on Sep 11,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# 
+# vsim -t 1ps -L altera_ver -L altera_lnsim_ver -L fiftyfivenm_ver -L gate_work -L work -voptargs="+acc"  max10_aging_top_gate_tb
+# ** Note: (vsim-220) 'modelsim.ini' is used as the ini file.
+# vsim -t 1ps -L altera_ver -L altera_lnsim_ver -L fiftyfivenm_ver -L gate_work -L work -voptargs=""+acc"" max10_aging_top_gate_tb 
+# Start time: 15:07:05 on Sep 11,2026
+# ** Note: (vsim-3812) Design is being optimized...
+# ** Warning: (vopt-10908) Some optimizations are turned off because the +acc switch is in effect.
+# ** Note: (vopt-220) 'modelsim.ini' is used as the ini file.
+# ** Warning: max10_aging_top.vo(8400): (vopt-2685) [TFMPC] - Too few port connections for '\~QUARTUS_CREATED_ADC1~ '.  Expected 8, found 7.
+# ** Warning: max10_aging_top.vo(8400): (vopt-2718) [TFMPC] - Missing connection for port 'clk_dft'.
+# ** Warning: max10_aging_top.vo(8423): (vopt-2685) [TFMPC] - Too few port connections for '\~QUARTUS_CREATED_ADC2~ '.  Expected 8, found 7.
+# ** Warning: max10_aging_top.vo(8423): (vopt-2718) [TFMPC] - Missing connection for port 'clk_dft'.
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=5.
+# ** License Issue: License request for intelqsimstarter feature failed
+# ** License Issue: Invalid host. (C:/Users/Diogo/questa_lic.dat)
+# ** Error: Failure to obtain a Verilog simulation license. Unable to checkout 'intelqsimstarter' license.
+# Error loading design
+# End time: 15:07:09 on Sep 11,2026, Elapsed time: 0:00:04
+# Errors: 0, Warnings: 5

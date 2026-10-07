@@ -1,0 +1,22 @@
+Info: Start Nativelink Simulation process
+
+========= EDA Simulation Settings =====================
+
+Sim Mode              :  Gate
+Family                :  max10
+Quartus root          :  c:/altera_lite/25.1std/quartus/bin64/
+Quartus sim root      :  c:/altera_lite/25.1std/quartus/eda/sim_lib
+Simulation Tool       :  questa altera fpga
+Simulation Language   :  verilog
+Simulation Mode       :  GUI
+Sim Output File       :  max10_aging_top.vo
+Sim SDF file          :  max10_aging_top__verilog.sdo
+Sim dir               :  simulation\questa
+
+=======================================================
+
+Info: Starting NativeLink simulation with Questa Altera FPGA software
+Sourced NativeLink script c:/altera_lite/25.1std/quartus/common/tcl/internal/nativelink/modelsim.tcl
+Warning: File max10_aging_top_run_msim_gate_verilog.do already exists - backing up current file as max10_aging_top_run_msim_gate_verilog.do.bak2
+Info: Spawning Questa Altera FPGA Simulation software 
+Info: NativeLink simulation flow was successful

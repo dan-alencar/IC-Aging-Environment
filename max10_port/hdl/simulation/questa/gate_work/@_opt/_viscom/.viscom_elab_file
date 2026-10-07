@@ -1,0 +1,1 @@
+C:/altera_lite/25.1std/questa_fse/win64/VisualizerRls/bin/viscom.exe -nolock -quiet -jmem_size 3538944 work.max10_aging_top_gate_tb -quiet -auto_acc_if_foreign -work work -L altera_ver -L altera_lnsim_ver -L fiftyfivenm_ver -L gate_work -L work +acc -allow_unnamed -o _opt -id 1-a83b76ec8d71-6aa45159-22f-fa4 +__betafsm
