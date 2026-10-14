@@ -108,7 +108,7 @@ module scc_controller #(
 
     // Direcao fixa: sempre avancando a fase ("shift psclk to the left",
     // Secao II-A do artigo)
-    assign phaseupdown = 1'b1;
+    assign phaseupdown = 1'b0;
 
     // ------------------------------------------------------------------
     // [A] Sincronizacao de pll_locked e reset interno
