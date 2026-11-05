@@ -52,6 +52,7 @@ test_logs/
 # the published papers. Every file there was already a blob in git history, so
 # re-tracking it adds no repository size. New campaigns: see data/campaigns/README.md.
 !data/campaigns/**/*.csv
+!data/campaigns/**/test_logs/
 data/local_runs/
 
 # ------------------------------------------------------------------------------
