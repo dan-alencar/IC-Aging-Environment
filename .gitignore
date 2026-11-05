@@ -48,8 +48,10 @@ dist/
 
 test_logs/
 **/test_logs/
-data/campaigns/*
-!data/campaigns/.gitkeep
+# data/campaigns/ is versioned on purpose (decision 2026-11-05): the raw logs behind
+# the published papers. Every file there was already a blob in git history, so
+# re-tracking it adds no repository size. New campaigns: see data/campaigns/README.md.
+!data/campaigns/**/*.csv
 data/local_runs/
 
 # ------------------------------------------------------------------------------
