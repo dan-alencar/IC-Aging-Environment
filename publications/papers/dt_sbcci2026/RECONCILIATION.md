@@ -116,7 +116,7 @@ Rejected: "over the 5,000-word limit". `wordcount.py` already counts 200 words p
 ## Alignment decision (authors, 2026-11-05): D&T stays loyal to SBCCI 2026
 
 The authors decided that the D&T article will not present corrections to SBCCI 2026. It reuses SBCCI 2026's stated and computed values and its conventions. Implemented as follows:
-- **Stress-delivery statistics** (mean and σ of die temperature, die error, ⟨AF⟩, σ(V), ripple, equivalent hours) are computed over the **whole run**, as SBCCI 2026 Table II actually did. They reproduce exactly: 107.73 / 117.04 °C, 2.64 / 1.25 °C, −7.27 / 2.04 °C, ⟨AF⟩ 31.1 / 51.3, σ(V) 6.1 / 3.6 mV, equivalent hours 710 / 1,182 (AF at the mean temperature × run length).
+- **Stress-delivery statistics** (mean and σ of die temperature, die error, ⟨AF⟩, σ(V), ripple, equivalent hours) are computed over the **whole run**, as SBCCI 2026 Table II actually did. They reproduce exactly: 107.73 / 117.04 °C, 2.64 / 1.25 °C, −7.27 / 2.04 °C, ⟨AF⟩ 31.1 / 51.3, σ(V) 6.1 / 3.6 mV, equivalent hours 711 / 1,182 (AF at the mean temperature × run length).
 - **Regression, noise and detectability statistics** exclude the first hour, as SBCCI 2026 Table III did: R² 92.1 / 59.2 %, residual 0.90 / 0.73 cnt.
 - **The manuscript states both windows truthfully** (whole run for stress, first hour excluded for regression). It never claims a soak exclusion for the stress table.
 - **Not printed, because they are not reproducible from the stated means:** the 9.37 °C text value (the table means give 9.31 °C) and SBCCI's 1.44–1.92× E_a range (whole run gives 1.43–1.90). The manuscript gives the two means and "about 1.4–1.9×".

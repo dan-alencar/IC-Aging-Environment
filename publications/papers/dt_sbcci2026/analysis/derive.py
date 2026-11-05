@@ -32,7 +32,8 @@ def stress_view(r):
         T_mean=s["T_mean_full"], T_sd=s["T_sd_full"], die_err=s["T_mean_full"] - r["die_target_c"],
         AF=s["AF_full"], AF_of_mean=s["AF_of_mean_full"], V_sd_mV=s["V_sd_full_mV"],
         ripple_pct={k: 100 * (s["AF_full"][k] / s["AF_of_mean_full"][k] - 1) for k in s["AF_full"]},
-        eqh_meanT={k: s["AF_of_mean_full"][k] * s["duration_raw_h"] for k in s["AF_full"]},
+        # equivalent hours as SBCCI 2026 Table I: AF(mean T) x the stated run length (2 decimals, 23.08 h)
+        eqh_meanT={k: s["AF_of_mean_full"][k] * round(s["duration_raw_h"], 2) for k in s["AF_full"]},
     )
 
 
