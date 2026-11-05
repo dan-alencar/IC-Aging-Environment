@@ -1,0 +1,3 @@
+timestamp,oven_temp_c,oven_setpoint_c,oven_output_pct,psu_voltage_v,psu_current_a,dut_temp_c,dut_slack
+0.9505691528320312,0.0,0.0,0.0,0.0,0.0,0.0,0
+1.936617374420166,0.0,0.0,0.0,0.0,0.0,0.0,0
