@@ -1,0 +1,33 @@
+{
+    "arduino_enabled": true,
+    "arduino_port": "SIM",
+    "arduino_baud": 115200,
+    "duts": [
+        {
+            "enabled": true,
+            "link": "hub",
+            "port": "SIM",
+            "baud": 125000,
+            "ftdi_serial": "0ABC01",
+            "jtag_usb": "5-3",
+            "jtag_backup": false,
+            "vccint_sp": 0.85
+        },
+        {
+            "enabled": true,
+            "link": "hub",
+            "port": "SIM",
+            "baud": 125000,
+            "ftdi_serial": "0ABC01",
+            "jtag_usb": "5-4",
+            "jtag_backup": false,
+            "vccint_sp": 0.85
+        }
+    ],
+    "program_fpga": false,
+    "bitstream_path": "/home/andre/Documentos/GitHub/IC-Aging-Environment/D&T 2027/10_DT_Monitor/bitstreams/au15p_TESTE_caminho_critico.bit",
+    "hub_bitstream": "au15p_multi_B.bit",
+    "vivado_bin": "/home/andre/2025.2/Vivado/bin/vivado",
+    "ea_ev": 0.7,
+    "t_use_c": 55.0
+}
