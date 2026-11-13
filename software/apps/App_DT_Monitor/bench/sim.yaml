@@ -1,0 +1,9 @@
+# The same bench on the simulator: ./run.sh sim  (then ./run.sh gui sim)
+bench: sim
+sessions_dir: ~/fbs_sessions/dt_monitor_sim
+experiment: ic_aging.burnin
+sim: {boards: 2, speed: 1.0, seed: 0}
+boards:
+  - {name: A, via: stlink}
+  - {name: B, via: stlink}
+oven: {driver: sim}

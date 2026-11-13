@@ -1,0 +1,13 @@
+# The two-board bench: fbs-service --config bench/rv02a_lab.yaml (or ./run.sh service)
+# Edit the ports for this PC (ls -l /dev/serial/by-id/). Boards are read through the STM32's
+# ST-LINK relay, so the watchdog can reprogram an FPGA whose SYSMON stops.
+bench: rv02a
+sessions_dir: ../../../data/campaigns/sessions    # git-ignored
+experiment: ic_aging.burnin
+bitstreams_dir: ../../../hardware/fpga/xilinx/ultrascale_plus/bitstreams
+boards:
+  - {name: A, port: /dev/serial/by-id/usb-STMicroelectronics_STLINK-V3_004800283133510937363734-if02, baud: 921600, via: stlink}
+  - {name: B, port: /dev/serial/by-id/usb-STMicroelectronics_STLINK-V3_003E00243234511537333934-if02, baud: 921600, via: stlink}
+oven: {driver: ic_aging_oven, port: /dev/serial/by-id/usb-Arduino_LLC_Arduino_Nano_33_IoT-if00}
+sniffers: []
+reprogram: {vivado: null, bitfile: ../../../hardware/fpga/xilinx/ultrascale_plus/bitstreams/fbs_aging_top.bit}

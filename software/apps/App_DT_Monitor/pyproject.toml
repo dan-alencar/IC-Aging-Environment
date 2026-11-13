@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dt-monitor"
+version = "0.1.0"
+description = "IC-Aging burn-in app (D&T 2027) on the fpgaging-board-support bench kit"
+requires-python = ">=3.9"
+dependencies = ["fpgaging-bsp[qt]>=0.2.0", "pyyaml>=5.4"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+dt-monitor = "dt_monitor.__main__:main"
+
+[project.entry-points."fbs.experiments"]
+"ic_aging.burnin" = "dt_monitor.experiment:experiment"
+
+[project.entry-points."fbs.ovens"]
+ic_aging_oven = "dt_monitor.oven:oven"
+
+[tool.setuptools.packages.find]
+include = ["dt_monitor*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

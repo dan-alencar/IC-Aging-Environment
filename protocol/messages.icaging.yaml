@@ -1,0 +1,140 @@
+# IC-Aging application messages on the fbs protocol (fpgaging-board-support SPEC §6.1).
+# Types 0x40-0x5F, sent by / to the FPGA_APP node. Generate the bindings with
+#   python3 protocol/generate.py            (or --check)
+# which runs external/fpgaging-board-support/tools/gen_protocol.py --app and places:
+#   software/apps/App_DT_Monitor/dt_monitor/protocol_aging.py
+#   hardware/fpga/xilinx/ultrascale_plus/src/rtl/fbs_aging/fbs_aging_pkg.sv
+#   protocol/MESSAGES_aging.md
+constants:
+  AGING_MAX_CHAINS: {value: 10, doc: "AGING_INFO.chains slots (9 stressed chains + 1 reference)"}
+  AGING_MAX_RO: {value: 4, doc: "AGING_RO.counts slots"}
+  AGING_HIST_BINS: {value: 16, doc: "AGING_WINDOW.hist bins"}
+  AGING_WINDOW_MS_MIN: {value: 100, doc: "AGING_SET_MODE.window_ms range"}
+  AGING_WINDOW_MS_MAX: {value: 5000, doc: "keeps sweeps per window within u16"}
+  AGING_RTL_VERSION: {value: 4, doc: "fbs payload (3 was the colleague's multi-chain design)"}
+
+enums:
+  ChainKind:
+    doc: "AGING_CHAIN.kind"
+    values: {CARRY8: 0, LUT: 1, INFERRED: 2, REFERENCE: 3}
+  SweepMode:
+    doc: "How the sensor sweeps: off, continuously (about 9000 sweeps per 1 s window), or one sweep per window (as in SBCCI 2026)"
+    values: {"OFF": 0, CONTINUOUS: 1, SINGLE: 2}
+
+bitfields:
+  AgingFlags:
+    doc: "AGING_WINDOW.flags"
+    bits:
+      NO_ALARM: 0          # a sweep of chain 0 reached the last phase step without an alarm
+      PS_TIMEOUT: 1        # the MMCM did not answer a phase step (PSDONE)
+      STUCK: 2             # chain 0 gave one code for the whole window (min == max, at least 2 sweeps)
+      LOCK_LOST: 3         # the MMCM lost lock in the window
+      MEASURE_WINDOW: 4    # reference chain and ring oscillators were measured in this window
+      PARTIAL: 5           # the window was cut short (mode change)
+
+messages:
+  - name: AGING_WINDOW
+    type: 0x40
+    kind: telemetry
+    doc: "Statistics of the main chain (chain 0) over one window"
+    fields:
+      - {name: t_ms, type: u32, unit: ms, doc: "Board time at the end of the window"}
+      - {name: window_id, type: u32}
+      - {name: sweeps, type: u16}
+      - {name: last, type: u16, doc: "Phase steps to the alarm in the last sweep"}
+      - {name: min, type: u16}
+      - {name: max, type: u16}
+      - {name: sum, type: u32}
+      - {name: sumsq, type: u64}
+      - name: hist
+        type: struct
+        count: 16
+        doc: "Sweeps per bin; bin k covers [base + k*bin_width, base + (k+1)*bin_width), the ends are open"
+        fields:
+          - {name: n, type: u16}
+      - {name: lock_loss, type: u16, doc: "MMCM unlocks in the window"}
+      - {name: sweep_mode, type: u8, enum: SweepMode}
+      - {name: flags, type: u8, bits: AgingFlags}
+
+  - name: AGING_CHAIN
+    type: 0x41
+    kind: telemetry
+    doc: "Statistics of one chain over one window (chain 0 equals AGING_WINDOW)"
+    fields:
+      - {name: window_id, type: u32}
+      - {name: chain, type: u8}
+      - {name: kind, type: u8, enum: ChainKind}
+      - {name: size, type: u16, doc: "Bits (CARRY8, inferred) or stages (LUT)"}
+      - {name: sweeps, type: u16}
+      - {name: last, type: u16}
+      - {name: min, type: u16}
+      - {name: max, type: u16}
+      - {name: sum, type: u32}
+      - {name: sumsq, type: u64}
+      - {name: stressed, type: u8, doc: "0: a reference chain, held static outside measurement windows"}
+
+  - name: AGING_RO
+    type: 0x42
+    kind: telemetry
+    doc: "Ring-oscillator edge counts over a measurement window (temperature cross-check)"
+    fields:
+      - {name: window_id, type: u32}
+      - {name: window_ms, type: u16, unit: ms}
+      - {name: n_ro, type: u8}
+      - name: counts
+        type: struct
+        count: 4
+        fields:
+          - {name: count, type: u32}
+
+  - name: AGING_INFO
+    type: 0x43
+    kind: telemetry
+    doc: "Payload description: after reset, every 60 s, and as the reply to AGING_GET_INFO"
+    fields:
+      - {name: rtl_version, type: u16}
+      - {name: window_ms, type: u16, unit: ms}
+      - {name: ps_step_fs, type: u32, unit: fs, doc: "One MMCM fine phase step"}
+      - {name: max_steps, type: u16, doc: "Steps a sweep tries before NO_ALARM"}
+      - {name: sweep_mode, type: u8, enum: SweepMode}
+      - {name: periodic, type: u8, doc: "1: windows are sent as they end"}
+      - {name: ref_period_s, type: u16, unit: s, doc: "0: the reference chain is never measured"}
+      - {name: ref_windows, type: u8, doc: "Measurement windows per reference period"}
+      - {name: hist_base, type: u16}
+      - {name: hist_bin_width, type: u8}
+      - {name: n_chains, type: u8}
+      - name: chains
+        type: struct
+        count: 10
+        fields:
+          - {name: kind, type: u8, enum: ChainKind}
+          - {name: size, type: u16}
+          - {name: stressed, type: u8}
+      - {name: n_ro, type: u8}
+
+  - name: AGING_SET_MODE
+    type: 0x50
+    kind: command
+    reply: ACK
+    doc: "Sweep mode and window; the reference chain and ring oscillators run for ref_windows windows every ref_period_s"
+    fields:
+      - {name: sweep_mode, type: u8, enum: SweepMode}
+      - {name: window_ms, type: u16, unit: ms}
+      - {name: periodic, type: u8}
+      - {name: ref_period_s, type: u16, unit: s}
+      - {name: ref_windows, type: u8}
+
+  - name: AGING_SET_HIST
+    type: 0x51
+    kind: command
+    reply: ACK
+    doc: "Histogram bins of AGING_WINDOW: 16 bins of bin_width steps from base"
+    fields:
+      - {name: base, type: u16}
+      - {name: bin_width, type: u8}
+
+  - name: AGING_GET_INFO
+    type: 0x52
+    kind: command
+    reply: AGING_INFO
+    doc: "Ask for AGING_INFO"

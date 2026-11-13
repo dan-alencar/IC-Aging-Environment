@@ -1,0 +1,3 @@
+[submodule "external/fpgaging-board-support"]
+	path = external/fpgaging-board-support
+	url = https://github.com/dan-alencar/fpgaging-board-support.git

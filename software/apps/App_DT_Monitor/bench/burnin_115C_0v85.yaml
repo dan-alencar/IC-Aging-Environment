@@ -1,0 +1,17 @@
+# The D&T 2027 burn-in (fbs SPEC §9.5). Board B is stress: blocked in the registry (V12).
+name: burnin_115C_0v85
+experiment: ic_aging.burnin
+boards: [A]
+pre:
+  - corners: {vccint_v: [0.85, 0.90, 0.95, 0.85], settle_min: 2, measure_min: 3, oven: off}
+stress:
+  oven_setpoint_c: 80
+  die_target_c: 115              # outer loop ±1 °C / 30 min, ±3 °C band (SBCCI 2026)
+  vccint_v: 0.85                 # closed loop on SYSMON, Kp 0.1 V/V
+  duration_h: 37
+  limits: {die_c: 130, iout_a: 3.0, oven_c: 130}
+post:
+  - wait: {oven: off, until_die_below_c: 70}
+  - corners: {same_as: pre}
+stop_on: [die_implausible, latched, {board_silent_s: 30}, oven_fault]
+notify: [alarm, finished]
