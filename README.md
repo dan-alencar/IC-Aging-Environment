@@ -27,7 +27,7 @@ The repository is organized into distinct, modular domains:
 │   ├── fpga/
 │   │   ├── xilinx/              # Vivado projects
 │   │   │   ├── nexys4_ddr/      # Digilent Nexys4 DDR (Artix-7 xc7a100t)
-│   │   │   └── ultrascale_plus/ # Custom UltraScale+ (xcau15p) SBCCI target
+│   │   │   └── ultrascale_plus/ # RV02A (xcau15p): SBCCI design, and fbs_aging_top (src/rtl/fbs_aging)
 │   │   └── intel/               # Quartus projects
 │   │       └── de10_lite/       # Terasic DE10-Lite (MAX10 10M50DA) port
 │   ├── common/                  # Shared RTL modules (sensors, filters, UART)
@@ -36,7 +36,7 @@ The repository is organized into distinct, modular domains:
 ├── firmware/                    # Embedded microcontrollers & controllers
 │   ├── thermal_chamber/         # Oven temperature PID & bang-bang controllers
 │   ├── uart_router/             # ESP32 packet router (CROC / STM32 bridge)
-│   └── supervisory/             # STM32L4 supervisory firmware (PMIC & OLED)
+│   └── supervisory/             # STM32L4 firmware: old SBCCI project; stm32_hub_fw/ = colleague's binaries
 │
 ├── software/                    # Desktop host applications and instrumentation
 │   ├── core/                    # Shared Python package (ic_aging_core)
@@ -44,10 +44,16 @@ The repository is organized into distinct, modular domains:
 │   │   ├── App_Nexys/           # Single DUT (Nexys4 DDR) burn-in app
 │   │   ├── App_2Nexys/          # Dual DUT (dual Nexys4 DDR) burn-in app
 │   │   ├── App_CornerSweep/     # Voltage/failure-boundary sweep tool
-│   │   └── App_FPGAging_Slack_Sensor/ # UltraScale+ CROC & STM32 bridge app
+│   │   ├── App_DT_Monitor/      # RV02A burn-in (D&T 2027) on the fbs bench kit
+│   │   └── App_FPGAging_Slack_Sensor/ # superseded by App_DT_Monitor (kept until the bench check, fbs P7)
 │   └── launcher.py              # Central Qt selector launcher
 │
+├── protocol/                    # IC-Aging messages on the fbs protocol (AGING_*), generate.py
+├── external/
+│   └── fpgaging-board-support/  # submodule: fbs protocol, platform RTL, STM32 firmware, bench kit
+│
 ├── analysis/                    # Post-processing, modeling & statistics
+│   ├── dt2027/                  # sbcci_metrics.py: SBCCI 2026 tables for the paper runs and new sessions
 │   ├── notebooks/               # Interactive Jupyter notebooks
 │   ├── scripts/                 # Batch processing & Arrhenius extrapolation
 │   ├── figures/                 # Script-generated publication figures
@@ -86,6 +92,16 @@ This opens the dark-themed launcher dialog allowing you to select between:
 
 Each application manages its own Python virtual environment (`.venv/`) independently.
 
+**RV02A boards (AU15P) with the fbs platform:** use App_DT_Monitor, which runs on the
+fpgaging-board-support bench kit (clone with `git submodule update --init`):
+
+```bash
+software/apps/App_DT_Monitor/run.sh sim     # the whole bench on the simulator
+software/apps/App_DT_Monitor/run.sh         # the lab bench (edit bench/rv02a_lab.yaml first)
+```
+
+See [`software/apps/App_DT_Monitor/README.md`](software/apps/App_DT_Monitor/README.md).
+
 ### 2. Building FPGA Bitstreams
 
 For **Nexys4 DDR (Artix-7)**:
@@ -94,6 +110,11 @@ cd hardware/fpga/xilinx/nexys4_ddr
 scripts/check_layout.sh
 scripts/create_project.sh
 scripts/build_bitstream.sh --jobs 8
+```
+
+For **RV02A with the fbs platform** (`fbs_aging_top`, no IP cores, any recent Vivado):
+```bash
+hardware/fpga/xilinx/ultrascale_plus/scripts/build_fbs_aging.sh   # -> build/fbs_aging/fbs_aging_top.bit
 ```
 
 For **UltraScale+ (SBCCI target)**:

@@ -221,9 +221,27 @@ Canonical source lives under `firmware/` (also symlinked via `Arduino-ESP/` and 
 - `firmware/thermal_chamber/PID_Controller/` — SIMC-tuned PID oven controller. Uses **ArduPID 1.0.1** (installed at `~/Arduino/libraries/ArduPID/`). Key API vs 0.2.1: `setTunings()` replaces `begin()`, `setILimits()` replaces `setWindUpLimits()`, `setDtMs()` replaces `setSampleTime()`, `compute(input)` takes input as argument and returns output (no pointer). `start()`/`stop()` were removed; `testRunning` flag controls execution.
 - `firmware/thermal_chamber/arduino_termostato/` — bang-bang oven controller (SSR + NTC).
 - `firmware/thermal_chamber/FOPDT_Step_Test/` — step-test sketch used to identify the FOPDT plant model.
-- `firmware/thermal_chamber/arduino_uart_tp_sniffer/` — passive UART sniffer for debugging serial traffic.
 - `firmware/uart_router/esp32_uart_router/` — UART router between PC and FPGA/STM32 (SBCCI path).
 - `firmware/supervisory/stm32l4_aging/` — STM32L4 supervisory MCU (PMIC TPS65400 & OLED).
+
+## RV02A on the fbs platform (D&T 2027)
+
+`external/fpgaging-board-support` is a git submodule (the shared board-support repo: protocol,
+`fbs_platform` RTL, STM32 supervisor firmware, bench kit). Its `docs/SPEC.md` is the source of
+truth; §6 lists what this repository builds on it. Update the submodule pointer when fbs changes.
+
+- `protocol/messages.icaging.yaml` — the AGING_* messages (types 0x40–0x5F). After editing,
+  run `python3 protocol/generate.py` (writes the Python and SV bindings; `--check` verifies).
+- `hardware/fpga/xilinx/ultrascale_plus/src/rtl/fbs_aging/` — `fbs_aging_top`: fbs_platform plus
+  the aging payload (continuous sweeps, 1 s window statistics, 9 chains + an unstressed
+  reference chain, ring oscillators, histogram). No IP: MMCME4_ADV is instantiated directly.
+  Build: `scripts/build_fbs_aging.sh`; simulate: `sim/test_rtl.py` (cocotb + Verilator, from the
+  fbs .venv). The SBCCI design (`fpga_unified_top`, XCI-based) is unchanged.
+- `software/apps/App_DT_Monitor/` — the burn-in app: plugins for fbs-service (experiment
+  `ic_aging.burnin`, oven driver `ic_aging_oven`), a simulator payload model, the Qt window,
+  and the `corners`, `oven-test`, `check-board` scripts. Tests: `pytest software/apps/App_DT_Monitor`.
+- `analysis/dt2027/sbcci_metrics.py` — SBCCI 2026 metrics for the paper's runs and new sessions.
+- `tools/check_fbs.sh` runs all of the above checks.
 
 ## Reference documents
 

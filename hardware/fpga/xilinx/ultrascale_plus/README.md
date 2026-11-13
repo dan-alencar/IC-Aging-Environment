@@ -1,3 +1,24 @@
+# RV02A (xcau15p) FPGA designs
+
+Two designs live here:
+
+- **`fbs_aging_top`** (`src/rtl/fbs_aging/`): the IC-Aging payload on the fpgaging-board-support
+  platform (fbs SPEC §6.1), used by App_DT_Monitor. No IP cores, so any Vivado that knows the
+  part builds it (checked with 2024.2: WNS +1.47 ns, 8.75 % LUTs, 583 CARRY8).
+  - Continuous sweeps of one MMCM fine-phase clock (19.841 ps steps, about 9000 sweeps/s at
+    400 steps), statistics per window (count, last, min, max, sum, sum of squares) for every
+    chain, and a 16-bin histogram of chain 0 (`AGING_WINDOW`, `AGING_CHAIN`).
+  - Chains: 0 inferred 256-bit adder (the main sensor), 1–4 CARRY8 128/256/512/1024 bits,
+    5–8 LUT 8/16/24/32 stages (the colleague's au15p_multi_B set), 9 a reference copy of
+    chain 0 that toggles only in measurement windows (3 windows a minute by default).
+  - Two ring oscillators counted in measurement windows (`AGING_RO`), for the die-temperature
+    cross-check of boards B and C (V12).
+  - Commands: `AGING_SET_MODE`, `AGING_SET_HIST`, `AGING_GET_INFO`, `PING`, `GET_INFO`.
+  - Build: `scripts/build_fbs_aging.sh` → `build/fbs_aging/`. Simulation: `sim/test_rtl.py`
+    (cocotb + Verilator, behavioural MMCM and fabric models). Placement of the chains is not
+    fixed yet; freeze one bitstream per run (see `bitstreams/README.md`).
+- **`fpga_unified_top`** (below): the SBCCI 2026 design with its Vivado IP, unchanged.
+
 # SBCCI FPGA Aging Vivado Project
 
 This is the cleaned, reproducible Vivado layout for the SBCCI FPGA aging
