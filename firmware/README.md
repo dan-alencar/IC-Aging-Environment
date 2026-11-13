@@ -11,7 +11,6 @@ firmware/
 │   ├── arduino_termostato/# Bang-bang hysteretic thermostat controller
 │   ├── FOPDT_Step_Test/   # Step-test logger to identify plant transfer function
 │   ├── SSR_TEST/          # Hardware validation sketch for Solid-State Relay
-│   ├── arduino_uart_tp_sniffer/ # Passive UART sniffer tool
 │   └── legacy/            # Superseded sketches
 │
 ├── uart_router/           # Communication routers

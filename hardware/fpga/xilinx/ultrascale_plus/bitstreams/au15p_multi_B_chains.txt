@@ -1,0 +1,21 @@
+# Cadeias da variante fpga_multi_top (checkpoint roteado; atrasos em ns)
+# Caminho funcional: de op_a[0..1] (os únicos registradores do estímulo que mudam) até o
+# sensor, pela cadeia inteira. É o que o sensor mede.
+# tamanho: bits (8 × CARRY8) ou estágios de LUT; '-' na soma inferida
+# cy8_tot: CARRY8 no somador; cy8_cam / lut_cam: CARRY8 e LUTs no caminho funcional
+# atraso / atraso_min: caminho funcional até o D do FF2, corner lento (setup) e rápido (hold)
+# folga_ff2 / folga_ff1: folga de setup do caminho funcional no FF2 (clk_sys) e no FF1
+# (clk_phase na origem); passos_ff1 = folga_ff1 / 19.841 ps; d_passos = diferença para a
+# cadeia 0 (cadeia mais longa, menos passos)
+# pior_atraso / pior_folga: pior caminho até o FF2 de qualquer origem (inclui registradores
+# constantes, que não mudam): é o que conta para o fechamento de timing
+cadeia tipo     tamanho cy8_tot cy8_cam lut_cam  atraso atraso_min niveis folga_ff2 folga_ff1 passos_ff1 d_passos pior_atraso pior_folga  ff2_loc
+0      INFERIDA       -      48      16       2   3.570      1.395     18     6.196     5.862        295        0       3.683      6.082  SLICE_X50Y109
+1      CARRY8       128      16      16       1   1.956      0.669     17     7.790     7.875        397      101       2.396      7.506  SLICE_X48Y75
+2      CARRY8       256      32      32       1   2.808      0.943     33     6.945     6.998        353       57       2.808      6.945  SLICE_X53Y84
+3      CARRY8       512      64      64       1   4.391      1.656     65     5.412     5.488        277      -19       4.448      5.356  SLICE_X50Y126
+4      CARRY8      1024     128     128       1   7.486      2.858    129     2.335     2.365        119     -176       7.660      2.166  SLICE_X34Y159
+5      LUT            8       0       0       8   2.764      1.024      8     7.075     6.569        331       36       2.802      7.038  SLICE_X50Y122
+6      LUT           16       0       0      16   3.831      1.491     16     6.019     5.532        279      -17       3.831      6.019  SLICE_X50Y122
+7      LUT           24       0       0      24   4.759      1.851     24     5.074     4.717        238      -58       4.794      5.034  SLICE_X38Y92
+8      LUT           32       0       0      32   6.551      2.636     32     3.313     3.004        151     -144       6.551      3.313  SLICE_X38Y91
