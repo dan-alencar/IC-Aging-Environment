@@ -237,6 +237,10 @@ truth; §6 lists what this repository builds on it. Update the submodule pointer
   reference chain, ring oscillators, histogram). No IP: MMCME4_ADV is instantiated directly.
   Build: `scripts/build_fbs_aging.sh`; simulate: `sim/test_rtl.py` (cocotb + Verilator, from the
   fbs .venv). The SBCCI design (`fpga_unified_top`, XCI-based) is unchanged.
+  The chains, sensors, ring oscillators and measurement clocks are placed and routed from the
+  generated `src/constraints/fbs_aging_fixed_pnr.xdc` (V19); the build fails unless its
+  `chains.txt` equals `src/constraints/fbs_aging_fixed_pnr_chains.txt`. Do not re-extract it
+  (`scripts/extract_fbs_aging_pnr.sh`) without understanding that it resets every baseline.
 - `software/apps/App_DT_Monitor/` — the burn-in app: plugins for fbs-service (experiment
   `ic_aging.burnin`, oven driver `ic_aging_oven`), a simulator payload model, the Qt window,
   and the `corners`, `oven-test`, `check-board` scripts. Tests: `pytest software/apps/App_DT_Monitor`.

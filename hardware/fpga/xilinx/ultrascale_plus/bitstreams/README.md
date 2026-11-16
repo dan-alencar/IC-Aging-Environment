@@ -30,7 +30,10 @@ adder) excites the adder so the top sum bit flips only after the carry crosses a
 ## fbs builds
 
 `fbs_aging_top` (IC-Aging on the fbs platform, `src/rtl/fbs_aging`, no IP) is built with
-`scripts/build_fbs_aging.sh` into `build/fbs_aging/`. A build is copied here, with its md5 and
+`scripts/build_fbs_aging.sh` into `build/fbs_aging/`. Its aged logic is placed and routed from
+`src/constraints/fbs_aging_fixed_pnr.xdc` (V19), so a rebuild reproduces the chain timing of
+`src/constraints/fbs_aging_fixed_pnr_chains.txt` exactly; still archive the `.bit` of every run
+with its md5, `chains.txt` and `fabric_pnr.txt`. A build is copied here, with its md5 and
 USR_ACCESS in this table, once it has passed the bench checks (fbs SPEC phase P7).
 
 | File | md5 | USR_ACCESS | What |

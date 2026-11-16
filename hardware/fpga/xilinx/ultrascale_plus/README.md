@@ -4,7 +4,7 @@ Two designs live here:
 
 - **`fbs_aging_top`** (`src/rtl/fbs_aging/`): the IC-Aging payload on the fpgaging-board-support
   platform (fbs SPEC §6.1), used by App_DT_Monitor. No IP cores, so any Vivado that knows the
-  part builds it (checked with 2024.2: WNS +1.47 ns, 8.75 % LUTs, 583 CARRY8).
+  part builds it (checked with 2024.2: WNS +1.25 ns, 8.75 % LUTs, 583 CARRY8).
   - Continuous sweeps of one MMCM fine-phase clock (19.841 ps steps, about 9000 sweeps/s at
     400 steps), statistics per window (count, last, min, max, sum, sum of squares) for every
     chain, and a 16-bin histogram of chain 0 (`AGING_WINDOW`, `AGING_CHAIN`).
@@ -15,8 +15,21 @@ Two designs live here:
     cross-check of boards B and C (V12).
   - Commands: `AGING_SET_MODE`, `AGING_SET_HIST`, `AGING_GET_INFO`, `PING`, `GET_INFO`.
   - Build: `scripts/build_fbs_aging.sh` → `build/fbs_aging/`. Simulation: `sim/test_rtl.py`
-    (cocotb + Verilator, behavioural MMCM and fabric models). Placement of the chains is not
-    fixed yet; freeze one bitstream per run (see `bitstreams/README.md`).
+    (cocotb + Verilator, behavioural MMCM and fabric models).
+  - **Fixed placement and routing (fbs V19).** The aged logic is placed and routed from
+    `src/constraints/fbs_aging_fixed_pnr.xdc` (generated, about 1 MB): LOC/BEL/LOCK_PINS for all
+    2670 cells under `u_fabric` (chains, sensors, ring oscillators), FIXED_ROUTE for every net
+    inside it, and the MMCM, the three BUFGCEs, their clock roots and their clock routes. The
+    build writes `chains.txt` (per-chain delays, skew and predicted steps) and `fabric_pnr.txt`
+    (everything locked), and fails unless `chains.txt` equals the frozen
+    `src/constraints/fbs_aging_fixed_pnr_chains.txt` to the picosecond. Checked 2026-11-16: a
+    rebuild with the default placer and one with `AltSpreadLogic_high` (WNS +1.25 / +0.83 ns,
+    so the rest of the design moved) both reproduce every chain exactly. Without the clock
+    routes, the sensor skew still moved by up to 6 ps (one step on two chains); without any of
+    it, a free rebuild moved chain 8 from 124 to 62 predicted steps.
+  - To freeze a new placement (only when the aged logic changes, never during a campaign):
+    `FBS_AGING_FREE_PNR=1 scripts/build_fbs_aging.sh build/fbs_aging_ref`, then
+    `scripts/extract_fbs_aging_pnr.sh`, then a normal build. New placement = new baselines.
 - **`fpga_unified_top`** (below): the SBCCI 2026 design with its Vivado IP, unchanged.
 
 # SBCCI FPGA Aging Vivado Project

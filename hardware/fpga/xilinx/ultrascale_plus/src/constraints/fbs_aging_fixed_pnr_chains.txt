@@ -1,0 +1,19 @@
+# fbs_aging_top chain timing (xcau15p-ffvb676-1-i, Vivado 2024.2, slow corner setup / fast corner hold)
+# ff2_delay / ff2_delay_min: data path to FF2/D (clk_meas), setup and hold analysis, ns
+# ff1_slack / ff1_skew: setup slack and clock skew to FF1/D (clk_phase, phase 0), ns; steps = ff1_slack / 19.841 ps
+chain ff2_loc   ff2_delay ff2_delay_min ff2_slack ff1_slack  ff1_skew  steps ff1_loc         
+0     SLICE_X28Y120     3.066         0.422     6.719     6.264    -0.491    315 SLICE_X28Y119   
+1     SLICE_X32Y113     2.093         0.809     7.783     7.646     -0.41    385 SLICE_X33Y112   
+2     SLICE_X35Y114     2.939         1.149     6.937     6.866    -0.407    346 SLICE_X34Y116   
+3     SLICE_X37Y114     4.584         1.785     5.201     5.138    -0.447    258 SLICE_X37Y112   
+4     SLICE_X36Y117      7.78          3.06      1.99     2.124    -0.407    107 SLICE_X39Y127   
+5     SLICE_X37Y114     2.917         1.063     7.011     6.728    -0.426    339 SLICE_X38Y114   
+6     SLICE_X35Y119     4.656         1.791     5.254     4.742    -0.438    239 SLICE_X35Y118   
+7     SLICE_X40Y112     6.939         2.663      2.91     2.417     -0.44    121 SLICE_X40Y112   
+8     SLICE_X37Y114     8.162         3.142     1.704     1.246    -0.436     62 SLICE_X38Y115   
+9     SLICE_X51Y112     2.617         0.494     7.297     6.753    -0.449    340 SLICE_X52Y112   
+# fabric cells 2670 (LOC and BEL fixed: 0); fabric nets 3418, 2056 with interconnect (route fixed: 0)
+# clock cell u_clocks/u_bg0 BUFGCE_X0Y22
+# clock cell u_clocks/u_bg1 BUFGCE_X0Y16
+# clock cell u_clocks/u_bg2 BUFGCE_X0Y14
+# clock cell u_clocks/u_mmcm MMCM_X0Y0
