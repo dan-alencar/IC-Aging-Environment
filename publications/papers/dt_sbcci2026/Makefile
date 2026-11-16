@@ -21,6 +21,9 @@ analysis: venv
 	$(PY) analysis/inventory.py > /dev/null
 	$(PY) analysis/run_analysis.py
 	$(PY) analysis/pid_bench.py > /dev/null
+	$(PY) analysis/timescales.py
+	$(PY) analysis/hybrid_checks.py > /dev/null
+	$(PY) analysis/robustness.py
 	$(PY) analysis/derive.py            # first pass: results_derived.json (figures need it)
 	$(PY) analysis/make_figures.py
 	$(PY) analysis/derive.py            # second pass: figure-derived macros

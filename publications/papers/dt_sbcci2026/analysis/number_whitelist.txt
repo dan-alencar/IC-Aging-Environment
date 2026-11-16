@@ -15,7 +15,7 @@
 30       # 30-liter oven (equipment), last 30 minutes window (method)
 1        # 1 h soak (method), 1 Hz logging (config), list/figure indices
 0.5      # 0.5 Hz bang-bang logging (config); E_a range end
-23       # campaign name "23-hour" (rounded label of the 23.08 h runs); SBCCI 2026 stated 23 % (quoted, corrected in footnote)
+23       # campaign name "23-hour" (rounded label of the 23.08 h runs); rounded run-length label
 
 # --- method choices
 0.7      # reference activation energy (eV)
@@ -26,9 +26,7 @@
 20       # +-20 % AF tolerance
 95       # confidence level
 8        # Newey-West bandwidth / block length (h)
-15       # 15-minute block length
 24       # 24-hour alarm window; CRLB constant 24
-0.99     # alarm-capacity target (bits)
 3        # 3-sigma detection criterion; list index
 
 # --- formula constants
@@ -45,12 +43,13 @@
 08       # JESD22-A108 (token split)
 883      # MIL-STD-883
 1015     # Method 1015
-0.1      # Sobas et al.: drift < 0.1 % (literature value, cited)
+0.1      # E_a range start for low-activation-energy mechanisms (method choice)
 1,000    # Sobas et al.: 1,000 hours (literature value, cited)
 
 # --- values quoted from SBCCI 2026 (prior publication) in the revisions table, not results of this article
-1.44     # SBCCI 2026 stated AF-ratio range, lower end (not reproduced; see RECONCILIATION 14)
-1.92     # SBCCI 2026 stated AF-ratio range, upper end (not reproduced)
 80       # SBCCI 2026 stated oven setpoint
 2025     # date of the bitstream build (April 2025)
-19.85    # MMCM step of the inverter-chain design, as stated in SBCCI 2026 (spec)
+0.3      # E_a range end for low-activation-energy mechanisms (method choice)
+164      # run identifier BB-164 (name)
+214      # run identifier PID-214 (name)
+0.01     # reported significance threshold (circular-shift permutation p = 0.006/0.004; exact 0.006/0.008; results_hybrid.json wander_sp)

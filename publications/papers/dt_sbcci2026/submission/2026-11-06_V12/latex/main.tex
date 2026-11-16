@@ -1,0 +1,269 @@
+% IEEE Design & Test feature article, laid out after the D&T house pattern
+% (department tag, sans-serif title and headings, unnumbered sentence-case
+% sections, small-caps lead-in, unheaded closing with end mark, "References"
+% and bios without heading, "Direct questions" line). CEDA author guidelines
+% take precedence: <= 5,000 words incl. references and bios (200 per figure or
+% table), <= 12 references, title <= 9 words, introduction 1-5 paragraphs,
+% conclusion 1-2 paragraphs, bios with position, degree, <= 3 interests, e-mail.
+% Author manuscript for IEEE Design & Test (SI: SBCCI 2026). D&T publishes no
+% template; production applies the magazine layout after acceptance. This file
+% follows the CEDA author guidelines (<= 5,000 words incl. references and bios,
+% 200 per figure/table; <= 12 references; title <= 9 words; opening 1-5
+% paragraphs without an "Introduction" heading; conclusion 1-2 paragraphs;
+% bios with position, degree, <= 3 interests, e-mail) and the structure of
+% published D&T features (unnumbered sentence-case headings).
+\documentclass[10pt,twocolumn]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage[letterpaper,top=0.75in,bottom=0.85in,left=0.7in,right=0.7in,columnsep=0.24in]{geometry}
+\usepackage{graphicx,booktabs,amsmath,xcolor,array,cite,url,textcomp}
+\usepackage[shortlabels]{enumitem}
+\graphicspath{{figures/}}
+\usepackage[font=footnotesize,labelfont=bf,labelsep=period,skip=4pt]{caption}
+\usepackage{titlesec,fancyhdr}
+\setcounter{secnumdepth}{0}
+\titleformat{\section}{\normalfont\large\bfseries\color{black!80}}{}{0pt}{}
+\titlespacing*{\section}{0pt}{9pt plus 2pt}{3pt}
+\renewcommand{\figurename}{Figure}
+\renewcommand{\tablename}{Table}
+\captionsetup[table]{position=top}
+\pagestyle{fancy}\fancyhf{}
+\fancyhead[L]{\footnotesize\itshape IEEE Design \& Test --- Special Issue: SBCCI 2026}
+\fancyhead[R]{\footnotesize\itshape Alencar et al.: Averaging Time Defines When On-Chip Sensors Resolve Burn-In Drift}
+\fancyfoot[C]{\footnotesize\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\setlength{\parskip}{0pt}
+\setlist{itemsep=1pt,parsep=0pt}
+\definecolor{pid}{HTML}{1F5FBF}\definecolor{bb}{HTML}{D9661F}
+\newcommand{\Tmin}{T_{\min}}
+\newcommand{\tint}{\tau_{\mathrm{int}}}
+% units without siunitx (keeps the source buildable on TeX Live 2020)
+\newcommand{\degC}{\,\textdegree C}
+\newcommand{\unit}[1]{\,\mathrm{#1}}
+\newcommand{\mcnth}{\,m\,cnt/h}
+\newcommand{\dttitle}{Averaging Time Defines When On-Chip Sensors Resolve Burn-In Drift}
+\hyphenation{Arrhe-nius}
+% every result printed below comes from analysis/ through these macros
+\input{values.tex}
+
+\begin{document}
+
+\twocolumn[{%
+\begin{center}
+{\footnotesize\scshape Feature Article --- Special Issue: SBCCI 2026}\\[6pt]
+{\LARGE\bfseries Averaging Time Defines When\\[2pt] On-Chip Sensors Resolve Burn-In Drift}\\[8pt]
+{\normalsize Danilo Alencar, Lucas Nogueira, Alisson Barros, Arthur Pamplona, Andre Grangeiro, and Jarbas Silveira}\\
+{\small\itshape Laboratory of Electronic Systems and Circuits (LESC), Universidade Federal do Cear\'a, Fortaleza, Brazil}\\[3pt]
+{\normalsize Fabian Vargas}\\
+{\small\itshape IHP -- Leibniz Institute for High Performance Microelectronics, Frankfurt (Oder), Germany}\\[8pt]
+\begin{minipage}{0.86\textwidth}
+\small\noindent\textbf{\textit{Abstract}---}On-chip aging sensors are validated under burn-in, where die temperature and voltage swamp the aging signal, yet run length is often sized from the sample-rate noise. Extending our SBCCI 2026 comparison of a thermostatic and a proportional-integral-derivative (PID) oven with a new \vDurRCA-hour run on one field-programmable gate array (FPGA), we read the sensor's residual by averaging time and find that an hour-scale noise floor sets how long a run must last: \vRatioLo--\vRatioHi{} times the white-noise prediction on both long logs (\vDetFairLo--\vDetFairHi\,h on the new run). Labs should size runs from that floor and set the die's mean temperature from die telemetry; with matched floors, the PID practice would resolve residual drift up to \vAFratio$\times$ sooner at 0.7\,eV, and less for bias-temperature instability.\\[4pt]
+\noindent\textbf{\textit{Keywords}---}Burn-in, on-chip aging sensor, silicon lifecycle management, FPGA, Allan deviation, trend detection, thermal control.
+\end{minipage}
+\end{center}
+\vspace{6pt}}]
+
+% ---------------------------------------------------------------
+% Opening (no heading in D&T; CEDA: 1-5 paragraphs)
+\noindent On-chip aging sensors are moving into the silicon lifecycle management (SLM) stack, where their readings drive adaptive voltage scaling (AVS), remaining-useful-life estimates, and maintenance decisions~\cite{kashyap,niemann}. Before such a sensor is trusted, it is validated under accelerated burn-in: the device is heated and over-volted, and the sensor should report the resulting delay degradation. We use burn-in in this laboratory sense of sustained accelerated aging (operating life, in JESD22-A108 terms), not infant-mortality screening. The difficulty is that the sensor responds to die temperature and supply voltage within seconds, and far more strongly than to a day of aging.
+
+Our SBCCI~2026 paper compared two benches on the same FPGA and sensor: the oven's stock thermostat (bang-bang, BB) and a proportional-integral-derivative (PID) controller~\cite{sbcci26}. The PID bench, as run, delivered \vAFratio$\times$ the thermostat's stress, and the thermostat left \vSigRawRatio$\times$ more sample-rate noise. That paper noted that a day-long run cannot separate aging from the bench's effects and called for longer campaigns. This article is that campaign. It asks how long a run must last before the sensor resolves drift, and which of the two bench effects sets that time.
+
+The answer depends on the averaging time. Over minutes, a temperature--voltage correction removes almost all of the thermostat's ripple. Over hours, every log keeps a noise floor that more averaging does not reduce, and that floor sets the run length, several times what white noise would predict. Over the whole run, the mean die temperature sets how fast drift accumulates, which is where thermal control can pay off. New here are that run, the averaging-time analysis of all four logs, a sizing rule checked on two long logs and by simulation, and a reporting checklist. A primer introduces the tools; we then apply them to stress, noise, and drift.
+
+% ---------------------------------------------------------------
+\section{Related work}
+
+Three lines of work meet here. FPGA aging sensors have been validated under accelerated stress for over a decade~\cite{valdes}, and their readings now calibrate voltage scaling~\cite{niemann} and feed SLM~\cite{kashyap}; these works characterize the sensor, with the bench as a setting. Dedicated aging monitors cancel temperature and voltage by design, comparing a stressed circuit with an unstressed reference, as in the silicon odometer~\cite{keane}; FPGA sensors such as ours usually lack a matched reference path, so labs correct by regression, and what the regression leaves behind is the subject of this article. JEDEC JESD22-A108 targets, by default, a minimum junction temperature and leaves the detailed application of burn-in outside its scope~\cite{jedec}. Industrial burn-in has long managed junctions running above their chamber~\cite{vassighi}; an FPGA can even regulate its own burn-in from its on-chip junction temperature~\cite{xilinx}; and Sobas and Marc regulate an FPGA aging bench's die temperature and internal voltage because on-chip ring oscillators respond to both~\cite{sobas}. Finally, drift detection in noisy records is mature in metrology and climate science: Allan deviation characterizes oscillator noise by averaging time~\cite{allan}, and Weatherhead et al.\ size trend records from noise level and autocorrelation~\cite{weatherhead}. We bring this last line to the first two.
+
+% ---------------------------------------------------------------
+\section{The instrument and the logs}
+
+\textbf{Sensor.} The device under test (DUT) is a 28\,nm Xilinx Artix-7 FPGA on a Nexys~4~DDR board, used for every campaign. Our slack sensor~\cite{sbcci25} shifts a sampling clock through a mixed-mode clock manager (MMCM) until a comparator sees that the monitored path has not settled; the number of steps is the path's slack in counts (cnt), one step being \vPsINV\,ps on the inverter-chain bitstream and \vPsRCA\,ps on the adder bitstream. Each reading is a fresh sweep, so no stored baseline can absorb a slow drift. Die temperature $T$ and core voltage $V$ come from the on-chip analog-to-digital converter (XADC).
+
+\textbf{Benches.} Both benches use the same 30-liter drying oven. The \emph{bang-bang} bench is the unmodified chamber with its stock thermostat. The \emph{PID} bench drives a solid-state relay from a microcontroller, tuned as in~\cite{sbcci26}. A software loop trims the supply to hold the on-die voltage (in 5\,mV steps on the bang-bang bench), except on PID-23, whose supply was fixed. On the long PID run only, an outer loop also stepped the oven setpoint by 1\degC{} whenever the die strayed more than 3\degC{} from target, checking every 30\,minutes.
+
+\textbf{Logs.} We name the four logs by bench and length. BB-23 and PID-23 are the \vDurPair-hour pair of~\cite{sbcci26}, with the same board, oven, sensor, circuit (a 50-stage inverter chain), die target (115\degC), and on-die voltage (1.3\,V). The thermostat ran at its 80\degC{} dial; the PID oven was set by hand to \vPIDspMax\degC{} in its first minutes to center the die, with its supply fixed at \vVpsuPID\,V. BB-23 is the first day of BB-164, a \vDurBBlong-hour burn-in from April~2025~\cite{sbcci25}; PID-23 dates from January~2026. PID-214, from May~2026, is new: \vDurRCA\,h on a 16-bit ripple-carry adder at a 125\degC{} die target and 1.4\,V. As in~\cite{sbcci26}, stress statistics cover each whole run, and noise statistics exclude the first hour as thermal soak.
+
+% ---------------------------------------------------------------
+\section{A primer: Finding aging in a PVT-dominated signal}
+
+\textbf{The signal model.} Over a burn-in log the sensor reports
+\begin{equation}
+S(t)=S_{\mathrm{ref}}+k_T\,T(t)+k_V\,V(t)+D(t)+n(t),
+\label{eq:model}
+\end{equation}
+where $k_T$ and $k_V$ are the path's temperature and voltage sensitivities, $D(t)$ is the slow aging drift, and $n(t)$ is everything else. Least-squares regression of $S$ on $T$ and $V$ estimates the sensitivities, and the residual is the \emph{PVT-corrected slack} (process, voltage, temperature), in which $D$ is sought. Two rules follow. First, regressors must not respond to aging themselves: a channel the device drives, such as supply current, removes part of $D$ along with the PVT term (a ``bad control''). Second, the correction is only as good as the thermometer: if the XADC sits away from the path, slow changes in the on-die gradient stay in the residual.
+
+\textbf{Delivered stress.} Burn-in accelerates thermally activated mechanisms by the Arrhenius factor, and when the die temperature $T_j(t)$ moves, the stress delivered is the trajectory-averaged acceleration factor (AF)
+\begin{equation}
+\langle AF\rangle=\Big\langle \exp\!\Big[\frac{E_a}{k_B}\Big(\frac{1}{T_{\mathrm{use}}}-\frac{1}{T_j(t)}\Big)\Big]\Big\rangle_t .
+\label{eq:af}
+\end{equation}
+Because the exponential is convex, ripple raises $\langle AF\rangle$ above the factor at the mean temperature; to leading order the gain is $(E_a\sigma_T/k_BT^2)^2/2$ (Jensen's inequality), small for a few degrees. A first-order expansion gives the mean die error $\delta$ that keeps $\langle AF\rangle$ within a fraction $\eta$ of nominal at setpoint $T_{\mathrm{set}}$ (in kelvin):
+\begin{equation}
+\delta\approx\frac{k_B T_{\mathrm{set}}^2}{E_a}\,\ln(1+\eta).
+\label{eq:delta}
+\end{equation}
+
+\textbf{Allan deviation.} A single standard deviation $\sigma$ hides how noise behaves at long averaging times, which is where aging lives. Split the residual into adjacent windows of length $\tau$ with means $\bar y_k$; the Allan and Hadamard variances~\cite{allan}, whose square roots are the ADEV and HDEV, compare neighboring windows (Figure~\ref{fig:allan} uses the overlapping estimator):
+\begin{gather}
+\sigma_A^2(\tau)=\frac{1}{2}\big\langle(\bar y_{k+1}-\bar y_k)^2\big\rangle,\nonumber\\
+\sigma_H^2(\tau)=\frac{1}{6}\big\langle(\bar y_{k+2}-2\bar y_{k+1}+\bar y_k)^2\big\rangle.
+\label{eq:allan}
+\end{gather}
+On a log--log plot, white noise falls as $\tau^{-1/2}$, a periodic disturbance shows as a bump, and a flat region is a \emph{floor} that more averaging does not reduce. A linear drift $\beta$ rises as $|\beta|\tau/\sqrt2$; the Hadamard form cancels it and so shows the noise alone (a curved drift still leaks in slightly at the longest windows). The drift is resolved at 3$\sigma$ where its line reaches three times the floor.
+
+\textbf{Detection time.} If the residual were short-memory noise with standard deviation $\sigma$ and integrated autocorrelation time $\tint$, a least-squares slope over a run of length $T$ would have variance $24\sigma^2\tint/T^3$, and a drift $\beta$ would exceed three standard errors after
+\begin{equation}
+\Tmin=\left(\frac{216\,\sigma^2\,\tint}{\beta^2}\right)^{1/3},
+\label{eq:tmin}
+\end{equation}
+with $\tint=1/2+\sum_k\rho_k$ in sampling intervals, the same scaling as the trend-detection rule of Weatherhead et al.~\cite{weatherhead}. Under a floor, the slope's error shrinks only as $1/T$, so the run must last about $2\times3\sqrt2\,\mathrm{floor}/|\beta|$: its two halves then differ by three times the two-window noise, $\sqrt2\,\mathrm{floor}$. Detection time grows in proportion to floor over drift. The Allan plot tells which regime a bench is in.
+
+\textbf{A recipe.} For a 1\,Hz burn-in log: drop the soak hour and link-down samples; regress slack on die temperature and voltage only; plot the Hadamard deviation of die temperature and of the residual from the sampling interval to a fifth of the run; read the floor where the residual's curve flattens; and size the run from that floor, not from $\sigma$, cross-checking with slopes over sliding windows. Few windows remain at the longest averaging times, so the right end of each curve is the least certain. Each step is a few lines of code; ours are available from the authors.
+
+% ---------------------------------------------------------------
+\section{Delivered stress is set at the die}
+
+Over the BB-23/PID-23 pair, the thermostat held the die at \vTBB\degC{} on average and the PID bench at \vTPID\degC~\cite{sbcci26}. At $E_a=0.7\unit{eV}$ and $T_{\mathrm{use}}=55$\degC, Eq.~\eqref{eq:af} gives $\langle AF\rangle=\vAFBB$ and \vAFPID, a \vAFratio$\times$ gap. The ripple's convexity adds little: the thermostat's die swung \vTsdRatio$\times$ more than the PID's, yet ripple adds only \vRippleBB\% to its $\langle AF\rangle$, as Jensen's expansion predicts, and the mean shortfall alone gives \vAFratioMeanOnly$\times$ [Figure~\ref{fig:stress}(a)]. The direction holds from 0.5 to 0.9\,eV (\vAFratioLoOne--\vAFratioHiOne$\times$).
+
+The mean decides. Each kelvin of mean die error moves the factor by about \vAFperK\%, so a lab cannot repair a thermostat by tightening its hysteresis; it must set the die's mean from die telemetry. At 115\degC, a 5\%, 10\%, or 20\% shortfall tolerance on $\langle AF\rangle$ allows only \vDeltaFive, \vDeltaTen, or \vDeltaTwenty\degC{} of mean die error by Eq.~\eqref{eq:delta}; the thermostat missed by \vTerrBB\degC{} and the PID bench by $+$\vTerrPID\degC{} [Figure~\ref{fig:stress}(b)]. Part of the gap is the PID practice itself: its oven ran \vSPoffset\degC{} above the thermostat's dial to center the die. With the air held equal, a \vAFratioGainLo--\vAFratioGainHi$\times$ gap remains, using the \vGainMin--\vGainMax\degC{} of die per degree of air measured from PID-214's air changes. The die-to-air offset also changed between runs (\vOffsetPID{} vs.\ \vOffsetRCA\degC), so a chamber setting does not fix the die's mean, and JESD22-A108's junction target is verified most directly by die telemetry~\cite{jedec}.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.94\textwidth]{fig_stress.pdf}
+\caption{Delivered stress on BB-23 and PID-23, from the measured die trajectories over each whole run. (a) PID-to-bang-bang $\langle AF\rangle$ ratio versus activation energy: measured, mean shortfall only, ripple only, and with the bang-bang trajectory raised by the \vSPoffset\degC{} air offset (die gain 1, or \vGainOLS{} from PID-214). Shaded: common $E_a$ range. (b) Allowed mean die error, Eq.~\eqref{eq:delta}, with each bench's die error.}
+\label{fig:stress}
+\end{figure*}
+
+% ---------------------------------------------------------------
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.94\textwidth]{fig_allan.pdf}
+\caption{Overlapping Hadamard deviation, first hour excluded, curves cut below about five windows. (a) Die temperature. (b) Corrected slack residual; shaded: 1--4\,h floor band; dash-dot: PID-214's drift; dotted: white noise. PID-214's level is not a bench ranking.}
+\label{fig:allan}
+\end{figure*}
+
+\section{Ripple averages out; slow wander does not}
+
+Figure~\ref{fig:allan}(a) shows what each bench does to the die: the thermostat's cycle is a large bump, \vCyclePeakBB\degC{} near \vCycleTauBB\,min of averaging. At the sampling interval it leaves a \vSigRawRatio$\times$ larger residual~\cite{sbcci26} (\vAdevTwoRatio$\times$ at a common 2\,s). Figure~\ref{fig:allan}(b) shows that the correction removes almost all of the cycle: at its peak, \vRejPeakBB\% of its effect on the slack is gone, and the remaining excess is spread over short averaging times. This short-term advantage of the PID bench matters for decisions taken over seconds to minutes, such as the margin a sensor-driven voltage-scaling loop must reserve~\cite{niemann}.
+
+Beyond an hour, every residual reaches a floor (median HDEV over 1--4\,h). On the paired runs the floors are \vFloorBB{} and \vFloorPID\,cnt, a \vFloorRatio$\times$ ratio within the range of consecutive 23-hour segments of BB-164 (\vSegBBlo--\vSegBBhi\,cnt). At hour scales, the quieter bench's advantage no longer shows; the bench acts through the mean instead. PID-214 sits higher, at \vFloorRCA\,cnt, about \vFloorPsRatio$\times$ BB-164's floor in picoseconds of slack. Its die also wandered more, and its residual jumped with the die at the outer loop's 1\degC{} setpoint steps: within 3\,h of a step, the median hour-to-hour change was \vWspRnear\,cnt, against \vWspRfar\,cnt elsewhere ($p<0.01$, circular-shift permutation). This is association, not cause, since the loop also steps when the die wanders; masking the 3\,h after each step (\vMaskedPct\% of the log, the rest analyzed as separate segments) lowers the floor to \vFloorExclRCA\,cnt, so the steps account for part of the excess, not all. The PID controller itself is not the cause: PID-23, at a fixed setpoint, had the smallest hour-scale wander of the four logs and a floor matching BB-23's, and BB-164, with the same software supply trim, shows no raised floor. Whatever its source, the floor sets the detection time.
+
+% ---------------------------------------------------------------
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.94\textwidth]{fig_drift.pdf}
+\caption{PID-214. (a) Spread of window slopes (2\,h stride, fitted drift removed) versus window length; resolved at 3$\sigma$ where three times the spread meets the mean rate. (b) Drift by regressor set, 95\% autocorrelation-robust intervals not widened for the floor; gray sets give \vBetaTVOP{} to \vBetaTVI\mcnth; dashed: the \vMinResolvable\mcnth{} this run resolves.}
+\label{fig:drift}
+\end{figure*}
+
+\section{How long until drift is resolvable}
+
+\textbf{The drift.} After correction, PID-214's residual drifts at \vBetaRCA\mcnth{}, thousandths of a count per hour, or about \vDriftPsDay\,ps of slack per day (95\% autocorrelation-robust interval \vBetaLoRCA{} to \vBetaHiRCA). The drift slows with time and fits a power law $t^{n}$ with $n=\vPowNblockRCA$ better than a line, consistent with, though not diagnostic of, bias-temperature instability. A floor-limited error model widens the interval 1.4-fold, still excluding zero. Over the run it amounts to \vRCAdriftCnt\,cnt, about \vRCAdriftPs\,ps.
+
+\textbf{Detection time.} By the floor rule of the primer, PID-214 needs \vAllanRunFloor--\vAllanRunPlateau\,h, from its 1--4\,h floor and 6--30\,h level [Figure~\ref{fig:allan}(b)], and the window-slope spread gives \vWstar\,h [Figure~\ref{fig:drift}(a)]; we quote about \vDetFairLo--\vDetFairHi\,h for the bench as run, against \vTminBound\,h for white noise (Table~\ref{tab:tmin}). With the Allan floor, about 10\% higher for flicker noise, the rule gives \vAllanRunAdev\,h; with the setpoint steps masked, \vRunExclLo--\vRunExclHi\,h. Removing the fitted drift first moves the 6--30\,h level only from \vFloorPlateauRCA{} to \vPlateauPow\,cnt. In \vSimB{} simulated runs of flicker-like noise matched to PID-214's 1--4\,h floor, plus its linear drift, a different detector, the least-squares slope reaching three times its noise-only spread, resolves the drift at \vSimOLS\,h, against the rule's \vSimRule\,h. BB-164 confirms the rule on a second log: \vBBfairLo--\vBBfairHi\,h for its \vBetaBBlong\mcnth{} drift, against \vBBdetWhite\,h; it resolves sooner than PID-214 despite a \vDriftRatioLong-fold slower drift because its floor is \vFloorCntRatioLong-fold lower in counts. On both logs the floor stretches the run \vRatioLo--\vRatioHi{} times.
+
+\begin{table}[!t]
+\centering
+\caption{Time (h) to resolve the mean drift at 3$\sigma$, by method. The long-run-variance row assumes short memory and is shown for comparison; we quote the floor-aware rows. BB-164: inverter chain.}
+\label{tab:tmin}
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{@{}p{24mm} p{27mm} r r@{}}
+\toprule
+Method & Noise model & PID-214 & BB-164 \\
+\midrule
+Eq.~\eqref{eq:tmin}, fast residual & white, $\sigma$ and $\tint$ & \vTminBound & \vBBdetWhite \\
+Long-run variance & 4--16\,h blocks & \vLrvLo--\vLrvHi & \vBBlrvLo--\vBBlrvHi \\
+Window-slope spread & drift law removed & \vWstar & \vBBwstar \\
+Hadamard level & 1--4\,h / 6--30\,h & \vAllanRunFloor/\vAllanRunPlateau & \vBBrunFloor/\vBBrunPlateau \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Sliding windows make the point concrete [Figure~\ref{fig:drift}(a)]: over \vWinLenMid-hour windows, PID-214's slope ranges from \vWinMinMid{} to $+$\vWinMaxMid\mcnth, and \vWinPosMid\% of the windows show the wrong sign, whereas every \vWinLenLong-hour window is negative, though only about three of them are independent; even PID-214's steep first day is only a \vEarlyZemp$\sigma$ reading. A day-long run therefore shows a slope but cannot establish a drift, as~\cite{sbcci26} anticipated for its 23-hour runs.
+
+\textbf{Which drift?} Supply current and voltage follow the device, and the oven air drifted at fixed die reading, so none is a safe regressor; our estimate uses $T$ and $V$ only [Figure~\ref{fig:drift}(b)]. The sizing rule holds whatever the drift's origin.
+
+\textbf{What the bench buys.} Under a floor, a run must accumulate a fixed drift, and drift accumulates in equivalent time, so detection time scales with the floor divided by the acceleration factor. If the floors match, which the paired runs neither confirm nor exclude, the PID practice would resolve drift up to \vAFratio$\times$ sooner than the thermostat at 0.7\,eV, \vAFratioGainLo--\vAFratioGainHi$\times$ with the air held equal, and only \vAFratioEaLo--\vAFratioEaHi$\times$ at the activation energies of bias-temperature instability. Thermal control thus helps detection through the mean die temperature, and through lower sample-rate noise only over short windows.
+
+% ---------------------------------------------------------------
+\section{What labs should report}
+
+JESD22-A108 already requires the test specification to state chamber ambient and maximum junction temperature~\cite{jedec}; a sensor validation also needs the delivered die trajectory and the noise at the right time scale. Table~\ref{tab:checklist} lists five items, each computable from a 1\,Hz log that includes die temperature, voltage, and the bench's actuator channels.
+
+\begin{table}[!t]
+\centering
+\caption{Reporting checklist for sensor-instrumented burn-in, with values from this study.}
+\label{tab:checklist}
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{@{}p{28mm} p{55mm}@{}}
+\toprule
+Item & This study \\
+\midrule
+1. Die $T$ and $V$ trajectory: mean, std.\ dev., error vs.\ target & $T$ (\textdegree C): BB \vTBB, \vTsdBB, \vTerrBB; PID \vTPID, \vTsdPID, $+$\vTerrPID; PID-214 \vTRCA, \vTsdRCA, $+$\vTerrRCA; std.\ dev.\ of $V$: BB \vVsdBB, PID \vVsdPID\,mV \\
+2. $\langle AF\rangle$ with $E_a$ range, and the bench configuration & BB \vAFBB, PID \vAFPID{} at 0.7\,eV; ratio \vAFratioLoOne--\vAFratioHiOne{} over 0.5--0.9\,eV (\vAFratioEaLo--\vAFratioEaHi{} at 0.1--0.3\,eV) \\
+3. Allan/Hadamard deviation of $T$ and of the corrected residual & Floors \vFloorBB{} (BB-23), \vFloorPID{} (PID-23), \vFloorRCA\,cnt (PID-214) \\
+4. Drift with its regressor set & \vBetaRCA\mcnth{} ($T$, $V$); \vBetaTVOP{} to \vBetaTVI{} with supply or air channels \\
+5. Detection time, with method & Table~\ref{tab:tmin}: \vTminBound\,h (white) vs.\ \vDetFairLo--\vDetFairHi\,h (floor) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Limitations.} All data come from one 28\,nm board, so these are within-device results; the paired runs were taken nine months apart, BB-23 at 0.5\,Hz on a then-unstressed device. The paired floors agree within the same-bench spread, which is wider than the detection gain, so their equality is neither confirmed nor excluded, and the gain also assumes an equal aging state; the long logs differ in circuit, voltage, temperature, and history, so they do not rank the benches. Bias-temperature instability also depends on voltage, which was equal on both benches. The air-held-equal estimate assumes the thermostat's air averaged its dial, which BB-23 did not log, uses die-to-air gains identified in closed loop, and does not exclude a shifted die-to-air offset. The floor's source is open: die temperature, air, and $dT/dt$ explain at most a quarter of the slow residual ($R^2\le\vSlowRtwoFast$); candidates are the on-die gradient between the XADC and the path and clocking-path drift, against which Sobas and Marc used a GPS time reference~\cite{sobas}. Read as a thermometer, the oven air would allow an XADC drift large enough to explain the whole slack drift, while the supply current, read the same way, allows only \vThermoShare\%; readout drift is not excluded. The power-law exponent is apparent, since the board carried earlier stress. Detection times assume a flat floor and carry tens of percent sampling error. Finally, the stress is deliberate overstress: the sizing method transfers, but the floor values, drift rates, and acceleration factors may not carry over to product burn-in. We claim no compliance with JESD22-A108: 1.3--1.4\,V exceeds the absolute-maximum core voltage, which the standard does not allow; PID-214's 125\degC{} target equals the absolute-maximum junction temperature, which the XADC reading exceeded in \vTjAbovePct\% of samples; and the paired runs' 115\degC{} target is below the standard's default 125\degC~\cite{jedec}.
+
+% ---------------------------------------------------------------
+% [SLOT: 16 nm FinFET transfer -- Artix UltraScale+ runs; go/no-go 2026-11-15]
+% Keep commented out unless the 16 nm data are complete; the article must read
+% complete without it. If enabled: one paragraph + at most one figure/table; add its
+% numbers to analysis/ (new campaign key in dtlib.CAMPAIGNS) and to values.tex;
+% re-run analysis/wordcount.py (budget headroom is printed there).
+% \section{Transfer to a 16\,nm FinFET FPGA}
+% ...
+% ---------------------------------------------------------------
+
+% Closing (CEDA: 1-2 paragraphs, lessons learned and future rather than a summary)
+\section{Conclusion}
+
+Read a burn-in bench by time scale. Over minutes, the PID bench's lower noise helps short-window decisions. Over hours, a floor present in every log set PID-214's run length at about \vDetFairLo--\vDetFairHi\,h, where white noise predicted \vTminBound\,h. Over the whole run, the mean die temperature, verified by die telemetry rather than by the chamber setting, sets how fast drift accumulates above that floor. Size runs from an Allan plot of the residual, not from $\sigma$, whatever the drift's origin.
+
+For SLM, this points to two deliverables: noise figures by averaging time, to inform the margins of sensor-driven voltage scaling, and validation runs sized from the floor before a drift feeds remaining-useful-life estimates. Next steps are a thermometer and an unaged reference path beside the monitored path, a continuous die loop as in~\cite{sobas,xilinx}, and replication across boards and on a 16\,nm FinFET FPGA.
+
+% ---------------------------------------------------------------
+\renewcommand{\refname}{References}\begin{thebibliography}{12}
+\footnotesize
+\bibitem{sbcci26} D.~Alencar \emph{et al.}, ``Quantifying the effect of burn-in thermal control on delivered acceleration factor and on-chip slack-sensor fidelity in an FPGA target,'' in \emph{Proc. 39th Symp. Integr. Circuits Syst. Design (SBCCI)}, 2026.
+\bibitem{kashyap} R.~Kashyap, ``Silicon lifecycle management (SLM) with in-chip monitoring,'' in \emph{Proc. IEEE Int. Rel. Phys. Symp. (IRPS)}, 2021, pp.~1--4, doi: 10.1109/IRPS46558.2021.9405187.
+\bibitem{niemann} C.~Niemann, M.~Ali, O.~U.~Shah, J.~Heller, and D.~Timmermann, ``Sensor based adaptive voltage scaling on FPGAs: Calibration and parametrization,'' \emph{Integration}, vol.~75, pp.~30--39, 2020, doi: 10.1016/j.vlsi.2020.05.006.
+\bibitem{valdes} M.~Vald\'es-Pe\~na \emph{et al.}, ``Design and validation of configurable online aging sensors in nanometer-scale FPGAs,'' \emph{IEEE Trans. Nanotechnol.}, vol.~12, no.~4, pp.~508--517, 2013, doi: 10.1109/TNANO.2013.2253795.
+\bibitem{keane} J.~Keane, X.~Wang, D.~Persaud, and C.~H.~Kim, ``An all-in-one silicon odometer for separately monitoring HCI, BTI, and TDDB,'' \emph{IEEE J. Solid-State Circuits}, vol.~45, no.~4, pp.~817--829, 2010, doi: 10.1109/JSSC.2010.2040125.
+\bibitem{jedec} \emph{Temperature, Bias, and Operating Life}, JEDEC Standard JESD22-A108G, Nov.~2022.
+\bibitem{vassighi} A.~Vassighi, O.~Semenov, M.~Sachdev, A.~Keshavarzi, and C.~Hawkins, ``CMOS IC technology scaling and its impact on burn-in,'' \emph{IEEE Trans. Device Mater. Rel.}, vol.~4, no.~2, pp.~208--221, 2004, doi: 10.1109/TDMR.2004.826591.
+\bibitem{xilinx} J.~Cho, G.~O'Rourke, M.~M.~Matera, and J.~Jeong, ``Method and apparatus for self-regulated burn-in of an integrated circuit,'' U.S. Patent 8\,212\,576 B1, Jul.~3, 2012.
+\bibitem{sobas} J.~Sobas and F.~Marc, ``Degradation measurement and modelling under ageing in a 16\,nm FinFET FPGA,'' \emph{Micromachines}, vol.~15, no.~1, 2024, Art. no.~19, doi: 10.3390/mi15010019.
+\bibitem{allan} D.~W.~Allan, ``Statistics of atomic frequency standards,'' \emph{Proc. IEEE}, vol.~54, no.~2, pp.~221--230, 1966, doi: 10.1109/PROC.1966.4634.
+\bibitem{weatherhead} E.~C.~Weatherhead \emph{et al.}, ``Factors affecting the detection of trends: Statistical considerations and applications to environmental data,'' \emph{J. Geophys. Res.}, vol.~103, no.~D14, pp.~17149--17161, 1998, doi: 10.1029/98JD00995.
+\bibitem{sbcci25} L.~Nogueira \emph{et al.}, ``Auto-tuning aging sensor validated under burn-in, temperature, and voltage variations,'' in \emph{Proc. 38th Symp. Integr. Circuits Syst. Design (SBCCI)}, 2025, pp.~1--5, doi: 10.1109/SBCCI66862.2025.11218640.
+\end{thebibliography}
+
+% ---------------------------------------------------------------
+% Biographies (CEDA: position, highest degree, discipline, institution, <= 3 interests, memberships, e-mail)
+\section*{Author Biographies}
+\footnotesize
+\noindent\textbf{Danilo Alencar} is a master's student in teleinformatics engineering at the Universidade Federal do Cear\'a (UFC), Fortaleza, Brazil, and a researcher at the Laboratory of Electronic Systems and Circuits (LESC). His research interests include FPGA reliability, aging instrumentation, and silicon lifecycle management. Alencar has a BSc in computer engineering from UFC. Contact him at danilo.alencar@lesc.ufc.br.
+
+\smallskip\noindent\textbf{Lucas Nogueira} is with LESC, UFC, Fortaleza, Brazil. His research interests include on-chip aging sensors and FPGA delay monitoring. Contact him at lucas.nogueira@lesc.ufc.br.
+
+% TODO(authors): complete co-author bios per CEDA (position, highest degree + discipline + institution, <=3 interests, memberships, e-mail)
+\smallskip\noindent\textbf{Alisson Barros}, \textbf{Arthur Pamplona}, and \textbf{Andre Grangeiro} are with LESC, UFC, Fortaleza, Brazil. Their research interests include FPGA test platforms and reliability instrumentation.
+
+\smallskip\noindent\textbf{Jarbas Silveira} is a professor at UFC, Fortaleza, Brazil, and leads research at LESC. His research interests include integrated-circuit design, test, and reliability. Contact him at jarbas@lesc.ufc.br.
+
+\smallskip\noindent\textbf{Fabian Vargas} is with IHP -- Leibniz Institute for High Performance Microelectronics, Frankfurt (Oder), Germany. His research interests include on-chip sensors, design for reliability, and silicon lifecycle management. Contact him at vargas@ihp-microelectronics.com.
+
+
+\end{document}

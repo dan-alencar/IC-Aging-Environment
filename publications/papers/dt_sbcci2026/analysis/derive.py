@@ -22,6 +22,9 @@ import dtlib as L
 G = L.PAPER / "generated"
 R = json.loads((G / "results_sensor.json").read_text())
 P = json.loads((G / "results_pid.json").read_text())
+TS = json.loads((G / "results_timescales.json").read_text())
+HY = json.loads((G / "results_hybrid.json").read_text())   # analysis/hybrid_checks.py
+RB = json.loads((G / "results_robust.json").read_text())   # analysis/robustness.py   # analysis/timescales.py (Allan, windows, regressors)
 
 
 def stress_view(r):
@@ -55,6 +58,12 @@ def derived():
     # share of the log AF gap explained by the mean shortfall alone
     k07 = "0.7"
     d["mean_share_pct"] = 100 * math.log(d["af_ratio_meanonly"][k07]) / math.log(d["af_ratio"][k07])
+    # PID outer loop held the oven air above the thermostat's stated 80 degC setpoint (SBCCI 2026).
+    # Counterfactual: shift the whole bang-bang die trajectory by that offset (die follows air 1:1).
+    d["sp_bb_stated"] = 80.0
+    d["sp_offset"] = pid["stress"]["oven_setpoint_c"]["max"] - d["sp_bb_stated"]
+    _bbfull = L.load("bb23", soak_s=0)
+    d["af_ratio_sp_adj"] = spid["AF"][k07] / float(L.af(_bbfull.T + d["sp_offset"], 0.7).mean())
     # tracking budget delta(eta) at 115 degC, 0.7 eV, and each bench's AF deviation vs target
     d["delta"] = {f"{e:g}": L.delta_budget(e) for e in (0.05, 0.10, 0.20)}
     for nm, r in (("bb", bb), ("pid", pid)):
@@ -119,6 +128,17 @@ def derived():
     d["rca_drift_ps"] = abs(dr["drift_total_cnt"]) * d["ps_step"]["RCA16"]
     d["rca_drift_ps_at_19p85"] = abs(dr["drift_total_cnt"]) * 19.85   # same drift at the inverter-chain step
     d["sigma_rev_degC"] = {k: R[k]["noise"]["resid_rev_degC_equiv"] for k in R}
+    # ---- time-scale view (analysis/timescales.py)
+    A = TS["allan"]
+    d["floor_ratio"] = A["bb23"]["floor_res"] / A["pid23"]["floor_res"]
+    d["adev2_ratio"] = A["bb23"]["adev_res_2s"] / A["pid23"]["adev_res_2s"]
+    # die-follows-air gain measured on the long run (lag-summed 30-min first differences)
+    g = TS["die_vs_air"]["rca212"]["gain_ols"]
+    d["af_ratio_sp_gain"] = spid["AF"][k07] / float(L.af(_bbfull.T + g * d["sp_offset"], 0.7).mean())
+    # detection-time penalty in the floor (flicker) regime: T_min ~ floor / beta
+    d["pen_floor_af"] = d["floor_ratio"] * d["af_ratio"][k07]
+    d["pen_floor_sp"] = d["floor_ratio"] * d["af_ratio_sp_adj"]
+    d["pen_floor_pow"] = d["floor_ratio"] * d["af_ratio"][k07] ** n_law
     return d
 
 
@@ -210,6 +230,8 @@ def macros(d):
     put("DurPair", bb["stress"]["duration_raw_h"], 2)
     put("PIDspMin", pid["stress"]["oven_setpoint_c"]["min"], 0); put("PIDspMax", pid["stress"]["oven_setpoint_c"]["max"], 0)
     put("DurPairPost", pid["stress"]["duration_post_h"], 0)
+    put("SPoffset", d["sp_offset"], 0); put("AFratioSPadj", d["af_ratio_sp_adj"], 2)
+    put("VpsuPID", pid["stress"]["psu_voltage_v"]["mean"], 2)
     put("PenNoiseSigOnly", d["sig_raw_ratio"] ** (2 / 3), 2)
     put("TauBBs", d["tau_bb_s"], 1); put("TauPIDs", d["tau_pid_s"], 1)
     put("SigRawRatioCommon", d["sig_raw_ratio_common"], 2)
@@ -235,12 +257,9 @@ def macros(d):
     put("MIexcessBBlong", bb164["mi"]["I_res"] - bb164["mi"]["I_res_quant_sim"], 2)
     put("HystPct", 100 * abs(bb["hysteresis"]["gap_heat_minus_cool"]) / bb["detect"]["sigma"], 0)
     put("DtdtGainPct", 100 * (1 - bb["hysteresis"]["resid_sd_raw_with_dTdt"] / bb["hysteresis"]["resid_sd_raw_same_slice"]), 1)
-    put("SeqZpid", json.loads((G / "results_figs.json").read_text())["z_pid_22"] if (G / "results_figs.json").exists() else None, 1)
-    _fz = json.loads((G / "results_figs.json").read_text()) if (G / "results_figs.json").exists() else {}
-    put("SeqZbb", _fz.get("z_bb_proj_22"), 1)
     put("RCAlrvGrowth", rca["detect"]["lrv"]["8"] / rca["detect"]["lrv"]["0.25"], 0)
     t = d["tmin_pid"]; tb = d["tmin_bb_proj"]
-    put("TminBound", t["bound"], 0); put("TminTip", t["tip"], 0); put("TminTipCorr", t["tip_corr"], 0)
+    put("TminBound", t["bound"], 1); put("TminTip", t["tip"], 0); put("TminTipCorr", t["tip_corr"], 0)
     put("TminLrv", t["lrv8"], 0); put("TminSeq", t["seq"], 0)
     put("TminSeqBBlong", bb164["detect"].get("sequential_detect_h"), 0)
     for kk, tag in (("bound", "Bound"), ("lrv8", "Lrv"), ("seq", "Seq")):
@@ -263,6 +282,111 @@ def macros(d):
         put(f"Sd{tag}", x["ss_sd"], 2); put(f"Ptp{tag}", x["ss_ptp"], 1); put(f"Emax{tag}", x["ss_abs_err_max"], 1)
         put(f"Over{tag}", x["overshoot"], 1)
     put("SdRatioThermo", ts["thermostat"]["ss_sd"] / ts["tuned"]["ss_sd"], 1)
+    # ---- time-scale view (analysis/timescales.py)
+    A = TS["allan"]
+    for tag, k in (("BB", "bb23"), ("PID", "pid23"), ("BBlong", "bb164"), ("RCA", "rca212")):
+        put(f"Floor{tag}", A[k]["floor_res"], 3); put(f"Wander{tag}", A[k]["floor_T"], 2)
+        put(f"Left{tag}", A[k]["leftover_pct"], 0); put(f"AdevTwo{tag}", A[k]["adev_res_2s"], 2)
+        put(f"FloorC{tag}", A[k]["floor_res_degC"], 2)
+    put("LeftPeakBB", A["bb23"]["leftover_at_peak_pct"], 0); put("RejPeakBB", 100 - A["bb23"]["leftover_at_peak_pct"], 0)
+    put("CyclePeakBB", A["bb23"]["T_peak"], 1); put("CycleTauBB", A["bb23"]["T_peak_tau_s"] / 60, 0)
+    put("FloorRatio", d["floor_ratio"], 2); put("AdevTwoRatio", d["adev2_ratio"], 2)
+    put("WanderRatio", A["rca212"]["floor_T"] / A["pid23"]["floor_T"], 0); put("WanderRatioBB", A["rca212"]["floor_T"] / A["bb164"]["floor_T"], 1)
+    W = TS["windows"]
+    for w, wt in (("34", "Mid"), ("72", "Long")):
+        x = W["table"][w]
+        put(f"WinMin{wt}", 1000 * x["min"], 0); put(f"WinMax{wt}", 1000 * x["max"], 0); put(f"WinPos{wt}", 100 * x["frac_pos"], 0); put(f"WinLen{wt}", float(w), 0)
+    put("WinSdSix", 1000 * W["table"]["6"]["sd_noise"], 0); put("WinSdNinetySix", 1000 * W["table"]["96"]["sd_noise"], 0)
+    put("SdExp", W["sd_exponent"], 2); put("SdExpAbs", abs(W["sd_exponent"]), 2); put("Wstar", W["W_star_h"], 0); put("Zextrap", W["z_full_extrap"], 1)
+    put("ZhacRCA", abs(rca["detect"]["beta_hac8"]["slope"]) / rca["detect"]["beta_hac8"]["se"], 1)
+    put("AllanCross", TS["allan_drift"]["tau_cross_h"], 0); put("AllanThree", TS["allan_drift"]["tau_3sig_h"], 0)
+    put("AllanRun", 2 * TS["allan_drift"]["tau_3sig_h"], 0)
+    rg = TS["regressors"]
+    for nm in ("TVO", "TVP", "TVI", "TVOP"):
+        put(f"Beta{nm}", 1000 * rg[nm]["beta"], 1)
+    put("VifTVP", rg["vif_t"]["TVP"], 1); put("VifTVI", rg["vif_t"]["TVI"], 1); put("CorrTIhourly", rg["corr_T_I_hourly"], 3)
+    dr_ = rg["drift_at_fixed_TV"]
+    put("Idrift", 1000 * dr_["I"]["per_h"], 3); put("IdriftTotal", 1000 * dr_["I"]["per_h"] * rca["stress"]["duration_post_h"], 1)
+    put("PdriftTotal", 1000 * dr_["P"]["per_h"] * rca["stress"]["duration_post_h"], 1)
+    put("IperC", 1000 * dr_["I"]["per_degC"], 0)
+    th = rg["thermo_check"]
+    put("ThermoShare", th["max_share_pct"], 0); put("SlackEquivTotal", th["slack_equiv_total_degC"], 1)
+    dv = TS["die_vs_air"]
+    put("GainOLS", dv["rca212"]["gain_ols"], 1); put("GainIV", dv["rca212"]["gain_iv"], 1); put("AirPerSP", dv["rca212"]["air_per_sp"], 2)
+    put("OffsetRCA", dv["rca212"]["offset_mean"], 1); put("OffsetPID", dv["pid23_offset_mean"], 1)
+    put("AFratioSPgain", d["af_ratio_sp_gain"], 2)
+    put("PenFloorAF", d["pen_floor_af"], 2); put("PenFloorSP", d["pen_floor_sp"], 2); put("PenFloorPow", d["pen_floor_pow"], 2)
+    pv = rca["stress"]["psu_voltage_v"]; put("RCApsuMin", pv["min"], 3); put("RCApsuMax", pv["max"], 3)
+    # ---- hybrid robustness (analysis/hybrid_checks.py, analysis/robustness.py)
+    lr = HY["lrv"]; put("LrvLo", min(lr.values()), 0); put("LrvHi", max(lr.values()), 0)
+    # Allan reading against the declared 1-4 h floor (3 x two-window noise sqrt(2)*floor)
+    _beta = abs(rca["detect"]["beta_hac8"]["slope"])
+    _tau_fl = 3 * math.sqrt(2) * A["rca212"]["floor_res"] / _beta
+    put("AllanTauFloor", _tau_fl, 0); put("AllanRunFloor", 2 * _tau_fl, 0)
+    _ws = [v for v in HY["wstar"].values() if v == v]
+    _tau_pl = 3 * math.sqrt(2) * HY["plateau_rca"] / _beta          # 6-30 h plateau of the long run
+    put("FloorPlateauRCA", HY["plateau_rca"], 2); put("AllanRunPlateau", 2 * _tau_pl, 0)
+    _all = list(HY["lrv"].values()) + _ws + [2 * _tau_fl, 2 * _tau_pl]
+    put("DetLo", min(_all), 0); put("DetHi", max(_all), 0)
+    put("TjAbovePct", 100 * HY["tj_above125"]["frac"], 0); put("TjPeak", HY["tj_above125"]["peak"], 0)
+    put("CIwiden", (abs(rca["detect"]["beta_hac8"]["slope"]) / rca["detect"]["beta_hac8"]["se"]) / TS["windows"]["z_full_extrap"], 1)
+    _sd24 = TS["windows"]["table"]["24"]["sd_noise"]
+    put("EarlySd", 1000 * _sd24, 0); put("EarlyZemp", abs(HY["early24"]["slope"]) / _sd24, 1)
+    put("SlowRtwoFast", HY["slow_attr_fast"]["r2_all"], 2)
+    put("AFratioEaLo", HY["af_low_ea"]["0.1"], 2); put("AFratioEaHi", HY["af_low_ea"]["0.3"], 2)
+    put("AirXadcLo", HY["air_drift"]["total"] * HY["gain"]["gain_min"], 1); put("AirXadcHi", HY["air_drift"]["total"] * HY["gain"]["gain_max"], 1)
+    ws = [v for v in HY["wstar"].values() if v == v]; put("WstarLo", min(ws), 0); put("WstarHi", max(ws), 0)
+    af_ = HY["allan_fine"]; put("AllanCrossFine", af_["cross_h"], 0); put("AllanThreeFine", af_["three_h"], 0)
+    put("AllanRunFine", 2 * af_["three_h"], 0); put("AllanNwin", af_["n_windows_three"], 0)
+    e24 = HY["early24"]; put("EarlySlope", 1000 * e24["slope"], 0); put("EarlyZ", e24["z"], 1)
+    put("SlowRtwo", HY["slow_attr_rca"]["r2"], 2); put("SlowRtwoBBlong", HY["slow_attr_bb164"]["r2"], 2)
+    put("AirDrift", HY["air_drift"]["total"], 1)
+    g_ = HY["gain"]; put("GainMin", g_["gain_min"], 2); put("GainMax", g_["gain_max"], 2)
+    put("AFratioGainLo", g_["ratio_min"], 2); put("AFratioGainHi", g_["ratio_max"], 2)
+    sb, sr = HY["seg_bb164"], HY["seg_rca"]
+    put("SegBBlo", min(sb), 3); put("SegBBhi", max(sb), 3); put("SegBBspread", max(sb) / min(sb), 1)
+    put("SegRCAlo", min(sr), 2); put("SegRCAhi", max(sr), 2); put("SegN", len(sb), 0)
+    put("PenStressPowBlock", d["af_ratio"]["0.7"] ** rca["detect"]["powerlaw_block2h"]["n"], 2)
+    put("BetaJoint", 1000 * RB["joint_TVt"]["slope"], 1); put("SigFullRCA", RB["sigma_full_detrended"], 2)
+    _fps_bb = A["bb164"]["floor_res"] * d["ps_step"]["INV50"]; _fps_rca = A["rca212"]["floor_res"] * d["ps_step"]["RCA16"]
+    put("FloorPsBBlong", _fps_bb, 2); put("FloorPsRCA", _fps_rca, 1); put("FloorPsRatio", _fps_rca / _fps_bb, 0)
+    db = HY["det_bb164"]
+    put("BBdetWhite", db["t_white"], 0); put("BBdetLo", db["det_lo"], 0); put("BBdetHi", db["det_hi"], 0)
+    put("BBlrvLo", min(db["lrv"].values()), 0); put("BBlrvHi", max(db["lrv"].values()), 0)
+    put("BBwstar", db["wstar"]["s2_all"], 0)
+    put("BBrunFloor", db["run_floor"], 0); put("BBrunPlateau", db["run_plateau"], 0)
+    ws_ = HY["wander_sp"]
+    put("WspTnear", ws_["dT_near"], 2); put("WspTfar", ws_["dT_far"], 2)
+    put("WspRnear", ws_["dr_near"], 2); put("WspRfar", ws_["dr_far"], 2)
+    put("PermP", math.ceil(1000 * max(ws_["perm_p_T"], ws_["perm_p_r"])) / 1000, 3); put("PermB", ws_["perm_B"], 0)
+    put("SPshareLo", d["af_ratio"]["0.7"] / g_["ratio_max"], 2); put("SPshareHi", d["af_ratio"]["0.7"] / g_["ratio_min"], 2)
+    put("DriftRatioLong", abs(rca["detect"]["beta_hac8"]["slope"]) / abs(db["beta"]), 0)
+    put("FloorCntRatioLong", A["rca212"]["floor_res"] / db["floor"], 1)
+    put("DriftPsDay", abs(rca["detect"]["beta_hac8"]["slope"]) * d["ps_step"]["RCA16"] * 24, 1)
+    put("MinResolvable", 1000 * 2 * 3 * math.sqrt(2) * A["rca212"]["floor_res"] / rca["stress"]["duration_post_h"], 0)
+    # option-1 detection range: floor-aware estimators only (window spread, Hadamard floor/level);
+    # the long-run-variance row assumes short memory and is reported as a lower bound in Table 1
+    # use the same window-slope value as Table 1 (the reported W*, stride 2 h), not its stride variants
+    _fair = [TS["windows"]["W_star_h"], 2 * _tau_fl, 2 * _tau_pl]
+    put("DetFairLo", min(_fair), 0); put("DetFairHi", max(_fair), 0)
+    _bbf = [db["wstar"]["s2_all"], db["run_floor"], db["run_plateau"]]
+    put("BBfairLo", min(_bbf), 0); put("BBfairHi", max(_bbf), 0)
+    _wr = d["tmin_pid"]["bound"]
+    _r0 = lambda x: float(round(x)); _wr1 = round(_wr, 1)
+    _rat = [_r0(min(_fair)) / _wr1, _r0(max(_fair)) / _wr1, _r0(min(_bbf)) / _r0(db["t_white"]), _r0(max(_bbf)) / _r0(db["t_white"])]
+    put("RatioLo", min(_rat), 1); put("RatioHi", max(_rat), 1)
+    fe = HY["floor_excl_steps"]
+    put("FloorExclRCA", fe["floor"], 2); put("RunExclLo", fe["run_floor"], 0); put("RunExclHi", fe["run_plateau"], 0)
+    put("MaskedPct", 100 * fe["frac_masked"], 0)
+    put("PlateauPow", HY["floor_after_pow"]["plateau"], 2)
+    rs = HY["rule_sim"]; put("SimRule", rs["T_rule"], 0); put("SimOLS", rs["T_ols"], 0); put("SimB", rs["B"], 0)
+    # Allan-floor variant of the sizing rule (the rule pairs an Allan drift line with the Hadamard floor;
+    # for flicker noise the Hadamard floor sits ~10% below the Allan floor, so the rule is slightly optimistic)
+    _ta = np.array(A["rca212"]["taus"]); _aa = np.array(A["rca212"]["adev_res"])
+    _ma = (_ta >= 3600 - 1) & (_ta <= 4 * 3600 + 1) & np.isfinite(_aa)
+    _afl = float(np.median(_aa[_ma]))
+    put("FloorAllanRCA", _afl, 2); put("AllanRunAdev", 2 * 3 * math.sqrt(2) * _afl / _beta, 0)
+    put("AFperK", 100 * L.EA_REF / (L.K_B * (115.0 + 273.15) ** 2), 1)
     return m
 
 
@@ -294,7 +418,7 @@ def main():
         "<!-- AUTO-GENERATED from analysis/RECONCILIATION.template.md by analysis/derive.py -->\n" + body)
     for k in ("AFratio", "AFratioMeanOnly", "Jensen", "RippleBB", "SigRatio", "TauRatio", "PenLow", "PenMid", "PenHigh",
               "TminBound", "TminTip", "TminTipCorr", "TminLrv", "TminSeq", "TminBBBound", "TminBBLrv", "TminBBSeq", "CpidBound", "CbbBound",
-              "CpidLrv", "CbbLrv", "WpidBound", "WbbBound", "WpidLrv", "WbbLrv", "TauRCA", "TauTipRCA", "SeqZbb"):
+              "CpidLrv", "CbbLrv", "WpidBound", "WbbBound", "WpidLrv", "WbbLrv", "TauRCA", "TauTipRCA"):
         print(f"  {k:16s} {m[k]}")
 
 

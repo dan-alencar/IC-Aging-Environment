@@ -1,5 +1,12 @@
 # IEEE D&T Special Issue (SBCCI 2026 extension)
 
+> **This folder is the latest version: V12, "Averaging Time Defines When On-Chip Sensors Resolve
+> Burn-In Drift" (2026-11-06), the hybrid of path A and path B.** The manuscript is `main.pdf`; the
+> packaged submission is `submission/2026-11-06_V12/`. V12 was uploaded to Overleaf, which is the
+> source of truth for the prose from then on: check Overleaf for later text edits. Earlier versions
+> are in `versions/` (index in `versions/README.md`); intermediate snapshots of this version are in
+> `drafts/`. Status of the claims: `FROZEN_CLAIMS.md`; last review: `REVIEW_2026-11-06_V12.md`.
+
 Extended version of the SBCCI 2026 paper "Quantifying the Effect of Burn-In Thermal Control on Delivered Acceleration Factor and On-Chip Slack-Sensor Fidelity in an FPGA Target" (`../gsem/`), invited to the IEEE Design & Test special issue.
 
 - **Submission type:** "SI: SBCCI 2026". **Due 2026-11-23**; planned submission 2026-11-22.
@@ -27,11 +34,15 @@ The first `make` creates `.venv` (numpy, scipy, pandas, matplotlib). LaTeX needs
 | `analysis/dtlib.py` | Loaders and estimators (cadence-aware; reproduces the TIP7266 estimators) |
 | `analysis/run_analysis.py` | Per-campaign stress, noise, MI, hysteresis, detectability, controls → `generated/results_sensor.json` |
 | `analysis/pid_bench.py` | FOPDT, SIMC, 100 °C oven tests → `generated/results_pid.json` |
+| `analysis/timescales.py` | Allan/Hadamard deviation, window-slope spread, regressor-set sensitivity, thermometer cross-check, die-vs-air gain → `generated/results_timescales.json` |
 | `analysis/derive.py` | Cross-run ratios and projections → `generated/values.tex`, and renders `RECONCILIATION.md` |
 | `analysis/wordcount.py`, `analysis/audit_numbers.py` (+ `number_whitelist.txt`) | D&T budget check; orphan-number audit |
 | `INVENTORY.md` | Phase 0: raw data per campaign, CUT and device answers |
 | `RECONCILIATION.md` | Generated from `analysis/RECONCILIATION.template.md`. Edit the template, never the output. |
-| `drafts/2026-11-04_contingency/` | Frozen snapshot of the draft received on 2026-11-04. Do not edit. |
+| `drafts/` | Frozen snapshots on the way to V12 (2026-11-04 contingency draft … V11). Do not edit. |
+| `versions/` | Earlier complete versions of the paper, each with its own analysis and build (see `versions/README.md`) |
+| `colleague_crosscheck/` | The colleague's independent check of the SBCCI 2026 material, mapped to `RECONCILIATION.md` |
+| `CHANGES.md`, `FROZEN_CLAIMS.md`, `REVIEW_2026-11-06_V12.md`, `EXPLICACAO.md` | How V12 was built from paths A and B, the locked claims, the last review, an explanation in Portuguese |
 | `generated/` | Script outputs only. Never hand-edit. |
 
 ## Data
