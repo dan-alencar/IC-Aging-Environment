@@ -1,0 +1,1058 @@
+diff -ruN --strip-trailing-cr 361fc39_Core/Inc/fpga_link_core.h hub_Core/Inc/fpga_link_core.h
+--- 361fc39_Core/Inc/fpga_link_core.h	1969-12-31 21:00:00.000000000 -0300
++++ hub_Core/Inc/fpga_link_core.h	2026-11-05 15:19:21.435361640 -0300
+@@ -0,0 +1,72 @@
++/******************************************************************************
++ * @file    fpga_link_core.h
++ * @brief   Arquitetura B (04/11/2026): parte portátil do enlace FPGA → STM32.
++ *
++ *          Remonta os quadros do protocolo v2 (PROTOCOL_V2.md do D&T Monitor)
++ *          que o FPGA manda pela USART1 e formata a linha de texto que o STM32
++ *          repassa ao PC pelo ST-Link:
++ *
++ *            $FPG,Tk,<ms>,Ok,<n>,Ce,<n>,He,<n>,Ue,<n>,Qd,<n>,Gp,<n>,Jk,<n>,Hx,<quadro em hex>*CS
++ *
++ *          O quadro vai inteiro e sem alteração no campo Hx: o app decodifica
++ *          com o mesmo código que usa para o sniffer do J9. Sem HAL nem RTOS,
++ *          para poder ser testado no PC (tests/fw_host).
++ *****************************************************************************/
++#ifndef INC_FPGA_LINK_CORE_H_
++#define INC_FPGA_LINK_CORE_H_
++
++#include <stddef.h>
++#include <stdint.h>
++
++#define FL_SYNC0           0xA5u
++#define FL_SYNC1           0x5Au
++#define FL_VERSION         0x02u
++#define FL_HDR_LEN         6u
++#define FL_CRC_LEN         2u
++#define FL_MAX_PAYLOAD     200u
++#define FL_MAX_FRAME       (FL_HDR_LEN + FL_MAX_PAYLOAD + FL_CRC_LEN)
++#define FL_MAX_FWD_FRAME   64u      /* maior quadro repassado no $FPG (o FPGA manda 44 e 33) */
++/* Mais que isso sem byte no meio de um quadro: recomeça. Desde a v3 os bytes chegam em lotes
++ * (meio/fim do buffer do DMA e linha ociosa), e um quadro pode vir em dois lotes separados
++ * pela rajada inteira (SENSOR + INFO colados = 77 bytes = 6,2 ms). Com 5 ms (v4), ~0,1 % das
++ * janelas se perdiam, todas nas que trazem o FPGA_INFO. O FPGA manda 1 rajada por segundo. */
++#define FL_GAP_MS          20u
++
++/* Contadores que vão na linha $FPG */
++typedef struct {
++    uint32_t frames_ok;    /* Ok: quadros com CRC certo */
++    uint32_t crc_err;      /* Ce: CRC errado */
++    uint32_t hdr_err;      /* He: VER ou LEN inválidos, ou quadro grande demais para repassar */
++    uint32_t uart_err;     /* Ue: erros da USART1 (ruído, framing, overrun) */
++    uint32_t queue_drop;   /* Qd: fila cheia entre a interrupção e a tarefa */
++    uint32_t gaps;         /* Gp: quadros cortados por FL_GAP_MS sem byte (bytes perdidos) */
++    uint32_t junk;         /* Jk: bytes descartados fora de quadro */
++} fl_counters_t;
++
++typedef struct {
++    uint8_t  buf[FL_MAX_FRAME];
++    uint16_t pos;          /* bytes já guardados do quadro atual */
++    uint16_t need;         /* tamanho total esperado (depois do cabeçalho) */
++    uint16_t crc;
++    uint32_t last_ms;
++    fl_counters_t c;
++} fl_asm_t;
++
++uint16_t fl_crc16_update(uint16_t crc, uint8_t b);
++uint16_t fl_crc16(const uint8_t *d, uint16_t n);
++
++void fl_asm_init(fl_asm_t *a);
++
++/* Um byte da USART1. Devolve o tamanho do quadro quando a->buf tem um quadro
++ * completo e com CRC certo (o chamador copia antes do próximo byte), senão 0. */
++uint16_t fl_asm_feed(fl_asm_t *a, uint8_t b, uint32_t now_ms);
++
++/* "$KIND,payload*CS" sem CRLF (checksum XOR de tudo entre '$' e '*', como no $TEL).
++ * Devolve o tamanho, ou -1 se não couber. */
++int fl_format_line(char *out, size_t cap, const char *kind, const char *payload);
++
++/* Linha $FPG de um quadro. Devolve o tamanho, ou -1 se não couber. */
++int fl_format_fpg(char *out, size_t cap, uint32_t tick_ms, const fl_counters_t *c,
++                  const uint8_t *frame, uint16_t len);
++
++#endif /* INC_FPGA_LINK_CORE_H_ */
+diff -ruN --strip-trailing-cr 361fc39_Core/Inc/fpga_link.h hub_Core/Inc/fpga_link.h
+--- 361fc39_Core/Inc/fpga_link.h	1969-12-31 21:00:00.000000000 -0300
++++ hub_Core/Inc/fpga_link.h	2026-11-05 15:19:21.435063181 -0300
+@@ -0,0 +1,30 @@
++/******************************************************************************
++ * @file    fpga_link.h
++ * @brief   Arquitetura B (04/11/2026): FPGA → STM32 (USART1) → PC (ST-Link).
++ *
++ *  - FPGA_Link_Rx_Byte(): na interrupção da USART1, remonta os quadros v2 do
++ *    FPGA e os põe numa fila (nunca executa nada que venha por essa porta).
++ *  - FPGA_Link_Task(): repassa cada quadro numa linha $FPG pela USART2, manda
++ *    o STM_HELLO ao FPGA uma vez por segundo (destrava a linha do FPGA para o
++ *    STM32, ver stm_hello_gate.v) e o $FWV (versão do firmware) a cada 5 s.
++ *****************************************************************************/
++#ifndef INC_FPGA_LINK_H_
++#define INC_FPGA_LINK_H_
++
++#include <stdint.h>
++#include "fpga_link_core.h"
++
++#define HUB_FW_NAME     "hub"
++#define HUB_FW_VERSION  "5"
++#define HUB_FW_BASE     "361fc39"
++#ifndef HUB_FW_BUILD
++#define HUB_FW_BUILD    "0"
++#endif
++
++void FPGA_Link_Init(void);
++void FPGA_Link_Rx_Byte(uint8_t b);     /* interrupção da USART1 */
++void FPGA_Link_Uart_Error(void);       /* interrupção da USART1 */
++void FPGA_Link_Task(void *argument);
++void FPGA_Link_Get_Counters(fl_counters_t *out);
++
++#endif /* INC_FPGA_LINK_H_ */
+diff -ruN --strip-trailing-cr 361fc39_Core/Inc/FreeRTOSConfig.h hub_Core/Inc/FreeRTOSConfig.h
+--- 361fc39_Core/Inc/FreeRTOSConfig.h	2026-04-07 20:55:10.000000000 -0300
++++ hub_Core/Inc/FreeRTOSConfig.h	2026-11-05 15:19:21.435095804 -0300
+@@ -69,7 +69,7 @@
+ #define configTICK_RATE_HZ                       ((TickType_t)1000)
+ #define configMAX_PRIORITIES                     ( 56 )
+ #define configMINIMAL_STACK_SIZE                 ((uint16_t)128)
+-#define configTOTAL_HEAP_SIZE                    ((size_t)15000)
++#define configTOTAL_HEAP_SIZE                    ((size_t)32768)   /* arquitetura B: era 15000; +2 tarefas */
+ #define configMAX_TASK_NAME_LEN                  ( 16 )
+ #define configUSE_TRACE_FACILITY                 1
+ #define configUSE_16_BIT_TICKS                   0
+diff -ruN --strip-trailing-cr 361fc39_Core/Inc/protocol.h hub_Core/Inc/protocol.h
+--- 361fc39_Core/Inc/protocol.h	2026-04-07 20:55:10.000000000 -0300
++++ hub_Core/Inc/protocol.h	2026-11-05 15:19:21.435210031 -0300
+@@ -71,6 +71,7 @@
+ 	uint16_t crc;
+ 	uint8_t  response[RESPONSE_BUFFER_SIZE];
+ 	uint32_t timeout;
++	uint8_t  deferred;   /* arquitetura B: a Command_Task aplica e responde */
+ } Data_ctx;
+ 
+ /* --------------------------------------------------------------------------
+@@ -100,4 +101,8 @@
+ 
+ uint8_t is_cmd_enable();
+ 
++/* Arquitetura B: os comandos válidos que chegam pelo ST-Link são aplicados nesta
++ * tarefa, fora da interrupção da UART (I2C com o mutex, $BST sem disputar o buffer). */
++void Command_Task(void *argument);
++
+ #endif /* INC_PROTOCOL_H_ */
+diff -ruN --strip-trailing-cr 361fc39_Core/Inc/Serial_Bridge.h hub_Core/Inc/Serial_Bridge.h
+--- 361fc39_Core/Inc/Serial_Bridge.h	2026-04-07 20:55:10.000000000 -0300
++++ hub_Core/Inc/Serial_Bridge.h	2026-11-05 15:19:21.435155908 -0300
+@@ -26,6 +26,13 @@
+ /** @brief Tamanho do buffer de debug. */
+ #define DEBUG_BUFFER_SIZE 24
+ 
++/** @brief Fila de saída de cada USART (arquitetura B: era MESSAGE_BUFFER_SIZE = 192, que
++ *         não cabia um $TEL e um $FPG juntos e descartava linhas em silêncio). */
++#define BRIDGE_RING_SIZE 2048
++
++/** @brief Quanto uma tarefa espera por espaço na fila antes de desistir da linha (ms). */
++#define BRIDGE_TX_WAIT_MS 50
++
+ /* --------------------------------------------------------------------------
+  * Estruturas de dados
+  * --------------------------------------------------------------------------*/
+@@ -36,7 +43,7 @@
+  * Contém buffer dos dados e informações do sistema de fila dos buffers
+  */
+ typedef struct {
+-	uint8_t rx_buffer[MESSAGE_BUFFER_SIZE];
++	uint8_t rx_buffer[BRIDGE_RING_SIZE];   // fila de SAÍDA (o nome vem do original)
+ 	uint32_t last;              // Próximo a escrever
+ 	uint32_t first;             // Próximo a enviar
+ 	uint8_t tx_in_progress;
+@@ -76,4 +83,9 @@
+ int send_raw_to_fpga(uint8_t *payload, uint16_t length);
+ int send_raw_to_stlink(uint8_t *payload, uint16_t length);
+ 
++/* Arquitetura B */
++int send_bytes_to_stlink(const uint8_t *payload, uint16_t length);  /* sem CRLF (respostas) */
++void Bridge_Send_Hello(void);                                        /* STM_HELLO pela USART1 */
++uint32_t Bridge_Stlink_Drops(void);                                  /* linhas descartadas */
++
+ #endif /* INC_SERIAL_BRIDGE_H_ */
+diff -ruN --strip-trailing-cr 361fc39_Core/Inc/telemetry.h hub_Core/Inc/telemetry.h
+--- 361fc39_Core/Inc/telemetry.h	2026-04-07 20:55:10.000000000 -0300
++++ hub_Core/Inc/telemetry.h	2026-11-05 15:19:21.435301886 -0300
+@@ -72,4 +72,8 @@
+ void Telemetry_Report_Latchup_Event(Telemetry_Context *ctx, const char *event_type, const char *reason);
+ void Telemetry_Send_Board_Status(Telemetry_Context *ctx);
+ 
++/* Arquitetura B: manda uma linha já pronta ("$KIND,...*CS", sem CRLF) pelo ST-Link,
++ * com o mesmo mutex das outras linhas. */
++void Telemetry_Send_Line(const char *line, uint16_t length);
++
+ #endif /* INC_TELEMETRY_H_ */
+diff -ruN --strip-trailing-cr 361fc39_Core/Src/fpga_link.c hub_Core/Src/fpga_link.c
+--- 361fc39_Core/Src/fpga_link.c	1969-12-31 21:00:00.000000000 -0300
++++ hub_Core/Src/fpga_link.c	2026-11-05 15:19:21.435875588 -0300
+@@ -0,0 +1,126 @@
++/******************************************************************************
++ * @file    fpga_link.c
++ * @brief   Arquitetura B: enlace FPGA → STM32 → PC. Ver fpga_link.h.
++ *****************************************************************************/
++#include "fpga_link.h"
++
++#include <stdio.h>
++#include <string.h>
++
++#include "main.h"
++#include "cmsis_os.h"
++#include "Serial_Bridge.h"
++#include "telemetry.h"
++
++#define FL_QUEUE        4u
++#define FL_FLAG_FRAME   0x0001u
++#define HELLO_PERIOD_MS 1000u
++#define FWV_PERIOD_MS   5000u     /* o app espera até 20 s pelo $FWV antes de avisar */
++
++typedef struct {
++    uint16_t len;
++    uint32_t tick;
++    uint8_t  data[FL_MAX_FWD_FRAME];
++} fl_slot_t;
++
++static fl_asm_t           s_asm;
++static fl_slot_t          s_q[FL_QUEUE];
++static volatile uint8_t   s_qw, s_qr;
++static volatile osThreadId_t s_task;
++
++void FPGA_Link_Init(void)
++{
++    fl_asm_init(&s_asm);
++    s_qw = s_qr = 0u;
++    s_task = NULL;
++}
++
++/* Interrupção da USART1 (DMA de 1 byte). Só remonta e enfileira. */
++void FPGA_Link_Rx_Byte(uint8_t b)
++{
++    uint16_t n = fl_asm_feed(&s_asm, b, HAL_GetTick());
++    if (n == 0u) {
++        return;
++    }
++    if (n > FL_MAX_FWD_FRAME) {
++        s_asm.c.hdr_err++;
++        return;
++    }
++    uint8_t next = (uint8_t)((s_qw + 1u) % FL_QUEUE);
++    if (next == s_qr) {
++        s_asm.c.queue_drop++;
++        return;
++    }
++    fl_slot_t *slot = &s_q[s_qw];
++    slot->len = n;
++    slot->tick = HAL_GetTick();
++    memcpy(slot->data, s_asm.buf, n);
++    s_qw = next;
++    if (s_task != NULL) {
++        osThreadFlagsSet((osThreadId_t)s_task, FL_FLAG_FRAME);
++    }
++}
++
++void FPGA_Link_Uart_Error(void)
++{
++    s_asm.c.uart_err++;
++    s_asm.pos = 0u;
++}
++
++void FPGA_Link_Get_Counters(fl_counters_t *out)
++{
++    uint32_t primask = __get_PRIMASK();
++    __disable_irq();
++    *out = s_asm.c;
++    __set_PRIMASK(primask);
++}
++
++static void send_fwv(void)
++{
++    static char payload[128];
++    static char line[160];
++    const uint32_t *uid = (const uint32_t *)UID_BASE;
++    snprintf(payload, sizeof(payload), "Fw,%s,Ver,%s,Base,%s,Build,%s,Uid,%08lX%08lX%08lX",
++             HUB_FW_NAME, HUB_FW_VERSION, HUB_FW_BASE, HUB_FW_BUILD,
++             (unsigned long)uid[0], (unsigned long)uid[1], (unsigned long)uid[2]);
++    int n = fl_format_line(line, sizeof(line), "FWV", payload);
++    if (n > 0) {
++        Telemetry_Send_Line(line, (uint16_t)n);
++    }
++}
++
++void FPGA_Link_Task(void *argument)
++{
++    (void)argument;
++    static char line[256];
++    fl_counters_t c;
++    s_task = osThreadGetId();
++    uint32_t next_hello = HAL_GetTick();
++    uint32_t next_fwv = HAL_GetTick();
++
++    for (;;) {
++        uint32_t now = HAL_GetTick();
++        if ((int32_t)(now - next_hello) >= 0) {
++            Bridge_Send_Hello();
++            next_hello = now + HELLO_PERIOD_MS;
++        }
++        if ((int32_t)(now - next_fwv) >= 0) {
++            send_fwv();
++            next_fwv = now + FWV_PERIOD_MS;
++        }
++        while (s_qr != s_qw) {
++            fl_slot_t *slot = &s_q[s_qr];
++            FPGA_Link_Get_Counters(&c);
++            int n = fl_format_fpg(line, sizeof(line), slot->tick, &c, slot->data, slot->len);
++            s_qr = (uint8_t)((s_qr + 1u) % FL_QUEUE);
++            if (n > 0) {
++                Telemetry_Send_Line(line, (uint16_t)n);
++            }
++        }
++        int32_t wait = (int32_t)(next_hello - HAL_GetTick());
++        if (wait < 1) {
++            wait = 1;
++        }
++        osThreadFlagsWait(FL_FLAG_FRAME, osFlagsWaitAny, (uint32_t)wait);
++    }
++}
+diff -ruN --strip-trailing-cr 361fc39_Core/Src/fpga_link_core.c hub_Core/Src/fpga_link_core.c
+--- 361fc39_Core/Src/fpga_link_core.c	1969-12-31 21:00:00.000000000 -0300
++++ hub_Core/Src/fpga_link_core.c	2026-11-05 15:19:21.435844369 -0300
+@@ -0,0 +1,138 @@
++/******************************************************************************
++ * @file    fpga_link_core.c
++ * @brief   Remontagem dos quadros v2 do FPGA e formatação da linha $FPG.
++ *          Ver fpga_link_core.h. Sem HAL nem RTOS.
++ *****************************************************************************/
++#include "fpga_link_core.h"
++
++#include <stdio.h>
++#include <string.h>
++
++uint16_t fl_crc16_update(uint16_t crc, uint8_t b)
++{
++    crc ^= b;
++    for (int i = 0; i < 8; i++) {
++        crc = (crc & 1u) ? (uint16_t)((crc >> 1) ^ 0xA001u) : (uint16_t)(crc >> 1);
++    }
++    return crc;
++}
++
++uint16_t fl_crc16(const uint8_t *d, uint16_t n)
++{
++    uint16_t crc = 0xFFFFu;
++    for (uint16_t i = 0; i < n; i++) {
++        crc = fl_crc16_update(crc, d[i]);
++    }
++    return crc;
++}
++
++void fl_asm_init(fl_asm_t *a)
++{
++    memset(a, 0, sizeof(*a));
++}
++
++uint16_t fl_asm_feed(fl_asm_t *a, uint8_t b, uint32_t now_ms)
++{
++    if (a->pos != 0u && (uint32_t)(now_ms - a->last_ms) > FL_GAP_MS) {
++        a->c.gaps++;                          /* quadro cortado: o resto não vem mais */
++        a->pos = 0u;
++    }
++    a->last_ms = now_ms;
++
++    if (a->pos == 0u) {
++        if (b == FL_SYNC0) {
++            a->buf[0] = b;
++            a->pos = 1u;
++        } else {
++            a->c.junk++;
++        }
++        return 0u;
++    }
++    if (a->pos == 1u) {
++        if (b == FL_SYNC1) {
++            a->buf[1] = b;
++            a->pos = 2u;
++            a->crc = 0xFFFFu;
++        } else if (b == FL_SYNC0) {
++            a->c.junk++;                      /* A5 A5 5A …: o segundo A5 pode ser o início */
++        } else {
++            a->c.junk += 2u;
++            a->pos = 0u;
++        }
++        return 0u;
++    }
++
++    uint16_t i = a->pos;
++    a->buf[i] = b;
++    a->pos = (uint16_t)(i + 1u);
++
++    if (i < FL_HDR_LEN) {                   /* VER, TYPE, SEQ, LEN */
++        a->crc = fl_crc16_update(a->crc, b);
++        if (i == FL_HDR_LEN - 1u) {
++            if (a->buf[2] != FL_VERSION || b > FL_MAX_PAYLOAD) {
++                a->c.hdr_err++;
++                a->pos = 0u;
++                return 0u;
++            }
++            a->need = (uint16_t)(FL_HDR_LEN + b + FL_CRC_LEN);
++        }
++        return 0u;
++    }
++    if (i < a->need - FL_CRC_LEN) {         /* payload */
++        a->crc = fl_crc16_update(a->crc, b);
++        return 0u;
++    }
++    if (a->pos < a->need) {                 /* primeiro byte do CRC */
++        return 0u;
++    }
++    a->pos = 0u;                            /* quadro completo */
++    uint16_t rx = (uint16_t)(a->buf[a->need - 2u] | (a->buf[a->need - 1u] << 8));
++    if (rx != a->crc) {
++        a->c.crc_err++;
++        return 0u;
++    }
++    a->c.frames_ok++;
++    return a->need;
++}
++
++static int append_checksum(char *out, size_t cap, int len)
++{
++    uint8_t cs = 0;
++    for (int i = 1; i < len; i++) {         /* tudo depois do '$' */
++        cs ^= (uint8_t)out[i];
++    }
++    if ((size_t)len + 4u > cap) {
++        return -1;
++    }
++    int n = snprintf(out + len, cap - (size_t)len, "*%02X", cs);
++    return (n == 3) ? len + 3 : -1;
++}
++
++int fl_format_line(char *out, size_t cap, const char *kind, const char *payload)
++{
++    int len = snprintf(out, cap, "$%s,%s", kind, payload);
++    if (len <= 0 || (size_t)len >= cap) {
++        return -1;
++    }
++    return append_checksum(out, cap, len);
++}
++
++int fl_format_fpg(char *out, size_t cap, uint32_t tick_ms, const fl_counters_t *c,
++                  const uint8_t *frame, uint16_t len)
++{
++    static const char hex[] = "0123456789ABCDEF";
++    int n = snprintf(out, cap, "$FPG,Tk,%lu,Ok,%lu,Ce,%lu,He,%lu,Ue,%lu,Qd,%lu,Gp,%lu,Jk,%lu,Hx,",
++                     (unsigned long)tick_ms, (unsigned long)c->frames_ok,
++                     (unsigned long)c->crc_err, (unsigned long)c->hdr_err,
++                     (unsigned long)c->uart_err, (unsigned long)c->queue_drop,
++                     (unsigned long)c->gaps, (unsigned long)c->junk);
++    if (n <= 0 || (size_t)n + 2u * len + 4u > cap) {
++        return -1;
++    }
++    for (uint16_t i = 0; i < len; i++) {
++        out[n++] = hex[frame[i] >> 4];
++        out[n++] = hex[frame[i] & 0x0Fu];
++    }
++    out[n] = '\0';
++    return append_checksum(out, cap, n);
++}
+diff -ruN --strip-trailing-cr 361fc39_Core/Src/main.c hub_Core/Src/main.c
+--- 361fc39_Core/Src/main.c	2026-04-07 20:55:10.000000000 -0300
++++ hub_Core/Src/main.c	2026-11-05 15:19:21.435540089 -0300
+@@ -28,6 +28,8 @@
+ #include "MYMGM1R.h"
+ #include "telemetry.h"
+ #include "utils.h"
++#include "protocol.h"
++#include "fpga_link.h"
+ 
+ /* USER CODE END Includes */
+ 
+@@ -104,6 +106,32 @@
+ };
+ /* USER CODE BEGIN PV */
+ 
++/* Arquitetura B (04/11/2026) ------------------------------------------------
++ * txMutex: uma linha por vez no ST-Link ($TEL, $BST, $LEVT, $FPG, $FWV).
++ * cmdTask: aplica os comandos do ST-Link fora da interrupção (protocol.c).
++ * fpgaLink: repassa os quadros do FPGA ($FPG) e manda o STM_HELLO (fpga_link.c).
++ * HUB_OLED = 0: a tarefa padrão não desenha mais no OLED (o OLED_Init já estava
++ * comentado no 361fc39); assim ela não usa sprintf com %f nem o I2C2. */
++#ifndef HUB_OLED
++#define HUB_OLED 0
++#endif
++osMutexId_t txMutexHandle;
++const osMutexAttr_t txMutex_attributes = {
++  .name = "txMutex"
++};
++osThreadId_t cmdTaskHandle;
++const osThreadAttr_t cmdTask_attributes = {
++  .name = "cmdTask",
++  .stack_size = 512 * 4,
++  .priority = (osPriority_t) osPriorityNormal,
++};
++osThreadId_t fpgaLinkHandle;
++const osThreadAttr_t fpgaLink_attributes = {
++  .name = "fpgaLink",
++  .stack_size = 512 * 4,
++  .priority = (osPriority_t) osPriorityNormal,
++};
++
+ MYMGM1R_Struct MYMGM1_ctx;
+ Telemetry_Context Telemetry_ctx;
+ TPS65400_Struct TPS65400_ctx;
+@@ -230,6 +258,7 @@
+ 
+   /* USER CODE BEGIN RTOS_MUTEX */
+   /* add mutexes, ... */
++  txMutexHandle = osMutexNew(&txMutex_attributes);
+   /* USER CODE END RTOS_MUTEX */
+ 
+   /* Create the semaphores(s) */
+@@ -263,6 +292,8 @@
+ 
+   /* USER CODE BEGIN RTOS_THREADS */
+   /* add threads, ... */
++  cmdTaskHandle = osThreadNew(Command_Task, NULL, &cmdTask_attributes);
++  fpgaLinkHandle = osThreadNew(FPGA_Link_Task, NULL, &fpgaLink_attributes);
+   /* USER CODE END RTOS_THREADS */
+ 
+   /* USER CODE BEGIN RTOS_EVENTS */
+@@ -839,7 +870,9 @@
+ void StartDefaultTask(void *argument)
+ {
+   /* USER CODE BEGIN 5 */
++#if HUB_OLED
+   Show_Stats(&MYMGM1_ctx, &Telemetry_ctx, &hadc1);
++#endif
+   /* Infinite loop */
+   for(;;)
+   {
+diff -ruN --strip-trailing-cr 361fc39_Core/Src/protocol.c hub_Core/Src/protocol.c
+--- 361fc39_Core/Src/protocol.c	2026-04-07 20:55:10.000000000 -0300
++++ hub_Core/Src/protocol.c	2026-11-05 15:19:21.435579364 -0300
+@@ -22,6 +22,42 @@
+ 
+ int send_data = 0;
+ int crc_size = 0;
++
++#ifndef HUB_VCORE_MAX_V
++#define HUB_VCORE_MAX_V 1.00f
++#endif
++
++/* ---------------------------------------------------------------------------
++ * Arquitetura B: fila de comandos entre a interrupção da USART2 e a Command_Task.
++ * Antes, Apply_Command rodava dentro da interrupção: o osMutexAcquire do I2C não
++ * funciona ali (volta osErrorISR na hora), então o FUNC_V podia achar o I2C ocupado
++ * pela get_measures e não chegar ao PMIC, e o $BST disputava o buffer do $TEL.
++ * -------------------------------------------------------------------------*/
++#define CMD_QUEUE 4u
++#define CMD_FLAG  0x0001u
++static Data_ctx cmd_q[CMD_QUEUE];
++static volatile uint8_t cmd_w, cmd_r;
++static volatile osThreadId_t cmd_task;
++
++static int Queue_Command(const Data_ctx *message)
++{
++    uint8_t next = (uint8_t)((cmd_w + 1u) % CMD_QUEUE);
++    if (next == cmd_r) {
++        return -1;                                 /* fila cheia */
++    }
++    Data_ctx *slot = &cmd_q[cmd_w];
++    slot->function  = message->function;
++    slot->direction = message->direction;
++    slot->count     = message->count;
++    for (uint32_t i = 0; i < 8u && i < MESSAGE_BUFFER_SIZE; i++) {
++        slot->buffer[i] = message->buffer[i];
++    }
++    cmd_w = next;
++    if (cmd_task != NULL) {
++        osThreadFlagsSet((osThreadId_t)cmd_task, CMD_FLAG);
++    }
++    return 0;
++}
+ float max_current = 2.00;
+ uint8_t is_cmd_e = 0;
+ 
+@@ -149,8 +185,10 @@
+         if (new_Vcore < 0.7) {
+         	new_Vcore = 0.70;
+         }
+-        if (new_Vcore > 1.3) {
+-        	new_Vcore = 1.30;
++        /* Arquitetura B: o 361fc39 deixava até 1.30 V. O máximo absoluto do VCCINT da
++         * Artix UltraScale+ é 1.0 V (o D&T Monitor já para em 0.95 V). */
++        if (new_Vcore > HUB_VCORE_MAX_V) {
++        	new_Vcore = HUB_VCORE_MAX_V;
+         }
+ 
+ 		if (MYMGM1R_ctx) {
+@@ -209,18 +247,39 @@
+ 	message->direction = STM_SLAVE;
+ 	message->crc       = 0xFFFF;
+ 	message->timeout   = Get_Tick();
++	message->deferred  = 0;
+ }
+ 
+ static void Prepare_Response(Data_ctx *message)
+ {
+-    if (message->direction == STM_SLAVE) {
++    /* Comando enfileirado: a resposta sai da Command_Task, depois de aplicado. */
++    if (message->direction == STM_SLAVE && !message->deferred) {
+         message->response[0] = message->direction + message->error + message->function;
+         crc_calc_hex(message->response, 1);
+         Enable_Send_data();
+     }
++    message->deferred = 0;
+     message->state = IDLE_STATE;
+ }
+ 
++void Command_Task(void *argument)
++{
++    (void)argument;
++    cmd_task = osThreadGetId();
++    for (;;) {
++        osThreadFlagsWait(CMD_FLAG, osFlagsWaitAny, osWaitForever);
++        while (cmd_r != cmd_w) {
++            Data_ctx *c = &cmd_q[cmd_r];
++            Apply_Command(c);
++            uint8_t resp[RESPONSE_BUFFER_SIZE];
++            resp[0] = (uint8_t)(STM_SLAVE + NO_ERROR + c->function);   /* "aplicado" */
++            crc_calc_hex(resp, 1);
++            cmd_r = (uint8_t)((cmd_r + 1u) % CMD_QUEUE);
++            send_bytes_to_stlink(resp, RESPONSE_BUFFER_SIZE);
++        }
++    }
++}
++
+ uint16_t Data_Pooling(uint8_t data, Data_ctx *message)
+ {
+     uint32_t now = Get_Tick();
+@@ -330,7 +389,12 @@
+             if (++crc_size == 2) {
+                 if (message->crc == CRC_OK) {
+                     if (message->error == NO_ERROR) {
+-                        Apply_Command(message);
++                        /* Arquitetura B: aplica na Command_Task, fora da interrupção */
++                        if (Queue_Command(message) == 0) {
++                            message->deferred = 1;
++                        } else {
++                            message->error = ERR_LEN;       /* fila cheia (4 comandos) */
++                        }
+                     }
+                 }
+                 else {
+diff -ruN --strip-trailing-cr 361fc39_Core/Src/Serial_Bridge.c hub_Core/Src/Serial_Bridge.c
+--- 361fc39_Core/Src/Serial_Bridge.c	2026-04-07 20:55:10.000000000 -0300
++++ hub_Core/Src/Serial_Bridge.c	2026-11-05 15:19:21.435476047 -0300
+@@ -2,7 +2,11 @@
+  * @file    Serial_Bridge.c
+  * @brief   Driver para criar ponte de comunicação USART
+  *
+- *          USART1 (FPGA path)  — receives commands forwarded from the FPGA
++ *          Arquitetura B (04/11/2026): a USART1 só recebe os quadros v2 do FPGA
++ *          (fpga_link.c) e só transmite o STM_HELLO. Ela NUNCA executa comandos:
++ *          num fluxo binário, um CRC certo por acaso viraria um FUNC_V aleatório.
++ *
++ *          USART1 (FPGA path)  — (original) receives commands forwarded from the FPGA
+  *                                uart_router; responds back via USART1.
+  *          USART2 (STLink path) — primary App ↔ STM32 channel.
+  *                                 Telemetry ($TEL/$BST/$LEVT) is always sent
+@@ -21,8 +25,33 @@
+ #include "IHM.h"
+ #include "main.h"
+ #include "utils.h"
++#include "fpga_link.h"
++#include "cmsis_os.h"
+ 
+ static Serial_Bridge_Struct buffer_fpga;
++
++/* USART1 RX (quadros do FPGA): DMA circular com evento de linha ociosa. Com o DMA de 1 byte
++ * (361fc39 e versões 1–2), cada byte esperava a interrupção; com as interrupções desligadas
++ * por mais de um byte (~80 µs, por exemplo ao enfileirar uma linha de 150 bytes), o byte
++ * seguinte sobrescrevia o anterior e o quadro era descartado sem erro (~1 % das janelas em
++ * 05/11/2026). Aqui o DMA guarda os bytes sozinho; a interrupção só os entrega ao montador. */
++#define FPGA_RX_DMA_SIZE 256u
++static uint8_t  fpga_rx_dma[FPGA_RX_DMA_SIZE];
++static uint16_t fpga_rx_old;
++
++static void fpga_rx_start(void)
++{
++    fpga_rx_old = 0u;
++    HAL_UARTEx_ReceiveToIdle_DMA(buffer_fpga.uart, fpga_rx_dma, FPGA_RX_DMA_SIZE);
++}
++
++static void fpga_rx_feed(uint16_t from, uint16_t to)
++{
++    for (uint16_t i = from; i < to; i++) {
++        FPGA_Link_Rx_Byte(fpga_rx_dma[i]);
++    }
++}
++static volatile uint32_t stlink_drops;
+ static Serial_Bridge_Struct buffer_stlink;
+ 
+ Data_ctx message_from_fpga;
+@@ -41,21 +70,21 @@
+ 
+ static inline uint8_t buffer_is_full(Serial_Bridge_Struct *q)
+ {
+-    return ((q->last + 1) % MESSAGE_BUFFER_SIZE) == q->first;
++    return ((q->last + 1) % BRIDGE_RING_SIZE) == q->first;
+ }
+ 
+ static inline void buffer_push(Serial_Bridge_Struct *q, uint8_t data)
+ {
+     if (!buffer_is_full(q)) {
+         q->rx_buffer[q->last] = data;
+-        q->last = (q->last + 1) % MESSAGE_BUFFER_SIZE;
++        q->last = (q->last + 1) % BRIDGE_RING_SIZE;
+     }
+ }
+ 
+ static inline uint8_t buffer_pop(Serial_Bridge_Struct *q)
+ {
+     uint8_t data = q->rx_buffer[q->first];
+-    q->first = (q->first + 1) % MESSAGE_BUFFER_SIZE;
++    q->first = (q->first + 1) % BRIDGE_RING_SIZE;
+     return data;
+ }
+ 
+@@ -97,18 +126,83 @@
+  *        Used by the telemetry module to emit $TEL/$BST/$LEVT lines.
+  *        This path remains alive even when FPGA output is disabled.
+  */
++static int ring_space(Serial_Bridge_Struct *q)
++{
++    return (q->first > q->last) ? (int)(q->first - q->last)
++                                : (int)(BRIDGE_RING_SIZE - q->last + q->first);
++}
++
++static int in_task_context(void)
++{
++    return (__get_IPSR() == 0u) && (osKernelGetState() == osKernelRunning);
++}
++
++/* Numa tarefa, espera até BRIDGE_TX_WAIT_MS por espaço na fila (antes descartava). */
++static void wait_space(Serial_Bridge_Struct *q, int needed)
++{
++    if (!in_task_context()) {
++        return;
++    }
++    for (int t = 0; t < BRIDGE_TX_WAIT_MS && ring_space(q) < needed; t++) {
++        osDelay(1);
++    }
++}
++
++uint32_t Bridge_Stlink_Drops(void)
++{
++    return stlink_drops;
++}
++
++/* Bytes sem CRLF (as respostas de 3 bytes dos comandos). */
++int send_bytes_to_stlink(const uint8_t *payload, uint16_t length)
++{
++    Serial_Bridge_Struct *q = &buffer_stlink;
++    wait_space(q, (int)length + 1);
++    uint32_t primask = __get_PRIMASK();
++    __disable_irq();
++    if (ring_space(q) < (int)length + 1) {
++        stlink_drops++;
++        __set_PRIMASK(primask);
++        return -1;
++    }
++    for (uint16_t i = 0; i < length; i++) {
++        buffer_push(q, payload[i]);
++    }
++    kick_tx_if_idle(q);
++    __set_PRIMASK(primask);
++    return 0;
++}
++
++/* STM_HELLO = protocol_v2.encode_frame(0x12, 0, b"HUB1"): destrava a linha do FPGA
++ * para o STM32 (stm_hello_gate.v). Mandado pela FPGA_Link_Task uma vez por segundo. */
++void Bridge_Send_Hello(void)
++{
++    static const uint8_t hello[12] = {0xA5, 0x5A, 0x02, 0x12, 0x00, 0x04,
++                                      'H', 'U', 'B', '1', 0xF4, 0xD7};
++    Serial_Bridge_Struct *q = &buffer_fpga;
++    uint32_t primask = __get_PRIMASK();
++    __disable_irq();
++    if (ring_space(q) > (int)sizeof(hello)) {
++        for (unsigned i = 0; i < sizeof(hello); i++) {
++            buffer_push(q, hello[i]);
++        }
++        kick_tx_if_idle(q);
++    }
++    __set_PRIMASK(primask);
++}
++
+ int send_raw_to_stlink(uint8_t *payload, uint16_t length)
+ {
+     Serial_Bridge_Struct *q = &buffer_stlink;
+ 
++    wait_space(q, (int)length + 3);
+     uint32_t primask = __get_PRIMASK();
+     __disable_irq();
+ 
+-    int open_space = (q->first > q->last)
+-                     ? (q->first - q->last)
+-                     : (MESSAGE_BUFFER_SIZE - q->last + q->first);
++    int open_space = ring_space(q);
+ 
+-    if (open_space < (int)(length + 2)) {
++    if (open_space < (int)(length + 3)) {
++        stlink_drops++;
+         __set_PRIMASK(primask);
+         return -1;
+     }
+@@ -137,7 +231,7 @@
+ 
+     int open_space = (q->first > q->last)
+                      ? (q->first - q->last)
+-                     : (MESSAGE_BUFFER_SIZE - q->last + q->first);
++                     : (BRIDGE_RING_SIZE - q->last + q->first);
+ 
+     if (open_space < (int)(length + 2)) {
+         __set_PRIMASK(primask);
+@@ -185,7 +279,7 @@
+ 
+     int open_space = (q->first > q->last)
+                      ? (q->first - q->last)
+-                     : (MESSAGE_BUFFER_SIZE - q->last + q->first);
++                     : (BRIDGE_RING_SIZE - q->last + q->first);
+ 
+     if (open_space < lenght + 10) {
+         __set_PRIMASK(primask);
+@@ -211,21 +305,40 @@
+  * UART callbacks
+  * --------------------------------------------------------------------------*/
+ 
+-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
++/* USART1: chamada pelo HAL na metade e no fim do buffer circular (interrupção do DMA) e
++ * quando a linha fica ociosa, no fim de um quadro (interrupção da USART). Só quadros v2 do
++ * FPGA: nada que chega aqui vira comando.
++ *
++ * A posição vem do contador do DMA, e não do Size: as duas interrupções podem chegar fora de
++ * ordem (um "meio do buffer" atrasado, depois de a linha ociosa já ter passado do meio), e um
++ * Size antigo parecia uma volta inteira do buffer, que reentregava 256 bytes velhos (v3:
++ * janelas perdidas e repetidas, Qd e Jk subindo). O contador do hardware só anda para frente. */
++void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+ {
+-    if (huart->Instance == USART1) {
+-        /* FPGA path: process commands arriving via uart_router (0x20 routed). */
+-        uint8_t byte = buffer_fpga.receiver;
+-        Data_Pooling(byte, &message_from_fpga);
+-        if (Send_Message()) {
+-            for (int l = 0; l < RESPONSE_BUFFER_SIZE; l++) {
+-                buffer_push(&buffer_fpga, message_from_fpga.response[l]);
+-            }
+-            kick_tx_if_idle(&buffer_fpga);
+-        }
+-        HAL_UART_Receive_DMA(buffer_fpga.uart, &buffer_fpga.receiver, 1);
++    (void)Size;
++    if (huart->Instance != USART1 || huart->hdmarx == NULL) {
++        return;
++    }
++    uint16_t pos = (uint16_t)(FPGA_RX_DMA_SIZE - __HAL_DMA_GET_COUNTER(huart->hdmarx));
++    if (pos >= FPGA_RX_DMA_SIZE) {
++        pos = 0u;                            /* contador recarregado: posição 0 */
++    }
++    if (pos == fpga_rx_old) {
++        return;
+     }
+-    else if (huart->Instance == USART2) {
++    if (pos > fpga_rx_old) {
++        fpga_rx_feed(fpga_rx_old, pos);
++    } else {
++        fpga_rx_feed(fpga_rx_old, FPGA_RX_DMA_SIZE);
++        fpga_rx_feed(0u, pos);
++    }
++    fpga_rx_old = pos;
++}
++
++void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
++{
++    /* USART1 usa o HAL_UARTEx_RxEventCallback acima. */
++    if (huart->Instance == USART2) {
+         /* STLink path: primary App ↔ STM32 channel.
+          * Process commands and respond on the same port.
+          * Active even when FPGA output is off. */
+@@ -269,11 +382,12 @@
+     Initialize_Message(&message_from_stlink);
+ 
+     /* UART1 — FPGA side */
++    FPGA_Link_Init();
+     buffer_fpga.last           = 0;
+     buffer_fpga.first          = 0;
+     buffer_fpga.tx_in_progress = 0;
+     buffer_fpga.uart           = huart1;
+-    HAL_UART_Receive_DMA(huart1, &buffer_fpga.receiver, 1);
++    fpga_rx_start();
+ 
+     /* UART2 — STLink side (always initialised) */
+     if (huart2 != NULL) {
+@@ -291,7 +405,12 @@
+         __HAL_UART_CLEAR_OREFLAG(huart);
+         __HAL_UART_CLEAR_NEFLAG(huart);
+         __HAL_UART_CLEAR_FEFLAG(huart);
+-        restart_rx_dma(&buffer_fpga, &message_from_fpga);
++        FPGA_Link_Uart_Error();
++        /* No modo DMA o HAL encerra a recepção em qualquer erro: recomeça. A fila de
++         * saída (o STM_HELLO) não é tocada. */
++        if (huart->RxState == HAL_UART_STATE_READY) {
++            fpga_rx_start();
++        }
+         return;
+     }
+     if (huart->Instance == USART2) {
+diff -ruN --strip-trailing-cr 361fc39_Core/Src/stm32l4xx_hal_msp.c hub_Core/Src/stm32l4xx_hal_msp.c
+--- 361fc39_Core/Src/stm32l4xx_hal_msp.c	2026-04-07 20:55:10.000000000 -0300
++++ hub_Core/Src/stm32l4xx_hal_msp.c	2026-11-05 15:19:21.435614982 -0300
+@@ -528,25 +528,21 @@
+     __HAL_RCC_USART1_CLK_ENABLE();
+ 
+     __HAL_RCC_GPIOB_CLK_ENABLE();
+-    __HAL_RCC_GPIOA_CLK_ENABLE();
+     /**USART1 GPIO Configuration
++    PB6     ------> USART1_TX
+     PB7     ------> USART1_RX
+-    PA9     ------> USART1_TX
++    Firmware B, 05/11/2026: no 361fc39 a TX estava no PA9, que não está ligado a nada
++    na placa (esquemático FPGAging_RV02A, folha 33). A MCU_USART1_TX sai do PB6
++    (esfera D5, TP2) e chega ao AB16 do FPGA; a MCU_USART1_RX vem do W12 ao PB7
++    (esfera C5, TP1). Com o PA9, o STM_HELLO nunca chegava ao FPGA.
+     */
+-    GPIO_InitStruct.Pin = GPIO_PIN_7;
++    GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
+     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+     GPIO_InitStruct.Pull = GPIO_NOPULL;
+     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+     GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
+     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+ 
+-    GPIO_InitStruct.Pin = GPIO_PIN_9;
+-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+-    GPIO_InitStruct.Pull = GPIO_NOPULL;
+-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+-    GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
+-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+-
+     /* USART1 DMA Init */
+     /* USART1_RX Init */
+     hdma_usart1_rx.Instance = DMA1_Channel1;
+@@ -681,12 +677,10 @@
+     __HAL_RCC_USART1_CLK_DISABLE();
+ 
+     /**USART1 GPIO Configuration
++    PB6     ------> USART1_TX
+     PB7     ------> USART1_RX
+-    PA9     ------> USART1_TX
+     */
+-    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_7);
+-
+-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_9);
++    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_6|GPIO_PIN_7);
+ 
+     /* USART1 DMA DeInit */
+     HAL_DMA_DeInit(huart->hdmarx);
+diff -ruN --strip-trailing-cr 361fc39_Core/Src/telemetry.c hub_Core/Src/telemetry.c
+--- 361fc39_Core/Src/telemetry.c	2026-04-07 20:55:10.000000000 -0300
++++ hub_Core/Src/telemetry.c	2026-11-05 15:19:21.435774265 -0300
+@@ -7,6 +7,7 @@
+ 
+ 
+ #include "main.h"
++#include "cmsis_os.h"
+ #include "MYMGM1R.h"
+ #include "telemetry.h"
+ #include "protocol.h"
+@@ -15,6 +16,37 @@
+ #include <stdio.h>
+ #include <string.h>
+ 
++/* ---------------------------------------------------------------------------
++ * Arquitetura B: um mutex para tudo o que formata e manda linhas pelo ST-Link.
++ * Antes, $TEL (sendTelemetry), $BST/$LEVT (LatchupDetect e a interrupção da UART)
++ * usavam o mesmo ctx->buffer sem proteção, e o snprintf com %f do newlib-nano
++ * (que usa malloc) rodava em várias tarefas ao mesmo tempo.
++ * -------------------------------------------------------------------------*/
++extern osMutexId_t txMutexHandle;
++
++static int tel_lock(void)
++{
++    if (txMutexHandle == NULL || __get_IPSR() != 0u || osKernelGetState() != osKernelRunning) {
++        return 0;               /* antes do escalonador (o $BST do boot): uma tarefa só */
++    }
++    osMutexAcquire(txMutexHandle, osWaitForever);
++    return 1;
++}
++
++static void tel_unlock(int locked)
++{
++    if (locked) {
++        osMutexRelease(txMutexHandle);
++    }
++}
++
++void Telemetry_Send_Line(const char *line, uint16_t length)
++{
++    int locked = tel_lock();
++    send_raw_to_stlink((uint8_t *)line, length);
++    tel_unlock(locked);
++}
++
+ float Read_MCU_Temperature(uint32_t raw_temp)
+ {
+ 	float temp;
+@@ -109,6 +141,7 @@
+ 	if (ctx == NULL) {
+ 		return;
+ 	}
++	int locked = tel_lock();
+ 	ctx->latest.sequence += 1u;
+ 	snprintf(
+ 		payload,
+@@ -122,6 +155,7 @@
+ 		(unsigned long)ctx->latest.sequence
+ 	);
+ 	send_ascii_payload(ctx, FUNC_T, "BST", payload);
++	tel_unlock(locked);
+ }
+ 
+ void Telemetry_Report_Latchup_Event(Telemetry_Context *ctx, const char *event_type, const char *reason)
+@@ -132,6 +166,7 @@
+ 	if (ctx == NULL) {
+ 		return;
+ 	}
++	int locked = tel_lock();
+ 	strncpy(ctx->latest.last_reason, safe_reason, sizeof(ctx->latest.last_reason) - 1u);
+ 	ctx->latest.last_reason[sizeof(ctx->latest.last_reason) - 1u] = '\0';
+ 	ctx->latest.sequence += 1u;
+@@ -150,6 +185,7 @@
+ 		(unsigned long)ctx->latest.sequence
+ 	);
+ 	send_ascii_payload(ctx, FUNC_M, "LEVT", payload);
++	tel_unlock(locked);
+ }
+ 
+ void get_measures(void *argument) {
+@@ -196,6 +232,7 @@
+ 	Telemetry_Context *Telemetry_ctx = (Telemetry_Context *)argument;
+ 	while(1) {
+ 		char payload[160];
++		int locked = tel_lock();
+ 		Telemetry_ctx->latest.sequence += 1u;
+ 		snprintf(
+ 			payload,
+@@ -216,6 +253,7 @@
+ 			(unsigned long)Telemetry_ctx->latest.sequence
+ 		);
+ 		send_ascii_payload(Telemetry_ctx, FUNC_T, "TEL", payload);
++		tel_unlock(locked);
+ 		osDelay(250);
+ 	}
+ }

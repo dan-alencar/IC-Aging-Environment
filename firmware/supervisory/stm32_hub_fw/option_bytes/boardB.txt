@@ -1,0 +1,25 @@
+ RDP : 0xAA (Level 0, no protection) 
+ BFB2 : 0x0 (Dual-bank boot disable) 
+ DBANK : 0x1 (Dual bank mode with 64 bits data) 
+ nBOOT1 : 0x1 (Boot from system memory when BOOT0=1) 
+ nSWBOOT0 : 0x1 (BOOT0 taken from PH3/BOOT0 pin) 
+ nBOOT0 : 0x1 (BOOT0 = 0, boot from system memory when nSWBOOT0=1 and main flash is empty,otherwise, boot from main flash memory) 
+ PCROP Protection (Bank 1):
+ PCROP1_STRT : 0x1FFFF (0x80FFFF8) 
+ PCROP1_END : 0x10000 (0x8080000) 
+ PCROP_RDP : 0x1 (PCROP zone is erased when RDP is decreased) 
+ Write Protection (FLASH_WRP1AR):
+ WRP1A_STRT : 0xFF (0x80FF000) 
+ WRP1A_END : 0x0 (0x8000000) 
+ Write Protection (FLASH_WRP2AR):
+ WRP2A_STRT : 0xFF (0x81FF000) 
+ WRP2A_END : 0x0 (0x8100000) 
+ PCROP Protection (Bank 2):
+ PCROP2_STRT : 0x1FFFF (0x81FFFF8) 
+ PCROP2_END : 0x10000 (0x8180000) 
+ Write Protection (FLASH_WRP1BR):
+ WRP1B_STRT : 0xFF (0x80FF000) 
+ WRP1B_END : 0x0 (0x8000000) 
+ Write Protection (FLASH_WRP2BR):
+ WRP2B_STRT : 0xFF (0x81FF000) 
+ WRP2B_END : 0x0 (0x8100000) 

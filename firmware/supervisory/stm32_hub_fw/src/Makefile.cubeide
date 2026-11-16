@@ -1,0 +1,54 @@
+# Build sem a IDE com os mesmos flags do .cproject (configuração Debug) do STM32CubeIDE 1.19:
+#   make -f Makefile.cubeide PROJ=<pasta do projeto> OUT=<pasta de saída>
+TC   ?= /opt/st/stm32cubeide_1.19.0/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.linux64_1.0.0.202410170706/tools/bin
+CC   := $(TC)/arm-none-eabi-gcc
+OBJCOPY := $(TC)/arm-none-eabi-objcopy
+SIZE := $(TC)/arm-none-eabi-size
+PROJ ?= STM_FW/Latchup_FW
+OUT  ?= out
+NAME ?= Teste_Aging
+OPT  ?= -O0
+EXTRA ?=
+
+ARCH := -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb
+DEFS := -DDEBUG -DUSE_HAL_DRIVER -DSTM32L4R9xx
+INCS := Core/Inc Drivers/STM32L4xx_HAL_Driver/Inc Drivers/STM32L4xx_HAL_Driver/Inc/Legacy \
+        Drivers/CMSIS/Device/ST/STM32L4xx/Include Drivers/CMSIS/Include Drivers/OLED \
+        Middlewares/Third_Party/FreeRTOS/Source/include \
+        Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 \
+        Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F \
+        Drivers/MYMGM1R Drivers/TPS65400
+CFLAGS := $(ARCH) -std=gnu11 -g3 $(DEFS) $(EXTRA) $(addprefix -I$(PROJ)/,$(INCS)) $(OPT) \
+          -ffunction-sections -fdata-sections -Wall -fstack-usage --specs=nano.specs
+LDFLAGS := $(ARCH) -T$(PROJ)/STM32L4R9ZIJX_FLASH.ld --specs=nosys.specs -Wl,-Map=$(OUT)/$(NAME).map \
+           -Wl,--gc-sections -static -u _printf_float --specs=nano.specs \
+           -Wl,--start-group -lc -lm -Wl,--end-group
+
+# Pastas de fontes do projeto (as mesmas do .cproject: Drivers, Core/Startup, Middlewares, Core)
+CSRC := $(shell cd $(PROJ) && find Core Drivers Middlewares -name '*.c' | sort)
+ASRC := $(shell cd $(PROJ) && find Core/Startup -name '*.s' | sort)
+OBJS := $(addprefix $(OUT)/obj/,$(CSRC:.c=.o) $(ASRC:.s=.o))
+
+all: $(OUT)/$(NAME).bin
+
+# -MMD -MP: cada .o depende também dos .h que inclui (sem isso, mudar um .h não recompilava
+# quem o usa; foi o que estragou o primeiro build da v3, em 05/11/2026)
+$(OUT)/obj/%.o: $(PROJ)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
+
+$(OUT)/obj/%.o: $(PROJ)/%.s
+	@mkdir -p $(dir $@)
+	$(CC) $(ARCH) -g3 -DDEBUG -c -x assembler-with-cpp $< -o $@
+
+$(OUT)/$(NAME).elf: $(OBJS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+	$(SIZE) $@
+
+$(OUT)/$(NAME).bin: $(OUT)/$(NAME).elf
+	$(OBJCOPY) -O binary $< $@
+
+clean:
+	rm -rf $(OUT)
+
+-include $(OBJS:.o=.d)

@@ -1,8 +1,8 @@
 # STM32 firmware B and board flash backups (reference only)
 
-Binaries from the colleague's architecture-B bench (2026-11). There is no source here: firmware
-B was built from RCROC commit `361fc39` plus his changes (branch `dt2027`,
-`D&T 2027/10_DT_Monitor/firmware_stm32/hub_fw/Latchup_FW_hub`). The current firmware for the
+Binaries and source of the colleague's architecture-B bench (2026-11). Firmware B is RCROC
+commit `361fc39` plus his changes; the source is in `src/` (moved here from branch `dt2027` on
+2026-11-16). The current firmware for the
 boards is fpgaging-board-support's `firmware/stm32` (fbs protocol); these files exist so a
 board can be put back exactly as it was.
 
@@ -20,3 +20,27 @@ Restore a board (ST-LINK serial in `sn=`; the board's UID is checked by
 `external/fpgaging-board-support/tools/flash_stm32.sh` for fbs images):
 
     STM32_Programmer_CLI -c port=SWD sn=<ST-LINK serial> -e all -w <file>.bin 0x08000000 -v -rst
+
+## Source (`src/`)
+
+| Path | What |
+|---|---|
+| `src/Latchup_FW_hub/` | The STM32CubeIDE project of firmware B v6: `Core/` (his code: `fpga_link*`, `telemetry`, `protocol`, `Serial_Bridge`, `IHM`, the clock and CSS changes in `main.c`), the `.ioc` (STM32Cube FW_L4 V1.18.1; it still says MSI, see `LEIAME.md`), linker scripts, `tests_host/` |
+| `src/hub_vs_361fc39.diff` | His changes against RCROC `361fc39` |
+| `src/LEIAME.md`, `src/LEIAME_firmware_stm32.md` | His notes per version (v1–v6) and on the firmware folder, in Portuguese |
+| `src/build.sh`, `src/Makefile.cubeide`, `src/gravar.sh` | His command-line build and flash scripts |
+| `option_bytes/boardA.txt`, `boardB.txt` | Option bytes read from boards A and B |
+
+`Drivers/` and `Middlewares/` (ST HAL, CMSIS, FreeRTOS and the OLED, MYMGM1R and TPS65400
+drivers) are not copied: every file is byte-identical to RCROC `361fc39`. To build, copy them in:
+
+    git -C <RCROC> archive 361fc39 STM_FW/Latchup_FW/Drivers STM_FW/Latchup_FW/Middlewares |
+      tar -x --strip-components=2 -C src/Latchup_FW_hub
+
+**What the source settles for the fbs bench (SPEC V8, §7.6):**
+
+- `Is` (`telemetry.c`) is `|V(OPAMP1 out) − V(OPAMP2 out)| / (2 × 0.1 Ω)`: PA0 and PA6, each through
+  an on-chip op-amp at gain 2 (`main.c` `MX_OPAMP1/2_Init`), read on ADC1 channels 8 and 15. The code
+  calls it `i_sram`. It is **only reported**: the latch-up trip compares the module's `READ_IOUT`
+  with `Mc` (2 A by default; off 3 s, settle 5 s; `main.c` `LatchupDetect`).
+- Both option-byte dumps show `DBANK = 1` (dual-bank flash), which the fbs event log needs.
