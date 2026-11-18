@@ -13,8 +13,6 @@ flow) put their deliverables. Expected subdirectories, mirroring
   path) and the `.qsf` location assignments that pin the sensor's placement, per
   front F2's reproducibility requirement.
 
-`scripts/check_layout.sh` in the parent directory checks for
-`src/rtl/top/max10_aging_top.sv`, `src/constraints/max10_aging.sdc`, and
-`src/constraints/max10_aging.qsf` as placeholder expected paths — rename these in
-both that script and `scripts/create_project.tcl` if the team settles on different
-names.
+The project's single `.qsf` lives in the parent directory (`max10_aging_top.qsf`);
+`scripts/check_layout.sh` checks for `src/rtl/top/max10_aging_top.sv` and
+`src/constraints/max10_aging.sdc`.

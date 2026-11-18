@@ -28,7 +28,6 @@ tooling_files=(
 design_files=(
   "src/rtl/top/max10_aging_top.sv"
   "src/constraints/max10_aging.sdc"
-  "src/constraints/max10_aging.qsf"
 )
 
 missing_tooling=0
