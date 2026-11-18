@@ -1,0 +1,18 @@
+# Quartus generated output
+hdl/db/
+hdl/incremental_db/
+hdl/greybox_tmp/
+hdl/output_files/
+hdl/build/
+hdl/artifacts/
+*.qws
+*_nativelink_simulation.rpt
+*.sof
+*.pof
+
+# Questa/ModelSim generated output (NativeLink)
+hdl/simulation/
+
+# Editor/tool backups
+*.bak
+*.bak[0-9]*
