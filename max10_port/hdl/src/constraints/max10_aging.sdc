@@ -22,17 +22,21 @@ derive_pll_clocks
 # Calcula a incerteza de clock (jitter/skew) automaticamente
 derive_clock_uncertainty
 
-# Caminho interno do proprio sensor: FF_sys_clk/FF_psclk (clocados por
-# clk[0]/clk[1]) -> XOR -> FF_alarm (clocado por clk[2]/catcher_clk).
-# Esta e a violacao real encontrada no relatorio do TimeQuest (nao a
-# travessia do sincronizador de alarm, como uma hipotese anterior
-# supunha). A margem entre catcher_clk e os clocks de captura e um
-# parametro de projeto fixo e pequeno (~192 ps) que o STA analisa como
-# um caminho sincrono convencional de "um ciclo", o que nao reflete
-# como esse sensor realmente funciona -- a validacao real dessa margem
-# e feita empiricamente (hardware), nao por STA convencional.
-set_false_path -from [get_clocks {u_aging_pll|altpll_component|auto_generated|pll1|clk[0]}] -to [get_clocks {u_aging_pll|altpll_component|auto_generated|pll1|clk[2]}]
-set_false_path -from [get_clocks {u_aging_pll|altpll_component|auto_generated|pll1|clk[1]}] -to [get_clocks {u_aging_pll|altpll_component|auto_generated|pll1|clk[2]}]
+# C3 -- Caminho interno do sensor: FF_sys_clk / FF_psclk -> XOR -> FF_alarm
+# (catcher_clk, fase FIXA c = 2,5 ns = 14 passos de 178,57 ps).
+#
+# ANTES: set_false_path clk[0]->clk[2] e clk[1]->clk[2], que escondia do STA um
+# caminho que PRECISA fechar: o XOR tem de assentar antes do catcher amostrar.
+# Como psclk e deslocado em tempo real, a relacao de fase estatica entre clk[1]
+# e clk[2] nao representa nada; so o ATRASO DE DADOS importa.
+#
+# AGORA (restricao do relatorio de revisao, C3 item 3): o XOR precisa estar
+# estavel antes do catcher (c), com folga. 1,500 ns = c (2,5 ns) - 1,0 ns.
+# CONFERIR no relatorio do Timing Analyzer que este caminho fecha. Se der slack
+# negativo, nao relaxe o numero as cegas: veja o atraso real e decida entre
+# aproximar os 3 FFs (LOCATION) ou subir c em multiplos de 178,57 ps
+# (c tem que continuar < d_min ~ 10,5 ns).
+set_max_delay -from [get_registers {*ff_sys_clk_q* *ff_psclk_q*}] -to [get_registers {*ff_alarm_q*}] 1.500
 
 # Travessia assincrona do sinal alarm: catcher_clk (clk[2], saida da PLL)
 # <-> scanclk/clk50 (dominio do scc_controller). Ja sincronizada em HDL

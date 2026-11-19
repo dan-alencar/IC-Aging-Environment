@@ -8,7 +8,9 @@
 //   Byte 0: 0xAA                 -- marcador de sincronismo/inicio
 //   Byte 1: slack_count[15:8]    -- MSB do contador de incrementos de fase
 //   Byte 2: slack_count[7:0]     -- LSB do contador de incrementos de fase
-//   Byte 3: status               -- bit0 = alarm, bit1 = calibrated, resto = 0
+//   Byte 3: status               -- bit0 = alarm, bit1 = calibrated, bit2 = valid,
+//                                   bit3 = sat_hi, bit4 = at_origin, bit5 = timeout,
+//                                   bit6 = pll_lost, bit7 = seq (alterna a cada medicao)
 //   Byte 4: checksum             -- byte1 XOR byte2 XOR byte3
 //
 // Os valores de slack_count/calibrated/alarm sao capturados ("congelados")
@@ -25,6 +27,7 @@ module uart_packet_sender #(
     input  wire        reset,        // reset assincrono, ativo em nivel alto
     input  wire [15:0] slack_count,
     input  wire        calibrated,
+    input  wire [5:0]  flags,        // status_hi: {seq, pll_lost, timeout, at_origin, sat_hi, valid}
     input  wire        alarm,
     output wire        uart_txd      // linha serial de saida, ligar a um adaptador USB-TTL externo
 );
@@ -105,8 +108,8 @@ module uart_packet_sender #(
                         // precisar de um registrador para ele)
                         byte1 <= slack_count[15:8];
                         byte2 <= slack_count[7:0];
-                        byte3 <= {6'b000000, calibrated, alarm};
-                        byte4 <= slack_count[15:8] ^ slack_count[7:0] ^ {6'b000000, calibrated, alarm};
+                        byte3 <= {flags, calibrated, alarm};
+                        byte4 <= slack_count[15:8] ^ slack_count[7:0] ^ {flags, calibrated, alarm};
 
                         byte_idx <= 3'd0;
                         data_in  <= 8'hAA;

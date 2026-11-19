@@ -30,6 +30,10 @@
 //   sempre 0). O Connectivity Check do Quartus aponta isso explicitamente
 //   se acontecer de novo ("port ... not connected by instance").
 //
+//   v3 (C2/C3): o scc_controller agora e um laco continuo (varre, trava,
+//   devolve a fase, repete). slack_count mostra a ULTIMA medicao valida.
+//   catcher_clk em 2,5 ns (antes 10 ns, que saturava a leitura em 1065).
+//
 //   ATENCAO -- HISTORICO: ambas as correcoes acima (phasecounterselect
 //   e a conexao de pll_locked) ja foram feitas, perdidas por uma
 //   reextracao acidental do .zip original do projeto por cima da copia
@@ -37,12 +41,22 @@
 //   de uma copia nova, confirme que essas duas coisas estao presentes.
 // ============================================================================
 
-module max10_aging_top (
+module max10_aging_top #(
+    // Geometria do sensor (C3/C4): DEVE refletir aging_pll.v.
+    //   T_PS       periodo de sys_clk/psclk/catcher_clk (clk*_divide_by=10 sobre 50 MHz)
+    //   C_PS       clk2_phase_shift (fase do catcher_clk)
+    //   STEP_X1000 vco_phase_shift_step em ps*1000 (VCO 700 MHz -> 178,571 ps)
+    //   MAX_STEPS  uma volta completa do psclk = T / passo (timeout da varredura)
+    parameter integer T_PS       = 200000,
+    parameter integer C_PS       = 2500,
+    parameter integer STEP_X1000 = 178571,
+    parameter integer MAX_STEPS  = (T_PS * 1000) / STEP_X1000
+)(
     input  wire clk50,               // MAX10_CLK1_50: oscilador on-board de 50 MHz
     input  wire cpu_resetn,           // KEY0: botao fisico, ATIVO EM NIVEL BAIXO
     output wire alarm,                // saida do sensor: erosao de slack / falha de timing
     output wire pll_locked,           // sinal de depuracao: indica se a PLL travou (locked)
-    output wire calibrated,           // em 1 quando a calibracao terminou (alarme disparou)
+    output wire calibrated,           // em 1 apos a primeira medicao valida (o laco continua medindo)
     output wire uart_txd,             // saida serial (ligar a um adaptador USB-TTL externo, ou futuramente ao ESP32)
     output wire [6:0] hex0,           // display de 7 segmentos: slack_count[3:0]   (nibble 0, menos significativo)
     output wire [6:0] hex1,           // display de 7 segmentos: slack_count[7:4]   (nibble 1)
@@ -83,6 +97,7 @@ module max10_aging_top (
     wire scc_phasestep;
     wire scc_phaseupdown;
     wire alarm_w;
+    wire [5:0] scc_flags;   // {seq, pll_lost, timeout, at_origin, sat_hi, valid}
 
     aging_pll u_aging_pll (
         .inclk0            (clk50),
@@ -104,8 +119,14 @@ module max10_aging_top (
 	 // ------------------------------------------------------------------
     // Controlador SCC: avanca a fase do psclk ate o alarme disparar
     // ------------------------------------------------------------------
+    // Geometria do sensor: parametros do topo (acima). Se algo mudar em
+    // aging_pll.v, mude la: o detector de saturacao e o MAX_STEPS usam estes valores.
     scc_controller #(
-        .COUNT_WIDTH (16)
+        .COUNT_WIDTH (16),
+        .T_PS        (T_PS),
+        .C_PS        (C_PS),
+        .STEP_X1000  (STEP_X1000),
+        .MAX_STEPS   (MAX_STEPS)
     ) u_scc_controller (
         .scanclk      (clk50),
         .reset        (reset),
@@ -118,6 +139,7 @@ module max10_aging_top (
         .phaseupdown  (scc_phaseupdown),
         .slack_count  (slack_count),
         .calibrated   (calibrated),
+        .flags        (scc_flags),
         .dbg_idle       (dbg_idle),
         .dbg_step       (dbg_step),
         .dbg_wait_low   (dbg_wait_low),
@@ -181,6 +203,7 @@ module max10_aging_top (
         .reset        (reset),
         .slack_count  (slack_count),
         .calibrated   (calibrated),
+        .flags        (scc_flags),
         .alarm        (alarm_w),
         .uart_txd     (uart_txd)
     );

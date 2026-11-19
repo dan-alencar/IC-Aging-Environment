@@ -21,8 +21,9 @@ max10_aging_port.qpf / .qsf   projeto + atribuições (pinos, posicionamento, fo
 aging_pll.v / .qip / .ppf     IP da PLL (deslocamento dinâmico de fase)
 src/rtl/                      top/, aging_sensor/, uart/, display/
 src/constraints/max10_aging.sdc   restrições de timing
-src/sim/                      testbenches
-scripts/                      esqueleto (não usado pelo build acima)
+src/sim/                      testbenches + modelos comportamentais (só simulação)
+scripts/run_sim.sh            roda todas as simulações (Icarus Verilog, sem Quartus)
+scripts/                      demais scripts são esqueleto (não usados pelo build acima)
 ```
 
 ## Regras

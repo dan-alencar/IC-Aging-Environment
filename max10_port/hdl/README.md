@@ -21,8 +21,9 @@ max10_aging_port.qpf / .qsf   project + assignments (pins, placement, sources)
 aging_pll.v / .qip / .ppf     PLL IP (dynamic phase shift)
 src/rtl/                      top/, aging_sensor/, uart/, display/
 src/constraints/max10_aging.sdc   timing constraints
-src/sim/                      testbenches
-scripts/                      scaffolding (not used by the build above)
+src/sim/                      testbenches + behavioral models (simulation only)
+scripts/run_sim.sh            runs all simulations (Icarus Verilog, no Quartus needed)
+scripts/                      other scripts are scaffolding (not used by the build above)
 ```
 
 ## Rules
