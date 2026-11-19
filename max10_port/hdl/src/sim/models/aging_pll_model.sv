@@ -1,7 +1,7 @@
 // MODELO COMPORTAMENTAL da aging_pll (ALTPLL) so para simulacao.
 // NAO e o modelo oficial da Intel: nao modela jitter, VCO, nem o pulso real de
 // phasedone. Modela o que o laco precisa:
-//   c0 = clk50/10 (200 ns); c1 = c0 adiantado de p*passo (phaseupdown=0 => p+1);
+//   c0 = clk50/10 (200 ns); c1 = c0 adiantado de p*passo (96,154 ps) (phaseupdown=0 => p+1);
 //   c2 = c0 + CATCHER_PS (fixo); so aceita passos com phasecounterselect=3'b011.
 // Passos so valem com phasestep em borda de subida amostrada por scanclk.
 `ifndef CATCHER_PS
@@ -14,7 +14,7 @@ module aging_pll (
     input  wire       phaseupdown, phasestep, scanclk,
     output reg        c0, c1, c2, phasedone, locked
 );
-    localparam integer T_PS = 200000, STEP_X1000 = 178571;
+    localparam integer T_PS = 200000, STEP_X1000 = 96154;
     integer p = 0;
     integer cnt = 0, lock_cnt = 0;
     reg ps_d = 0;

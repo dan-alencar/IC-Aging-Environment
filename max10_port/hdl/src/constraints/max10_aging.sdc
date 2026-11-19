@@ -23,7 +23,7 @@ derive_pll_clocks
 derive_clock_uncertainty
 
 # C3 -- Caminho interno do sensor: FF_sys_clk / FF_psclk -> XOR -> FF_alarm
-# (catcher_clk, fase FIXA c = 2,5 ns = 14 passos de 178,57 ps).
+# (catcher_clk, fase FIXA c = 2,5 ns = 26 passos de 96,154 ps).
 #
 # ANTES: set_false_path clk[0]->clk[2] e clk[1]->clk[2], que escondia do STA um
 # caminho que PRECISA fechar: o XOR tem de assentar antes do catcher amostrar.
@@ -34,7 +34,7 @@ derive_clock_uncertainty
 # estavel antes do catcher (c), com folga. 1,500 ns = c (2,5 ns) - 1,0 ns.
 # CONFERIR no relatorio do Timing Analyzer que este caminho fecha. Se der slack
 # negativo, nao relaxe o numero as cegas: veja o atraso real e decida entre
-# aproximar os 3 FFs (LOCATION) ou subir c em multiplos de 178,57 ps
+# aproximar os 3 FFs (LOCATION) ou subir c em multiplos de 96,154 ps
 # (c tem que continuar < d_min ~ 10,5 ns).
 set_max_delay -from [get_registers {*ff_sys_clk_q* *ff_psclk_q*}] -to [get_registers {*ff_alarm_q*}] 1.500
 

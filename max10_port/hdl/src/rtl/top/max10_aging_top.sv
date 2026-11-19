@@ -13,11 +13,12 @@
 //   O controlador SCC (scc_controller) ja esta integrado e aciona
 //   dinamicamente phasestep/phaseupdown, avancando a fase do psclk
 //   enquanto o alarme do sensor estiver em LOW. O passo de fase desta
-//   PLL (Quartus, MAX 10) e vco_phase_shift_step = 179 ps (ver
-//   aging_pll.v, defparam altpll_component.vco_phase_shift_step), NAO
-//   os 96 ps / VCO 1300 MHz do artigo de referencia (que usa MMCM da
-//   Xilinx). Ao converter slack_count para ps no host/UART, use
-//   179 ps/incremento.
+//   PLL (Quartus, MAX 10) e vco_phase_shift_step = 96 (aging_pll.v),
+//   que o Fitter realiza com VCO 1300 MHz, M=26 => 1/8 do periodo do VCO =
+//   96,154 ps: e o PISO do MAX 10 (relatorio de revisao, C4). O MMCM da
+//   Xilinx da 19,8 ps -- nao e a origem dos 96 ps. Ao converter slack_count
+//   para ps no host/UART, use STEP_PS = 96,154 ps/incremento (confirmar o
+//   valor efetivo no fit.rpt)
 //
 //   phasecounterselect = 3'b011 seleciona o contador c1 (psclk) como
 //   alvo do deslocamento de fase (000=todos os C, 001=M, 010=C0,
@@ -45,12 +46,13 @@ module max10_aging_top #(
     // Geometria do sensor (C3/C4): DEVE refletir aging_pll.v.
     //   T_PS       periodo de sys_clk/psclk/catcher_clk (clk*_divide_by=10 sobre 50 MHz)
     //   C_PS       clk2_phase_shift (fase do catcher_clk)
-    //   STEP_X1000 vco_phase_shift_step em ps*1000 (VCO 700 MHz -> 178,571 ps)
+    //   STEP_X1000 passo de fase em ps*1000 = 1/8 do periodo do VCO (C4: VCO 1300 MHz,
+    //              M=26 -> 96,154 ps; piso do MAX 10). CONFERIR no fit.rpt (PLL Summary)
     //   MAX_STEPS  uma volta completa do psclk = T / passo (timeout da varredura)
     parameter integer T_PS       = 200000,
     parameter integer C_PS       = 2500,
-    parameter integer STEP_X1000 = 178571,
-    parameter integer MAX_STEPS  = (T_PS * 1000) / STEP_X1000
+    parameter integer STEP_X1000 = 96154,
+    parameter integer MAX_STEPS  = (T_PS * 1000 + STEP_X1000 / 2) / STEP_X1000
 )(
     input  wire clk50,               // MAX10_CLK1_50: oscilador on-board de 50 MHz
     input  wire cpu_resetn,           // KEY0: botao fisico, ATIVO EM NIVEL BAIXO
@@ -214,7 +216,7 @@ module max10_aging_top #(
     // direto na placa, sem precisar de PC.
     //
     // ANTES, so hex0/hex1 existiam (8 bits, 0-255): com margens de
-    // dezenas ou centenas de ns e passo de 179 ps, o numero real de
+    // dezenas ou centenas de ns e passo de ~96 ps, o numero real de
     // incrementos facilmente ultrapassa 255 e da a volta (wraparound)
     // silenciosamente -- o valor exibido parecia pequeno mesmo quando
     // o sensor tinha calibrado corretamente com uma contagem bem maior.

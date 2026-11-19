@@ -14,8 +14,8 @@
 module scc_loop_tb;
     parameter  integer C_PS = 2500;      // 10000 reproduz o RTL ANTIGO (catcher 10 ns)
     parameter  integer TABLE7_ONLY = 0;  // 1: so a Tabela 7 do relatorio
-    localparam integer T_PS = 200000, STEP_X1000 = 178571;
-    localparam integer MAX_STEPS = (T_PS * 1000) / STEP_X1000;   // 1 volta = 1120 passos
+    localparam integer T_PS = 200000, STEP_X1000 = 96154;
+    localparam integer MAX_STEPS = (T_PS * 1000 + STEP_X1000 / 2) / STEP_X1000;   // 1 volta = 2080 passos
 
     reg scanclk = 0;  always #10 scanclk = ~scanclk;   // 50 MHz
     reg reset = 1, pll_locked = 0;
@@ -110,7 +110,7 @@ module scc_loop_tb;
         if (!TABLE7_ONLY) begin
         // 1) medicoes sucessivas, valores estaveis
         k = expected_k(d_ps);
-        check(dut.MAX_STEPS == 1120, "MAX_STEPS default = T/passo = 1120 (uma volta)");
+        check(dut.MAX_STEPS == 2080, "MAX_STEPS default = T/passo = 2080 (uma volta)");
         wait_meas;
         check(slack_count == k && flags[0] && calibrated, "T1 medida1 = formula, valid, calibrated");
         $display("T1: d=%0d ps -> k=%0d (esperado %0d) flags=%b", d_ps, slack_count, k, flags);
@@ -123,14 +123,14 @@ module scc_loop_tb;
         check(flags[4:1] == 4'b0000, "T1 sem flags de erro apos 20 varreduras");
         $display("T1: 20 varreduras consecutivas, todas k=%0d", k);
 
-        // relatorio C2 (b): degrau de +500 ps em d -> contagem cai de 2 ou 3 passos
+        // relatorio C2 (b): degrau de +500 ps em d -> contagem cai de 5 ou 6 passos (500/96,154 = 5,2)
         begin : step500
             integer k0; k0 = k;
             d_ps = d_ps + 500; k = expected_k(d_ps);
             wait_meas; wait_meas;
-            check(slack_count == k && (k0 - slack_count == 2 || k0 - slack_count == 3),
-                  "T1b degrau +500 ps: contagem cai de 2 ou 3 passos");
-            $display("T1b: d +500 ps -> k de %0d para %0d (queda %0d; 500/passo = 2,8)", k0, slack_count, k0 - slack_count);
+            check(slack_count == k && (k0 - slack_count == 5 || k0 - slack_count == 6),
+                  "T1b degrau +500 ps: contagem cai de 5 ou 6 passos");
+            $display("T1b: d +500 ps -> k de %0d para %0d (queda %0d; 500/passo = 5,2)", k0, slack_count, k0 - slack_count);
             d_ps = d_ps - 500; k = expected_k(d_ps);
             wait_meas; wait_meas;
             check(slack_count == k, "T1b volta ao valor original");
@@ -199,9 +199,10 @@ module scc_loop_tb;
         begin : table7
             integer i; integer dv [0:5]; integer prev [0:5]; integer obt [0:5];
             dv[0]=29200; dv[1]=20000; dv[2]=12000; dv[3]=10500; dv[4]=9000; dv[5]=6000;
-            prev[0]=957; prev[1]=1009; prev[2]=1053; prev[3]=1062; prev[4]=1070; prev[5]=1087;
-            // "Obtido" com catcher de 10 ns (RTL antigo): as duas ultimas saturam
-            obt[0]=957; obt[1]=1009; obt[2]=1053; obt[3]=1062; obt[4]=1065; obt[5]=1065;
+            // Valores RECALCULADOS para o passo de 96,154 ps (C4): k = (T - max(d,C))/passo + 1.
+            // (No passo antigo de 178,57 ps eram 957, 1009, 1053, 1062, 1070, 1087.)
+            // Com C=10 ns as duas ultimas linhas (d < C) saturam em (T-C)/passo + 1.
+            for (i = 0; i < 6; i = i + 1) begin prev[i] = expected_k(dv[i]); obt[i] = expected_k(dv[i]); end
             $display("\nTabela 7 (C=%0d ps): d[ns] previsto obtido flags(seq,lost,to,orig,sat,valid)", C_PS);
             for (i = 0; i < 6; i = i + 1) begin
                 d_ps = dv[i];
@@ -211,11 +212,11 @@ module scc_loop_tb;
                     check(slack_count == prev[i], "T8 (C=2,5 ns) obtido == previsto");
                     check(!flags[1] && flags[0], "T8 (C=2,5 ns) nao saturado e valido");
                 end else begin
-                    check(slack_count == obt[i], "T8 (C=10 ns) reproduz o 'Obtido' do relatorio");
+                    check(slack_count == obt[i], "T8 (C=10 ns) obtido == formula (satura em (T-C)/passo+1)");
                 end
             end
             if (C_PS != 2500) begin
-                // com C=10 ns o RTL antigo devolvia 1065 SILENCIOSAMENTE; o detector
+                // com C=10 ns o RTL antigo devolvia o patamar SILENCIOSAMENTE; o detector
                 // novo precisa ao menos marcar saturacao nessas duas linhas
                 check(flags[1] && !flags[0], "T8 (C=10 ns) d=6 ns: sat_hi=1 e valid=0");
             end
@@ -227,5 +228,5 @@ module scc_loop_tb;
         $finish;
     end
 
-    initial begin #4_000_000_000; $display("FAIL: watchdog global"); $finish; end
+    initial begin #400_000_000_000; $display("FAIL: watchdog global"); $finish; end
 endmodule

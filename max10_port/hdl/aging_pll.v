@@ -189,7 +189,7 @@ module aging_pll (
 		altpll_component.port_extclk3 = "PORT_UNUSED",
 		altpll_component.self_reset_on_loss_lock = "OFF",
 		altpll_component.vco_frequency_control = "MANUAL_PHASE",
-		altpll_component.vco_phase_shift_step = 179,
+		altpll_component.vco_phase_shift_step = 96,
 		altpll_component.width_clock = 5,
 		altpll_component.width_phasecounterselect = 3;
 
@@ -246,7 +246,7 @@ endmodule
 // Retrieval info: PRIVATE: LVDS_PHASE_SHIFT_UNIT0 STRING "deg"
 // Retrieval info: PRIVATE: LVDS_PHASE_SHIFT_UNIT1 STRING "deg"
 // Retrieval info: PRIVATE: LVDS_PHASE_SHIFT_UNIT2 STRING "ps"
-// Retrieval info: PRIVATE: MANUAL_PHASE_SHIFT_STEP_EDIT STRING "179.00000000"
+// Retrieval info: PRIVATE: MANUAL_PHASE_SHIFT_STEP_EDIT STRING "96.00000000"
 // Retrieval info: PRIVATE: MANUAL_PHASE_SHIFT_STEP_UNIT STRING "ps"
 // Retrieval info: PRIVATE: MIG_DEVICE_SPEED_GRADE STRING "Any"
 // Retrieval info: PRIVATE: MIRROR_CLK0 STRING "0"
@@ -374,7 +374,7 @@ endmodule
 // Retrieval info: CONSTANT: PORT_extclk3 STRING "PORT_UNUSED"
 // Retrieval info: CONSTANT: SELF_RESET_ON_LOSS_LOCK STRING "OFF"
 // Retrieval info: CONSTANT: VCO_FREQUENCY_CONTROL STRING "MANUAL_PHASE"
-// Retrieval info: CONSTANT: VCO_PHASE_SHIFT_STEP NUMERIC "179"
+// Retrieval info: CONSTANT: VCO_PHASE_SHIFT_STEP NUMERIC "96"
 // Retrieval info: CONSTANT: WIDTH_CLOCK NUMERIC "5"
 // Retrieval info: CONSTANT: WIDTH_PHASECOUNTERSELECT NUMERIC "3"
 // Retrieval info: USED_PORT: @clk 0 0 5 0 OUTPUT_CLK_EXT VCC "@clk[4..0]"

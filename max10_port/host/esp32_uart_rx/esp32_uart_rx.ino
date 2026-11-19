@@ -95,7 +95,7 @@ struct StatWindow {
 constexpr int      RX_PIN  = 25;        // GPIO25 recebe o TX do FPGA
 constexpr int      TX_PIN  = 26;        // so ocupa a configuracao; NAO ligue nada nele
 constexpr uint32_t BAUD    = 115200;
-constexpr float    STEP_PS = 178.571f;  // 1/8 do periodo do VCO de 700 MHz
+constexpr float    STEP_PS = 96.154f;   // 1/8 do periodo do VCO de 1300 MHz (C4); conferir no fit.rpt
 
 FrameParser parser;
 StatWindow  stats;

@@ -1,7 +1,7 @@
 // ============================================================================
 // max10_top_tb -- integracao do TOPO com modelos comportamentais (PLL e LUT).
 // Verifica de ponta a ponta: sensor -> laco continuo -> flags -> pacote UART.
-//   +EXPECT_K=<n>   leitura esperada (formula, ou 1065 se saturar)
+//   +EXPECT_K=<n>   leitura esperada pela formula; -1 = nao checar (medida saturada)
 //   +EXPECT_SAT=0|1 flag sat_hi esperada
 // Atraso da cadeia d = 50 * STAGE_DELAY_PS ; catcher = CATCHER_PS (macros).
 // ATENCAO: modelos simplificados -- isto NAO substitui Questa+ALTPLL oficial
@@ -62,8 +62,8 @@ module max10_top_tb;
         if (!$value$plusargs("EXPECT_SAT=%d", exp_sat)) exp_sat = 0;
         #1 cpu_resetn = 0;      // borda de reset (assincrona) -- inicializa launch/FFs
         #100000 cpu_resetn = 1;
-        // ~4 medicoes completas (cada uma ~3 ms)
-        #14_000_000_000;
+        // ~4 medicoes completas (cada uma ~6 ms com o passo de 96 ps)
+        #28_000_000_000;
         $display("pacotes validos=%0d  checksum_ruim=%0d  mudancas_de_seq=%0d", frames, bad, seq_changes);
         $display("ultimo pacote: slack=%0d (0x%04h) status=%b  [valid=%b sat=%b origin=%b timeout=%b lost=%b seq=%b calib=%b alarm=%b]",
                  last_slack, last_slack[15:0], last_status[7:0], last_status[2], last_status[3], last_status[4],

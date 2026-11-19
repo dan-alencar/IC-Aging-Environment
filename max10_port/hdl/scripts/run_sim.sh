@@ -24,15 +24,15 @@ run() { # nome, comando de compilacao..., (plusargs depois de --)
 
 # 1) controlador isolado, laco fechado (catcher 2,5 ns): medidas, rastreio, saturacao, timeout, lock, Tabela 7
 run scc_loop_c2500 sim/scc_loop_tb.sv rtl/aging_sensor/scc_controller.sv
-# 2) mesmo teste com o catcher ANTIGO (10 ns): reproduz o 1065 da Tabela 7 e o detector marca saturacao
+# 2) mesmo teste com o catcher ANTIGO (10 ns): mostra o patamar de saturacao da Tabela 7 e o detector o marca
 run scc_table7_c10000 -P scc_loop_tb.C_PS=10000 -P scc_loop_tb.TABLE7_ONLY=1 sim/scc_loop_tb.sv rtl/aging_sensor/scc_controller.sv
 # 3) topo completo + pacote UART, varios atrasos de cadeia (d = 50 x STAGE_DELAY_PS)
 top() { # delay_ps_por_estagio catcher_ps k_esperado sat_esperado
   run "top_d$(( $1 * 50 ))_c$2" -DSTAGE_DELAY_PS=$1 -DCATCHER_PS=$2 $MODELS sim/max10_top_tb.sv $RTL -- +EXPECT_K=$3 +EXPECT_SAT=$4
 }
-top 584 2500 957 0     # d = 29,2 ns (corner lento)
-top 348 2500 1023 0    # d = 17,4 ns (ambiente, medido em placa)
-top 120 2500 1087 0    # d =  6,0 ns (antes: saturava em 1065)
-top 120 10000 1065 1   # catcher antigo: satura e agora e MARCADO
+top 584 2500 1777 0    # d = 29,2 ns (corner lento)
+top 348 2500 1900 0    # d = 17,4 ns (ambiente, medido em placa)
+top 120 2500 2018 0    # d =  6,0 ns (com o catcher antigo de 10 ns saturava)
+top 120 10000 -1 1     # catcher antigo: satura e e MARCADO (k no patamar exato nao e checado: medida invalida)
 [ $fail -eq 0 ] && echo "TODOS OS TESTES PASSARAM" || echo "HOUVE FALHAS"
 exit $fail

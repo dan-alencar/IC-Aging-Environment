@@ -63,7 +63,7 @@
 //
 //     Causa provavel: a documentacao da Intel descreve que phasedone
 //     DE-ASSERTA NA BORDA DE DESCIDA do scanclk. Com um passo de apenas
-//     179 ps, o deslocamento se completa em pouquissimos ciclos de VCO,
+//     ~96 ps, o deslocamento se completa em pouquissimos ciclos de VCO,
 //     e o pulso baixo de phasedone pode caber inteiramente ENTRE duas
 //     bordas de subida do scanclk -- ficando invisivel para uma FSM que
 //     so amostra em posedge. Nesse cenario a fase pode ate estar sendo
@@ -116,16 +116,18 @@ module scc_controller #(
 
     // Geometria do sensor (C3). T = periodo de sys_clk/psclk; C = fase do
     // catcher_clk (clk2_phase_shift); STEP_X1000 = vco_phase_shift_step em
-    // ps*1000 (178571 = 1/8 do periodo do VCO de 700 MHz).
+    // ps*1000 (96154 = 1/8 do periodo do VCO de 1300 MHz, C4).
     parameter integer T_PS       = 200000,
     parameter integer C_PS       = 2500,
-    parameter integer STEP_X1000 = 178571,
+    parameter integer STEP_X1000 = 96154,
     parameter integer SAT_MARGIN = 2,       // passos de folga abaixo do patamar
 
     // Passos sem alarme antes de declarar timeout = UMA VOLTA COMPLETA do
     // psclk (T / passo), conforme o relatorio (C2). Alem disso a fase daria a
     // volta e a medida seria ambigua. Deve ser > SAT_K.
-    parameter integer MAX_STEPS    = (T_PS * 1000) / STEP_X1000,
+    // Arredondado (nao truncado): STEP_X1000 = 96154 e arredondado PARA CIMA
+    // (real 96153,8), e o truncamento daria 2079 em vez de 2080 passos.
+    parameter integer MAX_STEPS    = (T_PS * 1000 + STEP_X1000 / 2) / STEP_X1000,
 
     // Intervalos (ciclos de scanclk): entre medicoes e apos o retorno de fase.
     parameter integer GAP_CYCLES    = 50000,   // 1 ms
@@ -153,7 +155,7 @@ module scc_controller #(
 );
 
     // Patamar de saturacao: leitura obtida quando c > d (C3)
-    localparam integer SAT_K = ((T_PS - C_PS) * 1000) / STEP_X1000;
+    localparam integer SAT_K = ((T_PS - C_PS) * 1000 + STEP_X1000 / 2) / STEP_X1000;   // arredondado
 
     // ------------------------------------------------------------------
     // [A] Sincronizacao de pll_locked e reset interno

@@ -31,7 +31,7 @@ import csv
 import sys
 from datetime import datetime
 
-STEP_PS = 178.571      # 1/8 do periodo do VCO de 700 MHz (aging_pll.v: vco_phase_shift_step=179 e arredondamento)
+STEP_PS = 96.154       # 1/8 do periodo do VCO de 1300 MHz (C4; aging_pll.v: vco_phase_shift_step=96). Conferir no fit.rpt
 SYNC = 0xAA
 FRAME_LEN = 5
 
