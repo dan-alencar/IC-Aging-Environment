@@ -13,7 +13,7 @@ The repo uses a domain-based layout (`hardware/`, `firmware/`, `software/`, `dat
 - `software/core/ic_aging_core/` is a shared package (instrument drivers, Nexys packet/CRC16 parsers, Catppuccin theme) installable with `pip install -e software/core`. **None of the apps import it yet.** Each app still has its own copy of workers/theme, so a fix in one place does not reach the others.
 - Subprojects have their own CLAUDE.md with more detail: `hardware/fpga/xilinx/nexys4_ddr/CLAUDE.md` (RTL/Vivado) and `publications/coursework/tf_teoria-da-informacao/CLAUDE.md`.
 - `hardware/common/` and `hardware/asic/` are empty placeholders.
-- Data hygiene (from `CONTRIBUTING.md`): never commit raw campaign CSVs (>1 MB). App logs go to `test_logs/` (gitignored), trimmed fixtures (<1 MB) go to `data/sample_logs/`, and full datasets go to Zenodo or the lab NAS.
+- Data hygiene: App logs go to `test_logs/` (gitignored) and trimmed fixtures (<1 MB) to `data/sample_logs/`. The raw logs behind published papers are versioned in `data/campaigns/` (decision 2026-11-05; README.md and SHA256SUMS there). Files over ~50 MB go to Zenodo or the lab NAS.
 - Commit message prefixes per `CONTRIBUTING.md`: `hardware:`, `firmware:`, `software:`, `docs:`.
 
 ## Running the Python apps

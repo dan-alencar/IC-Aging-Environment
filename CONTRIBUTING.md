@@ -34,6 +34,8 @@ Work within the appropriate domain:
 > [!WARNING]
 > **NEVER commit raw campaign CSV files (>1 MB) to Git.**
 > Multi-day burn-in experiments generate hundreds of thousands of lines. Checking these into Git quickly causes repository bloat and slows down clones.
+>
+> **Exception:** `data/campaigns/` holds the raw logs behind the group's published papers. They were already blobs in git history, so they are versioned there (decision 2026-11-05); see `data/campaigns/README.md` before adding a campaign.
 
 - **Local runs**: All desktop apps output local logs into `test_logs/` or `data/local_runs/`, which are globally ignored by `.gitignore`.
 - **Sample fixtures**: If you need a log for testing or documentation, store a trimmed version (<1 MB) in `data/sample_logs/`.

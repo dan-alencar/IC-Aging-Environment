@@ -53,6 +53,7 @@ test_logs/
 # re-tracking it adds no repository size. New campaigns: see data/campaigns/README.md.
 !data/campaigns/**/*.csv
 !data/campaigns/**/test_logs/
+!data/campaigns/**/dist/
 data/local_runs/
 
 # ------------------------------------------------------------------------------
