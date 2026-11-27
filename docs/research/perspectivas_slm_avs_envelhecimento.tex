@@ -1,0 +1,467 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[brazilian]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{booktabs,tabularx,enumitem,xcolor,amsmath}
+\usepackage[hidelinks]{hyperref}
+\usepackage{tcolorbox}
+\usepackage{array}
+\setlist{nosep,leftmargin=*}
+\setlength{\parskip}{0.45em}
+\setlength{\parindent}{0pt}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newtcolorbox{nota}[1][]{colback=gray!6,colframe=gray!55,boxrule=0.5pt,arc=1pt,left=6pt,right=6pt,top=4pt,bottom=4pt,fonttitle=\bfseries\small,title=#1}
+
+\title{\textbf{Envelhecimento, SLM e AVS em FPGAs e processadores RISC-V}\\[2pt]
+\large O que já temos, o que pode vir a ser e o que esta linha de pesquisa\\ pode oferecer à microeletrônica atual}
+\author{Síntese das discussões de 27/11/2026 sobre o aparato de burn-in do LESC/UFC\\
+\small Preparado para Danilo Alencar e colaboradores}
+\date{27 de novembro de 2026 --- versão 1}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent Este documento reúne a parte teórica e acadêmica de uma série de discussões sobre o aparato de
+envelhecimento acelerado do grupo: o que os três artigos já publicados ou submetidos estabelecem, que conclusões
+metodológicas se tiram deles, como o próximo experimento foi desenhado (sensores de auto-tuning dentro de um
+processador RISC-V, na placa RV02A) e como essa linha pode entrar de forma definitiva em
+\emph{Silicon Lifecycle Management} (SLM), escalonamento adaptativo de tensão (AVS) e proteção ativa de circuitos
+integrados. Termina com um panorama do estado da arte, as lacunas que vemos e uma lista comentada de leituras.
+As referências foram conferidas nas fontes; estimativas próprias estão marcadas como tal.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% =====================================================================
+\section{A pergunta central}
+
+\begin{nota}[Pergunta]
+No que SLM, AVS e o estudo de envelhecimento podem contribuir no mundo da microeletrônica nos tempos atuais?
+\end{nota}
+
+A margem temporal (\emph{slack}) de um circuito digital é consumida por três coisas: variação de processo, condição
+de operação (tensão e temperatura) e envelhecimento. Por décadas a resposta da indústria foi o \emph{guard band}: projetar
+e qualificar para o pior caso e fixar tensão e frequência com folga para todos os chips, todas as condições e toda a vida
+útil. Três tendências tornam essa resposta cada vez mais cara.
+
+\begin{enumerate}
+  \item \textbf{A margem ficou escassa.} Em nós avançados (FinFET e além), a tensão de operação caiu, a variabilidade
+        cresceu e mecanismos como a instabilidade por temperatura e polarização (BTI) passaram a pesar mais em relação à
+        margem disponível~\cite{babu2025extending,seok2018recent}. Um guard band dimensionado para o pior caso custa
+        energia e desempenho de todos os chips que nunca chegariam lá.
+  \item \textbf{A confiabilidade virou um problema de campo.} Operadores de data centers relataram núcleos de processador que
+        passaram pelos testes de fábrica e, ainda assim, produzem erros silenciosos de computação (\emph{silent data
+        corruption}) em produção, raros por núcleo mas visíveis numa frota grande~\cite{hochschild2021cores,dixit2021sdc}. Em aplicações automotivas e espaciais o custo de uma falha é de
+        segurança, não de desempenho. O teste de fábrica, sozinho, não basta: é preciso observar o chip durante a vida.
+  \item \textbf{A telemetria dentro do chip virou produto.} SLM é o nome que a indústria deu a esse ciclo: sensores
+        embarcados, coleta de dados ao longo da vida e decisões tomadas a partir deles --- da caracterização na fábrica à
+        manutenção preditiva no campo~\cite{kashyap2021slm,tahoori2024future}. Já existem blocos comerciais que medem
+        margem em caminhos funcionais~\cite{synopsysPMM}.
+\end{enumerate}
+
+Nesse cenário, o estudo de envelhecimento e os sensores que o medem deixam de ser só ferramenta de qualificação e passam a
+ser \textbf{o instrumento que permite trocar o guard band fixo por um orçamento de margem medido}. A resposta curta à
+pergunta, desenvolvida na seção~\ref{sec:contrib}, é que essa linha contribui em quatro frentes: energia (margem medida em
+vez de presumida), confiabilidade e segurança funcional (previsão antes da falha), vida útil (compensação do envelhecimento
+em vez de aposentadoria precoce) e \emph{metodologia} --- saber quando um sensor de envelhecimento está de fato medindo
+envelhecimento, que é justamente onde o nosso grupo tem resultados próprios.
+
+% =====================================================================
+\section{Fundamentos}
+
+\subsection{Mecanismos e aceleração}
+
+Os mecanismos que degradam o atraso de caminhos digitais são principalmente a BTI (NBTI em pMOS, PBTI em nMOS) e a
+injeção de portadores quentes (HCI); a ruptura dependente do tempo do dielétrico (TDDB) e a eletromigração completam o
+quadro~\cite{babu2025extending,agarwal2007failure}. Duas propriedades importam para o desenho de experimentos:
+
+\begin{itemize}
+  \item \textbf{A BTI se recupera.} Parte do deslocamento de limiar desaparece quando o estresse é retirado, com uma
+        distribuição larga de constantes de tempo associada a defetos individuais~\cite{grasser2010tdds}. Qualquer pausa
+        do estresse (para medir, num checkpoint, numa queda de energia) altera o que se mede.
+  \item \textbf{A aceleração é exponencial na temperatura.} Pelo modelo de Arrhenius, o fator de aceleração entregue é a
+        média de $\exp[(E_a/k_B)(1/T_{uso}-1/T_j(t))]$ sobre a trajetória real da junção, não o valor no setpoint. Como
+        a exponencial é convexa, o \emph{ripple} aumenta um pouco o fator, mas é a \emph{média} da temperatura do die
+        que decide~\cite{alencar2026sbcci}.
+\end{itemize}
+
+\subsection{Sensores de envelhecimento}
+
+As famílias principais, em ordem aproximada de proximidade com o caminho real:
+\begin{itemize}
+  \item \textbf{Osciladores em anel e odômetros:} medem frequência de estruturas dedicadas; o \emph{silicon odometer}
+        compara um oscilador estressado com um de referência não estressado, cancelando temperatura e tensão por
+        construção~\cite{kim2008odometer,keane2010odometer}.
+  \item \textbf{Réplicas de caminho crítico:} um caminho sintético que imita o pior caminho; base de muitos esquemas de
+        AVS~\cite{bowman2011resilient}.
+  \item \textbf{Monitores de caminho e sensores \emph{in situ}:} observam o próprio caminho funcional, por amostragem
+        defasada ou detecção de transição tardia --- do monitor de caminho crítico do POWER6~\cite{drake2007cpm} e dos
+        circuitos resilientes do tipo Razor~\cite{ernst2004razor} à predição de falha por amostragem
+        antecipada~\cite{agarwal2007failure}.
+  \item \textbf{Sensores para FPGA:} validados sob burn-in há mais de uma década~\cite{valdespena2013,stott2010degradation,amouri2014aging},
+        com correção de temperatura por aprendizado de máquina em 28~nm~\cite{huang2022aging} e medidas recentes em
+        16~nm FinFET~\cite{sobas2024finfet}. Levantamentos gerais estão em~\cite{lanzieri2024review,juracy2020survey}.
+\end{itemize}
+
+O sensor do grupo~\cite{nogueira2025autotuning} pertence à terceira família: dois flip-flops amostram a saída do caminho com
+clocks defasados e um XOR acusa divergência; a fase do clock de prova é varrida dinamicamente pelo MMCM até o alarme, e o
+número de passos é a folga do caminho. A propriedade que importa adiante: \textbf{cada leitura é uma varredura nova}, então
+nenhuma linha de base armazenada absorve um drift lento.
+
+\subsection{Do guard band ao AVS e ao SLM}
+
+O AVS fecha um laço entre uma medida de margem e a tensão de alimentação: baixa a tensão enquanto a margem medida permite
+e a sobe quando ela encolhe. A mesma ideia vale para a frequência (DVFS guiado por sensor) e, em tecnologias com corpo
+acessível, para a polarização de corpo, que historicamente começou como compensação de variação de
+processo~\cite{tschanz2002abb}. O ganho é real e medido em silício: num núcleo resiliente de 45~nm, detecção e recuperação
+de erros deram 41\% mais vazão com a mesma energia, ou 22\% menos energia com a mesma vazão, diante de uma queda de 10\%
+na alimentação~\cite{bowman2011resilient}. A calibração e a parametrização de um AVS guiado por sensor em FPGA foram
+estudadas em~\cite{niemann2020avs}; sensores \emph{in situ} em 28~nm FD-SOI em~\cite{saliva2015fdsoi}. O SLM generaliza:
+os mesmos sensores alimentam caracterização, AVS, estimativa de vida útil restante e manutenção~\cite{kashyap2021slm}.
+
+Um ponto teórico recente merece destaque: o AVS e o envelhecimento formam um laço de realimentação. Subir a tensão para
+compensar o envelhecimento acelera o próprio envelhecimento, e políticas que estimam o envelhecimento a partir da tensão
+máxima o superestimam~\cite{xie2026agingavs}. Medir o envelhecimento \emph{durante} o AVS, em vez de presumi-lo, é parte da
+solução.
+
+% =====================================================================
+\section{O que já temos: três artigos e o que eles estabelecem}
+
+\subsection{O sensor de auto-tuning (SBCCI 2025)}
+
+O primeiro artigo~\cite{nogueira2025autotuning} introduz a varredura dinâmica de fase no sensor, o que o torna autocalibrável
+em operação. Em Artix-7 (28~nm, Nexys~4~DDR), com uma cadeia de 50 inversores como caminho, ele acompanha a redução de
+folga com a queda de tensão e o aumento de temperatura, registra a perda de folga em seis \emph{corners} após uma e duas
+semanas de burn-in (115~°C e +30\% de VDD; depois 125~°C e +40\%) e prevê a falha funcional: um \emph{failure catcher}
+confirma o erro quando a folga medida chega a zero.
+
+\subsection{O controle térmico como variável (SBCCI 2026)}
+
+O segundo~\cite{alencar2026sbcci} compara dois controles térmicos do mesmo forno, com o mesmo FPGA, o mesmo sensor e o mesmo
+setpoint nominal, por 23,08~h. Os resultados que fundamentam o resto:
+\begin{itemize}
+  \item a média da temperatura do die diferiu 9,37~°C (107,73 contra 117,04~°C), o que dá um fator de aceleração 1,65 vez
+        maior no PID (31,1 contra 51,3 a 0,7~eV e 55~°C de uso);
+  \item a temperatura e a tensão instantâneas explicam 92,1\% da variância da folga com termostato e 59,2\% com PID; o
+        desvio residual após a correção cai de 0,90 para 0,73 contagens;
+  \item a expansão de primeira ordem do fator de aceleração dá o orçamento de erro médio do die: a 115~°C e 0,7~eV,
+        tolerar 5\%, 10\% ou 20\% de desvio no fator permite só 0,9, 1,8 ou 3,4~°C de erro médio.
+\end{itemize}
+
+\subsection{O tempo de média define a detecção (D\&T 2027)}
+
+O terceiro~\cite{alencar2027dt} acrescenta uma corrida de 214,6~h e lê o resíduo por tempo de média, com os desvios de
+Allan e de Hadamard~\cite{allan1966statistics}. A conclusão central é que, acima de cerca de uma hora, todo log tem um
+\textbf{piso de ruído} que mais média não reduz. É esse piso, não o ruído na taxa de amostragem, que define quanto uma
+corrida precisa durar: 91 a 149~h na corrida longa, 4,5 a 7,6 vezes o que o ruído branco
+preveria~\cite{weatherhead1998trends}. O drift corrigido foi de $-18{,}3$~mcnt/h (cerca de 7,8~ps de folga por dia),
+mais bem descrito por uma lei de potência com expoente 0,35, compatível com BTI sem ser diagnóstico. Dois achados
+práticos: os degraus de 1~°C do laço externo de temperatura coincidem com saltos no resíduo, e uma corrida de um dia
+mostra uma inclinação mas não estabelece um drift. O artigo propõe uma lista de itens que todo burn-in instrumentado
+deveria relatar.
+
+\begin{nota}[O que os três juntos dizem]
+O sensor funciona e antecipa a falha (2025); o aparato que o valida é uma variável experimental de primeira ordem (2026);
+e a duração de uma validação tem de ser dimensionada pelo piso de ruído em escala de horas, medido, e não pelo ruído
+instantâneo (2027). Isso é uma contribuição de \emph{metrologia} para sensores de envelhecimento, que a literatura de
+sensores, centrada no circuito, raramente trata.
+\end{nota}
+
+% =====================================================================
+\section{Conclusões metodológicas desta discussão}
+
+\subsection{Amostrar mais rápido não encurta a corrida}
+
+Com o resíduo de 0,73~contagens a 1~Hz, se o ruído fosse branco, uma hora de média o reduziria a
+$0{,}73/\sqrt{3600}\approx 0{,}012$~contagens --- já abaixo dos pisos medidos, de 0,040 a 0,25~contagens. Aumentar a taxa
+empurra a parte branca para ainda mais baixo, mas ela já não é o limitante. No regime de piso, o tempo de detecção é
+proporcional a piso$/|\beta|$ e não depende da taxa; amostras correlacionadas não trazem informação nova. Amostrar mais
+ajuda em outras coisas: resolução abaixo de um passo em janelas curtas (útil para decisões rápidas, como um laço de AVS),
+diagnóstico (histogramas, perdas de lock) e alinhamento com temperatura e tensão medidas na mesma janela.
+
+\subsection{O ruído não é constante}
+
+Trechos consecutivos de 23~h da mesma corrida deram pisos de 0,031 a 0,055~contagens; o piso respondeu ao que o aparato
+fez (mascarar as 3~h após cada degrau de setpoint o baixou de 0,25 para 0,15); e um ruído do tipo $1/f$ não tem variância
+que convirja --- quanto mais longo o registro, maior. Consequências: estimar o piso em cada corrida, testar
+estacionariedade por segmentos, registrar todo evento do aparato e usar intervalos robustos à autocorrelação.
+
+\subsection{Regressão e Hadamard contra espaço de estados}
+
+Na análise há três funções: \emph{correção} (regressão em temperatura e tensão), \emph{caracterização do ruído por tempo de
+média} (Allan/Hadamard) e \emph{estimativa do drift com incerteza}. Um modelo de espaço de estados (filtro de Kalman)
+substitui a primeira e a terceira juntas --- o drift como estado, estimado com as sensibilidades e um modo comum entre
+sensores --- mas \textbf{não} a segunda: ele precisa de um modelo de ruído, e é a Hadamard que o fornece. O risco é o mesmo
+que o D\&T mostrou: com o ruído mal modelado, o estimador fica confiante demais. A decisão foi manter o método do D\&T
+como análise primária (comparável com aquele artigo) e o espaço de estados como \textbf{análise secundária
+pré-registrada}, com o ruído ajustado à linha de base pré-estresse e um critério de concordância fixado antes da corrida.
+É uma continuação natural: o D\&T caracterizou o piso; aqui o piso entra no estimador.
+
+\subsection{Margem do fabricante e erro do instrumento}
+
+O \emph{datasheet} do Artix UltraScale+ (DS931, rev.~1.9) fixa o máximo absoluto em 1,000~V para VCCINT, VCCINT\_IO e
+VCCBRAM e em 125~°C para a junção, e a tensão de retenção da configuração em 0,68~V~\cite{ds931}. O sensor de temperatura do
+SYSMON com referência interna erra até $\pm$5~°C entre 110 e 125~°C, e o de tensão até $\pm$2\%. Somando o erro do
+instrumento e uma margem, o alvo de estresse cabe em 110~°C lidos (corte em 117~°C) e 0,95~V lidos. Dois pontos
+acadêmicos: (i) um burn-in é, por definição, sobre-estresse em relação às condições recomendadas, e isso deve ser
+declarado; (ii) o erro do termômetro se propaga para o fator de aceleração absoluto --- $\pm$5~°C a 110~°C e 0,7~eV dão
+cerca de $\pm$32\% --- e raramente aparece nos artigos.
+
+\subsection{Pré-registro, controle, replicação}
+
+Para que um drift seja um resultado sobre o dispositivo, e não sobre o aparato, a metodologia passou a exigir:
+plano de análise congelado antes da corrida; uma placa de controle fora do estresse (a única referência de fato não
+estressada, porque uma cadeia de referência no die continua na temperatura de estresse); ao menos três placas estressadas;
+modos de estresse distribuídos entre placas para separar HCI de BTI; duas temperaturas para medir a energia de ativação; e
+publicação dos dados com a metodologia congelada. Hoje só uma placa pode ser estressada, então os resultados continuam
+sendo de um único dispositivo --- e isso precisa ser dito.
+
+% =====================================================================
+\section{O que pode vir a ser: o próximo aparato}
+
+\subsection{Sensores dentro do processador}
+
+O próximo passo leva o sensor de um caminho sintético para \textbf{98 caminhos funcionais de um processador RISC-V}
+(CROC com núcleo CVE2): busca de instrução, banco de registradores, barramento e UART, na placa RV02A (Artix UltraScale+,
+16~nm FinFET). A literatura mede quase sempre estruturas sintéticas; medir o caminho funcional cria um problema novo, o da
+\textbf{qualificação de atividade}: um caminho só comuta quando a instrução certa passa por ele, e ``sem alarme'' pode
+significar folga boa ou caminho parado. Na campanha mais recente, 75 dos 98 canais qualificaram.
+
+\subsection{Decisões de desenho, em resumo}
+
+\begin{tabularx}{\textwidth}{@{}l Y@{}}
+\toprule
+Tema & Decisão \\ \midrule
+Controle térmico & PI em cascata sobre a temperatura do die (planta identificada antes); aquecedor no die como laço
+rápido e o forno como bias \\
+Referências no die & cadeia casada por grupo, com polaridade alternada para não acumular BTI DC de um lado só; osciladores
+em anel locais como termômetros; cadeias ``nulas'' que medem só o drift do clock \\
+Instrumento & clocks de prova desligados entre varreduras (uma por minuto), para o próprio sensor não envelhecer \\
+Análise & varredura inteira no host; diferencial tap $-$ referência $-$ nula; Hadamard ao vivo; relatório automático com
+regra rígida de regressores (corrente e tensão da fonte nunca entram na estimativa principal) \\
+Checkpoints & antes e depois completos (calibração entre perfis de clock, Vmin e Fmax); diário curto, só baixando a
+tensão na mesma temperatura \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Ganchos para SLM e AVS}
+
+O mesmo bitstream do burn-in já deve servir aos experimentos de SLM: o processador lê os próprios sensores; um caminho de
+AVS limitado, em que o processador \emph{pede} uma tensão e o supervisor (STM32) decide dentro dos limites dele; troca de
+frequência pela reconfiguração do MMCM em operação; um alarme de margem em hardware; buscas de Vmin e Fmax; e modos de
+ocioso que equilibram a BTI. A família de experimentos prevista: (E1) mapa de margem e calibração do limiar, com a
+\emph{taxa de predição} --- quantas falhas foram antecedidas por alarme do sensor; (E2) AVS em laço fechado contra guard
+band fixo, com zero erros funcionais; (E3) AVS durante o burn-in, em que a subida da tensão pedida pelo laço é a própria
+medida de envelhecimento; (E4) previsão de vida útil restante validada contra a falha real, com as métricas de
+prognóstico de~\cite{saxena2008metrics}; (E5) ações de proteção comparadas entre placas; (E6) detecção de quedas de
+alimentação, primeiro passo em direção à detecção de injeção de falhas.
+
+% =====================================================================
+\section{Estado da arte e lacunas}\label{sec:gaps}
+
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.8cm} Y Y@{}}
+\toprule
+Tema & Onde a área está & Lacuna que vemos \\ \midrule
+Sensores de envelhecimento & maduros em estruturas dedicadas (odômetros, réplicas, osciladores) e em monitores de
+caminho industriais~\cite{kim2008odometer,drake2007cpm,synopsysPMM}; levantamentos recentes em~\cite{babu2025extending,juracy2020survey} &
+caminhos \emph{funcionais} de processadores medidos em silício, com prova de atividade por caminho; relação calibrada entre
+a leitura e a margem funcional \\
+Validação sob burn-in & sensores em FPGA validados há mais de uma década~\cite{valdespena2013,amouri2014aging,sobas2024finfet};
+normas tratam da condição de qualificação, não da fidelidade do sensor & o aparato como fonte de erro; dimensionamento da
+corrida pelo piso de ruído; pré-registro, controle não estressado e replicação raramente
+aparecem~\cite{alencar2026sbcci,alencar2027dt} \\
+Separação de mecanismos & odômetros que separam HCI, BTI e TDDB por construção~\cite{keane2010odometer} & separar
+mecanismos \emph{in situ}, no caminho funcional, com modos de estresse controlados \\
+AVS & demonstrado em silício com réplicas e sensores \emph{in situ}~\cite{bowman2011resilient,saliva2015fdsoi};
+calibração em FPGA~\cite{niemann2020avs} & AVS com envelhecimento \emph{medido} durante o próprio laço (o laço
+AVS--envelhecimento de~\cite{xie2026agingavs}), com dados abertos \\
+SLM & arquitetura e mercado estabelecidos~\cite{kashyap2021slm,tahoori2024future}; erros silenciosos no campo motivam
+telemetria~\cite{hochschild2021cores,dixit2021sdc} & plataformas e conjuntos de dados abertos e reprodutíveis; hoje os
+agentes de margem são proprietários \\
+Prognóstico & métricas consolidadas em PHM~\cite{saxena2008metrics} & previsões de vida útil de sensores no chip validadas
+contra a falha real, com a incerteza do piso de ruído \\
+Hardware aberto & SoCs RISC-V abertos e PDKs abertos (o CROC foi feito para o IHP SG13G2); sensores de SLM em RISC-V em
+130~nm do IHP~\cite{vargas2025slmcore} & levar a metodologia do FPGA para o ASIC: no ASIC não há MMCM, e a varredura de fase
+precisa de outra base de tempo \\
+\bottomrule
+\end{tabularx}
+
+% =====================================================================
+\section{No que esta linha pode contribuir}\label{sec:contrib}
+
+\begin{enumerate}
+  \item \textbf{Energia por margem medida.} Um AVS guiado por sensores dentro do processador transforma o guard band fixo
+        num orçamento medido: margem $=$ limiar $+\,k\cdot$HDEV$(\tau_{\text{laço}})+$ erro de calibração. Os três termos
+        saem dos nossos próprios dados; o segundo é exatamente o ``ruído por tempo de média'' que o D\&T recomenda relatar.
+  \item \textbf{Confiabilidade e segurança funcional.} A taxa de predição (fração de falhas antecedidas por alarme) é a
+        grandeza que um argumento de segurança precisa, no sentido da cobertura de diagnóstico da ISO~26262~\cite{iso26262}; o
+        acesso padronizado a instrumentos embarcados existe na IEEE~1687~\cite{ieee1687}. O grupo pode medi-la em silício,
+        com metodologia pré-registrada.
+  \item \textbf{Vida útil.} Medir o envelhecimento durante o AVS permite compensá-lo em vez de aposentar o chip pelo pior
+        caso, e permite políticas que desaceleram o envelhecimento (repouso para recuperação da BTI, estados ociosos
+        equilibrados).
+  \item \textbf{Metrologia de sensores de envelhecimento.} É a contribuição mais própria do grupo: dizer quando um sensor
+        está de fato medindo envelhecimento, quanto tempo é preciso e como relatar. Toda a pilha de SLM depende disso, e a
+        literatura de sensores raramente o trata.
+  \item \textbf{Abertura e reprodutibilidade.} Plataforma de bancada aberta, metodologias congeladas e dados publicados
+        dão à área algo que os produtos comerciais não dão: um banco de provas onde algoritmos de SLM podem ser comparados.
+\end{enumerate}
+
+% =====================================================================
+\section{Leituras recomendadas}
+
+\textbf{Para começar (panorama).} \cite{kashyap2021slm} define SLM do ponto de vista da indústria; \cite{tahoori2024future}
+discute o futuro de DFT e SLM; \cite{babu2025extending} é uma revisão recente de mecanismos, monitoramento e mitigação;
+\cite{seok2018recent} revê monitoramento e compensação \emph{in situ} e em campo; \cite{lanzieri2024review} e
+\cite{juracy2020survey} levantam técnicas de detecção e monitores.
+
+\textbf{Física do envelhecimento.} \cite{grasser2010tdds} para a recuperação da BTI e a estatística de defeitos;
+\cite{agarwal2007failure} para a ponte entre mecanismo e predição de falha.
+
+\textbf{Sensores e monitores.} \cite{kim2008odometer,keane2010odometer} (odômetros com referência não estressada);
+\cite{drake2007cpm} (monitor de caminho crítico em produto); \cite{ernst2004razor} (detecção de erro de timing);
+\cite{nogueira2025autotuning,vargas2025slmcore} (a linha do grupo e colaboradores).
+
+\textbf{AVS e resiliência.} \cite{bowman2011resilient} (ganhos medidos em silício); \cite{tschanz2002abb} (compensação
+adaptativa, origem da ideia); \cite{niemann2020avs} (AVS guiado por sensor em FPGA); \cite{saliva2015fdsoi} (sensores
+\emph{in situ} em FD-SOI); \cite{xie2026agingavs} (o laço AVS--envelhecimento).
+
+\textbf{Envelhecimento em FPGA.} \cite{stott2010degradation,amouri2014aging,valdespena2013,huang2022aging,sobas2024finfet}.
+
+\textbf{Estatística e metrologia.} \cite{allan1966statistics} (desvio de Allan); \cite{weatherhead1998trends}
+(dimensionamento de registros para detectar tendências); \cite{saxena2008metrics} (métricas de prognóstico).
+
+\textbf{Do grupo.} \cite{nogueira2025autotuning,alencar2026sbcci,alencar2027dt}.
+
+\textbf{Motivação de campo.} \cite{hochschild2021cores,dixit2021sdc}.
+
+% =====================================================================
+\section{Limitações deste documento}
+
+Ele resume discussões, não substitui os artigos citados. Os números do grupo vêm dos três manuscritos; os números de
+terceiros vêm dos resumos e registros bibliográficos consultados em 27/11/2026, e alguns artigos não foram lidos na
+íntegra. Os resultados do grupo são, até aqui, de um único dispositivo por campanha. As decisões de desenho estão no
+documento \texttt{docs/architecture/CROC\_BURNIN\_DESIGN.md} do IC-Aging-Environment, e as metodologias em
+\texttt{docs/methodology/} do repositório fpgaging-board-support.
+
+% =====================================================================
+\begin{thebibliography}{99}\small
+
+\bibitem{nogueira2025autotuning} L. Nogueira \emph{et al.}, ``Auto-tuning aging sensor validated under burn-in, temperature,
+and voltage variations,'' in \emph{Proc. 38th SBCCI}, 2025, doi: 10.1109/SBCCI66862.2025.11218640.
+
+\bibitem{alencar2026sbcci} D. Alencar \emph{et al.}, ``Quantifying the effect of burn-in thermal control on delivered
+acceleration factor and on-chip slack-sensor fidelity in an FPGA target,'' in \emph{Proc. 39th SBCCI}, 2026.
+
+\bibitem{alencar2027dt} D. Alencar \emph{et al.}, ``Averaging time defines when on-chip sensors resolve burn-in drift,''
+\emph{IEEE Design \& Test}, special issue SBCCI 2026 (manuscrito).
+
+\bibitem{kashyap2021slm} R. Kashyap, ``Silicon lifecycle management (SLM) with in-chip monitoring,'' in \emph{Proc. IEEE
+IRPS}, 2021, doi: 10.1109/IRPS46558.2021.9405187.
+
+\bibitem{tahoori2024future} M. B. Tahoori, ``The future of design for test and silicon lifecycle management,'' \emph{IEEE
+Design \& Test}, vol.~41, no.~4, pp.~35--49, 2024.
+
+\bibitem{babu2025extending} S. J. Babu, F. Hu, L. Zhu, S. Singhal, X. Guo, ``Extending silicon lifetime: a review of design
+techniques for reliable integrated circuits,'' arXiv:2503.21165, 2025.
+
+\bibitem{seok2018recent} M. Seok, P. R. Kinget, T. Yang, J. Li, D. Kim, ``Recent advances in in-situ and in-field aging
+monitoring and compensation for integrated circuits (invited),'' in \emph{Proc. IEEE IRPS}, 2018, doi:
+10.1109/IRPS.2018.8353612.
+
+\bibitem{lanzieri2024review} L. Lanzieri, G. Martino, G. Fey, H. Schlarb, T. C. Schmidt, M. Wählisch, ``A review of
+techniques for ageing detection and monitoring on embedded systems,'' \emph{ACM Comput. Surv.}, vol.~57, no.~1, 2024, doi:
+10.1145/3695247.
+
+\bibitem{juracy2020survey} L. R. Juracy, M. T. Moreira, A. M. Amory, F. G. Moraes, ``A survey of aging monitors and
+reconfiguration techniques,'' arXiv:2007.07829, 2020.
+
+\bibitem{grasser2010tdds} T. Grasser, H. Reisinger, P.-J. Wagner, F. Schanovsky, W. Goes, B. Kaczer, ``The time dependent
+defect spectroscopy (TDDS) for the characterization of the bias temperature instability,'' in \emph{Proc. IEEE IRPS},
+2010, pp.~16--25, doi: 10.1109/IRPS.2010.5488859.
+
+\bibitem{agarwal2007failure} M. Agarwal, B. C. Paul, M. Zhang, S. Mitra, ``Circuit failure prediction and its application
+to transistor aging,'' in \emph{Proc. IEEE VTS}, 2007, pp.~277--286, doi: 10.1109/VTS.2007.22.
+
+\bibitem{kim2008odometer} T.-H. Kim, R. Persaud, C. H. Kim, ``Silicon odometer: an on-chip reliability monitor for measuring
+frequency degradation of digital circuits,'' \emph{IEEE J. Solid-State Circuits}, vol.~43, no.~4, pp.~874--880, 2008,
+doi: 10.1109/JSSC.2008.917502.
+
+\bibitem{keane2010odometer} J. Keane, X. Wang, D. Persaud, C. H. Kim, ``An all-in-one silicon odometer for separately
+monitoring HCI, BTI, and TDDB,'' \emph{IEEE J. Solid-State Circuits}, vol.~45, no.~4, pp.~817--829, 2010, doi:
+10.1109/JSSC.2010.2040125.
+
+\bibitem{drake2007cpm} A. Drake \emph{et al.}, ``A distributed critical-path timing monitor for a 65nm high-performance
+microprocessor,'' in \emph{ISSCC Dig. Tech. Papers}, 2007, pp.~398--399.
+
+\bibitem{ernst2004razor} D. Ernst \emph{et al.}, ``Razor: circuit-level correction of timing errors for low-power
+operation,'' \emph{IEEE Micro}, vol.~24, no.~6, pp.~10--20, 2004, doi: 10.1109/MM.2004.85.
+
+\bibitem{bowman2011resilient} K. A. Bowman \emph{et al.}, ``A 45 nm resilient microprocessor core for dynamic variation
+tolerance,'' \emph{IEEE J. Solid-State Circuits}, vol.~46, no.~1, pp.~194--208, 2011, doi: 10.1109/JSSC.2010.2089657.
+
+\bibitem{tschanz2002abb} J. W. Tschanz \emph{et al.}, ``Adaptive body bias for reducing impacts of die-to-die and within-die
+parameter variations on microprocessor frequency and leakage,'' \emph{IEEE J. Solid-State Circuits}, vol.~37, no.~11,
+pp.~1396--1402, 2002.
+
+\bibitem{niemann2020avs} C. Niemann, M. Ali, O. U. Shah, J. Heller, D. Timmermann, ``Sensor based adaptive voltage scaling on
+FPGAs: calibration and parametrization,'' \emph{Integration}, vol.~75, pp.~30--39, 2020, doi: 10.1016/j.vlsi.2020.05.006.
+
+\bibitem{saliva2015fdsoi} M. Saliva \emph{et al.}, ``Digital circuits reliability with in-situ monitors in 28nm fully
+depleted SOI,'' in \emph{Proc. DATE}, 2015, pp.~441--446.
+
+\bibitem{xie2026agingavs} T. Xie, Z. Zhang, C. Yang, Y. Wang, R. Wang, M. Li, ``Aging aware adaptive voltage scaling for
+reliable and efficient AI accelerators,'' arXiv:2604.09994, 2026 (aceito no ISEDA 2026).
+
+\bibitem{valdespena2013} M. Valdés-Peña \emph{et al.}, ``Design and validation of configurable online aging sensors in
+nanometer-scale FPGAs,'' \emph{IEEE Trans. Nanotechnol.}, vol.~12, no.~4, pp.~508--517, 2013, doi:
+10.1109/TNANO.2013.2253795.
+
+\bibitem{stott2010degradation} E. A. Stott, J. S. Wong, N. P. Sedcole, P. Y. K. Cheung, ``Degradation in FPGAs: measurement
+and modelling,'' in \emph{Proc. ACM/SIGDA FPGA}, 2010, pp.~229--238.
+
+\bibitem{amouri2014aging} A. Amouri, F. Bruguier, S. Kiamehr, P. Benoit, L. Torres, M. Tahoori, ``Aging effects in FPGAs: an
+experimental analysis,'' in \emph{Proc. FPL}, 2014.
+
+\bibitem{huang2022aging} Y.-Y. Huang \emph{et al.}, ``Implementation of aging mechanism analysis and prediction for XILINX
+7-series FPGAs with a 28-nm process,'' \emph{Sensors}, vol.~22, no.~12, 2022.
+
+\bibitem{sobas2024finfet} J. Sobas, F. Marc, ``Degradation measurement and modelling under ageing in a 16 nm FinFET FPGA,''
+\emph{Micromachines}, vol.~15, no.~1, art.~19, 2024, doi: 10.3390/mi15010019.
+
+\bibitem{vargas2025slmcore} F. Vargas, A. Balakrishnan, ``On-chip aging sensor core for silicon lifecycle management,'' in
+\emph{Proc. IEEE LATS}, 2025, doi: 10.1109/LATS65346.2025.10963953.
+
+\bibitem{allan1966statistics} D. W. Allan, ``Statistics of atomic frequency standards,'' \emph{Proc. IEEE}, vol.~54, no.~2,
+pp.~221--230, 1966, doi: 10.1109/PROC.1966.4634.
+
+\bibitem{weatherhead1998trends} E. C. Weatherhead \emph{et al.}, ``Factors affecting the detection of trends: statistical
+considerations and applications to environmental data,'' \emph{J. Geophys. Res.}, vol.~103, no.~D14, pp.~17149--17161,
+1998, doi: 10.1029/98JD00995.
+
+\bibitem{saxena2008metrics} A. Saxena, J. Celaya, E. Balaban, K. Goebel, B. Saha, S. Saha, M. Schwabacher, ``Metrics for
+evaluating performance of prognostic techniques,'' in \emph{Proc. IEEE PHM}, 2008.
+
+\bibitem{hochschild2021cores} P. H. Hochschild \emph{et al.}, ``Cores that don't count,'' in \emph{Proc. HotOS}, 2021.
+
+\bibitem{dixit2021sdc} H. D. Dixit \emph{et al.}, ``Silent data corruptions at scale,'' arXiv:2102.11245, 2021.
+
+\bibitem{synopsysPMM} Synopsys, ``SLM Path Margin Monitor IP,'' página do produto,
+\url{https://www.synopsys.com/solutions/silicon-lifecycle-management/structural-monitors/path-margin-monitor-ip.html},
+consultada em 27/11/2026.
+
+\bibitem{ds931} AMD, \emph{Artix UltraScale+ FPGA Data Sheet: DC and AC Switching Characteristics}, DS931, rev.~1.9,
+19/05/2026.
+
+\bibitem{iso26262} ISO 26262:2018, \emph{Road vehicles --- Functional safety}.
+
+\bibitem{ieee1687} IEEE Std 1687-2014, \emph{IEEE Standard for Access and Control of Instrumentation Embedded within a
+Semiconductor Device}.
+
+\end{thebibliography}
+\end{document}

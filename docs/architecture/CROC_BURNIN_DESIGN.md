@@ -629,5 +629,7 @@ Proposta, a combinar com o colega:
   desde que reportem pelas mesmas mensagens.
 - **Bitstream:** o host identifica o bitstream pelo `USR_ACCESS` e pelo hash no manifesto
   (prática C4 do croc-cve2-aging), venha ele de qual repositório vier.
-- **Limitação:** o TVLSI---Slack-Scanner hoje é só local, sem remoto. Para o IC-Aging fixar uma
-  versão do contrato, ele precisa de um remoto, ou de um commit exportado com hash.
+- **Remoto e plataforma:** o TVLSI---Slack-Scanner tem remoto
+  (`github.com/Lucasss-Nogueira/TVLSI---Slack-Scanner`). Desde 2026-11-27 ele inclui o fbs como
+  submódulo (`external/fpgaging-board-support`, commit `3ee8c55` daquele repositório). O fbs é
+  privado, então o colega precisa de acesso a ele para clonar o submódulo.
