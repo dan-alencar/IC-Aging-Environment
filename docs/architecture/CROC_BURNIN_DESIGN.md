@@ -23,7 +23,7 @@ Os dados de 0,25 e 0,15 cnt são da PID-214 em [DT]; a duração 91–149 h tamb
 | # | Item | Decisão |
 |---|---|---|
 | P1 | RTL base | **CROC98** (TVLSI---Slack-Scanner, Lucas) com peças do **croc-cve2-aging** (Alisson): cadeias de referência, MMCM único com as três armadilhas de silício já resolvidas e extrator de PnR fixo |
-| P2 | Repositório | **IC-Aging-Environment**, novo payload ao lado do `fbs_aging` sobre o `fbs_platform` |
+| P2 | Repositório | Payload do CROC no **repositório do colega** (TVLSI---Slack-Scanner), sobre o fbs; no IC-Aging, a bancada, o host, a análise e uma versão parcial adaptada (revisto em 2026-11-27, §6 e §13) |
 | P3 | Clock | **Um perfil durante o burn-in**; os outros dois perfis só nos checkpoints antes/depois, trocados por JTAG |
 | P4 | Cadência | **Uma varredura por minuto**, instrumento desligado entre varreduras |
 | B1 | Controle térmico | **PI em cascata** na temperatura do die, no host; o PID do Arduino continua como laço interno |
@@ -255,8 +255,9 @@ das de estresse e registra a recuperação acumulada (soma das janelas a V nomin
 
 ### A1. Uma varredura inteira por mensagem
 
-Proposta de mensagens em `protocol/messages.icaging.yaml`. Os números são distintos dos do
-`fbs_aging` (0x40–0x43, 0x50–0x51), para os dois payloads conviverem num yaml só:
+Proposta de mensagens para `protocol/messages.croc.yaml`, cujo dono é o repositório do colega
+(contrato, §13), com cópia fixada no IC-Aging. Os números são distintos dos do `fbs_aging`
+(0x40–0x43, 0x50–0x51), para os dois payloads conviverem no mesmo host:
 
 | Tipo | Nome | Conteúdo |
 |---|---|---|
@@ -312,21 +313,38 @@ Proposta de mensagens em `protocol/messages.icaging.yaml`. Os números são dist
 
 ## 6. Pacotes de trabalho
 
-| WP | O quê | Onde | Depende de | Aceite |
+**Divisão (decisão de 2026-11-27, revista):** o payload do CROC (CROC98 + instrumentação) é
+migrado para a RV02A **pelo colega, no repositório dele** (TVLSI---Slack-Scanner), que passa a
+consumir o fbs como submódulo, como o IC-Aging, podendo reaproveitar peças do `fbs_aging`. O
+IC-Aging fica com a bancada, o host, a análise e a integração dos experimentos, e pode ter uma
+**versão parcial adaptada** do payload para testar essa integração (WP1p). O fbs fica com a
+plataforma, o protocolo comum, o STM32 e o sequenciador (fase **P10** do fbs). A §13 tem o
+contrato entre os repositórios.
+
+| WP | O quê | Repositório | Depende de | Aceite |
 |---|---|---|---|---|
-| 0 | Fase 0 na RV02A: MMCM único com 3 saídas e fine PS só no dpsclk; BUFGCE nas duas saídas de prova; `report_clock_interaction` soc_clk → dpsclk "Clean/Timed" | `ultrascale_plus/` (projeto de teste) | — | as três perguntas de `00_CONTEXTO` §6 respondidas; G1 em simulação |
-| 1 | Importar o RTL do CROC98 (origem e commit anotados, terceiros em overlay) e criar `fbs_croc_aging_top` sobre o `fbs_platform`; console em RAW0; correções 1–3 | `src/rtl/fbs_croc_aging/`, `sim/` | 0 | elabora; cocotb: scan completo em simulação reduzida; testes das correções |
-| 2 | Mensagens `CROC_*` no yaml + `generate.py`; `EVENT` no fbs (SPEC, bindings, testes, ARCHITECTURE.pdf) | `protocol/`, `external/fpgaging-board-support` | — | `generate.py --check`; testes do fbs verdes |
-| 3 | Kits: referências com inversão, ROs, nulas por região, gating; PnR fixo à moda V19 com guarda de lista | `src/rtl/fbs_croc_aging/`, `src/constraints/`, `scripts/` | 1, 2 | build reproduzível; WNS ≥ 0 no funcional; censo de sensores igual à lista |
-| 4 | Aquecedor + PI no payload + heartbeat do host | `src/rtl/fbs_croc_aging/` | 3, **H1 medido** | sim: degrau de alvo, timeout do host; bancada: Tj segura ±0,5 °C a 1 Hz |
-| 5 | Host: plugin `ic_aging.croc_burnin` (`derive` por varredura, janelas, eventos); run plan com pré/estresse/checkpoints/pós; `outer_loop.mode: pi` no fbs; ensaio de degrau | `software/apps/App_DT_Monitor/`, fbs `runplan.py` | 2 | simulador fbs com modelo do payload; pytest |
-| 6 | Análise: resíduo, diferencial, HDEV ao vivo, relatório, regra de regressores | `analysis/croc_burnin/`, `dt_monitor/stats.py` | 5 | relatório gerado num log simulado; a regra recusa corrente da fonte |
-| 7 | Bancada: perfis derivados na -1-i, calibração dos ROs, linha de base, burn-in piloto | lab | 3–6 | piso medido; checkpoint diário sem degrau visível na HDEV |
+| 0 | Fase 0 na RV02A: MMCM único com 3 saídas e fine PS só no dpsclk; BUFGCE nas duas saídas de prova; `report_clock_interaction` soc_clk → dpsclk "Clean/Timed" | TVLSI (colega) | — | as três perguntas de `00_CONTEXTO` §6 respondidas; G1 em simulação |
+| 1 | CROC98 sobre o `fbs_platform` (`fbs_croc_aging_top`); console em RAW0; correções 1–3; `slm_regs` (SLM1) no lugar do monitor OBI legado; alarme de margem (SLM4); carga dirigida para os taps não qualificados (metodologia do CROC §4) | TVLSI (colega) | 0 | elabora; cocotb: scan completo em simulação reduzida; ≥ 90/98 taps qualificados |
+| 1p | Versão parcial adaptada no IC-Aging: poucos taps, um kit, as mensagens do contrato. É só para testar a integração com host, análise e bancada enquanto o WP1 avança | IC-Aging, `src/rtl/fbs_croc_aging/` | 2 | o plugin do WP5 roda contra ela no simulador do fbs e numa placa |
+| 2 | Mensagens `CROC_*` do contrato (§13) | TVLSI (dono do arquivo), espelhado no IC-Aging | — | `generate.py --check` nos dois lados |
+| 3 | Kits de instrumentação: referências com polaridade alternada, ROs, nulas por região, gating; PnR fixo à moda V19; controlador de DRP do MMCM (perfil e SLM3). Os blocos genéricos ficam em `src/rtl/aging_instruments/` no IC-Aging, usados pelo `fbs_aging` e oferecidos ao colega | IC-Aging (blocos) + TVLSI (integração) | 1 (ou 1p) | build reproduzível; WNS ≥ 0 no funcional; censo de sensores igual à lista |
+| 4 | Aquecedor + PI no payload + heartbeat do host; bloco genérico em `aging_instruments/` | IC-Aging (bloco) + TVLSI (integração) | 3, **orçamento de corrente H1 medido** | sim: degrau de alvo, timeout do host; bancada: Tj segura ±0,5 °C a 1 Hz |
+| 5 | Host: plugin `ic_aging.croc_burnin` (`derive` por varredura, janelas, eventos) e run plans com pré, estresse, checkpoints e pós; ensaio de degrau para identificar a planta do PI | IC-Aging, `software/apps/App_DT_Monitor/` | 2, P10 | simulador do fbs com modelo do payload; pytest |
+| 6 | Análise: resíduo, diferencial, HDEV ao vivo, relatório, regra de regressores, **verificação do oscilador por software (M8)** e **estimador de espaço de estados (M1a)**, validado em dados simulados com drift conhecido | IC-Aging, `analysis/croc_burnin/`, `dt_monitor/stats.py` | 5 | relatório gerado num log simulado; a regra recusa corrente da fonte; M1a recupera o drift simulado dentro do intervalo |
+| 7 | Bancada: perfis derivados na -1-i, calibração dos ROs, linha de base, burn-in piloto | laboratório | 3–6, P10 | piso medido; checkpoint diário sem degrau visível na HDEV |
+| 8 | Firmware do CROC: controlador de AVS, ações de proteção, modos de ocioso (SLM2, SLM6) | TVLSI (colega) | 1, P10 | sim e bancada pela metodologia `ic_aging_avs.md` |
+| 9 | Modos de estresse do `fbs_aging` (`alternate` / `static0` / `static1` / `measure-only`), para o experimento `ic_aging.burnin` | IC-Aging, `src/rtl/fbs_aging/` | — | cocotb por modo; `AGING_SET_MODE` com o campo novo |
 
-O caminho crítico é 0 → 1 → 3 → 7. Os pacotes 2, 5 e 6 andam em paralelo. O 4 só começa
-depois de medir o H1 na bancada.
+**No fbs (fase P10):** revisão 3 do SPEC com:
+- `EVENT`;
+- `AVS_CONFIG` e `VCCINT_REQUEST` (SLM2), com o firmware do STM32;
+- os limites em conflito (§9.3): `DIE_TEMP_CAP_CC`, `VCCINT_SENSE_TOL_MV`, os exemplos com
+  `die_c: 130`, e `VCCINT_HARD_MIN_MV` diante do VDRINT de 0,68 V;
+- no `runplan.py`: `outer_loop.mode: pi`, o papel `control` para placas, o registro da
+  metodologia na sessão e os passos `vmin_search` / `fmax_search` (SLM5).
 
----
+**Caminho crítico:** TVLSI 0 → 1 → 3, junto com P10, e depois a bancada (WP7). O IC-Aging não
+espera o colega: o WP1p, o WP5, o WP6 e o WP9 andam em paralelo.
 
 ## 7. Pendências abertas
 
@@ -487,7 +505,7 @@ O objetivo é que o mesmo bitstream do burn-in já sirva aos experimentos de SLM
 `fbs_croc_aging` e no fbs. As **políticas** (quando baixar a tensão, quando reduzir a frequência)
 ficam no firmware do CROC e no host, não no hardware.
 
-### H1. O CPU lê os próprios sensores
+### SLM1. O CPU lê os próprios sensores
 
 - Periférico OBI `slm_regs` no `user_domain` do CROC, **só leitura para o CPU**, com:
   - por canal: última borda válida (`u16`), flags de qualificação e `scan_id`;
@@ -503,7 +521,7 @@ ficam no firmware do CROC e no host, não no hardware.
 - **Conferência:** em cada varredura, o host compara o que leu pelo fbs com o que o CPU leu
   pelo OBI (o firmware ecoa um resumo no console RAW0). Uma divergência é um evento.
 
-### H2. Caminho de AVS limitado: o payload pede, o STM32 decide
+### SLM2. Caminho de AVS limitado: o payload pede, o STM32 decide
 
 - Proposta de mensagens novas no fbs (é mudança de SPEC):
   - `AVS_CONFIG` (host → STM32): habilita por corrida e fixa `min_mv`, `max_mv`, `step_mv`,
@@ -513,11 +531,11 @@ ficam no firmware do CROC e no host, não no hardware.
   passo e intervalo. Cada mudança aplicada vira `EVENT` com a origem. Com o AVS desabilitado, o
   pedido é recusado e contado. **O STM32 continua sendo a autoridade de segurança**: o pedido
   nunca passa de `vccint_soft_max_mv` (M9).
-- O **controlador** de AVS roda no firmware do CROC: lê o H1 e escreve num registrador de
+- O **controlador** de AVS roda no firmware do CROC: lê o SLM1 e escreve num registrador de
   pedido do `slm_regs`, que o payload converte em `VCCINT_REQUEST`. O laço fica todo na placa,
   sem o PC, que é a narrativa de SLM ("o processador gerencia a própria margem").
 
-### H3. Ação de frequência
+### SLM3. Ação de frequência
 
 - O controlador de DRP do MMCM, o mesmo da troca de perfil em execução (P3), fica acessível ao
   host e ao CPU (`slm_regs`, registrador `PROFILE_REQ`).
@@ -531,19 +549,19 @@ ficam no firmware do CROC e no host, não no hardware.
 - **[VERIFY F1]** O CROC tem de sobreviver à troca sem reset, porque o soc_clk para durante o
   relock. Caso contrário, a troca exige reset do CPU, e isso entra na metodologia.
 
-### H4. Alarme de margem em hardware
+### SLM4. Alarme de margem em hardware
 
 - Comparador no payload: se a margem mínima de algum grupo cair abaixo do limiar programado
   pelo host, ele gera ao mesmo tempo uma interrupção no CPU e um `EVENT` no fbs. É o ponto onde
   as ações de proteção (metodologia, E5) se ligam.
-- O limiar vem da calibração de Vmin (H5). O hardware só sinaliza; a ação é política de
+- O limiar vem da calibração de Vmin (SLM5). O hardware só sinaliza; a ação é política de
   firmware.
 
-### H5. Busca de Vmin e Fmax como passos do run plan
+### SLM5. Busca de Vmin e Fmax como passos do run plan
 
 - Passos novos no sequenciador do fbs, `vmin_search` e `fmax_search`:
   - `vmin_search` desce a VCCINT em passos de `step_mv`;
-  - `fmax_search` sobe o perfil por H3.
+  - `fmax_search` sobe o perfil por SLM3.
 
   Em cada ponto, são feitas N varreduras e o autoteste do CPU. O passo para na **primeira falha
   funcional**: autoteste falho, progresso do CPU parado, ou erros de CRC no link da plataforma
@@ -556,23 +574,28 @@ ficam no firmware do CROC e no host, não no hardware.
   0,750 V em leitura**, e abaixo disso a busca para e registra "Vmin < 0,75 V" (censurado).
 - Usados nos checkpoints antes e depois do burn-in: o deslocamento de Vmin e Fmax com o
   envelhecimento é a grandeza central de AVS, e a leitura de cada sensor no Vmin calibra o
-  limiar do H4.
+  limiar do SLM4.
 
-### H6. Estado ocioso do CPU selecionável
+### SLM6. Estado ocioso do CPU selecionável
 
 - O clock enable do CROC (já necessário para o modo `halted`, metodologia M4) e um modo de
   ocioso no firmware: `WFI` com clock parado, ou um laço com operandos complementares que
   equilibra o BTI DC (a mesma ideia da polaridade alternada das referências). O modo vai no
   registro de cada varredura.
 
-### Pacotes de trabalho afetados
+### Onde cada gancho é feito
 
-| WP | Acréscimo |
-|---|---|
-| 1 | `slm_regs` (H1) substituindo o monitor OBI legado; H4 |
-| 2 | `AVS_CONFIG`, `VCCINT_REQUEST` (H2) no SPEC e no firmware do STM32 (fbs) |
-| 3 | controlador de DRP compartilhado por P3 e H3 |
-| 5 | passos `vmin_search` / `fmax_search` (H5) no sequenciador |
+Pela divisão da §6:
+- SLM1, SLM4 e o controlador de DRP do SLM3 vão no WP1 e no WP3 (repositório do colega; o DRP é
+  bloco genérico do IC-Aging);
+- SLM2 e SLM5 vão na fase P10 do fbs (SPEC, firmware do STM32, sequenciador);
+- SLM6 e as políticas de AVS e proteção vão no WP8 (firmware do CROC, repositório do colega).
+
+---|---|
+| 1 | `slm_regs` (SLM1) substituindo o monitor OBI legado; SLM4 |
+| 2 | `AVS_CONFIG`, `VCCINT_REQUEST` (SLM2) no SPEC e no firmware do STM32 (fbs) |
+| 3 | controlador de DRP compartilhado por P3 e SLM3 |
+| 5 | passos `vmin_search` / `fmax_search` (SLM5) no sequenciador |
 | novo 8 | firmware do CROC: controlador de AVS, ações de proteção, modos de ocioso |
 
 ---
@@ -584,3 +607,27 @@ ficam no firmware do CROC e no host, não no hardware.
   principal é a RV02A.** O RTL novo continua independente de tecnologia onde isso não custa nada,
   mas não se faz trabalho específico de ASIC agora.
 - **Mudanças físicas** na placa ou no setup de burn-in (§10).
+
+---
+
+## 13. Contrato entre os repositórios
+
+Proposta, a combinar com o colega:
+
+- **O payload do CROC é do repositório dele.** O IC-Aging não depende de nenhum arquivo do
+  repositório dele para funcionar, só do contrato abaixo, numa versão fixada.
+- **Mensagens:** o colega é dono de `protocol/messages.croc.yaml` (tipos 0x44–0x48 e 0x52–0x55,
+  §5, distintos dos do `fbs_aging`, para os dois conviverem num host só). O IC-Aging mantém uma
+  cópia com a origem e o commit anotados e confere com `generate.py --check`. Uma mudança no
+  contrato sobe a versão no `CROC_INFO` (`rtl_version`), e o plugin recusa versões que não
+  conhece.
+- **Mapa de canais:** fica no `CROC_INFO` (grupo, tipo tap/ref/nula, região de clock), e não em
+  arquivos combinados à mão. O host lê da placa.
+- **Blocos de instrumentação** (`aging_instruments/`, WP3 e WP4): ficam no IC-Aging e são
+  oferecidos como RTL simples, sem IP, como o `fbs_platform`. O colega pode copiá-los com a
+  origem anotada ou usar o IC-Aging como submódulo. Não é obrigatório: ele pode ter os seus,
+  desde que reportem pelas mesmas mensagens.
+- **Bitstream:** o host identifica o bitstream pelo `USR_ACCESS` e pelo hash no manifesto
+  (prática C4 do croc-cve2-aging), venha ele de qual repositório vier.
+- **Limitação:** o TVLSI---Slack-Scanner hoje é só local, sem remoto. Para o IC-Aging fixar uma
+  versão do contrato, ele precisa de um remoto, ou de um commit exportado com hash.
