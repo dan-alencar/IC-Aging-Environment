@@ -263,6 +263,7 @@ truth; §6 lists what this repository builds on it. Update the submodule pointer
 - `CONTRIBUTING.md` — guidelines on code style, data hygiene, and lab procedures.
 - `PROTOCOL.md` — serial protocol reference for DUT (Nexys4), Arduino, and PSU.
 - `ARCHITECTURE.md` — design intent behind each subsystem and why decisions were made.
+- `docs/architecture/CROC_BURNIN_DESIGN.md` — design (draft, 2026-11-27) of the next step: CROC98 auto-tuning sensors inside the CROC on `fbs_platform` (new `fbs_croc_aging` payload), with the bench, sensor and analysis improvements from the SBCCI/D&T papers and work packages WP0–WP7. Nothing implemented yet.
 - `docs/onboarding/onboarding.tex` (and `docs/IC_Aging_Environment.pdf`) — 35-page onboarding manual: aging physics, RTL, software, protocols, workstation setup, running an experiment, data analysis, troubleshooting.
 - `hardware/fpga/xilinx/nexys4_ddr/SENSOR_ARCHITECTURE.md` — scientific rationale for the dual-adder sensor design.
 - `hardware/fpga/xilinx/nexys4_ddr/IMPLEMENTATION_ROADMAP.md` — phased checklist; RTL phases 1–2 are done, phases 3–7 (build, validation, data collection) are pending.
