@@ -1073,13 +1073,21 @@ FPGA core actually operates at the commanded voltage.
 
 Because the oven air temperature and the FPGA die temperature differ (the die generates
 heat internally), a slow outer loop adjusts the oven setpoint to drive the die temperature
-to the target. Every 1800 ticks (approximately 30~minutes) the sequencer:
+to the target (\texttt{DieTempOuterLoop} in \texttt{workers.py}). Every 30~minutes the sequencer:
 
 \begin{enumerate}
-  \item Computes $e = T_{die,target} - T_{die,measured}$.
-  \item If $|e| > 3\,^\circ\text{C}$ (dead-band), shifts the oven setpoint by $\pm 1\,^\circ\text{C}$
-        in the direction that reduces the error.
+  \item Computes $e = T_{die,target} - \overline{T}_{die}$, where $\overline{T}_{die}$ is the
+        mean of the valid die samples over the whole interval (not a single reading, which
+        XADC noise or a thermostat-cycle peak could push across the dead-band).
+  \item If $|e| > 3\,^\circ\text{C}$ (dead-band), moves the oven setpoint by $\pm 1\,^\circ\text{C}$
+        in the direction that reduces the error, as a ramp of $0.1\,^\circ\text{C}$ every
+        150~s (1\,$^\circ$C in 25~min) rather than a single step.
 \end{enumerate}
+
+A setpoint changed by hand during the ramp cancels it. The single-step version is the one
+used in the PID-214 campaign; the D\&T 2027 analysis associates its steps with jumps in the
+corrected slack residual. A continuous cascade loop on die temperature is planned (see the
+\texttt{TODO(control)} note in the code).
 
 This ensures that the FPGA transistors experience the intended stress temperature
 regardless of self-heating variations.

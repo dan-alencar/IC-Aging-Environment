@@ -25,9 +25,154 @@ import pyvisa as visa
 from logger import DataLogger
 import threading
 
-_DUT_OUTER_TICK_INTERVAL = 1800   # ticks between oven-sp adjustments (~30 min at 1 s/tick)
-_DUT_TEMP_TOLERANCE_C = 3.0       # ±3 °C dead-band around DUT target
-_OVEN_SP_STEP_C = 1.0             # °C per adjustment step
+
+# =============================================================================
+#   DUT die-temperature outer loop (slow oven-setpoint trim)
+# =============================================================================
+# Decision rule, unchanged from the campaigns already logged (PID-214): every
+# 30 min, if the die is more than 3 °C from its target, move the oven setpoint
+# 1 °C toward it.
+#
+# Fixed 2026-11-27:
+#   * The decision read one instantaneous die sample, so XADC noise or a
+#     thermostat-cycle peak could trigger (or skip) a step. It now uses the mean
+#     of the valid die samples over the whole interval.
+#   * The 1 °C change went out as one SET_SP (the oven firmware ramps it at
+#     1 °C/s), an air step the D&T 2027 analysis associates with jumps in the
+#     corrected slack residual. It now goes out as a 0.1 °C / 150 s ramp
+#     (1 °C in 25 min, close to the die's ~1300 s thermal time constant).
+#   * The interval is counted from LOG_INTERVAL_MS instead of assuming 1 s ticks.
+#   * A change is logged only when it was sent; a setpoint changed by hand in
+#     the UI mid-ramp cancels the ramp instead of being overwritten.
+#
+# TODO(control): replace this dead-band stepper by a continuous cascade loop on
+#   the die temperature (see the D&T 2027 analysis and the AU15P ideas note,
+#   hardware/fpga/xilinx/ultrascale_plus/docs/ideas_au15p_burnin_2026-11-10.md §2.2):
+#   1. Identify the outer plant first: step the oven setpoint at a fixed die
+#      load and fit die-vs-setpoint as FOPDT (PID-214 gave 0.97-1.81 °C of die
+#      per °C of air, die tau ~1300 s), then tune a PI by SIMC, as was done for
+#      the oven PID. Do not guess the gains.
+#   2. Outer PI on the low-passed die temperature (5-10 min, to keep XADC noise
+#      and the bang-bang cycle out) -> oven setpoint, continuous and
+#      rate-limited (<= ~0.1 °C/min), clamped to the oven range, with
+#      anti-windup. The inner loop stays the Arduino oven PID.
+#   3. No dead-band (or <= 0.5 °C): at 115 °C and Ea = 0.7 eV a 5 % AF tolerance
+#      allows only 0.9 °C of mean die error (Eq. 3); the current +-3 °C
+#      dead-band lets the mean sit ~3 °C off, an ~18 % AF shortfall.
+#   4. Hold the integrator during the first-hour thermal soak, or start the
+#      setpoint from a die-to-air offset model, so the soak does not wind it up.
+#   5. Log the loop state (setpoint command, integral) in the CSV and name the
+#      loop in the header, so the analysis can regress or mask it.
+#   6. Validate against PID-214: Hadamard deviation of die temperature and of
+#      the T,V-corrected residual (floor 0.25 cnt as run, 0.15 cnt with the
+#      setpoint steps masked); the goal is a floor at or below the masked one.
+#   Longer term: close the loop on the die itself (on-die heater driven from
+#   SYSMON/XADC, response in seconds), with the oven as a slow bias.
+_OUTER_INTERVAL_S = 1800.0      # decision interval (s)
+_OUTER_DEADBAND_C = 3.0         # dead-band on the interval-mean die error (°C)
+_OUTER_STEP_C = 1.0             # setpoint change per decision (°C)
+_OUTER_RAMP_STEP_C = 0.1        # the change is sent in increments of this (°C)
+_OUTER_RAMP_EVERY_S = 150.0     # ... one increment every this many seconds
+_OUTER_SP_MIN_C = 20.0          # oven firmware SET_SP range (OVEN_SP_MIN_C)
+_OUTER_SP_MATCH_TOL_C = 0.05    # readback vs last command; larger = changed by hand
+_OUTER_MIN_VALID_FRACTION = 0.5 # skip a decision with fewer valid die samples
+
+
+class DieTempOuterLoop:
+    """Slow outer loop that trims the oven setpoint so the die mean reaches its target.
+
+    Pure logic, no I/O: tick() is called once per log tick and returns the
+    setpoint to send (or None) and a message to log (or None).
+    """
+
+    def __init__(self, tick_s: float, sp_max_c: float):
+        self.interval_ticks = max(1, round(_OUTER_INTERVAL_S / tick_s))
+        self.ramp_every_ticks = max(1, round(_OUTER_RAMP_EVERY_S / tick_s))
+        self.sp_max_c = sp_max_c
+        self.reset(0.0)
+
+    def reset(self, target_c: float):
+        self.target_c = float(target_c)
+        self._tick = 0
+        self._sum = 0.0
+        self._n = 0
+        self._ramp_goal = None
+        self._ramp_cmd = None
+        self._ramp_tick = 0
+
+    @property
+    def enabled(self) -> bool:
+        return self.target_c > 0
+
+    @property
+    def ramping(self) -> bool:
+        return self._ramp_goal is not None
+
+    def tick(self, die_c: float, sp_readback: float, can_send: bool):
+        if not self.enabled:
+            return None, None
+        if die_c > 0:
+            self._sum += die_c
+            self._n += 1
+        self._tick += 1
+
+        sp_out, msg = (self._ramp_step(sp_readback, can_send)
+                       if self.ramping else (None, None))
+        if self._tick < self.interval_ticks:
+            return sp_out, msg
+
+        # End of the interval: decide on its mean die temperature.
+        n, mean = self._n, (self._sum / self._n if self._n else 0.0)
+        self._tick, self._sum, self._n = 0, 0.0, 0
+        if self.ramping:
+            return sp_out, msg          # previous change still going out
+        if n < _OUTER_MIN_VALID_FRACTION * self.interval_ticks:
+            return None, (f"DUT outer loop: only {n}/{self.interval_ticks} valid die "
+                          f"samples in the interval; no adjustment")
+        error = mean - self.target_c
+        if abs(error) <= _OUTER_DEADBAND_C:
+            return None, None
+        if not can_send or sp_readback <= 0:
+            return None, (f"DUT outer loop: die mean {mean:.2f}°C, target "
+                          f"{self.target_c:.1f}°C, but the oven is not available; "
+                          f"no adjustment")
+        base = round(sp_readback, 2)
+        step = _OUTER_STEP_C if error < 0 else -_OUTER_STEP_C
+        goal = round(max(_OUTER_SP_MIN_C, min(self.sp_max_c, base + step)), 2)
+        if goal == base:
+            return None, (f"DUT outer loop: die mean {mean:.2f}°C, target "
+                          f"{self.target_c:.1f}°C, oven setpoint already at its "
+                          f"limit ({base:.2f}°C)")
+        self._ramp_goal, self._ramp_cmd = goal, base
+        self._ramp_tick = self.ramp_every_ticks - 1   # first increment now
+        sp_out, ramp_msg = self._ramp_step(sp_readback, can_send)
+        msg = (f"DUT outer loop: die mean {mean:.2f}°C over {n} samples, target "
+               f"{self.target_c:.1f}°C -> oven setpoint {base:.2f} -> {goal:.2f}°C, "
+               f"ramp of {_OUTER_RAMP_STEP_C}°C every {_OUTER_RAMP_EVERY_S:.0f} s")
+        if ramp_msg:
+            msg += f" | {ramp_msg}"
+        return sp_out, msg
+
+    def _ramp_step(self, sp_readback: float, can_send: bool):
+        self._ramp_tick += 1
+        if self._ramp_tick < self.ramp_every_ticks:
+            return None, None
+        self._ramp_tick = 0
+        if abs(sp_readback - self._ramp_cmd) > _OUTER_SP_MATCH_TOL_C:
+            expected = self._ramp_cmd
+            self._ramp_goal = self._ramp_cmd = None
+            return None, (f"DUT outer loop: oven setpoint changed outside the loop "
+                          f"({sp_readback:.2f}°C, expected {expected:.2f}°C); ramp cancelled")
+        if not can_send:
+            return None, None           # retry at the next increment
+        delta = self._ramp_goal - self._ramp_cmd
+        inc = max(-_OUTER_RAMP_STEP_C, min(_OUTER_RAMP_STEP_C, delta))
+        self._ramp_cmd = round(self._ramp_cmd + inc, 2)
+        if abs(self._ramp_goal - self._ramp_cmd) < 1e-6:
+            self._ramp_cmd = self._ramp_goal
+            self._ramp_goal = None
+            return self._ramp_cmd, f"DUT outer loop: ramp done, oven setpoint {self._ramp_cmd:.2f}°C"
+        return self._ramp_cmd, None
 
 
 # =============================================================================
@@ -120,7 +265,7 @@ class ArduinoWorker(QObject):
 
     @Slot(float)
     def set_target_setpoint(self, temp):
-        self.send_command(f"SET_SP,{int(temp)}")
+        return self.send_command(f"SET_SP,{float(temp):.2f}")
 
     @Slot()
     def start_test_oven(self):
@@ -580,8 +725,8 @@ class TestSequencer(QObject):
         self._psu1_cmd_v = 0.0
 
         # DUT temperature outer loop
-        self._dut_target_temp = 0.0
-        self._outer_tick = 0
+        self._outer_loop = DieTempOuterLoop(config.LOG_INTERVAL_MS / 1000.0,
+                                            config.MAX_OVEN_TEMP_C)
 
         # Oven controller identified from firmware (provenance)
         self._oven_controller = None
@@ -671,8 +816,7 @@ exit
             return
         try:
             self._settings = settings
-            self._dut_target_temp = float(settings.get("dut_target_temp", 0.0))
-            self._outer_tick = 0
+            self._outer_loop.reset(float(settings.get("dut_target_temp", 0.0)))
 
             # Identifica o controlador real do forno ANTES de abrir o log, para
             # que o cabeçalho registre o regime correto (PID vs bang-bang são
@@ -864,27 +1008,16 @@ exit
             self.psu1.set_voltage(self._psu1_cmd_v)
 
     def _adjust_oven_outer_loop(self, avg_dut_temp: float, sp_oven: float):
-        """Shift oven setpoint every ~30 min to bring average DUT temp to target.
-        Runs every log tick; acts only when _outer_tick reaches the interval."""
-        if self._dut_target_temp <= 0 or avg_dut_temp <= 0:
-            return
-        self._outer_tick += 1
-        if self._outer_tick < _DUT_OUTER_TICK_INTERVAL:
-            return
-        self._outer_tick = 0
-        error = avg_dut_temp - self._dut_target_temp
-        if abs(error) <= _DUT_TEMP_TOLERANCE_C:
-            return
-        step = _OVEN_SP_STEP_C if error < 0 else -_OVEN_SP_STEP_C
-        new_sp = max(0.0, min(config.MAX_OVEN_TEMP_C, sp_oven + step))
-        if new_sp == sp_oven:
-            return
-        if config.ARDUINO_ENABLED and self.arduino.is_ready:
-            self.arduino.set_target_setpoint(new_sp)
-        self.log_message.emit(
-            f"DUT outer loop: DUT_avg={avg_dut_temp:.1f}°C target={self._dut_target_temp:.0f}°C "
-            f"→ oven_sp {sp_oven:.0f}→{new_sp:.0f}°C"
-        )
+        """Slow oven-setpoint trim toward the DUT die target (see DieTempOuterLoop)."""
+        can_send = config.ARDUINO_ENABLED and self.arduino.is_ready
+        new_sp, msg = self._outer_loop.tick(avg_dut_temp, sp_oven, can_send)
+        if new_sp is not None:
+            resp = self.arduino.set_target_setpoint(new_sp)
+            if not (resp or "").startswith("OK"):
+                self.log_message.emit(
+                    f"DUT outer loop: SET_SP,{new_sp:.2f} not acknowledged ({resp!r})")
+        if msg:
+            self.log_message.emit(msg)
 
     def _check_safety(self, t0, c0, t1, c1, t_oven):
         if t0 > config.MAX_DUT_TEMP_C:

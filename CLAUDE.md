@@ -196,7 +196,7 @@ Config lives in `App_CornerSweep/config.py` (own `CORNERS_V`/`SWEEP_*`/`SETTLE_*
 - `DataLogger` (`logger.py`) — writes timestamped CSV rows to `test_logs/` inside the app directory.
 - PID parameters (Kp=2.78, Ki=0.00106, Kd=5.0) were identified via FOPDT step test and tuned with SIMC (τc = θ). Do not change without a new step test; see comments in `App_Nexys/config.py`.
 - Safety limits: oven max 130°C, DUT max 140°C, PSU current max 1.5 A.
-- **DUT outer temperature loop:** `TestSequencer._adjust_oven_outer_loop()` shifts the oven setpoint by ±1°C every ~30 min (1800 ticks at 1 s/tick) to bring the DUT die temperature to its target, with a ±3°C dead-band. In `App_2Nexys`, the average of both DUT temperatures is used.
+- **DUT outer temperature loop:** `TestSequencer._adjust_oven_outer_loop()` delegates to `DieTempOuterLoop` (in each app's `workers.py`). Every 30 min it takes the **mean** die temperature over the interval and, if that is more than 3°C from target, moves the oven setpoint 1°C toward it as a 0.1°C / 150 s ramp (not one step). A setpoint changed by hand mid-ramp cancels the ramp. In `App_2Nexys`, the average of both DUT temperatures is used. The planned replacement (identified cascade PI on die temperature, no dead-band) is the `TODO(control)` above `DieTempOuterLoop`. `SET_SP` is sent with two decimals (it used to be truncated to an integer).
 
 ## FPGA RTL structure (Nexys4 DDR)
 
